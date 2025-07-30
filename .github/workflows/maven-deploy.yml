@@ -1,0 +1,89 @@
+name: Deploy to Maven
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  maven-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+          
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+      
+    - name: Get version from tag
+      id: get_version
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        else
+          # Extract branch name and create SNAPSHOT version
+          if [[ $GITHUB_REF == refs/heads/* ]]; then
+            BRANCH=${GITHUB_REF#refs/heads/}
+          else
+            BRANCH="main"
+          fi
+          VERSION="${BRANCH}-SNAPSHOT"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Version: $VERSION"
+
+    - name: Build and publish common module
+      run: |
+        echo "Building and publishing common module..."
+        ./gradlew :common:build :common:publishMavenPublicationToNexusRepository \
+          -Pversion="${{ steps.get_version.outputs.VERSION }}" \
+          -PnexusRegistry="${{ secrets.NEXUS_REGISTRY }}" \
+          -PnexusUsername="${{ secrets.NEXUS_USER }}" \
+          -PnexusPassword="${{ secrets.NEXUS_PASSWORD }}"
+        echo "Published common module artifacts:"
+        echo "- world.selene:selene-common:${{ github.ref_name }}"
+
+    - name: Build and publish client module
+      run: |
+        echo "Building and publishing client module..."
+        ./gradlew :client:build :client:publishMavenPublicationToNexusRepository \
+          -Pversion="${{ steps.get_version.outputs.VERSION }}" \
+          -PnexusRegistry="${{ secrets.NEXUS_REGISTRY }}" \
+          -PnexusUsername="${{ secrets.NEXUS_USER }}" \
+          -PnexusPassword="${{ secrets.NEXUS_PASSWORD }}"
+        echo "Published client module artifacts:"
+        echo "- world.selene:selene-client:${{ github.ref_name }}"
+        echo "- world.selene:selene-client:${{ github.ref_name }}:dist"
+        echo "- world.selene:selene-client:${{ github.ref_name }}:libraries"
+
+    - name: Summary
+      run: |
+        echo "✅ Successfully published all artifacts to Nexus repository:"
+        echo ""
+        echo "Common Module:"
+        echo "- world.selene:selene-common:${{ github.ref_name }}"
+        echo ""
+        echo "Client Module:"
+        echo "- world.selene:selene-client:${{ github.ref_name }}"
+        echo "- world.selene:selene-client:${{ github.ref_name }}:dist"
+        echo "- world.selene:selene-client:${{ github.ref_name }}:libraries"
+        echo ""
+        echo "Repository: ${{ secrets.NEXUS_REGISTRY }}/repository/maven-releases/"
