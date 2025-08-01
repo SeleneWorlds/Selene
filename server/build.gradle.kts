@@ -91,6 +91,12 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJ
     }
 }
 
+tasks.withType<Jar> {
+    manifest {
+        attributes["Main-Class"] = "world.selene.server.ServerBootstrapKt"
+    }
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
