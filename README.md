@@ -22,7 +22,7 @@ it's up to us to set things up manually.
 2. Place any bundles you want to load into the `bundles` folder
 
 For example, to set up a Gobaith server, you could use the following bundles:
-```bash
+```shell
 git clone https://github.com/SeleneWorlds/Moonlight.git moonlight
 git clone https://github.com/SeleneWorlds/Illarion-Script-Loader.git illarion-script-loader
 git clone https://github.com/SeleneWorlds/Illarion-API-Bridge.git illarion-api
