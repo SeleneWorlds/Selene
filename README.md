@@ -46,7 +46,7 @@ The server expects a `server.properties` file in its working directory.
 save_path=save
 bundles_path=../../bundles
 port=8147
-bundles=illarion-vbu,illarion-script-loader,illarion-gobaith-data,illarion-gobaith-map
+bundles=illarion-vbu,illarion-script-loader,illarion-gobaith-data,illarion-gobaith-map,illarion-gobaith-ui
 ```
 
 ### Running the Client
