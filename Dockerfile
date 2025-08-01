@@ -1,11 +1,15 @@
 FROM gradle:8.5-jdk21 AS build
 COPY --chown=gradle:gradle . /app
 WORKDIR /app
-RUN gradle build --no-daemon
+RUN gradle :server:installDist --no-daemon
+RUN mv /app/server/build/install/server/lib/server.jar /app/server/build/install/server/server.jar
 
 FROM openjdk:21-jdk-slim
 WORKDIR /app
-COPY --from=build /app/server/build/libs/*.jar app.jar
+COPY --from=build /app/server/build/install/server/bin/ ./bin/
+COPY --from=build /app/server/build/install/server/lib/ ./lib/
+COPY --from=build /app/server/build/install/server/server.jar ./lib/server.jar
+
 EXPOSE 8147
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["./bin/server"]
