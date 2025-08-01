@@ -99,12 +99,13 @@ class ClientBundleCache(config: ServerConfig) {
     }
 
     fun cleanupStaleZips() {
-        val hashSet = hashByBundleName.values.toSet()
-        for (file in cacheDir.listFiles()) {
-            if (file.isDirectory || file.extension != ".zip") {
+        val currentHashes = hashByBundleName.values.toSet()
+        for (file in cacheDir.listFiles() ?: emptyArray()) {
+            if (file.isDirectory || file.extension != "zip") {
                 continue
             }
-            if (file.nameWithoutExtension !in hashSet) {
+            // Check if this zip file corresponds to a current hash
+            if (file.nameWithoutExtension !in currentHashes) {
                 try {
                     file.delete()
                 } catch (_: Exception) {
@@ -151,11 +152,15 @@ class ClientBundleCache(config: ServerConfig) {
     }
 
     fun getZipFile(bundleDir: File): File {
-        return File(cacheDir, "${bundleDir.name}.zip").apply {
-            if (!exists()) {
-                createClientZip(bundleDir, this)
-            }
+        val currentHash = getHash(bundleDir) ?: throw IllegalStateException("Could not compute hash for ${bundleDir.name}")
+        val zipFile = File(cacheDir, "$currentHash.zip")
+        
+        if (!zipFile.exists()) {
+            cacheDir.mkdirs()
+            createClientZip(bundleDir, zipFile)
         }
+        
+        return zipFile
     }
 
     fun hasClientSide(bundleDir: File): Boolean {
