@@ -74,6 +74,19 @@ jobs:
         echo "- world.selene:selene-client:${{ github.ref_name }}:dist"
         echo "- world.selene:selene-client:${{ github.ref_name }}:libraries"
 
+    - name: Build and publish server module
+      run: |
+        echo "Building and publishing server module..."
+        ./gradlew :server:build :server:publishMavenPublicationToNexusRepository \
+          -Pversion="${{ steps.get_version.outputs.VERSION }}" \
+          -PnexusRegistry="${{ secrets.NEXUS_REGISTRY }}" \
+          -PnexusUsername="${{ secrets.NEXUS_USER }}" \
+          -PnexusPassword="${{ secrets.NEXUS_PASSWORD }}"
+        echo "Published server module artifacts:"
+        echo "- world.selene:selene-server:${{ github.ref_name }}"
+        echo "- world.selene:selene-server:${{ github.ref_name }}:dist"
+        echo "- world.selene:selene-server:${{ github.ref_name }}:libraries"
+
     - name: Summary
       run: |
         echo "✅ Successfully published all artifacts to Nexus repository:"
@@ -85,5 +98,10 @@ jobs:
         echo "- world.selene:selene-client:${{ github.ref_name }}"
         echo "- world.selene:selene-client:${{ github.ref_name }}:dist"
         echo "- world.selene:selene-client:${{ github.ref_name }}:libraries"
+        echo ""
+        echo "Server Module:"
+        echo "- world.selene:selene-server:${{ github.ref_name }}"
+        echo "- world.selene:selene-server:${{ github.ref_name }}:dist"
+        echo "- world.selene:selene-server:${{ github.ref_name }}:libraries"
         echo ""
         echo "Repository: ${{ secrets.NEXUS_REGISTRY }}/repository/maven-releases/"
