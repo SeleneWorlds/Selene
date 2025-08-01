@@ -76,7 +76,6 @@ class SeleneApplication(
     override fun create() {
         MainDispatcher.initiate()
 
-        ClientConfig.createDefault()
         val coreModule = module {
             single { LoggerFactory.getLogger("Selene") }
         }

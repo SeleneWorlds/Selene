@@ -9,6 +9,7 @@ import world.selene.client.config.ClientRuntimeConfig
 
 @OptIn(ExperimentalHoplite::class)
 fun main(args: Array<String>) {
+    ClientConfig.createDefault()
     val config = ConfigLoaderBuilder.default()
         .withExplicitSealedTypes()
         .build()
