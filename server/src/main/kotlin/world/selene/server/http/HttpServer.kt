@@ -61,6 +61,7 @@ class HttpServer(
                 authenticate("session") {
                     get("/bundles") {
                         call.respond(bundleDatabase.loadedBundles.associateBy { it.manifest.name }
+                            .filter { clientBundleCache.hasClientSide(it.value.dir) }
                             .mapValues { (_, value) ->
                                 mapOf(
                                     "name" to value.manifest.name,

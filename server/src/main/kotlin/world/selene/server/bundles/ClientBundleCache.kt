@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import world.selene.common.bundles.LocatedBundle
 import world.selene.server.config.ServerConfig
 import java.io.File
 import java.io.FileInputStream
@@ -155,5 +156,9 @@ class ClientBundleCache(config: ServerConfig) {
                 createClientZip(bundleDir, this)
             }
         }
+    }
+
+    fun hasClientSide(bundleDir: File): Boolean {
+        return bundleDir.resolve("common").exists() || bundleDir.resolve("client").exists()
     }
 }
