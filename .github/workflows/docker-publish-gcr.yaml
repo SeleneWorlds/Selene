@@ -10,6 +10,7 @@ on:
       - 'Dockerfile'
       - 'common/**'
       - 'server/**'
+  workflow_dispatch:  # Allows manual triggering
 
 env:
   # Use docker.io for Docker Hub if empty
