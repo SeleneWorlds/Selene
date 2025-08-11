@@ -1,14 +1,13 @@
 package world.selene.client.visual
 
 import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.GlyphLayout
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Rectangle
-import ktx.assets.async.AssetStorage
 import world.selene.client.animator.Animator
+import world.selene.client.assets.AssetProvider
 import world.selene.client.data.Anchor
 import world.selene.client.data.AnimatedVisualDefinition
 import world.selene.client.data.AnimatorVisualDefinition
@@ -116,12 +115,11 @@ abstract class TextureBasedVisualInstance : VisualInstance, SizedVisualInstance 
 
 data class SimpleVisualInstance(
     private val visualDef: SimpleVisualDefinition,
-    private val assetStorage: AssetStorage
+    private val assetProvider: AssetProvider
 ) : TextureBasedVisualInstance(), SizedVisualInstance {
     override val textureRegion: TextureRegion by lazy {
         val texturePath = visualDef.texture
-        val texture = assetStorage.loadSync<Texture>(texturePath)
-        TextureRegion(texture).apply { flip(false, true) }
+        assetProvider.loadTextureRegion(texturePath) ?: assetProvider.missingTexture
     }
 
     override val offsetX: Float get() = visualDef.offsetX.toFloat()
@@ -136,12 +134,11 @@ data class SimpleVisualInstance(
 
 data class VariantsVisualInstance(
     private val visualDef: VariantsVisualDefinition,
-    private val assetStorage: AssetStorage
+    private val assetProvider: AssetProvider
 ) : TextureBasedVisualInstance(), SizedVisualInstance {
     override val textureRegion: TextureRegion by lazy {
         val texturePath = visualDef.textures.first()
-        val texture = assetStorage.loadSync<Texture>(texturePath)
-        TextureRegion(texture).apply { flip(false, true) }
+        assetProvider.loadTextureRegion(texturePath) ?: assetProvider.missingTexture
     }
     override val offsetX: Float get() = visualDef.offsetX.toFloat()
     override val offsetY: Float get() = visualDef.offsetY.toFloat()
@@ -156,12 +153,11 @@ data class VariantsVisualInstance(
 
 data class AnimatedVisualInstance(
     private val visualDef: AnimatedVisualDefinition,
-    private val assetStorage: AssetStorage
+    private val assetProvider: AssetProvider
 ) : TextureBasedVisualInstance(), SizedVisualInstance {
     private val textureRegions: List<TextureRegion> by lazy {
         visualDef.textures.map { path ->
-            val texture = assetStorage.loadSync<Texture>(path)
-            TextureRegion(texture).apply { flip(false, true) }
+            assetProvider.loadTextureRegion(path) ?: assetProvider.missingTexture
         }
     }
     private var currentFrame = 0
@@ -190,7 +186,7 @@ data class AnimatedVisualInstance(
 
 class AnimatorVisualInstance(
     private val visualDef: AnimatorVisualDefinition,
-    private val assetStorage: AssetStorage
+    private val assetProvider: AssetProvider
 ) : TextureBasedVisualInstance(), SizedVisualInstance {
     lateinit var animator: Animator
     private var currentAnimation = ""
@@ -198,8 +194,7 @@ class AnimatorVisualInstance(
     private var time = 0f
     private val regions: Map<String, List<TextureRegion>> = visualDef.animations.mapValues { (_, frames) ->
         frames.textures.map { path ->
-            val tex = assetStorage.loadSync<Texture>(path)
-            TextureRegion(tex).apply { flip(false, true) }
+            assetProvider.loadTextureRegion(path) ?: assetProvider.missingTexture
         }
     }
     private val speeds: Map<String, Float> = visualDef.animations.mapValues { it.value.speed ?: 0.13f }

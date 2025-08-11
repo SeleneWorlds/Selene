@@ -3,7 +3,7 @@ package world.selene.client.visual
 import world.selene.client.data.VisualRegistry
 import world.selene.common.data.TileRegistry
 import world.selene.client.maps.Tile
-import ktx.assets.async.AssetStorage
+import world.selene.client.assets.AssetProvider
 import world.selene.client.data.AnimatedVisualDefinition
 import world.selene.client.data.AnimatorVisualDefinition
 import world.selene.client.data.LabelVisualDefinition
@@ -12,7 +12,7 @@ import world.selene.client.data.VariantsVisualDefinition
 import world.selene.common.data.EntityRegistry
 
 class VisualManager(
-    private val assetStorage: AssetStorage,
+    private val assetProvider: AssetProvider,
     private val tileRegistry: TileRegistry,
     private val entityRegistry: EntityRegistry,
     private val visualRegistry: VisualRegistry
@@ -40,11 +40,11 @@ class VisualManager(
         }
 
         val instance = when (visualDef) {
-            is SimpleVisualDefinition -> SimpleVisualInstance(visualDef, assetStorage)
-            is VariantsVisualDefinition -> VariantsVisualInstance(visualDef, assetStorage)
-            is AnimatedVisualDefinition -> AnimatedVisualInstance(visualDef, assetStorage)
+            is SimpleVisualDefinition -> SimpleVisualInstance(visualDef, assetProvider)
+            is VariantsVisualDefinition -> VariantsVisualInstance(visualDef, assetProvider)
+            is AnimatedVisualDefinition -> AnimatedVisualInstance(visualDef, assetProvider)
             is AnimatorVisualDefinition -> {
-                AnimatorVisualInstance(visualDef, assetStorage)
+                AnimatorVisualInstance(visualDef, assetProvider)
             }
 
             is LabelVisualDefinition -> LabelVisualInstance(visualDef, properties["label"] ?: visualDef.label)

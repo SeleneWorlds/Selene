@@ -17,6 +17,7 @@ import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 
 import org.koin.logger.slf4jLogger
+import world.selene.client.assets.AssetProvider
 import world.selene.client.assets.BundleFileResolver
 import world.selene.client.bundles.ClientBundleLocator
 import world.selene.client.camera.CameraManager
@@ -125,6 +126,7 @@ class SeleneApplication(
             singleOf(::SeleneApplicationListener) { bind<ApplicationListener>() }
             singleOf(::BundleFileResolver)
             single { AssetStorage(fileResolver = get<BundleFileResolver>()) }
+            singleOf(::AssetProvider)
         }
         val worldModule = module {
             singleOf(::ClientMap)
