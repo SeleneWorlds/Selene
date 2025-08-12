@@ -2,58 +2,164 @@ package world.selene.client.ui
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.OrthographicCamera
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
-import ktx.assets.async.AssetStorage
-import world.selene.client.ui.theme.ThemeImpl
+import com.badlogic.gdx.graphics.Pixmap
+import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.scenes.scene2d.Stage
+import com.badlogic.gdx.scenes.scene2d.ui.*
+import com.badlogic.gdx.scenes.scene2d.Actor
+import com.badlogic.gdx.scenes.scene2d.Group
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable
+import com.badlogic.gdx.utils.viewport.ScreenViewport
+import org.slf4j.Logger
+import world.selene.client.assets.AssetProvider
 
-class UI(assetStorage: AssetStorage) {
-    val rootTheme = ThemeImpl(assetStorage)
-    val systemRoot = Node().apply { name = "System"
-        width = Gdx.graphics.width.toFloat()
-        height = Gdx.graphics.width.toFloat()
+class UI(private val assetProvider: AssetProvider, private val logger: Logger) {
+
+    val stage: Stage = Stage(ScreenViewport())
+
+    val skin: Skin = createSkin()
+
+    val bundlesRoot = Stack().apply {
+        name = "Bundles"
     }
-    val customRoot = Node().apply { name = "Custom"
-        width = Gdx.graphics.width.toFloat()
-        height = Gdx.graphics.width.toFloat()
+
+    val systemRoot = Stack().apply {
+        name = "System"
     }
-    val root = Node().apply {
+
+    val root = Stack().apply {
         name = "Root"
-        theme = rootTheme
-        width = Gdx.graphics.width.toFloat()
-        height = Gdx.graphics.width.toFloat()
-        addChild(customRoot)
-        addChild(systemRoot)
-    }
-    val camera = OrthographicCamera().apply {
-        setToOrtho(true)
+        add(bundlesRoot)
+        add(systemRoot)
     }
 
-    fun render(spriteBatch: SpriteBatch) {
-        spriteBatch.projectionMatrix = camera.combined
-        spriteBatch.color = Color.WHITE
-        root.render(spriteBatch)
+    init {
+        stage.addActor(root)
+        // TODO stage is an InputProcessor - need to use a multiplexer
     }
 
-    fun createNode(nodeDefinition: NodeDefinition): Node {
-        val node = when (nodeDefinition.type) {
-            "Node" -> Node()
-            "Image" -> ImageNode().apply { src = nodeDefinition.attributes["src"] ?: "" }
+    private fun createSkin(): Skin {
+        // TODO apparently skins can be loaded from json, should do that instead
+        val skin = Skin()
+
+        skin.add("white", Color.WHITE)
+        skin.add("gray", Color.GRAY)
+        skin.add("dark-gray", Color.DARK_GRAY)
+        skin.add("light-gray", Color.LIGHT_GRAY)
+        skin.add("black", Color.BLACK)
+
+        val pixelTexture = Pixmap(1, 1, Pixmap.Format.RGBA8888).apply {
+            setColor(Color.WHITE)
+            fill()
+        }
+        val texture = Texture(pixelTexture)
+        pixelTexture.dispose()
+
+        val whitePixel = TextureRegionDrawable(texture)
+        skin.add("white-pixel", whitePixel)
+
+        val defaultFont = BitmapFont()
+        skin.add("default-font", defaultFont)
+
+        val labelStyle = Label.LabelStyle().apply {
+            font = defaultFont
+            fontColor = Color.BLACK
+        }
+        skin.add("default", labelStyle)
+
+        val buttonStyle = TextButton.TextButtonStyle().apply {
+            font = defaultFont
+            fontColor = Color.BLACK
+            up = whitePixel
+            down = whitePixel
+            over = whitePixel
+        }
+        skin.add("default", buttonStyle)
+
+        val imageButtonStyle = ImageButton.ImageButtonStyle().apply {
+            up = whitePixel
+            down = whitePixel
+            over = whitePixel
+        }
+        skin.add("default", imageButtonStyle)
+
+        val windowStyle = Window.WindowStyle().apply {
+            titleFont = defaultFont
+            titleFontColor = Color.BLACK
+            background = whitePixel
+        }
+        skin.add("default", windowStyle)
+
+        return skin
+    }
+
+    fun render() {
+        stage.act(Gdx.graphics.deltaTime)
+        stage.draw()
+    }
+
+    fun resize(width: Int, height: Int) {
+        //stage.viewport.update(width, height, true)
+    }
+
+    fun dispose() {
+        stage.dispose()
+        skin.dispose()
+    }
+
+    fun createActor(nodeDefinition: NodeDefinition): Actor {
+        val actor = when (nodeDefinition.type) {
+            "Container" -> createContainer(nodeDefinition)
+            "Group" -> createGroup(nodeDefinition)
+            "Image" -> createImage(nodeDefinition)
             else -> throw IllegalArgumentException("Unsupported node type: ${nodeDefinition.type}")
         }
-        node.name = nodeDefinition.name
-        node.x = nodeDefinition.x
-        node.y = nodeDefinition.y
-        node.width = nodeDefinition.width
-        node.height = nodeDefinition.height
-        if (node.width == 0f || node.height == 0f) {
-            node.fitToContent()
+
+        if (nodeDefinition.children.isNotEmpty()) {
+            for (childDefinition in nodeDefinition.children) {
+                val childActor = createActor(childDefinition)
+                if (actor is Group) {
+                    actor.addActor(childActor)
+                } else {
+                    logger.warn("Element of type ${actor.javaClass.simpleName} cannot have children")
+                }
+            }
         }
-        node.anchor = nodeDefinition.anchor
-        node.theme = rootTheme
-        for (child in nodeDefinition.children) {
-            node.addChild(createNode(child))
+
+        return actor
+    }
+
+    private fun createGroup(nodeDefinition: NodeDefinition): Group {
+        return Group().apply {
+            name = nodeDefinition.name
+            setPosition(nodeDefinition.x, nodeDefinition.y)
+            setSize(nodeDefinition.width, nodeDefinition.height)
         }
-        return node
+    }
+
+    private fun createContainer(nodeDefinition: NodeDefinition): Container<Actor> {
+        return Container<Actor>().apply {
+            name = nodeDefinition.name
+            setPosition(nodeDefinition.x, nodeDefinition.y)
+            setSize(nodeDefinition.width, nodeDefinition.height)
+        }
+    }
+
+    private fun createImage(nodeDefinition: NodeDefinition): Image {
+        val src = nodeDefinition.attributes["src"] ?: ""
+        val textureRegion = if (src.isNotEmpty()) {
+            assetProvider.loadTextureRegion(src)?.apply { flip(false, true) } ?: assetProvider.missingTexture
+        } else {
+            assetProvider.missingTexture
+        }
+        val drawable = TextureRegionDrawable(textureRegion)
+
+        return Image(drawable).apply {
+            name = nodeDefinition.name
+            setPosition(nodeDefinition.x, nodeDefinition.y)
+            if (nodeDefinition.width > 0) width = nodeDefinition.width
+            if (nodeDefinition.height > 0) height = nodeDefinition.height
+        }
     }
 }

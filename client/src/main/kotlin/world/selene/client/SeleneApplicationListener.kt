@@ -22,7 +22,6 @@ import world.selene.client.rendering.SceneRenderer
 import world.selene.client.ui.UI
 import world.selene.client.visual.VisualManager
 import world.selene.common.bundles.BundleLoader
-import world.selene.common.util.Coordinate
 
 class SeleneApplicationListener(
     private val client: SeleneClient,
@@ -64,6 +63,7 @@ class SeleneApplicationListener(
     }
 
     override fun resize(width: Int, height: Int) {
+        ui.resize(width, height)
     }
 
     override fun render() {
@@ -86,16 +86,7 @@ class SeleneApplicationListener(
         sceneRenderer.render(spriteBatch)
         spriteBatch.end()
 
-        spriteBatch.begin()
-        ui.render(spriteBatch)
-        var y = 10f
-        systemFont.draw(spriteBatch, "${Gdx.graphics.framesPerSecond} FPS", 10f, y)
-        y += systemFont.lineHeight
-        playerController.controlledEntity?.let {
-            systemFont.draw(spriteBatch, "X: ${it.coordinate.x} Y: ${it.coordinate.y} Z: ${it.coordinate.z}", 10f, y)
-            y += systemFont.lineHeight
-        }
-        spriteBatch.end()
+        ui.render()
 
         debugRenderer.render(cameraManager.camera.combined)
     }
@@ -108,6 +99,7 @@ class SeleneApplicationListener(
 
     override fun dispose() {
         spriteBatch.dispose()
+        ui.dispose()
         networkClient.disconnect()
     }
 }

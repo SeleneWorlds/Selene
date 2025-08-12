@@ -2,7 +2,9 @@ package world.selene.client.lua
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import world.selene.client.ui.Node
+import com.badlogic.gdx.scenes.scene2d.Actor
+import com.badlogic.gdx.scenes.scene2d.Group
+import com.badlogic.gdx.scenes.scene2d.ui.Container
 import world.selene.client.ui.NodeDefinition
 import world.selene.client.ui.UI
 import world.selene.common.lua.LuaManager
@@ -13,28 +15,19 @@ class LuaUIModule(private val ui: UI) : LuaModule {
     override val name = "selene.ui"
 
     override fun initialize(luaManager: LuaManager) {
-        luaManager.exposeClass(Node.NodeLuaProxy::class)
+        luaManager.exposeClass(ActorLuaProxy::class)
     }
 
     override fun register(table: LuaValue) {
         table.register("LoadUI", this::luaLoadUI)
         table.register("CreateUI", this::luaCreateUI)
-        table.set("Root", ui.customRoot.luaProxy)
-        table.set("ANCHOR_TOP_LEFT", Node.Anchor.TOP_LEFT)
-        table.set("ANCHOR_TOP", Node.Anchor.TOP)
-        table.set("ANCHOR_TOP_RIGHT", Node.Anchor.TOP_RIGHT)
-        table.set("ANCHOR_LEFT", Node.Anchor.LEFT)
-        table.set("ANCHOR_CENTER", Node.Anchor.CENTER)
-        table.set("ANCHOR_RIGHT", Node.Anchor.RIGHT)
-        table.set("ANCHOR_BOTTOM_LEFT", Node.Anchor.BOTTOM_LEFT)
-        table.set("ANCHOR_BOTTOM", Node.Anchor.BOTTOM)
-        table.set("ANCHOR_BOTTOM_RIGHT", Node.Anchor.BOTTOM_RIGHT)
+        table.set("Root", ActorLuaProxy(ui.bundlesRoot))
     }
 
     private fun luaCreateUI(lua: Lua): Int {
         val nodeDefinition = lua.toJavaObject(-1) as? NodeDefinition ?: return 0
-        val node = ui.createNode(nodeDefinition)
-        lua.push(node.luaProxy, Lua.Conversion.NONE)
+        val actor = ui.createActor(nodeDefinition)
+        lua.push(ActorLuaProxy(actor), Lua.Conversion.NONE)
         return 1
     }
 
@@ -79,14 +72,6 @@ class LuaUIModule(private val ui: UI) : LuaModule {
             }
             lua.pop(1)
 
-            // Get anchor
-            var anchor = Node.Anchor.TOP_LEFT
-            lua.getField(idx, "anchor")
-            if (lua.isJavaObject(-1)) {
-                anchor = lua.toJavaObject(-1) as? Node.Anchor ?: Node.Anchor.TOP_LEFT
-            }
-            lua.pop(1)
-
             // Get 'children'
             val children = mutableListOf<NodeDefinition>()
             lua.getField(idx, "children")
@@ -118,7 +103,7 @@ class LuaUIModule(private val ui: UI) : LuaModule {
             }
             lua.pop(1)
 
-            return NodeDefinition(type, name, x, y, width, height, anchor, children, attributes)
+            return NodeDefinition(type, name, x, y, width, height, children, attributes)
         }
 
         val nodeDefinition = parseNodeDefinition(-1)
@@ -126,5 +111,22 @@ class LuaUIModule(private val ui: UI) : LuaModule {
 
         lua.push(nodeDefinition, Lua.Conversion.NONE)
         return 1
+    }
+
+    class ActorLuaProxy(private val delegate: Actor) {
+        fun AddChild(child: ActorLuaProxy) {
+            when (delegate) {
+                is Container<*> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    (delegate as Container<Actor>).actor = child.delegate
+                }
+                is Group -> {
+                    delegate.addActor(child.delegate)
+                }
+                else -> {
+                    // TODO throw an error
+                }
+            }
+        }
     }
 }
