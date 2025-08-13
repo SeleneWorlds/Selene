@@ -262,33 +262,26 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         }
 
         private fun resolveFont(fontName: String): BitmapFont {
-            return if (fontName.startsWith("@")) {
-                val skinFontName = fontName.substring(1)
-                delegate.get(skinFontName, BitmapFont::class.java)
-                    ?: throw IllegalArgumentException("Font not found in skin: $skinFontName")
+            delegate.optional(fontName, BitmapFont::class.java)?.let { return it }
+            
+            val fontFile = bundleFileResolver.resolve(fontName)
+            if (fontFile.exists()) {
+                return BitmapFont(fontFile)
             } else {
-                // Load font from file path
-                val fontFile = bundleFileResolver.resolve(fontName)
-                if (fontFile.exists()) {
-                    BitmapFont(fontFile)
-                } else {
-                    throw IllegalArgumentException("Font file not found: $fontName")
-                }
+                throw IllegalArgumentException("Font not found in skin or file system: $fontName")
             }
         }
 
         private fun resolveDrawable(path: String): Drawable? {
-            return if (path.startsWith("@")) {
-                val textureName = path.substring(1)
-                val textureRegion = delegate.get(textureName, TextureRegion::class.java)
-                textureRegion?.let { TextureRegionDrawable(it) }
+            delegate.optional(path, TextureRegion::class.java)?.let {
+                return TextureRegionDrawable(it) 
+            }
+            
+            val textureFile = bundleFileResolver.resolve(path)
+            return if (textureFile.exists()) {
+                TextureRegionDrawable(TextureRegion(Texture(textureFile)))
             } else {
-                val textureFile = bundleFileResolver.resolve(path)
-                if (textureFile.exists()) {
-                    TextureRegionDrawable(TextureRegion(Texture(textureFile)))
-                } else {
-                    null
-                }
+                null
             }
         }
 
@@ -307,8 +300,10 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     }
                 }
 
-                else -> delegate.get(colorString, Color::class.java)
-                    ?: throw IllegalArgumentException("Color not found in skin: $colorString")
+                else -> {
+                    delegate.optional(colorString, Color::class.java)
+                        ?: throw IllegalArgumentException("Color not found in skin: $colorString")
+                }
             }
         }
     }
