@@ -98,8 +98,23 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
 
             val actors = parser.build().parseTemplate(xmlFile)
-            lua.push(actors.map { ActorLuaProxy(it) }, Lua.Conversion.FULL)
-            return 1
+
+            val actorsByName = mutableMapOf<String, ActorLuaProxy>()
+            fun collectActorsByName(actor: Actor) {
+                if (actor.name != null && actor.name.isNotEmpty()) {
+                    actorsByName[actor.name] = ActorLuaProxy(actor)
+                }
+                if (actor is Group) {
+                    actor.children.forEach { child ->
+                        collectActorsByName(child)
+                    }
+                }
+            }
+            actors.forEach { collectActorsByName(it) }
+            
+            lua.push( actors.map { ActorLuaProxy(it) }, Lua.Conversion.FULL)
+            lua.push(actorsByName, Lua.Conversion.FULL)
+            return 2
         } catch (e: Exception) {
             return lua.error(e)
         }
