@@ -6,10 +6,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.badlogic.gdx.utils.I18NBundle
 import com.badlogic.gdx.utils.viewport.ScreenViewport
 import com.kotcrab.vis.ui.VisUI
-import org.slf4j.Logger
-import world.selene.client.assets.AssetProvider
 
-class UI(private val assetProvider: AssetProvider, private val logger: Logger) {
+class UI {
 
     val stage = Stage(ScreenViewport())
 
@@ -38,7 +36,6 @@ class UI(private val assetProvider: AssetProvider, private val logger: Logger) {
         stage.addActor(root)
 
         I18NBundle.setExceptionOnMissingKey(false)
-        // TODO stage is an InputProcessor - need to use a multiplexer
     }
 
     fun render() {

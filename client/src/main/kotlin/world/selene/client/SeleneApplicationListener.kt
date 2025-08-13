@@ -3,6 +3,7 @@ package world.selene.client
 import com.badlogic.gdx.ApplicationListener
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
+import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
@@ -31,6 +32,7 @@ class SeleneApplicationListener(
     private val runtimeConfig: ClientRuntimeConfig,
     private val visualManager: VisualManager,
     private val cameraManager: CameraManager,
+    private val inputMultiplexer: InputMultiplexer,
     private val inputManager: InputManager,
     private val grid: Grid,
     private val ui: UI,
@@ -51,7 +53,10 @@ class SeleneApplicationListener(
         spriteBatch = SpriteBatch()
         markerTexture = Texture("icon_16.png")
         systemFont = BitmapFont(true)
-        Gdx.input.inputProcessor = inputManager
+
+        inputMultiplexer.addProcessor(inputManager)
+        inputMultiplexer.addProcessor(ui.stage)
+        Gdx.input.inputProcessor = inputMultiplexer
 
         inputManager.bindKeyboardAction(Input.Keys.I) {
             playerController.controlledEntity?.let { entity ->

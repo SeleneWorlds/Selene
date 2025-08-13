@@ -2,6 +2,7 @@ package world.selene.client
 
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.ApplicationListener
+import com.badlogic.gdx.InputMultiplexer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.koin.dsl.module
@@ -143,6 +144,7 @@ class SeleneApplication(
             singleOf(::DebugRenderer)
         }
         val inputModule = module {
+            single { InputMultiplexer() }
             singleOf(::InputManager)
             singleOf(::PlayerController)
             singleOf(::GridMovement)
