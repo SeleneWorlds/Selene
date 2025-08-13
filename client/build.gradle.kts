@@ -26,6 +26,12 @@ dependencies {
     implementation("io.github.libktx:ktx-app:$ktxVersion")
     implementation("io.github.libktx:ktx-assets-async:$ktxVersion")
     implementation("io.github.libktx:ktx-freetype-async:$ktxVersion")
+
+    val visuiVersion by properties
+    implementation("com.kotcrab.vis:vis-ui:$visuiVersion")
+    val lmlVersion by properties
+    implementation("com.crashinvaders.lml:gdx-lml:$lmlVersion")
+    implementation("com.crashinvaders.lml:gdx-lml-vis:$lmlVersion")
 }
 
 tasks.register("generateLibrariesJson") {
