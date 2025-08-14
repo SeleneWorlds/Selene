@@ -36,7 +36,23 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         table.register("LoadUI", this::luaLoadUI)
         table.register("LoadSkin", this::luaLoadSkin)
         table.register("CreateSkin", this::luaCreateSkin)
+        table.register("AddToRoot", this::luaAddToRoot)
         table.set("Root", ActorLuaProxy(ui.bundlesRoot))
+    }
+
+    private fun luaAddToRoot(lua: Lua): Int {
+        if (lua.isTable(1)) {
+            val actors = lua.toMap(1)?.values ?: emptyList()
+            for (actor in actors) {
+                if (actor is ActorLuaProxy) {
+                    ui.bundlesRoot.add(actor.delegate)
+                }
+            }
+        } else if (lua.isUserdata(1)) {
+            val actor = lua.checkJavaObject(1, ActorLuaProxy::class).delegate
+            ui.bundlesRoot.add(actor)
+        }
+        return 0
     }
 
     private fun luaLoadUI(lua: Lua): Int {
@@ -111,8 +127,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 }
             }
             actors.forEach { collectActorsByName(it) }
-            
-            lua.push( actors.map { ActorLuaProxy(it) }, Lua.Conversion.FULL)
+
+            lua.push(actors.map { ActorLuaProxy(it) }, Lua.Conversion.FULL)
             lua.push(actorsByName, Lua.Conversion.FULL)
             return 2
         } catch (e: Exception) {
@@ -147,7 +163,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         return 1
     }
 
-    class ActorLuaProxy(private val delegate: Actor) {
+    class ActorLuaProxy(val delegate: Actor) {
         fun AddChild(child: ActorLuaProxy) {
             when (delegate) {
                 is Container<*> -> {
@@ -263,7 +279,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
         private fun resolveFont(fontName: String): BitmapFont {
             delegate.optional(fontName, BitmapFont::class.java)?.let { return it }
-            
+
             val fontFile = bundleFileResolver.resolve(fontName)
             if (fontFile.exists()) {
                 return BitmapFont(fontFile)
@@ -274,9 +290,9 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
         private fun resolveDrawable(path: String): Drawable? {
             delegate.optional(path, TextureRegion::class.java)?.let {
-                return TextureRegionDrawable(it) 
+                return TextureRegionDrawable(it)
             }
-            
+
             val textureFile = bundleFileResolver.resolve(path)
             return if (textureFile.exists()) {
                 TextureRegionDrawable(TextureRegion(Texture(textureFile)))
