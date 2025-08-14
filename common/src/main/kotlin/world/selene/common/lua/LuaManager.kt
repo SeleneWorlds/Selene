@@ -36,7 +36,9 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.openLibrary("math")
         packages["math"] = lua.get("math")
         lua.openLibrary("table")
-        packages["table"] = lua.get("table")
+        packages["table"] = lua.get("table").also {
+            it.register("find", this::luaTableFind)
+        }
 
         lua.register("require", this::luaRequire)
         lua.register("trim", this::luaTrim)
@@ -162,6 +164,33 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
     private fun luaTrim(lua: Lua): Int {
         lua.push(lua.checkString(-1).trim())
+        return 1
+    }
+
+    private fun luaTableFind(lua: Lua): Int {
+        lua.checkTable(1)
+        lua.top = 2
+        
+        var idx = 1
+        lua.pushNil() // initial key for next call
+        
+        // Stack: table(1), target(2), nil(3)
+        while (lua.next(1) != 0) { // pushes key-value pair
+            // Stack: table(1), target(2), key(3), value(4)
+            
+            // Compare the value with target
+            if (lua.equal(4, 2)) {
+                lua.pushValue(3) // push the key as return value
+                return 1
+            }
+            
+            lua.pop(1) // pop value, keep key for next iteration
+            // Stack: table(1), target(2), key(3)
+            idx++
+        }
+        
+        // Return nil if not found
+        lua.pushNil()
         return 1
     }
 
