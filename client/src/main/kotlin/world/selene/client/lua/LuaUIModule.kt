@@ -19,6 +19,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Slider
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.badlogic.gdx.scenes.scene2d.ui.Touchpad
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable
+import com.badlogic.gdx.scenes.scene2d.utils.Layout
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable
 import com.badlogic.gdx.utils.I18NBundle
 import com.kotcrab.vis.ui.widget.LinkLabel
@@ -281,31 +282,57 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             return 0
         }
 
-        fun SetText(text: String) {
-            when (delegate) {
-                is Label -> {
-                    delegate.setText(text)
-                }
+        var Text: String?
+            get() {
+                return when (delegate) {
+                    is Label -> {
+                        delegate.text.toString()
+                    }
 
-                is TextField -> {
-                    delegate.setText(text)
+                    is TextField -> {
+                        delegate.text
+                    }
+
+                    else -> null
                 }
             }
-        }
+            set(value) {
+                when (delegate) {
+                    is Label -> {
+                        delegate.setText(value)
+                    }
 
-        fun GetText(): String {
-            return when (delegate) {
-                is Label -> {
-                    delegate.text.toString()
+                    is TextField -> {
+                        delegate.setText(value)
+                    }
+
+                    else -> {
+                        throw IllegalArgumentException("Widget of type ${delegate.javaClass.simpleName} cannot have text")
+                    }
                 }
-
-                is TextField -> {
-                    delegate.text
-                }
-
-                else -> throw IllegalArgumentException("Widget of type ${delegate.javaClass.simpleName} does not have text")
             }
-        }
+
+        var MinWidth
+            get() = (delegate as? Layout)?.minWidth ?: 0f
+            set(value) {
+                when (delegate) {
+                    is Container<*> -> delegate.minWidth(value)
+                }
+            }
+
+        var Width
+            get() = delegate.width;
+            set(value) {
+                delegate.width = value
+            }
+
+        val Parent: ActorLuaProxy?
+            get() {
+                return when (delegate.parent) {
+                    null -> null
+                    else -> ActorLuaProxy(delegate.parent)
+                }
+            }
     }
 
     class SkinLuaProxy(val delegate: Skin, private val bundleFileResolver: BundleFileResolver) {
