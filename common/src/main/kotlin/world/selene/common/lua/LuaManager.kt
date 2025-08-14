@@ -30,7 +30,6 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         secureClassMetatable()
         secureObjectMetatable()
 
-        lua.openLibraries()
         lua.openLibrary("string")
         packages["string"] = lua.get("string").also {
             it.register("trim", this::luaTrim)
