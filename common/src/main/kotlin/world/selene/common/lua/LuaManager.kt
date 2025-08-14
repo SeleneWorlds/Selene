@@ -32,7 +32,9 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
         lua.openLibraries()
         lua.openLibrary("string")
-        packages["string"] = lua.get("string")
+        packages["string"] = lua.get("string").also {
+            it.register("trim", this::luaTrim)
+        }
         lua.openLibrary("math")
         packages["math"] = lua.get("math")
         lua.openLibrary("table")
@@ -41,7 +43,6 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         }
 
         lua.register("require", this::luaRequire)
-        lua.register("trim", this::luaTrim)
         lua.register("print2", this::luaPrint)
         lua.set("dofile", null)
         lua.set("loadfile", null)
