@@ -2,13 +2,30 @@ package world.selene.client.ui
 
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.github.czyzby.lml.parser.LmlParser
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.CheckBoxLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.DialogLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.ImageButtonLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.ImageLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.ImageTextButtonLmlTagProvider
 import com.github.czyzby.lml.parser.impl.tag.actor.provider.LabelLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.ListLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.ProgressBarLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.ScrollPaneLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.SelectBoxLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.SliderLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.SplitPaneLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.TableLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.TextAreaLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.TextButtonLmlTagProvider
 import com.github.czyzby.lml.parser.impl.tag.actor.provider.TextFieldLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.TreeLmlTagProvider
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.WindowLmlTagProvider
 import com.github.czyzby.lml.parser.tag.LmlAttribute
 import com.github.czyzby.lml.parser.tag.LmlTag
 import com.github.czyzby.lml.util.LmlUtilities
 import com.github.czyzby.lml.vis.util.VisLml
 import com.github.czyzby.lml.vis.util.VisLmlParserBuilder
+
 
 object SeleneLmlParser {
     fun parser(): VisLmlParserBuilder {
@@ -17,6 +34,26 @@ object SeleneLmlParser {
             // Therefore, we revert "label" to use the default provider instead of the visui-lml one.
             tag(LabelLmlTagProvider(), "label")
             tag(TextFieldLmlTagProvider(), "textField")
+            tag(ScrollPaneLmlTagProvider(), "scrollPane")
+            tag(CheckBoxLmlTagProvider(), "checkBox")
+            tag(DialogLmlTagProvider(), "dialog")
+            tag(ImageButtonLmlTagProvider(), "imageButton")
+            tag(ImageLmlTagProvider(), "image")
+            tag(ImageTextButtonLmlTagProvider(), "imageTextButton")
+            tag(LabelLmlTagProvider(), "label")
+            tag(ListLmlTagProvider(), "list")
+            tag(ProgressBarLmlTagProvider(), "progressBar")
+            tag(ScrollPaneLmlTagProvider(), "scrollPane")
+            tag(SelectBoxLmlTagProvider(), "selectBox")
+            tag(SliderLmlTagProvider(), "slider")
+            tag(SplitPaneLmlTagProvider(), "splitPane")
+            tag(TableLmlTagProvider(), "table")
+            tag(TextAreaLmlTagProvider(), "textArea")
+            tag(TextButtonLmlTagProvider(), "textButton")
+            tag(TextFieldLmlTagProvider(), "textField")
+            tag(TreeLmlTagProvider(), "tree")
+            tag(WindowLmlTagProvider(), "window")
+
 
             // For some reason these attributes are not supported by default, so we expose them to LML
             attribute(object : LmlAttribute<TextField> {
