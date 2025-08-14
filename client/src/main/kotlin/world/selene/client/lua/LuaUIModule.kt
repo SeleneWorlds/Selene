@@ -44,6 +44,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         table.register("LoadUI", this::luaLoadUI)
         table.register("LoadSkin", this::luaLoadSkin)
         table.register("CreateSkin", this::luaCreateSkin)
+        table.register("CreateLabel", this::luaCreateLabel)
         table.register("AddToRoot", this::luaAddToRoot)
         table.set("Root", ActorLuaProxy(ui.bundlesRoot))
     }
@@ -169,6 +170,38 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         }
         lua.push(SkinLuaProxy(skin, bundleFileResolver), Lua.Conversion.NONE)
         return 1
+    }
+
+    private fun luaCreateLabel(lua: Lua): Int {
+        val skin = lua.checkJavaObject(1, SkinLuaProxy::class).delegate
+        
+        var text = ""
+        var styleName = "default"
+        
+        if (lua.top > 1) {
+            lua.checkType(2, Lua.LuaType.TABLE)
+            
+            lua.getField(2, "text")
+            if (!lua.isNil(-1)) {
+                text = lua.checkString(-1)
+            }
+            lua.pop(1)
+            
+            lua.getField(2, "style")
+            if (!lua.isNil(-1)) {
+                styleName = lua.checkString(-1)
+            }
+            lua.pop(1)
+        }
+        
+        try {
+            val labelStyle = skin.get(styleName, Label.LabelStyle::class.java)
+            val label = Label(text, labelStyle)
+            lua.push(ActorLuaProxy(label), Lua.Conversion.NONE)
+            return 1
+        } catch (e: Exception) {
+            return lua.error(RuntimeException("Failed to create label: ${e.message}", e))
+        }
     }
 
     class ActorLuaProxy(val delegate: Actor) {
