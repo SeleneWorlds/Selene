@@ -141,7 +141,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.push { lua ->
             val obj = lua.toJavaObject(-3)!! // [obj, key, value]
             if (!exposedClasses.contains(obj::class)) {
-                return@push lua.error(IllegalArgumentException("Tried to access restricted class: ${obj::class}#${lua.checkString(-1)}"))
+                return@push lua.error(IllegalArgumentException("Tried to access restricted class: ${obj::class}#${lua.checkString(-2)}"))
             }
 
             val key = lua.checkString(-2)
