@@ -16,6 +16,8 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.utils.I18NBundle
 import com.github.czyzby.lml.vis.util.VisLml
+import com.kotcrab.vis.ui.widget.VisImageButton
+import com.kotcrab.vis.ui.widget.VisImageButton.VisImageButtonStyle
 import world.selene.client.assets.BundleFileResolver
 import world.selene.client.ui.UI
 import world.selene.common.lua.LuaManager
@@ -282,6 +284,105 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 return 0
             } catch (e: Exception) {
                 return lua.error(RuntimeException("Failed to add label style '$styleName': ${e.message}", e))
+            }
+        }
+
+        fun AddImageButtonStyle(lua: Lua): Int {
+            val styleName = lua.checkString(2)
+
+            try {
+                val imageButtonStyle = VisImageButtonStyle()
+
+                if (lua.isTable(3)) {
+                    lua.getField(3, "up")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.up = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "down")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.down = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "over")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.over = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "checked")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.checked = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "checkedOver")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.checkedOver = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "disabled")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.disabled = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "imageUp")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.imageUp = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "imageDown")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.imageDown = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "imageOver")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.imageOver = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "imageChecked")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.imageChecked = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "imageCheckedOver")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.imageCheckedOver = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "imageDisabled")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        imageButtonStyle.imageDisabled = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+                }
+
+                delegate.add(styleName, imageButtonStyle)
+                return 0
+            } catch (e: Exception) {
+                return lua.error(RuntimeException("Failed to add image button style '$styleName': ${e.message}", e))
             }
         }
 
