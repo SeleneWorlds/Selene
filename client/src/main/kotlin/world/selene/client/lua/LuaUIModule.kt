@@ -8,15 +8,30 @@ import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.ui.Button
 import com.badlogic.gdx.scenes.scene2d.ui.Container
+import com.badlogic.gdx.scenes.scene2d.ui.Image
+import com.badlogic.gdx.scenes.scene2d.ui.ImageButton
 import com.badlogic.gdx.scenes.scene2d.ui.Label
+import com.badlogic.gdx.scenes.scene2d.ui.List
+import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar
+import com.badlogic.gdx.scenes.scene2d.ui.SelectBox
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
+import com.badlogic.gdx.scenes.scene2d.ui.Slider
+import com.badlogic.gdx.scenes.scene2d.ui.TextField
+import com.badlogic.gdx.scenes.scene2d.ui.Touchpad
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable
 import com.badlogic.gdx.utils.I18NBundle
 import com.github.czyzby.lml.parser.impl.tag.actor.provider.LabelLmlTagProvider
 import com.github.czyzby.lml.vis.util.VisLml
+import com.kotcrab.vis.ui.widget.BusyBar
+import com.kotcrab.vis.ui.widget.LinkLabel
+import com.kotcrab.vis.ui.widget.Separator
 import com.kotcrab.vis.ui.widget.VisImageButton
 import com.kotcrab.vis.ui.widget.VisImageButton.VisImageButtonStyle
+import com.kotcrab.vis.ui.widget.VisLabel
+import com.kotcrab.vis.ui.widget.VisProgressBar
+import com.kotcrab.vis.ui.widget.VisTextField
+import com.kotcrab.vis.ui.widget.color.internal.Palette
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.assets.BundleFileResolver
@@ -185,11 +200,80 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
         }
 
-        fun SetStyle(style: String) {
+        fun SetStyle(lua: Lua): Int {
+            val skin = lua.checkJavaObject(2, SkinLuaProxy::class).delegate
+            val style = lua.checkString(3)
             when (delegate) {
                 is VisImageButton -> {
-                    delegate.style = delegate.skin.get(style, VisImageButtonStyle::class.java)
+                    delegate.style = skin.get(style, VisImageButtonStyle::class.java)
                 }
+
+                is VisTextField -> {
+                    delegate.style = skin.get(style, VisTextField.VisTextFieldStyle::class.java)
+                }
+
+                is ImageButton -> {
+                    delegate.style = skin.get(style, ImageButton.ImageButtonStyle::class.java)
+                }
+
+                is LinkLabel -> {
+                    delegate.style = skin.get(style, LinkLabel.LinkLabelStyle::class.java)
+                }
+
+                is Label -> {
+                    delegate.style = skin.get(style, Label.LabelStyle::class.java)
+                }
+
+                is SelectBox<*> -> {
+                    delegate.style = skin.get(style, SelectBox.SelectBoxStyle::class.java)
+                }
+
+                is Slider -> {
+                    delegate.style = skin.get(style, Slider.SliderStyle::class.java)
+                }
+
+                is ProgressBar -> {
+                    delegate.style = skin.get(style, ProgressBar.ProgressBarStyle::class.java)
+                }
+
+                is TextField -> {
+                    delegate.style = skin.get(style, TextField.TextFieldStyle::class.java)
+                }
+
+                is List<*> -> {
+                    delegate.style = skin.get(style, List.ListStyle::class.java)
+                }
+
+                is Touchpad -> {
+                    delegate.style = skin.get(style, Touchpad.TouchpadStyle::class.java)
+                }
+            }
+            return 0
+        }
+
+        fun SetText(text: String) {
+            when (delegate) {
+                is Label -> {
+                    delegate.setText(text)
+                }
+
+                is TextField -> {
+                    delegate.setText(text)
+                }
+            }
+        }
+
+        fun GetText(): String {
+            return when (delegate) {
+                is Label -> {
+                    delegate.text.toString()
+                }
+
+                is TextField -> {
+                    delegate.text
+                }
+
+                else -> throw IllegalArgumentException("Widget of type ${delegate.javaClass.simpleName} does not have text")
             }
         }
     }
