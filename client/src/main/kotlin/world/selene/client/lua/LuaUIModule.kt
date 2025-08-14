@@ -12,6 +12,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.ImageButton
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.List
 import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.ui.Slider
@@ -362,95 +363,121 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             val styleName = lua.checkString(2)
 
             try {
-                val imageButtonStyle = VisImageButtonStyle()
+                val imageButtonStyle = ImageButton.ImageButtonStyle()
+                val visImageButtonStyle = VisImageButtonStyle()
 
                 if (lua.isTable(3)) {
                     lua.getField(3, "up")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.up = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.up = drawable
+                        visImageButtonStyle.up = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "down")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.down = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.down = drawable
+                        visImageButtonStyle.down = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "over")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.over = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.over = drawable
+                        visImageButtonStyle.over = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "checked")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.checked = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.checked = drawable
+                        visImageButtonStyle.checked = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "checkedOver")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.checkedOver = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.checkedOver = drawable
+                        visImageButtonStyle.checkedOver = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "disabled")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.disabled = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.disabled = drawable
+                        visImageButtonStyle.disabled = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "imageUp")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.imageUp = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.imageUp = drawable
+                        visImageButtonStyle.imageUp = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "imageDown")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.imageDown = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.imageDown = drawable
+                        visImageButtonStyle.imageDown = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "imageOver")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.imageOver = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.imageOver = drawable
+                        visImageButtonStyle.imageOver = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "imageChecked")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.imageChecked = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.imageChecked = drawable
+                        visImageButtonStyle.imageChecked = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "imageCheckedOver")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.imageCheckedOver = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.imageCheckedOver = drawable
+                        visImageButtonStyle.imageCheckedOver = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "imageDisabled")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        imageButtonStyle.imageDisabled = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        imageButtonStyle.imageDisabled = drawable
+                        visImageButtonStyle.imageDisabled = drawable
                     }
                     lua.pop(1)
                 }
 
                 delegate.add(styleName, imageButtonStyle)
+                delegate.add(styleName, visImageButtonStyle)
                 return 0
             } catch (e: Exception) {
                 return lua.error(RuntimeException("Failed to add image button style '$styleName': ${e.message}", e))
@@ -464,82 +491,107 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 val textFieldStyle = TextField.TextFieldStyle().apply {
                     fontColor = Color.WHITE
                 }
+                val visTextFieldStyle = VisTextField.VisTextFieldStyle().apply {
+                    fontColor = Color.WHITE
+                }
 
                 if (lua.isTable(3)) {
                     lua.getField(3, "font")
                     if (lua.isString(-1)) {
                         val fontName = lua.toString(-1)!!
-                        textFieldStyle.font = resolveFont(fontName)
+                        val font = resolveFont(fontName)
+                        textFieldStyle.font = font
+                        visTextFieldStyle.font = font
                     }
                     lua.pop(1)
 
                     lua.getField(3, "fontColor")
                     if (lua.isString(-1)) {
                         val colorString = lua.toString(-1)!!
-                        textFieldStyle.fontColor = resolveColor(colorString)
+                        val color = resolveColor(colorString)
+                        textFieldStyle.fontColor = color
+                        visTextFieldStyle.fontColor = color
                     }
                     lua.pop(1)
 
                     lua.getField(3, "focusedFontColor")
                     if (lua.isString(-1)) {
                         val colorString = lua.toString(-1)!!
-                        textFieldStyle.focusedFontColor = resolveColor(colorString)
+                        val color = resolveColor(colorString)
+                        textFieldStyle.focusedFontColor = color
+                        visTextFieldStyle.focusedFontColor = color
                     }
                     lua.pop(1)
 
                     lua.getField(3, "disabledFontColor")
                     if (lua.isString(-1)) {
                         val colorString = lua.toString(-1)!!
-                        textFieldStyle.disabledFontColor = resolveColor(colorString)
+                        val color = resolveColor(colorString)
+                        textFieldStyle.disabledFontColor = color
+                        visTextFieldStyle.disabledFontColor = color
                     }
                     lua.pop(1)
 
                     lua.getField(3, "background")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        textFieldStyle.background = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        textFieldStyle.background = drawable
+                        visTextFieldStyle.background = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "focusedBackground")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        textFieldStyle.focusedBackground = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        textFieldStyle.focusedBackground = drawable
+                        visTextFieldStyle.focusedBackground = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "disabledBackground")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        textFieldStyle.disabledBackground = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        textFieldStyle.disabledBackground = drawable
+                        visTextFieldStyle.disabledBackground = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "cursor")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        textFieldStyle.cursor = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        textFieldStyle.cursor = drawable
+                        visTextFieldStyle.cursor = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "selection")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        textFieldStyle.selection = resolveDrawable(path)
+                        val drawable = resolveDrawable(path)
+                        textFieldStyle.selection = drawable
+                        visTextFieldStyle.selection = drawable
                     }
                     lua.pop(1)
 
                     lua.getField(3, "messageFont")
                     if (lua.isString(-1)) {
                         val fontName = lua.toString(-1)!!
-                        textFieldStyle.messageFont = resolveFont(fontName)
+                        val font = resolveFont(fontName)
+                        textFieldStyle.messageFont = font
+                        visTextFieldStyle.messageFont = font
                     }
                     lua.pop(1)
 
                     lua.getField(3, "messageFontColor")
                     if (lua.isString(-1)) {
                         val colorString = lua.toString(-1)!!
-                        textFieldStyle.messageFontColor = resolveColor(colorString)
+                        val color = resolveColor(colorString)
+                        textFieldStyle.messageFontColor = color
+                        visTextFieldStyle.messageFontColor = color
                     }
                     lua.pop(1)
                 }
