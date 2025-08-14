@@ -27,6 +27,7 @@ import com.github.czyzby.lml.parser.tag.LmlTag
 import com.github.czyzby.lml.util.LmlUtilities
 import com.github.czyzby.lml.vis.util.VisLml
 import com.github.czyzby.lml.vis.util.VisLmlParserBuilder
+import world.selene.client.ui.element.Canvas
 
 
 object SeleneLmlParser {
@@ -56,7 +57,7 @@ object SeleneLmlParser {
             tag(TreeLmlTagProvider(), "tree")
             tag(WindowLmlTagProvider(), "window")
 
-            tag(CanvasLmlTagProvider(), "canvas")
+            tag(Canvas.CanvasLmlTagProvider, "canvas")
 
             // For some reason these attributes are not supported by default, so we expose them to LML
             attribute(object : LmlAttribute<TextField> {

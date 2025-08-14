@@ -1,9 +1,15 @@
-package world.selene.client.ui
+package world.selene.client.ui.element
 
 import com.badlogic.gdx.scenes.scene2d.Actor
+import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.Touchable
 import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup
 import com.badlogic.gdx.scenes.scene2d.utils.Layout
+import com.github.czyzby.lml.parser.LmlParser
+import com.github.czyzby.lml.parser.impl.tag.AbstractGroupLmlTag
+import com.github.czyzby.lml.parser.tag.LmlActorBuilder
+import com.github.czyzby.lml.parser.tag.LmlTag
+import com.github.czyzby.lml.parser.tag.LmlTagProvider
 import kotlin.math.max
 import kotlin.math.min
 
@@ -106,5 +112,23 @@ class Canvas() : WidgetGroup() {
         if (sizeInvalid) computeSize()
         return canvasMaxHeight
     }
+
+    class CanvasLmlTag(parser: LmlParser, parentTag: LmlTag?, rawTagData: StringBuilder) :
+        AbstractGroupLmlTag(parser, parentTag, rawTagData) {
+        override fun getNewInstanceOfGroup(builder: LmlActorBuilder): Group {
+            return Canvas()
+        }
+    }
+
+    object CanvasLmlTagProvider : LmlTagProvider {
+        override fun create(
+            parser: LmlParser,
+            parentTag: LmlTag?,
+            rawTagData: StringBuilder
+        ): LmlTag {
+            return CanvasLmlTag(parser, parentTag, rawTagData)
+        }
+    }
+
 }
 
