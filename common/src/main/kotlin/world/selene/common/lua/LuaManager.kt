@@ -9,6 +9,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.util.Coordinate
 import java.io.File
 import kotlin.reflect.KClass
+import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.memberProperties
@@ -137,17 +138,30 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
         lua.getField(-1, "__newindex") // [metatable, index]
         val nativeNewIndex = lua.get() // [metatable]
-        lua.push {
-            val obj = it.toJavaObject(-2)!! // [key, obj, value]
+        lua.push { lua ->
+            val obj = lua.toJavaObject(-3)!! // [obj, key, value]
             if (!exposedClasses.contains(obj::class)) {
-                it.pushNil() // [key, obj, value, nil]
-                return@push 1
+                return@push lua.error(IllegalArgumentException("Tried to access restricted class: ${obj::class}#${lua.checkString(-1)}"))
             }
-            it.push(nativeNewIndex) // [key, obj, value, index]
-            it.pushValue(-4) // [key, obj, value, index, key]
-            it.pushValue(-4) // [key, obj, value, index, key, obj]
-            it.pushValue(-4) // [key, obj, value, index, key, obj, value]
-            it.pCall(3, 0) // [key, obj, value]
+
+            val key = lua.checkString(-2)
+            val property = obj::class.memberProperties.find { it.name == key } as? KMutableProperty1<Any, Any?>
+            if (property != null) {
+                val value = when(property.returnType.classifier) {
+                    Boolean::class -> lua.checkBoolean(-1)
+                    Int::class -> lua.checkInt(-1)
+                    String::class -> lua.checkString(-1)
+                    Float::class -> lua.checkFloat(-1)
+                    else -> lua.toJavaObject(-1)
+                }
+                property.set(obj, value)
+                return@push 0
+            }
+            lua.push(nativeNewIndex) // [obj, key, value, index]
+            lua.pushValue(-4) // [obj, key, value, index, key]
+            lua.pushValue(-4) // [obj, key, value, index, key, obj]
+            lua.pushValue(-4) // [obj, key, value, index, key, obj, value]
+            lua.pCall(3, 0) // [obj, key, value]
             0
         } // [metatable, function]
         lua.setField(-2, "__newindex") // [metatable]
