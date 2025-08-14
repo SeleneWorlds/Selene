@@ -59,7 +59,13 @@ class ClientPacketHandler(
             context.enqueueWork {
                 val componentOverrides =
                     packet.components.mapValues { objectMapper.readValue(it.value, ConfiguredComponent::class.java) }
-                clientMap.placeOrUpdateEntity(packet.entityId, packet.networkId, packet.coordinate, packet.facing, componentOverrides)
+                clientMap.placeOrUpdateEntity(
+                    packet.entityId,
+                    packet.networkId,
+                    packet.coordinate,
+                    packet.facing,
+                    componentOverrides
+                )
             }
         } else if (packet is RemoveEntityPacket) {
             context.enqueueWork {
@@ -85,32 +91,34 @@ class ClientPacketHandler(
                 }
             }
         } else if (packet is CustomPayloadPacket) {
-            val handler = payloadRegistry.retrieveHandler(packet.payloadId)
-            if (handler != null) {
-                handler.push(luaManager.lua)
-                luaManager.lua.newTable()
-                // Helper to recursively push Map<String, Any> to Lua table
-                fun pushMapToLuaTable(map: Map<String, Any>) {
-                    for ((key, value) in map) {
-                        when (value) {
-                            is Int -> luaManager.lua.push(value)
-                            is Float -> luaManager.lua.push(value)
-                            is Double -> luaManager.lua.push(value)
-                            is String -> luaManager.lua.push(value)
-                            is Boolean -> luaManager.lua.push(value)
-                            is Map<*, *> -> {
-                                luaManager.lua.newTable()
-                                @Suppress("UNCHECKED_CAST")
-                                pushMapToLuaTable(value as Map<String, Any>)
-                            }
+            context.enqueueWork {
+                val handler = payloadRegistry.retrieveHandler(packet.payloadId)
+                if (handler != null) {
+                    handler.push(luaManager.lua)
+                    luaManager.lua.newTable()
+                    // Helper to recursively push Map<String, Any> to Lua table
+                    fun pushMapToLuaTable(map: Map<String, Any>) {
+                        for ((key, value) in map) {
+                            when (value) {
+                                is Int -> luaManager.lua.push(value)
+                                is Float -> luaManager.lua.push(value)
+                                is Double -> luaManager.lua.push(value)
+                                is String -> luaManager.lua.push(value)
+                                is Boolean -> luaManager.lua.push(value)
+                                is Map<*, *> -> {
+                                    luaManager.lua.newTable()
+                                    @Suppress("UNCHECKED_CAST")
+                                    pushMapToLuaTable(value as Map<String, Any>)
+                                }
 
-                            else -> luaManager.lua.push(value.toString()) // fallback
+                                else -> luaManager.lua.push(value.toString()) // fallback
+                            }
+                            luaManager.lua.setField(-2, key)
                         }
-                        luaManager.lua.setField(-2, key)
                     }
+                    pushMapToLuaTable(packet.payload)
+                    luaManager.lua.pCall(1, 0)
                 }
-                pushMapToLuaTable(packet.payload)
-                luaManager.lua.pCall(1, 0)
             }
         }
     }
