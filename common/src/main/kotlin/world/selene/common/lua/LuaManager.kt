@@ -168,7 +168,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
     }
 
     private fun luaTableFind(lua: Lua): Int {
-        lua.checkTable(1)
+        lua.checkType(1, Lua.LuaType.TABLE)
         lua.top = 2
         
         var idx = 1

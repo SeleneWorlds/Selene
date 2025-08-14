@@ -219,7 +219,6 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 val buttonStyle = Button.ButtonStyle()
 
                 if (lua.isTable(2)) {
-                    // Get up texture
                     lua.getField(2, "up")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
@@ -227,7 +226,6 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     }
                     lua.pop(1)
 
-                    // Get down texture
                     lua.getField(2, "down")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
@@ -235,7 +233,6 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     }
                     lua.pop(1)
 
-                    // Get over texture
                     lua.getField(2, "over")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!

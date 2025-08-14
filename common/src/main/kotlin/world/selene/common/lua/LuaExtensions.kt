@@ -153,3 +153,13 @@ fun <T : Enum<T>> Lua.checkEnum(index: Int, clazz: KClass<T>): T {
 private fun <T : Enum<T>> enumValueOf(value: String, clazz: KClass<T>): T {
     return clazz.java.enumConstants.firstOrNull { it.name.equals(value, ignoreCase = true) } as T
 }
+
+fun Lua.checkType(index: Int, expectedType: Lua.LuaType) {
+    if (top < abs(index)) {
+        throwTypeError(index, expectedType, Lua.LuaType.NIL)
+    }
+    val type = type(index)
+    if (type != expectedType) {
+        throwTypeError(index, expectedType, type)
+    }
+}
