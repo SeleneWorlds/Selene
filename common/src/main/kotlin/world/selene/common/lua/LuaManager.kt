@@ -30,6 +30,17 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         secureClassMetatable()
         secureObjectMetatable()
 
+        lua.openLibrary("os")
+        val os = lua.get("os")
+        val luaOsDate = os.get("date")
+        val luaOsTime = os.get("time")
+        val luaClock = os.get("clock")
+        lua.set("os", lua.newTable {
+            set("date", luaOsDate)
+            set("time", luaOsTime)
+            set("clock", luaClock)
+        })
+
         lua.openLibrary("string")
         packages["string"] = lua.get("string").also {
             it.register("trim", this::luaTrim)
@@ -43,6 +54,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
         lua.register("require", this::luaRequire)
         lua.register("print2", this::luaPrint)
+
         lua.set("dofile", null)
         lua.set("loadfile", null)
         lua.set("load", null)
