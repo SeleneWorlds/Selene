@@ -1,5 +1,6 @@
 package world.selene.client.ui
 
+import com.badlogic.gdx.scenes.scene2d.ui.Container
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.github.czyzby.lml.parser.LmlParser
 import com.github.czyzby.lml.parser.impl.tag.actor.provider.CheckBoxLmlTagProvider
@@ -54,6 +55,7 @@ object SeleneLmlParser {
             tag(TreeLmlTagProvider(), "tree")
             tag(WindowLmlTagProvider(), "window")
 
+            tag(CanvasLmlTagProvider(), "canvas")
 
             // For some reason these attributes are not supported by default, so we expose them to LML
             attribute(object : LmlAttribute<TextField> {
@@ -87,6 +89,44 @@ object SeleneLmlParser {
                 }
 
             }, "alignment")
+
+            // Width and Height in Containers seems to only be set if a layout does it for them?
+            // Not sure if this is the solution or if Canvas should just set items to their pref size
+            attribute(object : LmlAttribute<Container<*>> {
+                override fun getHandledType(): Class<Container<*>> {
+                    return Container::class.java
+                }
+
+                override fun process(
+                    parser: LmlParser,
+                    tag: LmlTag,
+                    actor: Container<*>,
+                    rawAttributeData: String
+                ) {
+                    val width = rawAttributeData.toFloat()
+                    actor.width = width
+                    actor.width(width)
+                }
+
+            }, "width")
+
+            attribute(object : LmlAttribute<Container<*>> {
+                override fun getHandledType(): Class<Container<*>> {
+                    return Container::class.java
+                }
+
+                override fun process(
+                    parser: LmlParser,
+                    tag: LmlTag,
+                    actor: Container<*>,
+                    rawAttributeData: String
+                ) {
+                    val height = rawAttributeData.toFloat()
+                    actor.height = height
+                    actor.height(height)
+                }
+
+            }, "height")
         }
     }
 }
