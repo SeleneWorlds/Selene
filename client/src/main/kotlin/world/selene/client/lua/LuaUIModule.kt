@@ -174,29 +174,37 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
     private fun luaCreateLabel(lua: Lua): Int {
         val skin = lua.checkJavaObject(1, SkinLuaProxy::class).delegate
-        
+
         var text = ""
         var styleName = "default"
-        
+        var wrap = false
+
         if (lua.top > 1) {
             lua.checkType(2, Lua.LuaType.TABLE)
-            
+
             lua.getField(2, "text")
             if (!lua.isNil(-1)) {
                 text = lua.checkString(-1)
             }
             lua.pop(1)
-            
+
             lua.getField(2, "style")
             if (!lua.isNil(-1)) {
                 styleName = lua.checkString(-1)
             }
             lua.pop(1)
+
+            lua.getField(2, "wrap")
+            if (!lua.isNil(-1)) {
+                wrap = lua.checkBoolean(-1)
+            }
+            lua.pop(1)
         }
-        
+
         try {
             val labelStyle = skin.get(styleName, Label.LabelStyle::class.java)
             val label = Label(text, labelStyle)
+            label.wrap = wrap
             lua.push(ActorLuaProxy(label), Lua.Conversion.NONE)
             return 1
         } catch (e: Exception) {
