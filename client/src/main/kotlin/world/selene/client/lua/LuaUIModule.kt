@@ -317,6 +317,16 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             set(value) {
                 when (delegate) {
                     is Container<*> -> delegate.minWidth(value)
+                    else -> throw IllegalArgumentException("Widget of type ${delegate.javaClass.simpleName} cannot have minWidth")
+                }
+            }
+
+        var MinHeight
+            get() = (delegate as? Layout)?.minHeight ?: 0f
+            set(value) {
+                when (delegate) {
+                    is Container<*> -> delegate.minHeight(value)
+                    else -> throw IllegalArgumentException("Widget of type ${delegate.javaClass.simpleName} cannot have minHeight")
                 }
             }
 
@@ -324,6 +334,12 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             get() = delegate.width;
             set(value) {
                 delegate.width = value
+            }
+
+        var Height
+            get() = delegate.height;
+            set(value) {
+                delegate.height = value
             }
 
         val Parent: ActorLuaProxy?
