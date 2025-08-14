@@ -180,6 +180,14 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 }
             }
         }
+
+        fun SetStyle(style: String) {
+            when(delegate) {
+                is VisImageButton -> {
+                    delegate.style = delegate.skin.get(style, VisImageButtonStyle::class.java)
+                }
+            }
+        }
     }
 
     class SkinLuaProxy(val delegate: Skin, private val bundleFileResolver: BundleFileResolver) {
