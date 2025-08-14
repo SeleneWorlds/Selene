@@ -8,7 +8,6 @@ import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.ui.Button
 import com.badlogic.gdx.scenes.scene2d.ui.Container
-import com.badlogic.gdx.scenes.scene2d.ui.Image
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.List
@@ -21,23 +20,16 @@ import com.badlogic.gdx.scenes.scene2d.ui.Touchpad
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable
 import com.badlogic.gdx.utils.I18NBundle
-import com.github.czyzby.lml.parser.impl.tag.actor.provider.LabelLmlTagProvider
-import com.github.czyzby.lml.vis.util.VisLml
-import com.kotcrab.vis.ui.widget.BusyBar
 import com.kotcrab.vis.ui.widget.LinkLabel
-import com.kotcrab.vis.ui.widget.Separator
 import com.kotcrab.vis.ui.widget.VisImageButton
 import com.kotcrab.vis.ui.widget.VisImageButton.VisImageButtonStyle
-import com.kotcrab.vis.ui.widget.VisLabel
-import com.kotcrab.vis.ui.widget.VisProgressBar
 import com.kotcrab.vis.ui.widget.VisTextField
-import com.kotcrab.vis.ui.widget.color.internal.Palette
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.assets.BundleFileResolver
+import world.selene.client.ui.SeleneLmlParser
 import world.selene.client.ui.UI
 import world.selene.common.lua.*
-
 
 class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFileResolver) : LuaModule {
     override val name = "selene.ui.lml"
@@ -103,11 +95,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         }
 
         try {
-            val parser = VisLml.parser().skin(skin ?: ui.systemSkin)
-
-            // VisLabel forces the VisUI skin and provides no other benefits. It makes no sense to be applied to label.
-            // Therefore, we revert "label" to use the default provider instead of the visui-lml one.
-            parser.tag(LabelLmlTagProvider(), "label")
+            val parser = SeleneLmlParser.parser().skin(skin ?: ui.systemSkin)
 
             // Register actions from Lua
             for ((actionName, actionFunction) in actions) {
