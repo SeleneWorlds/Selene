@@ -45,6 +45,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         table.register("LoadUI", this::luaLoadUI)
         table.register("LoadSkin", this::luaLoadSkin)
         table.register("CreateSkin", this::luaCreateSkin)
+        table.register("CreateContainer", this::luaCreateContainer)
         table.register("CreateLabel", this::luaCreateLabel)
         table.register("AddToRoot", this::luaAddToRoot)
         table.set("Root", ActorLuaProxy(ui.bundlesRoot))
@@ -92,7 +93,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
             lua.getField(2, "skin")
             if (lua.isUserdata(-1)) {
-                skin = lua.checkJavaObject(-1, SkinLuaProxy::class)?.delegate
+                skin = lua.checkJavaObject(-1, SkinLuaProxy::class).delegate
             }
             lua.pop(1)
         }
@@ -156,7 +157,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
 
             val skin = Skin(skinFile)
-            lua.push(SkinLuaProxy(skin, bundleFileResolver), Lua.Conversion.NONE)
+            lua.push(SkinLuaProxy(skin, this, bundleFileResolver), Lua.Conversion.NONE)
             return 1
         } catch (e: Exception) {
             return lua.error(e)
@@ -169,7 +170,44 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             add("default", font)
             add("default", Label.LabelStyle(font, Color.WHITE))
         }
-        lua.push(SkinLuaProxy(skin, bundleFileResolver), Lua.Conversion.NONE)
+        lua.push(SkinLuaProxy(skin, this, bundleFileResolver), Lua.Conversion.NONE)
+        return 1
+    }
+
+    private fun luaCreateContainer(lua: Lua): Int {
+        val skin = lua.checkJavaObject(1, SkinLuaProxy::class).delegate
+
+        val container = Container<Actor>()
+
+        if (lua.top > 1) {
+            lua.checkType(2, Lua.LuaType.TABLE)
+
+            lua.getField(2, "background")
+            if (!lua.isNil(-1)) {
+                container.background = resolveDrawable(skin, lua.toString(-1)!!)
+            }
+            lua.pop(1)
+
+            lua.getField(2, "child")
+            if (!lua.isNil(-1)) {
+                container.actor = lua.checkJavaObject(-1, ActorLuaProxy::class).delegate
+            }
+            lua.pop(1)
+
+            lua.getField(2, "width")
+            if (!lua.isNil(-1)) {
+                container.width(lua.checkFloat(-1))
+            }
+            lua.pop(1)
+
+            lua.getField(2, "height")
+            if (!lua.isNil(-1)) {
+                container.height(lua.checkFloat(-1))
+            }
+            lua.pop(1)
+        }
+
+        lua.push(ActorLuaProxy(container), Lua.Conversion.NONE)
         return 1
     }
 
@@ -351,7 +389,11 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
     }
 
-    class SkinLuaProxy(val delegate: Skin, private val bundleFileResolver: BundleFileResolver) {
+    class SkinLuaProxy(
+        val delegate: Skin,
+        private val module: LuaUIModule,
+        private val bundleFileResolver: BundleFileResolver
+    ) {
         fun AddTexture(lua: Lua): Int {
             val name = lua.checkString(2)
             val texturePath = lua.checkString(3)
@@ -381,21 +423,21 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(2, "up")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        buttonStyle.up = resolveDrawable(path)
+                        buttonStyle.up = module.resolveDrawable(delegate, path)
                     }
                     lua.pop(1)
 
                     lua.getField(2, "down")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        buttonStyle.down = resolveDrawable(path)
+                        buttonStyle.down = module.resolveDrawable(delegate, path)
                     }
                     lua.pop(1)
 
                     lua.getField(2, "over")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        buttonStyle.over = resolveDrawable(path)
+                        buttonStyle.over = module.resolveDrawable(delegate, path)
                     }
                     lua.pop(1)
                 }
@@ -417,21 +459,21 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "font")
                     if (lua.isString(-1)) {
                         val fontName = lua.toString(-1)!!
-                        labelStyle.font = resolveFont(fontName)
+                        labelStyle.font = module.resolveFont(delegate, fontName)
                     }
                     lua.pop(1)
 
                     lua.getField(3, "fontColor")
                     if (lua.isString(-1)) {
                         val colorString = lua.toString(-1)!!
-                        labelStyle.fontColor = resolveColor(colorString)
+                        labelStyle.fontColor = module.resolveColor(delegate, colorString)
                     }
                     lua.pop(1)
 
                     lua.getField(3, "background")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        labelStyle.background = resolveDrawable(path)
+                        labelStyle.background = module.resolveDrawable(delegate, path)
                     }
                     lua.pop(1)
                 }
@@ -454,7 +496,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "up")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.up = drawable
                         visImageButtonStyle.up = drawable
                     }
@@ -463,7 +505,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "down")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.down = drawable
                         visImageButtonStyle.down = drawable
                     }
@@ -472,7 +514,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "over")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.over = drawable
                         visImageButtonStyle.over = drawable
                     }
@@ -481,7 +523,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "checked")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.checked = drawable
                         visImageButtonStyle.checked = drawable
                     }
@@ -490,7 +532,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "checkedOver")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.checkedOver = drawable
                         visImageButtonStyle.checkedOver = drawable
                     }
@@ -499,7 +541,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "disabled")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.disabled = drawable
                         visImageButtonStyle.disabled = drawable
                     }
@@ -508,7 +550,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "imageUp")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.imageUp = drawable
                         visImageButtonStyle.imageUp = drawable
                     }
@@ -517,7 +559,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "imageDown")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.imageDown = drawable
                         visImageButtonStyle.imageDown = drawable
                     }
@@ -526,7 +568,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "imageOver")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.imageOver = drawable
                         visImageButtonStyle.imageOver = drawable
                     }
@@ -535,7 +577,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "imageChecked")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.imageChecked = drawable
                         visImageButtonStyle.imageChecked = drawable
                     }
@@ -544,7 +586,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "imageCheckedOver")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.imageCheckedOver = drawable
                         visImageButtonStyle.imageCheckedOver = drawable
                     }
@@ -553,7 +595,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "imageDisabled")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         imageButtonStyle.imageDisabled = drawable
                         visImageButtonStyle.imageDisabled = drawable
                     }
@@ -583,7 +625,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "font")
                     if (lua.isString(-1)) {
                         val fontName = lua.toString(-1)!!
-                        val font = resolveFont(fontName)
+                        val font = module.resolveFont(delegate, fontName)
                         textFieldStyle.font = font
                         visTextFieldStyle.font = font
                     }
@@ -592,7 +634,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "fontColor")
                     if (lua.isString(-1)) {
                         val colorString = lua.toString(-1)!!
-                        val color = resolveColor(colorString)
+                        val color = module.resolveColor(delegate, colorString)
                         textFieldStyle.fontColor = color
                         visTextFieldStyle.fontColor = color
                     }
@@ -601,7 +643,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "focusedFontColor")
                     if (lua.isString(-1)) {
                         val colorString = lua.toString(-1)!!
-                        val color = resolveColor(colorString)
+                        val color = module.resolveColor(delegate, colorString)
                         textFieldStyle.focusedFontColor = color
                         visTextFieldStyle.focusedFontColor = color
                     }
@@ -610,7 +652,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "disabledFontColor")
                     if (lua.isString(-1)) {
                         val colorString = lua.toString(-1)!!
-                        val color = resolveColor(colorString)
+                        val color = module.resolveColor(delegate, colorString)
                         textFieldStyle.disabledFontColor = color
                         visTextFieldStyle.disabledFontColor = color
                     }
@@ -619,7 +661,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "background")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         textFieldStyle.background = drawable
                         visTextFieldStyle.background = drawable
                     }
@@ -628,7 +670,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "focusedBackground")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         textFieldStyle.focusedBackground = drawable
                         visTextFieldStyle.focusedBackground = drawable
                     }
@@ -637,7 +679,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "disabledBackground")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         textFieldStyle.disabledBackground = drawable
                         visTextFieldStyle.disabledBackground = drawable
                     }
@@ -646,7 +688,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "cursor")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         textFieldStyle.cursor = drawable
                         visTextFieldStyle.cursor = drawable
                     }
@@ -655,7 +697,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "selection")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        val drawable = resolveDrawable(path)
+                        val drawable = module.resolveDrawable(delegate, path)
                         textFieldStyle.selection = drawable
                         visTextFieldStyle.selection = drawable
                     }
@@ -664,7 +706,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "messageFont")
                     if (lua.isString(-1)) {
                         val fontName = lua.toString(-1)!!
-                        val font = resolveFont(fontName)
+                        val font = module.resolveFont(delegate, fontName)
                         textFieldStyle.messageFont = font
                         visTextFieldStyle.messageFont = font
                     }
@@ -673,7 +715,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "messageFontColor")
                     if (lua.isString(-1)) {
                         val colorString = lua.toString(-1)!!
-                        val color = resolveColor(colorString)
+                        val color = module.resolveColor(delegate, colorString)
                         textFieldStyle.messageFontColor = color
                         visTextFieldStyle.messageFontColor = color
                     }
@@ -697,42 +739,42 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     lua.getField(3, "background")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        scrollPaneStyle.background = resolveDrawable(path)
+                        scrollPaneStyle.background = module.resolveDrawable(delegate, path)
                     }
                     lua.pop(1)
 
                     lua.getField(3, "corner")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        scrollPaneStyle.corner = resolveDrawable(path)
+                        scrollPaneStyle.corner = module.resolveDrawable(delegate, path)
                     }
                     lua.pop(1)
 
                     lua.getField(3, "hScroll")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        scrollPaneStyle.hScroll = resolveDrawable(path)
+                        scrollPaneStyle.hScroll = module.resolveDrawable(delegate, path)
                     }
                     lua.pop(1)
 
                     lua.getField(3, "hScrollKnob")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        scrollPaneStyle.hScrollKnob = resolveDrawable(path)
+                        scrollPaneStyle.hScrollKnob = module.resolveDrawable(delegate, path)
                     }
                     lua.pop(1)
 
                     lua.getField(3, "vScroll")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        scrollPaneStyle.vScroll = resolveDrawable(path)
+                        scrollPaneStyle.vScroll = module.resolveDrawable(delegate, path)
                     }
                     lua.pop(1)
 
                     lua.getField(3, "vScrollKnob")
                     if (lua.isString(-1)) {
                         val path = lua.toString(-1)!!
-                        scrollPaneStyle.vScrollKnob = resolveDrawable(path)
+                        scrollPaneStyle.vScrollKnob = module.resolveDrawable(delegate, path)
                     }
                     lua.pop(1)
                 }
@@ -743,50 +785,50 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 return lua.error(RuntimeException("Failed to add scroll pane style '$styleName': ${e.message}", e))
             }
         }
+    }
 
-        private fun resolveFont(fontName: String): BitmapFont {
-            delegate.optional(fontName, BitmapFont::class.java)?.let { return it }
+    private fun resolveFont(skin: Skin, fontName: String): BitmapFont {
+        skin.optional(fontName, BitmapFont::class.java)?.let { return it }
 
-            val fontFile = bundleFileResolver.resolve(fontName)
-            if (fontFile.exists()) {
-                return BitmapFont(fontFile)
-            } else {
-                throw IllegalArgumentException("Font not found in skin or file system: $fontName")
-            }
+        val fontFile = bundleFileResolver.resolve(fontName)
+        if (fontFile.exists()) {
+            return BitmapFont(fontFile)
+        } else {
+            throw IllegalArgumentException("Font not found in skin or file system: $fontName")
+        }
+    }
+
+    private fun resolveDrawable(skin: Skin, path: String): Drawable? {
+        skin.optional(path, TextureRegion::class.java)?.let {
+            return TextureRegionDrawable(it)
         }
 
-        private fun resolveDrawable(path: String): Drawable? {
-            delegate.optional(path, TextureRegion::class.java)?.let {
-                return TextureRegionDrawable(it)
-            }
-
-            val textureFile = bundleFileResolver.resolve(path)
-            return if (textureFile.exists()) {
-                TextureRegionDrawable(TextureRegion(Texture(textureFile)))
-            } else {
-                null
-            }
+        val textureFile = bundleFileResolver.resolve(path)
+        return if (textureFile.exists()) {
+            TextureRegionDrawable(TextureRegion(Texture(textureFile)))
+        } else {
+            null
         }
+    }
 
-        private fun resolveColor(colorString: String): Color {
-            return when {
-                colorString.startsWith("#") -> {
-                    try {
-                        val hex = colorString.substring(1)
-                        when (hex.length) {
-                            6 -> Color.valueOf(hex + "FF")
-                            8 -> Color.valueOf(hex)
-                            else -> throw IllegalArgumentException("Invalid hex color: $colorString")
-                        }
-                    } catch (e: Exception) {
-                        throw IllegalArgumentException("Invalid hex color: $colorString", e)
+    private fun resolveColor(skin: Skin, colorString: String): Color {
+        return when {
+            colorString.startsWith("#") -> {
+                try {
+                    val hex = colorString.substring(1)
+                    when (hex.length) {
+                        6 -> Color.valueOf(hex + "FF")
+                        8 -> Color.valueOf(hex)
+                        else -> throw IllegalArgumentException("Invalid hex color: $colorString")
                     }
+                } catch (e: Exception) {
+                    throw IllegalArgumentException("Invalid hex color: $colorString", e)
                 }
+            }
 
-                else -> {
-                    delegate.optional(colorString, Color::class.java)
-                        ?: throw IllegalArgumentException("Color not found in skin: $colorString")
-                }
+            else -> {
+                skin.optional(colorString, Color::class.java)
+                    ?: throw IllegalArgumentException("Color not found in skin: $colorString")
             }
         }
     }
