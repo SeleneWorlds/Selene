@@ -469,6 +469,100 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
         }
 
+        fun AddTextFieldStyle(lua: Lua): Int {
+            val styleName = lua.checkString(2)
+
+            try {
+                val textFieldStyle = TextField.TextFieldStyle().apply {
+                    fontColor = Color.WHITE
+                }
+
+                if (lua.isTable(3)) {
+                    lua.getField(3, "font")
+                    if (lua.isString(-1)) {
+                        val fontName = lua.toString(-1)!!
+                        textFieldStyle.font = resolveFont(fontName)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "fontColor")
+                    if (lua.isString(-1)) {
+                        val colorString = lua.toString(-1)!!
+                        textFieldStyle.fontColor = resolveColor(colorString)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "focusedFontColor")
+                    if (lua.isString(-1)) {
+                        val colorString = lua.toString(-1)!!
+                        textFieldStyle.focusedFontColor = resolveColor(colorString)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "disabledFontColor")
+                    if (lua.isString(-1)) {
+                        val colorString = lua.toString(-1)!!
+                        textFieldStyle.disabledFontColor = resolveColor(colorString)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "background")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        textFieldStyle.background = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "focusedBackground")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        textFieldStyle.focusedBackground = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "disabledBackground")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        textFieldStyle.disabledBackground = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "cursor")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        textFieldStyle.cursor = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "selection")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        textFieldStyle.selection = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "messageFont")
+                    if (lua.isString(-1)) {
+                        val fontName = lua.toString(-1)!!
+                        textFieldStyle.messageFont = resolveFont(fontName)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "messageFontColor")
+                    if (lua.isString(-1)) {
+                        val colorString = lua.toString(-1)!!
+                        textFieldStyle.messageFontColor = resolveColor(colorString)
+                    }
+                    lua.pop(1)
+                }
+
+                delegate.add(styleName, textFieldStyle)
+                return 0
+            } catch (e: Exception) {
+                return lua.error(RuntimeException("Failed to add text field style '$styleName': ${e.message}", e))
+            }
+        }
+
         private fun resolveFont(fontName: String): BitmapFont {
             delegate.optional(fontName, BitmapFont::class.java)?.let { return it }
 
