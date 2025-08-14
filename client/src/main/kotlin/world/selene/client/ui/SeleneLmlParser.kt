@@ -2,6 +2,7 @@ package world.selene.client.ui
 
 import com.badlogic.gdx.scenes.scene2d.ui.Container
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
+import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup
 import com.github.czyzby.lml.parser.LmlParser
 import com.github.czyzby.lml.parser.impl.tag.actor.provider.CheckBoxLmlTagProvider
 import com.github.czyzby.lml.parser.impl.tag.actor.provider.DialogLmlTagProvider
@@ -88,7 +89,23 @@ object SeleneLmlParser {
                     actor.alignment = LmlUtilities.parseAlignment(parser, actor, rawAttributeData)
                 }
 
-            }, "alignment")
+            }, "alignment", "align")
+
+            attribute(object : LmlAttribute<VerticalGroup> {
+                override fun getHandledType(): Class<VerticalGroup> {
+                    return VerticalGroup::class.java
+                }
+
+                override fun process(
+                    parser: LmlParser,
+                    tag: LmlTag,
+                    actor: VerticalGroup,
+                    rawAttributeData: String
+                ) {
+                    actor.columnAlign(LmlUtilities.parseAlignment(parser, actor, rawAttributeData))
+                }
+
+            }, "columnAlign")
 
             // Width and Height in Containers seems to only be set if a layout does it for them?
             // Not sure if this is the solution or if Canvas should just set items to their pref size
