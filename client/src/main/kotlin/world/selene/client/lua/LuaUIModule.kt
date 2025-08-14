@@ -1,30 +1,28 @@
 package world.selene.client.lua
 
-import party.iroiro.luajava.Lua
-import party.iroiro.luajava.value.LuaValue
+import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Group
-import com.badlogic.gdx.scenes.scene2d.ui.Container
-import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.ui.Button
+import com.badlogic.gdx.scenes.scene2d.ui.Container
 import com.badlogic.gdx.scenes.scene2d.ui.Label
+import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable
-import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.TextureRegion
-import com.badlogic.gdx.graphics.g2d.BitmapFont
-import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.utils.I18NBundle
+import com.github.czyzby.lml.parser.impl.tag.actor.provider.LabelLmlTagProvider
 import com.github.czyzby.lml.vis.util.VisLml
 import com.kotcrab.vis.ui.widget.VisImageButton
 import com.kotcrab.vis.ui.widget.VisImageButton.VisImageButtonStyle
+import party.iroiro.luajava.Lua
+import party.iroiro.luajava.value.LuaValue
 import world.selene.client.assets.BundleFileResolver
 import world.selene.client.ui.UI
-import world.selene.common.lua.LuaManager
-import world.selene.common.lua.LuaModule
-import world.selene.common.lua.checkJavaObject
-import world.selene.common.lua.checkString
-import world.selene.common.lua.register
+import world.selene.common.lua.*
+
 
 class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFileResolver) : LuaModule {
     override val name = "selene.ui.lml"
@@ -91,6 +89,10 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
         try {
             val parser = VisLml.parser().skin(skin ?: ui.systemSkin)
+
+            // VisLabel forces the VisUI skin and provides no other benefits. It makes no sense to be applied to label.
+            // Therefore, we revert "label" to use the default provider instead of the visui-lml one.
+            parser.tag(LabelLmlTagProvider(), "label")
 
             // Register actions from Lua
             for ((actionName, actionFunction) in actions) {
@@ -184,7 +186,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         }
 
         fun SetStyle(style: String) {
-            when(delegate) {
+            when (delegate) {
                 is VisImageButton -> {
                     delegate.style = delegate.skin.get(style, VisImageButtonStyle::class.java)
                 }
