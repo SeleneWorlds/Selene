@@ -603,6 +603,63 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
         }
 
+        fun AddScrollPaneStyle(lua: Lua): Int {
+            val styleName = lua.checkString(2)
+
+            try {
+                val scrollPaneStyle = ScrollPane.ScrollPaneStyle()
+
+                if (lua.isTable(3)) {
+                    lua.getField(3, "background")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        scrollPaneStyle.background = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "corner")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        scrollPaneStyle.corner = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "hScroll")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        scrollPaneStyle.hScroll = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "hScrollKnob")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        scrollPaneStyle.hScrollKnob = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "vScroll")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        scrollPaneStyle.vScroll = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "vScrollKnob")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        scrollPaneStyle.vScrollKnob = resolveDrawable(path)
+                    }
+                    lua.pop(1)
+                }
+
+                delegate.add(styleName, scrollPaneStyle)
+                return 0
+            } catch (e: Exception) {
+                return lua.error(RuntimeException("Failed to add scroll pane style '$styleName': ${e.message}", e))
+            }
+        }
+
         private fun resolveFont(fontName: String): BitmapFont {
             delegate.optional(fontName, BitmapFont::class.java)?.let { return it }
 
