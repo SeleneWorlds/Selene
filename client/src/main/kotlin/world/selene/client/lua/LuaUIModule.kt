@@ -38,6 +38,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
     override fun initialize(luaManager: LuaManager) {
         luaManager.exposeClass(ActorLuaProxy::class)
+        luaManager.exposeClass(ProgressBarLuaProxy::class)
         luaManager.exposeClass(SkinLuaProxy::class)
     }
 
@@ -48,14 +49,14 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         table.register("CreateContainer", this::luaCreateContainer)
         table.register("CreateLabel", this::luaCreateLabel)
         table.register("AddToRoot", this::luaAddToRoot)
-        table.set("Root", ActorLuaProxy(ui.bundlesRoot))
+        table.set("Root", ActorLuaProxy.createProxy(ui.bundlesRoot))
     }
 
     private fun luaAddToRoot(lua: Lua): Int {
         if (lua.isTable(1)) {
             val actors = lua.toMap(1)?.values ?: emptyList()
             for (actor in actors) {
-                if (actor is ActorLuaProxy) {
+                if (actor is ActorLuaProxy<*>) {
                     ui.bundlesRoot.add(actor.delegate)
                 }
             }
@@ -105,7 +106,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             for ((actionName, actionFunction) in actions) {
                 parser.action(actionName) { actor ->
                     try {
-                        actionFunction.call(ActorLuaProxy(actor as Actor))
+                        actionFunction.call(ActorLuaProxy.createProxy(actor as Actor))
                     } catch (e: Exception) {
                         // Log error but don't crash the UI
                         println("Error executing Lua action '$actionName': ${e.message}")
@@ -126,10 +127,10 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
             val actors = parser.build().parseTemplate(xmlFile)
 
-            val actorsByName = mutableMapOf<String, ActorLuaProxy>()
+            val actorsByName = mutableMapOf<String, ActorLuaProxy<*>>()
             fun collectActorsByName(actor: Actor) {
                 if (actor.name != null && actor.name.isNotEmpty()) {
-                    actorsByName[actor.name] = ActorLuaProxy(actor)
+                    actorsByName[actor.name] = ActorLuaProxy.createProxy(actor)
                 }
                 if (actor is Group) {
                     actor.children.forEach { child ->
@@ -139,7 +140,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
             actors.forEach { collectActorsByName(it) }
 
-            lua.push(actors.map { ActorLuaProxy(it) }, Lua.Conversion.FULL)
+            lua.push(actors.map { ActorLuaProxy.createProxy(it) }, Lua.Conversion.FULL)
             lua.push(actorsByName, Lua.Conversion.FULL)
             return 2
         } catch (e: Exception) {
@@ -207,7 +208,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             lua.pop(1)
         }
 
-        lua.push(ActorLuaProxy(container), Lua.Conversion.NONE)
+        lua.push(ActorLuaProxy.createProxy(container), Lua.Conversion.NONE)
         return 1
     }
 
@@ -244,15 +245,34 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             val labelStyle = skin.get(styleName, Label.LabelStyle::class.java)
             val label = Label(text, labelStyle)
             label.wrap = wrap
-            lua.push(ActorLuaProxy(label), Lua.Conversion.NONE)
+            lua.push(ActorLuaProxy.createProxy(label), Lua.Conversion.NONE)
             return 1
         } catch (e: Exception) {
             return lua.error(RuntimeException("Failed to create label: ${e.message}", e))
         }
     }
 
-    class ActorLuaProxy(val delegate: Actor) {
-        fun AddChild(child: ActorLuaProxy) {
+    class ProgressBarLuaProxy(delegate: ProgressBar) : ActorLuaProxy<ProgressBar>(delegate) {
+        var Value: Float
+            get() {
+                return delegate.value
+            }
+            set(value) {
+                delegate.value = value
+            }
+    }
+
+    open class ActorLuaProxy<T : Actor>(val delegate: T) {
+        companion object {
+            fun createProxy(actor: Actor): ActorLuaProxy<*> {
+                return when (actor) {
+                    is ProgressBar -> return ProgressBarLuaProxy(actor)
+                    else -> ActorLuaProxy(actor)
+                }
+            }
+        }
+
+        fun AddChild(child: ActorLuaProxy<*>) {
             when (delegate) {
                 is Container<*> -> {
                     @Suppress("UNCHECKED_CAST")
@@ -380,11 +400,11 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 delegate.height = value
             }
 
-        val Parent: ActorLuaProxy?
+        val Parent: ActorLuaProxy<*>?
             get() {
                 return when (delegate.parent) {
                     null -> null
-                    else -> ActorLuaProxy(delegate.parent)
+                    else -> createProxy(delegate.parent)
                 }
             }
     }
@@ -783,6 +803,77 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 return 0
             } catch (e: Exception) {
                 return lua.error(RuntimeException("Failed to add scroll pane style '$styleName': ${e.message}", e))
+            }
+        }
+
+        fun AddProgressBarStyle(lua: Lua): Int {
+            val styleName = lua.checkString(2)
+
+            try {
+                val progressBarStyle = ProgressBar.ProgressBarStyle()
+
+                if (lua.isTable(3)) {
+                    lua.getField(3, "background")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        progressBarStyle.background = module.resolveDrawable(delegate, path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "knob")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        progressBarStyle.knob = module.resolveDrawable(delegate, path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "knobBefore")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        progressBarStyle.knobBefore = module.resolveDrawable(delegate, path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "knobAfter")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        progressBarStyle.knobAfter = module.resolveDrawable(delegate, path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "disabledBackground")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        progressBarStyle.disabledBackground = module.resolveDrawable(delegate, path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "disabledKnob")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        progressBarStyle.disabledKnob = module.resolveDrawable(delegate, path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "disabledKnobBefore")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        progressBarStyle.disabledKnobBefore = module.resolveDrawable(delegate, path)
+                    }
+                    lua.pop(1)
+
+                    lua.getField(3, "disabledKnobAfter")
+                    if (lua.isString(-1)) {
+                        val path = lua.toString(-1)!!
+                        progressBarStyle.disabledKnobAfter = module.resolveDrawable(delegate, path)
+                    }
+                    lua.pop(1)
+                }
+
+                delegate.add(styleName, progressBarStyle)
+                return 0
+            } catch (e: Exception) {
+                return lua.error(RuntimeException("Failed to add progress bar style '$styleName': ${e.message}", e))
             }
         }
     }
