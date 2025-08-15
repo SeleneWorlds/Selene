@@ -69,12 +69,14 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
     private fun luaLoadUI(lua: Lua): Int {
         val xmlFilePath = lua.checkString(1)
+        if (lua.top >= 2) {
+            lua.checkType(2, Lua.LuaType.TABLE)
+        }
 
         val actions = mutableMapOf<String, LuaValue>()
-        var i18nBundle = "system"
-        var skin: Skin? = null
+        val i18nBundle = lua.getFieldString(2, "i18nBundle") ?: "system"
+        val skin = lua.getFieldJavaObject(2, "skin", SkinLuaProxy::class)?.delegate
 
-        // Load options from second parameter
         if (lua.isTable(2)) {
             lua.getField(2, "actions")
             if (lua.isTable(-1)) {
@@ -83,18 +85,6 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                         actions[actionName] = actionFunction
                     }
                 }
-            }
-            lua.pop(1)
-
-            lua.getField(2, "i18nBundle")
-            if (lua.isString(-1)) {
-                i18nBundle = lua.toString(-1) ?: "system"
-            }
-            lua.pop(1)
-
-            lua.getField(2, "skin")
-            if (lua.isUserdata(-1)) {
-                skin = lua.checkJavaObject(-1, SkinLuaProxy::class).delegate
             }
             lua.pop(1)
         }
@@ -177,74 +167,37 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
     private fun luaCreateContainer(lua: Lua): Int {
         val skin = lua.checkJavaObject(1, SkinLuaProxy::class).delegate
-
-        val container = Container<Actor>()
-
         if (lua.top > 1) {
             lua.checkType(2, Lua.LuaType.TABLE)
-
-            lua.getField(2, "background")
-            if (!lua.isNil(-1)) {
-                container.background = resolveDrawable(skin, lua.toString(-1)!!)
-            }
-            lua.pop(1)
-
-            lua.getField(2, "child")
-            if (!lua.isNil(-1)) {
-                container.actor = lua.checkJavaObject(-1, ActorLuaProxy::class).delegate
-            }
-            lua.pop(1)
-
-            lua.getField(2, "width")
-            if (!lua.isNil(-1)) {
-                container.width(lua.checkFloat(-1))
-            }
-            lua.pop(1)
-
-            lua.getField(2, "height")
-            if (!lua.isNil(-1)) {
-                container.height(lua.checkFloat(-1))
-            }
-            lua.pop(1)
         }
 
+        val child = lua.getFieldJavaObject(2, "child", ActorLuaProxy::class)?.delegate
+        val container = Container<Actor>(child)
+        lua.getFieldString(2, "width")?.let {
+            container.background = resolveDrawable(skin, lua.toString(-1)!!)
+        }
+        lua.getFieldFloat(2, "width")?.let {
+            container.width(it)
+        }
+        lua.getFieldFloat(2, "height")?.let {
+            container.height(it)
+        }
         lua.push(ActorLuaProxy.createProxy(container), Lua.Conversion.NONE)
         return 1
     }
 
     private fun luaCreateLabel(lua: Lua): Int {
         val skin = lua.checkJavaObject(1, SkinLuaProxy::class).delegate
-
-        var text = ""
-        var styleName = "default"
-        var wrap = false
-
         if (lua.top > 1) {
             lua.checkType(2, Lua.LuaType.TABLE)
-
-            lua.getField(2, "text")
-            if (!lua.isNil(-1)) {
-                text = lua.checkString(-1)
-            }
-            lua.pop(1)
-
-            lua.getField(2, "style")
-            if (!lua.isNil(-1)) {
-                styleName = lua.checkString(-1)
-            }
-            lua.pop(1)
-
-            lua.getField(2, "wrap")
-            if (!lua.isNil(-1)) {
-                wrap = lua.checkBoolean(-1)
-            }
-            lua.pop(1)
         }
 
         try {
-            val labelStyle = skin.get(styleName, Label.LabelStyle::class.java)
+            val style = lua.getFieldString(2, "style") ?: "default"
+            val labelStyle = skin.get(style, Label.LabelStyle::class.java)
+            val text = lua.getFieldString(2, "text") ?: ""
             val label = Label(text, labelStyle)
-            label.wrap = wrap
+            label.wrap = lua.getFieldBoolean(2, "wrap") ?: false
             lua.push(ActorLuaProxy.createProxy(label), Lua.Conversion.NONE)
             return 1
         } catch (e: Exception) {
@@ -435,33 +388,23 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
         fun AddButtonStyle(lua: Lua): Int {
             val styleName = lua.checkString(2)
+            lua.checkType(3, Lua.LuaType.TABLE)
 
             try {
-                val buttonStyle = Button.ButtonStyle()
-
-                if (lua.isTable(2)) {
-                    lua.getField(2, "up")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        buttonStyle.up = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(2, "down")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        buttonStyle.down = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(2, "over")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        buttonStyle.over = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
+                val up = lua.getFieldString(3, "up")?.let {
+                    module.resolveDrawable(delegate, it)
                 }
-
+                val down = lua.getFieldString(3, "down")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val checked = lua.getFieldString(3, "checked")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val buttonStyle = Button.ButtonStyle(up, down, checked)
+                lua.getFieldString(3, "over")?.let {
+                    buttonStyle.over = module.resolveDrawable(delegate, it)
+                }
+                // TODO many more fields here to support
                 delegate.add(styleName, buttonStyle)
                 return 0
             } catch (e: Exception) {
@@ -471,33 +414,19 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
         fun AddLabelStyle(lua: Lua): Int {
             val styleName = lua.checkString(2)
+            lua.checkType(3, Lua.LuaType.TABLE)
 
             try {
-                val labelStyle = Label.LabelStyle()
-
-                if (lua.isTable(3)) {
-                    lua.getField(3, "font")
-                    if (lua.isString(-1)) {
-                        val fontName = lua.toString(-1)!!
-                        labelStyle.font = module.resolveFont(delegate, fontName)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "fontColor")
-                    if (lua.isString(-1)) {
-                        val colorString = lua.toString(-1)!!
-                        labelStyle.fontColor = module.resolveColor(delegate, colorString)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "background")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        labelStyle.background = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
+                val font = lua.getFieldString(3, "font")?.let {
+                    module.resolveFont(delegate, it)
                 }
-
+                val fontColor = lua.getFieldString(3, "fontColor")?.let {
+                    module.resolveColor(delegate, it)
+                } ?: Color.WHITE
+                val labelStyle = Label.LabelStyle(font, fontColor)
+                lua.getFieldString(3, "background")?.let {
+                    labelStyle.background = module.resolveDrawable(delegate, it)
+                }
                 delegate.add(styleName, labelStyle)
                 return 0
             } catch (e: Exception) {
@@ -507,119 +436,64 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
         fun AddImageButtonStyle(lua: Lua): Int {
             val styleName = lua.checkString(2)
+            lua.checkType(3, Lua.LuaType.TABLE)
 
             try {
-                val imageButtonStyle = ImageButton.ImageButtonStyle()
-                val visImageButtonStyle = VisImageButtonStyle()
+                val up = lua.getFieldString(3, "up")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val down = lua.getFieldString(3, "down")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val checked = lua.getFieldString(3, "checked")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val imageUp = lua.getFieldString(3, "imageUp")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val imageDown = lua.getFieldString(3, "imageDown")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val imageChecked = lua.getFieldString(3, "imageChecked")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val imageButtonStyle = ImageButton.ImageButtonStyle(up, down, checked, imageUp, imageDown, imageChecked)
+                val visImageButtonStyle = VisImageButtonStyle(up, down, checked, imageUp, imageDown, imageChecked)
 
-                if (lua.isTable(3)) {
-                    lua.getField(3, "up")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.up = drawable
-                        visImageButtonStyle.up = drawable
-                    }
-                    lua.pop(1)
+                lua.getFieldString(3, "over")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    imageButtonStyle.over = drawable
+                    visImageButtonStyle.over = drawable
+                }
 
-                    lua.getField(3, "down")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.down = drawable
-                        visImageButtonStyle.down = drawable
-                    }
-                    lua.pop(1)
+                lua.getFieldString(3, "checkedOver")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    imageButtonStyle.checkedOver = drawable
+                    visImageButtonStyle.checkedOver = drawable
+                }
 
-                    lua.getField(3, "over")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.over = drawable
-                        visImageButtonStyle.over = drawable
-                    }
-                    lua.pop(1)
+                lua.getFieldString(3, "disabled")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    imageButtonStyle.disabled = drawable
+                    visImageButtonStyle.disabled = drawable
+                }
 
-                    lua.getField(3, "checked")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.checked = drawable
-                        visImageButtonStyle.checked = drawable
-                    }
-                    lua.pop(1)
+                lua.getFieldString(3, "imageOver")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    imageButtonStyle.imageOver = drawable
+                    visImageButtonStyle.imageOver = drawable
+                }
 
-                    lua.getField(3, "checkedOver")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.checkedOver = drawable
-                        visImageButtonStyle.checkedOver = drawable
-                    }
-                    lua.pop(1)
+                lua.getFieldString(3, "imageCheckedOver")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    imageButtonStyle.imageCheckedOver = drawable
+                    visImageButtonStyle.imageCheckedOver = drawable
+                }
 
-                    lua.getField(3, "disabled")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.disabled = drawable
-                        visImageButtonStyle.disabled = drawable
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "imageUp")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.imageUp = drawable
-                        visImageButtonStyle.imageUp = drawable
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "imageDown")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.imageDown = drawable
-                        visImageButtonStyle.imageDown = drawable
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "imageOver")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.imageOver = drawable
-                        visImageButtonStyle.imageOver = drawable
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "imageChecked")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.imageChecked = drawable
-                        visImageButtonStyle.imageChecked = drawable
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "imageCheckedOver")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.imageCheckedOver = drawable
-                        visImageButtonStyle.imageCheckedOver = drawable
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "imageDisabled")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        imageButtonStyle.imageDisabled = drawable
-                        visImageButtonStyle.imageDisabled = drawable
-                    }
-                    lua.pop(1)
+                lua.getFieldString(3, "imageDisabled")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    imageButtonStyle.imageDisabled = drawable
+                    visImageButtonStyle.imageDisabled = drawable
                 }
 
                 delegate.add(styleName, imageButtonStyle)
@@ -632,114 +506,61 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
         fun AddTextFieldStyle(lua: Lua): Int {
             val styleName = lua.checkString(2)
+            lua.checkType(3, Lua.LuaType.TABLE)
 
             try {
-                val textFieldStyle = TextField.TextFieldStyle().apply {
-                    fontColor = Color.WHITE
+                val font = lua.getFieldString(3, "font")?.let {
+                    module.resolveFont(delegate, it)
                 }
-                val visTextFieldStyle = VisTextField.VisTextFieldStyle().apply {
-                    fontColor = Color.WHITE
+                val fontColor = lua.getFieldString(3, "fontColor")?.let {
+                    module.resolveColor(delegate, it)
+                } ?: Color.WHITE
+                val cursor = lua.getFieldString(3, "cursor")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val selection = lua.getFieldString(3, "selection")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val background = lua.getFieldString(3, "background")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val textFieldStyle = TextField.TextFieldStyle(font, fontColor, cursor, selection, background)
+                val visTextFieldStyle = VisTextField.VisTextFieldStyle(font, fontColor, cursor, selection, background)
+
+                lua.getFieldString(3, "focusedFontColor")?.let {
+                    val color = module.resolveColor(delegate, it)
+                    textFieldStyle.focusedFontColor = color
+                    visTextFieldStyle.focusedFontColor = color
                 }
 
-                if (lua.isTable(3)) {
-                    lua.getField(3, "font")
-                    if (lua.isString(-1)) {
-                        val fontName = lua.toString(-1)!!
-                        val font = module.resolveFont(delegate, fontName)
-                        textFieldStyle.font = font
-                        visTextFieldStyle.font = font
-                    }
-                    lua.pop(1)
+                lua.getFieldString(3, "disabledFontColor")?.let {
+                    val color = module.resolveColor(delegate, it)
+                    textFieldStyle.disabledFontColor = color
+                    visTextFieldStyle.disabledFontColor = color
+                }
 
-                    lua.getField(3, "fontColor")
-                    if (lua.isString(-1)) {
-                        val colorString = lua.toString(-1)!!
-                        val color = module.resolveColor(delegate, colorString)
-                        textFieldStyle.fontColor = color
-                        visTextFieldStyle.fontColor = color
-                    }
-                    lua.pop(1)
+                lua.getFieldString(3, "focusedBackground")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    textFieldStyle.focusedBackground = drawable
+                    visTextFieldStyle.focusedBackground = drawable
+                }
 
-                    lua.getField(3, "focusedFontColor")
-                    if (lua.isString(-1)) {
-                        val colorString = lua.toString(-1)!!
-                        val color = module.resolveColor(delegate, colorString)
-                        textFieldStyle.focusedFontColor = color
-                        visTextFieldStyle.focusedFontColor = color
-                    }
-                    lua.pop(1)
+                lua.getFieldString(3, "disabledBackground")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    textFieldStyle.disabledBackground = drawable
+                    visTextFieldStyle.disabledBackground = drawable
+                }
 
-                    lua.getField(3, "disabledFontColor")
-                    if (lua.isString(-1)) {
-                        val colorString = lua.toString(-1)!!
-                        val color = module.resolveColor(delegate, colorString)
-                        textFieldStyle.disabledFontColor = color
-                        visTextFieldStyle.disabledFontColor = color
-                    }
-                    lua.pop(1)
+                lua.getFieldString(3, "messageFont")?.let {
+                    val font = module.resolveFont(delegate, it)
+                    textFieldStyle.messageFont = font
+                    visTextFieldStyle.messageFont = font
+                }
 
-                    lua.getField(3, "background")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        textFieldStyle.background = drawable
-                        visTextFieldStyle.background = drawable
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "focusedBackground")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        textFieldStyle.focusedBackground = drawable
-                        visTextFieldStyle.focusedBackground = drawable
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "disabledBackground")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        textFieldStyle.disabledBackground = drawable
-                        visTextFieldStyle.disabledBackground = drawable
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "cursor")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        textFieldStyle.cursor = drawable
-                        visTextFieldStyle.cursor = drawable
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "selection")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        val drawable = module.resolveDrawable(delegate, path)
-                        textFieldStyle.selection = drawable
-                        visTextFieldStyle.selection = drawable
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "messageFont")
-                    if (lua.isString(-1)) {
-                        val fontName = lua.toString(-1)!!
-                        val font = module.resolveFont(delegate, fontName)
-                        textFieldStyle.messageFont = font
-                        visTextFieldStyle.messageFont = font
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "messageFontColor")
-                    if (lua.isString(-1)) {
-                        val colorString = lua.toString(-1)!!
-                        val color = module.resolveColor(delegate, colorString)
-                        textFieldStyle.messageFontColor = color
-                        visTextFieldStyle.messageFontColor = color
-                    }
-                    lua.pop(1)
+                lua.getFieldString(3, "messageFontColor")?.let {
+                    val color = module.resolveColor(delegate, it)
+                    textFieldStyle.messageFontColor = color
+                    visTextFieldStyle.messageFontColor = color
                 }
 
                 delegate.add(styleName, textFieldStyle)
@@ -751,54 +572,29 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
         fun AddScrollPaneStyle(lua: Lua): Int {
             val styleName = lua.checkString(2)
+            lua.checkType(3, Lua.LuaType.TABLE)
 
             try {
-                val scrollPaneStyle = ScrollPane.ScrollPaneStyle()
-
-                if (lua.isTable(3)) {
-                    lua.getField(3, "background")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        scrollPaneStyle.background = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "corner")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        scrollPaneStyle.corner = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "hScroll")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        scrollPaneStyle.hScroll = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "hScrollKnob")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        scrollPaneStyle.hScrollKnob = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "vScroll")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        scrollPaneStyle.vScroll = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "vScrollKnob")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        scrollPaneStyle.vScrollKnob = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
+                val background = lua.getFieldString(3, "background")?.let {
+                    module.resolveDrawable(delegate, it)
                 }
-
+                val hScroll = lua.getFieldString(3, "hScroll")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val hScrollKnob = lua.getFieldString(3, "hScrollKnob")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val vScroll = lua.getFieldString(3, "vScroll")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val vScrollKnob = lua.getFieldString(3, "vScrollKnob")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val scrollPaneStyle = ScrollPane.ScrollPaneStyle(background, hScroll, hScrollKnob, vScroll, vScrollKnob)
+                lua.getFieldString(3, "corner")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    scrollPaneStyle.corner = drawable
+                }
                 delegate.add(styleName, scrollPaneStyle)
                 return 0
             } catch (e: Exception) {
@@ -808,68 +604,40 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
         fun AddProgressBarStyle(lua: Lua): Int {
             val styleName = lua.checkString(2)
+            lua.checkType(3, Lua.LuaType.TABLE)
 
             try {
-                val progressBarStyle = ProgressBar.ProgressBarStyle()
-
-                if (lua.isTable(3)) {
-                    lua.getField(3, "background")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        progressBarStyle.background = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "knob")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        progressBarStyle.knob = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "knobBefore")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        progressBarStyle.knobBefore = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "knobAfter")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        progressBarStyle.knobAfter = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "disabledBackground")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        progressBarStyle.disabledBackground = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "disabledKnob")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        progressBarStyle.disabledKnob = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "disabledKnobBefore")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        progressBarStyle.disabledKnobBefore = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
-
-                    lua.getField(3, "disabledKnobAfter")
-                    if (lua.isString(-1)) {
-                        val path = lua.toString(-1)!!
-                        progressBarStyle.disabledKnobAfter = module.resolveDrawable(delegate, path)
-                    }
-                    lua.pop(1)
+                val background = lua.getFieldString(3, "background")?.let {
+                    module.resolveDrawable(delegate, it)
                 }
-
+                val knob = lua.getFieldString(3, "knob")?.let {
+                    module.resolveDrawable(delegate, it)
+                }
+                val progressBarStyle = ProgressBar.ProgressBarStyle(background, knob)
+                lua.getFieldString(3, "knobBefore")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    progressBarStyle.knobBefore = drawable
+                }
+                lua.getFieldString(3, "knobAfter")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    progressBarStyle.knobAfter = drawable
+                }
+                lua.getFieldString(3, "disabledBackground")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    progressBarStyle.disabledBackground = drawable
+                }
+                lua.getFieldString(3, "disabledKnob")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    progressBarStyle.disabledKnob = drawable
+                }
+                lua.getFieldString(3, "disabledKnobBefore")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    progressBarStyle.disabledKnobBefore = drawable
+                }
+                lua.getFieldString(3, "disabledKnobAfter")?.let {
+                    val drawable = module.resolveDrawable(delegate, it)
+                    progressBarStyle.disabledKnobAfter = drawable
+                }
                 delegate.add(styleName, progressBarStyle)
                 return 0
             } catch (e: Exception) {

@@ -163,3 +163,59 @@ fun Lua.checkType(index: Int, expectedType: Lua.LuaType) {
         throwTypeError(index, expectedType, type)
     }
 }
+
+fun Lua.getFieldString(tableIndex: Int, fieldName: String): String? {
+    if (!isTable(tableIndex)) {
+        return null
+    }
+
+    var result: String? = null
+    getField(tableIndex, fieldName)
+    if (!isNil(-1)) {
+        result = checkString(-1)
+    }
+    pop(1)
+    return result
+}
+
+fun Lua.getFieldFloat(tableIndex: Int, fieldName: String): Float? {
+    if (!isTable(tableIndex)) {
+        return null
+    }
+
+    var result: Float? = null
+    getField(tableIndex, fieldName)
+    if (!isNil(-1)) {
+        result = checkFloat(-1)
+    }
+    pop(1)
+    return result
+}
+
+fun Lua.getFieldBoolean(tableIndex: Int, fieldName: String): Boolean? {
+    if (!isTable(tableIndex)) {
+        return null
+    }
+
+    var result: Boolean? = null
+    getField(tableIndex, fieldName)
+    if (!isNil(-1)) {
+        result = checkBoolean(-1)
+    }
+    pop(1)
+    return result
+}
+
+fun <T: Any> Lua.getFieldJavaObject(tableIndex: Int, fieldName: String, clazz: KClass<out T>): T? {
+    if (!isTable(tableIndex)) {
+        return null
+    }
+
+    var result: T? = null
+    getField(tableIndex, fieldName)
+    if (!isNil(-1)) {
+        result = checkJavaObject(-1, clazz)
+    }
+    pop(1)
+    return result
+}
