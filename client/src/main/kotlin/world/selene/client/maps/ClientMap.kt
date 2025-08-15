@@ -2,7 +2,9 @@ package world.selene.client.maps
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
+import party.iroiro.luajava.Lua
 import world.selene.client.grid.Grid
+import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.scene.Scene
 import world.selene.client.visual.VisualManager
 import world.selene.common.data.ConfiguredComponent
@@ -13,7 +15,8 @@ class ClientMap(
     private val grid: Grid,
     private val entityPool: EntityPool,
     private val scene: Scene,
-    private val visualManager: VisualManager
+    private val visualManager: VisualManager,
+    private val signals: ClientLuaSignals
 ) {
     private val tiles = ArrayListMultimap.create<Coordinate, Tile>()
     private val entitiesByNetworkId = HashMap<Int, Entity>()
@@ -40,6 +43,12 @@ class ClientMap(
         }
         additionalTiles.forEach { coordinate, tileId ->
             placeTile(coordinate, tileId)
+        }
+        signals.mapChunkChanged.emit { lua ->
+            lua.push(Coordinate(x, y, z), Lua.Conversion.NONE)
+            lua.push(width)
+            lua.push(height)
+            3
         }
         scene.endBatch()
     }

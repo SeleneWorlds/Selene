@@ -20,6 +20,8 @@ class Tile(private val grid: Grid) : Pool.Poolable, Renderable {
     override var localSortLayer: Int = 0
     override var coordinate: Coordinate = Coordinate.Zero
     var visualInstance: VisualInstance? = null
+    
+    val luaProxy = TileLuaProxy(this)
 
     val screenX get() = grid.getScreenX(coordinate)
     val screenY get() = grid.getScreenY(coordinate)
@@ -62,5 +64,22 @@ class Tile(private val grid: Grid) : Pool.Poolable, Renderable {
         localSortLayer = 0
         coordinate = Coordinate.Zero
         visualInstance = null
+    }
+
+    class TileLuaProxy(private val tile: Tile) {
+        val Name: String?
+            get() = tile.tileName
+
+        val X: Int
+            get() = tile.coordinate.x
+
+        val Y: Int
+            get() = tile.coordinate.y
+
+        val Z: Int
+            get() = tile.coordinate.z
+
+        val Coordinate: Coordinate
+            get() = tile.coordinate
     }
 }

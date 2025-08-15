@@ -33,6 +33,7 @@ import world.selene.client.grid.Grid
 import world.selene.client.input.InputManager
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.lua.LuaCameraModule
+import world.selene.client.lua.LuaMapModule
 import world.selene.client.lua.LuaTexturesModule
 import world.selene.client.lua.LuaUIModule
 import world.selene.client.network.ClientPacketHandler
@@ -91,6 +92,7 @@ class SeleneApplication(
             singleOf(::LuaMixinModule) { bind<LuaModule>() }
             singleOf(::LuaClientNetworkModule) { bind<LuaModule>() }
             singleOf(::LuaCameraModule) { bind<LuaModule>() }
+            singleOf(::LuaMapModule) { bind<LuaModule>() }
             singleOf(::LuaTexturesModule) { bind<LuaModule>() }
             singleOf(::LuaResourcesModule) { bind<LuaModule>() }
             singleOf(::LuaInputModule) { bind<LuaModule>() }
