@@ -173,7 +173,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
         val child = lua.getFieldJavaObject(2, "child", ActorLuaProxy::class)?.delegate
         val container = Container<Actor>(child)
-        lua.getFieldString(2, "width")?.let {
+        lua.getFieldString(2, "background")?.let {
             container.background = resolveDrawable(skin, lua.toString(-1)!!)
         }
         lua.getFieldFloat(2, "width")?.let {
@@ -369,21 +369,27 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
     ) {
         fun AddTexture(lua: Lua): Int {
             val name = lua.checkString(2)
-            val texturePath = lua.checkString(3)
+            if (lua.isString(3)) {
+                val texturePath = lua.checkString(3)
 
-            try {
-                val textureFile = bundleFileResolver.resolve(texturePath)
-                if (!textureFile.exists()) {
-                    return lua.error(IllegalArgumentException("Texture file not found: $texturePath"))
+                try {
+                    val textureFile = bundleFileResolver.resolve(texturePath)
+                    if (!textureFile.exists()) {
+                        return lua.error(IllegalArgumentException("Texture file not found: $texturePath"))
+                    }
+
+                    val texture = Texture(textureFile)
+                    val region = TextureRegion(texture)
+                    delegate.add(name, region)
+                } catch (e: Exception) {
+                    return lua.error(RuntimeException("Failed to add texture region '$name': ${e.message}", e))
                 }
-
-                val texture = Texture(textureFile)
+            } else if (lua.isUserdata(3)) {
+                val texture = lua.checkJavaObject(3, LuaTexturesModule.TextureLuaProxy::class).texture
                 val region = TextureRegion(texture)
                 delegate.add(name, region)
-                return 0
-            } catch (e: Exception) {
-                return lua.error(RuntimeException("Failed to add texture region '$name': ${e.message}", e))
             }
+            return 0
         }
 
         fun AddButtonStyle(lua: Lua): Int {
