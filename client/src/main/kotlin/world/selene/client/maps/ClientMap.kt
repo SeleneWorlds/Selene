@@ -3,7 +3,7 @@ package world.selene.client.maps
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import party.iroiro.luajava.Lua
-import world.selene.client.grid.Grid
+import world.selene.client.grid.ClientGrid
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.scene.Scene
 import world.selene.client.visual.VisualManager
@@ -12,7 +12,7 @@ import world.selene.common.util.Coordinate
 
 class ClientMap(
     private val tilePool: TilePool,
-    private val grid: Grid,
+    private val grid: ClientGrid,
     private val entityPool: EntityPool,
     private val scene: Scene,
     private val visualManager: VisualManager,
@@ -74,7 +74,7 @@ class ClientMap(
         entityId: Int,
         networkId: Int,
         coordinate: Coordinate,
-        facing: Coordinate,
+        facing: Float,
         componentOverrides: Map<String, ConfiguredComponent>
     ) {
         val entity = entitiesByNetworkId[networkId] ?: entityPool.obtain(entityId).also {
@@ -84,7 +84,7 @@ class ClientMap(
         }
         entity.networkId = networkId
         entity.setCoordinate(coordinate)
-        grid.getDirection(coordinate, facing)?.let { entity.facing = it }
+        entity.facing = facing
         entity.setupComponents(componentOverrides)
         entity.updateVisual()
     }

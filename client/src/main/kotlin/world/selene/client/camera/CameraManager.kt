@@ -5,12 +5,12 @@ import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
-import world.selene.client.grid.Grid
+import world.selene.client.grid.ClientGrid
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.maps.ClientMap
 import world.selene.common.util.Coordinate
 
-class CameraManager(private val map: ClientMap, private val grid: Grid, private val signals: ClientLuaSignals) {
+class CameraManager(private val map: ClientMap, private val grid: ClientGrid, private val signals: ClientLuaSignals) {
     val camera = OrthographicCamera().apply {
         setToOrtho(true)
     }

@@ -4,7 +4,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.math.MathUtils
 import world.selene.client.camera.CameraManager
-import world.selene.client.grid.Grid
+import world.selene.client.grid.ClientGrid
 import world.selene.client.scene.Scene
 import world.selene.client.visual.VisualContext
 import world.selene.common.util.Coordinate
@@ -13,7 +13,7 @@ class SceneRenderer(
     val debugRenderer: DebugRenderer,
     val cameraManager: CameraManager,
     private val scene: Scene,
-    val grid: Grid
+    val grid: ClientGrid
 ) : VisualContextProvider {
     val interiorFadeSpeed = 20f
     var interiorFadeAlpha = 1f

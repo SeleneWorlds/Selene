@@ -33,6 +33,8 @@ import world.selene.server.config.ServerConfig
 import world.selene.common.data.EntityRegistry
 import world.selene.common.data.TileRegistry
 import world.selene.common.data.TransitionRegistry
+import world.selene.common.grid.Grid
+import world.selene.common.lua.LuaGridModule
 import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.collision.CollisionResolver
 import world.selene.server.data.PersistentNameIdRegistry
@@ -85,6 +87,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaPlayersModule) { bind<LuaModule>() }
         singleOf(::LuaMixinModule) { bind<LuaModule>() }
         singleOf(::LuaServerNetworkModule) { bind<LuaModule>() }
+        singleOf(::LuaGridModule) { bind<LuaModule>() }
         singleOf(::LuaResourcesModule) { bind<LuaModule>() }
         singleOf(::LuaSavesModule) { bind<LuaModule>() }
         singleOf(::LuaMapsModule) { bind<LuaModule>() }
@@ -125,6 +128,7 @@ fun main(args: Array<String>) {
         singleOf(::ChunkViewManager)
         singleOf(::TransitionResolver)
         singleOf(::CollisionResolver)
+        singleOf(::Grid)
         singleOf(::World)
         factoryOf(::Entity)
     }

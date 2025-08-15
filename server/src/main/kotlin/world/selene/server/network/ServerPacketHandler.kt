@@ -35,6 +35,7 @@ class ServerPacketHandler(private val signals: ServerLuaSignals, private val nam
                         controlledEntity.networkId,
                         controlledEntity.coordinate,
                         controlledEntity.coordinate,
+                        controlledEntity.facing?.angle ?: 0f,
                         0f
                     )
                 )

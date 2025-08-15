@@ -85,7 +85,7 @@ class ClientPacketHandler(
             }
         } else if (packet is MoveEntityPacket) {
             context.enqueueWork {
-                clientMap.getEntityByNetworkId(packet.networkId)?.move(packet.end, packet.duration)
+                clientMap.getEntityByNetworkId(packet.networkId)?.move(packet.end, packet.duration, packet.facing)
                 if (playerController.controlledEntityNetworkId == packet.networkId) {
                     gridMovement.confirmMove()
                 }

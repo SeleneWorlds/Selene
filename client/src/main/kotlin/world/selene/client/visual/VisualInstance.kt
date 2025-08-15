@@ -216,7 +216,6 @@ class AnimatorVisualInstance(
         val nextAnimation = animator.getAnimation()
         if (currentAnimation != nextAnimation) {
             currentAnimation = nextAnimation
-            println("Animation changed to $currentAnimation")
             frameIndex = 0
             time = 0f
         }

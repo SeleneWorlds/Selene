@@ -3,6 +3,7 @@ package world.selene.server.entities
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.data.ConfiguredComponent
+import world.selene.common.grid.Grid
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
@@ -21,7 +22,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     var entityType: String = ""
     val name = "John Selene"
     var coordinate = Coordinate(0, 0, 0)
-    var facing = Coordinate(0, 0, 0)
+    var facing: Grid.Direction? = null
     var dimension: Dimension? = null
     val luaProxy = EntityLuaProxy(this)
     val customData = mutableMapOf<String, Any>()
@@ -72,6 +73,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
         val prevCoordinate = this.coordinate
         this.coordinate = coordinate
+        this.facing = world.grid.getDirection(prevCoordinate, coordinate)
         dimension.syncManager.entityMoved(this, prevCoordinate, coordinate, 0.2f)
         scripting.signals.entitySteppedOnTile.emit {
             it.push(luaProxy, Lua.Conversion.NONE)

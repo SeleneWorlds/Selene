@@ -29,7 +29,7 @@ import world.selene.client.data.Registries
 import world.selene.common.data.ComponentRegistry
 import world.selene.common.data.TileRegistry
 import world.selene.client.data.VisualRegistry
-import world.selene.client.grid.Grid
+import world.selene.client.grid.ClientGrid
 import world.selene.client.input.InputManager
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.lua.LuaCameraModule
@@ -50,7 +50,7 @@ import world.selene.common.lua.LuaModule
 import world.selene.client.lua.LuaClientNetworkModule
 import world.selene.client.lua.LuaEntitiesModule
 import world.selene.client.lua.LuaGameModule
-import world.selene.client.lua.LuaGridModule
+import world.selene.client.lua.LuaClientGridModule
 import world.selene.client.lua.LuaInputModule
 import world.selene.client.lua.LuaMovementGridModule
 import world.selene.client.maps.ClientMap
@@ -96,7 +96,7 @@ class SeleneApplication(
             singleOf(::LuaTexturesModule) { bind<LuaModule>() }
             singleOf(::LuaResourcesModule) { bind<LuaModule>() }
             singleOf(::LuaInputModule) { bind<LuaModule>() }
-            singleOf(::LuaGridModule) { bind<LuaModule>() }
+            singleOf(::LuaClientGridModule) { bind<LuaModule>() }
             singleOf(::LuaMovementGridModule) { bind<LuaModule>() }
             singleOf(::LuaGameModule) { bind<LuaModule>() }
             singleOf(::LuaEntitiesModule) { bind<LuaModule>() }
@@ -138,7 +138,7 @@ class SeleneApplication(
             singleOf(::TilePool)
             singleOf(::EntityPool)
             singleOf(::Scene)
-            singleOf(::Grid)
+            singleOf(::ClientGrid)
             factoryOf(::Entity)
         }
         val renderingModule = module {

@@ -12,7 +12,7 @@ data class EntityPacket(
     val networkId: Int,
     val entityId: Int,
     val coordinate: Coordinate,
-    val facing: Coordinate,
+    val facing: Float,
     val components: Map<String, String> // TODO in the future would be nice to have custom de/encoders
 ) : Packet {
     companion object {
@@ -20,7 +20,7 @@ data class EntityPacket(
             buf.writeInt(packet.networkId)
             buf.writeInt(packet.entityId)
             buf.writeCoordinate(packet.coordinate)
-            buf.writeCoordinate(packet.facing)
+            buf.writeFloat(packet.facing)
             buf.writeInt(packet.components.size)
             packet.components.forEach { (key, value) ->
                 buf.writeString(key)
@@ -32,7 +32,7 @@ data class EntityPacket(
             val networkId = buf.readInt()
             val entityId = buf.readInt()
             val coordinate = buf.readCoordinate()
-            val facing = buf.readCoordinate()
+            val facing = buf.readFloat()
             val componentCount = buf.readInt()
             val components = mutableMapOf<String, String>()
             repeat(componentCount) {

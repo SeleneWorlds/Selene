@@ -22,7 +22,7 @@ class DimensionSyncManager {
         updateEntityWatches(entity)
         sendToAllWatching(
             entity.networkId,
-            MoveEntityPacket(entity.networkId, start, end, duration)
+            MoveEntityPacket(entity.networkId, start, end, entity.facing?.angle ?: 0f, duration)
         )
     }
 
@@ -30,7 +30,7 @@ class DimensionSyncManager {
         updateEntityWatches(entity)
         sendToAllWatching(
             entity.networkId,
-            MoveEntityPacket(entity.networkId, entity.coordinate, entity.coordinate, 0f)
+            MoveEntityPacket(entity.networkId, entity.coordinate, entity.coordinate, entity.facing?.angle ?: 0f,0f)
         )
     }
 }

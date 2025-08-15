@@ -10,7 +10,7 @@ import party.iroiro.luajava.Lua
 import world.selene.client.animator.HumanoidAnimator
 import java.util.ArrayDeque
 import world.selene.client.controls.EntityMotion
-import world.selene.client.grid.Grid
+import world.selene.client.grid.ClientGrid
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.scene.Renderable
 import world.selene.client.scene.Scene
@@ -39,7 +39,7 @@ class Entity(
     val objectMapper: ObjectMapper,
     val visualManager: VisualManager,
     val scene: Scene,
-    val grid: Grid
+    val grid: ClientGrid
 ) :
     Pool.Poolable, Renderable {
     var networkId: Int = 0
@@ -50,7 +50,8 @@ class Entity(
     val luaProxy = EntityLuaProxy(this)
 
     override var coordinate: Coordinate = Coordinate.Zero; private set
-    var facing: Grid.Direction = Grid.Direction.None
+    var facing: Float = 0f
+    val direction get() = grid.getDirection(facing)
     override val sortLayerOffset: Int get() = visualInstances.maxOfOrNull { it.second.sortLayerOffset } ?: 0
     override val sortLayer: Int get() = grid.getSortLayer(position, sortLayerOffset)
     override var localSortLayer: Int = 0
@@ -67,8 +68,8 @@ class Entity(
      * Moves the entity to the target position over the given duration.
      * If skipQueue is true, clears the queue before adding the new motion.
      */
-    fun move(target: Coordinate, duration: Float, skipQueue: Boolean = false) {
-        facing = grid.getDirection(coordinate, target) ?: Grid.Direction.None
+    fun move(target: Coordinate, duration: Float, facing: Float, skipQueue: Boolean = false) {
+        this.facing = facing
         if (skipQueue) {
             motionQueue.clear()
         }

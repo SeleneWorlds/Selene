@@ -13,7 +13,7 @@ import world.selene.client.camera.CameraManager
 import world.selene.client.config.ClientRuntimeConfig
 import world.selene.client.controls.GridMovement
 import world.selene.client.controls.PlayerController
-import world.selene.client.grid.Grid
+import world.selene.client.grid.ClientGrid
 import world.selene.client.input.InputManager
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.maps.ClientMap
@@ -34,7 +34,7 @@ class SeleneApplicationListener(
     private val cameraManager: CameraManager,
     private val inputMultiplexer: InputMultiplexer,
     private val inputManager: InputManager,
-    private val grid: Grid,
+    private val grid: ClientGrid,
     private val ui: UI,
     private val clientMap: ClientMap,
     private val playerController: PlayerController,

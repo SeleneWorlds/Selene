@@ -105,7 +105,7 @@ class PlayerSyncManager(
                     networkId = entity.networkId,
                     entityId = registries.mappings.getId("entities", entity.entityType) ?: 0,
                     coordinate = entity.coordinate,
-                    facing = entity.facing,
+                    facing = entity.facing?.angle ?: 0f,
                     components = entity.resolveComponentsFor(player).mapValues { objectMapper.writeValueAsString(it.value) }
                 )
             )

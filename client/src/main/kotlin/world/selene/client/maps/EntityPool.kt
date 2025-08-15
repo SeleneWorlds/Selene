@@ -2,10 +2,7 @@ package world.selene.client.maps
 
 import com.badlogic.gdx.utils.Pool
 import org.koin.mp.KoinPlatform.getKoin
-import world.selene.client.visual.VisualManager
 import world.selene.client.data.Registries
-import world.selene.client.grid.Grid
-import world.selene.client.scene.Scene
 
 class EntityPool(private val registries: Registries) :
     Pool<Entity>() {

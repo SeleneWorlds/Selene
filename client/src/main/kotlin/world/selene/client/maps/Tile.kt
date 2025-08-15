@@ -2,7 +2,7 @@ package world.selene.client.maps
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.Pool
-import world.selene.client.grid.Grid
+import world.selene.client.grid.ClientGrid
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.scene.Renderable
 import world.selene.client.visual.VisualContext
@@ -11,7 +11,7 @@ import world.selene.common.data.TileDefinition
 import world.selene.common.util.Coordinate
 import kotlin.math.min
 
-class Tile(private val grid: Grid) : Pool.Poolable, Renderable {
+class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable {
     var tileName: String? = null
     var tileDefinition: TileDefinition? = null
 
