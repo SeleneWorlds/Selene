@@ -1,5 +1,6 @@
 package world.selene.client.ui
 
+import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.ui.Container
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup
@@ -145,6 +146,38 @@ object SeleneLmlParser {
                 }
 
             }, "height")
+
+            attribute(object : LmlAttribute<Actor> {
+                override fun getHandledType(): Class<Actor> {
+                    return Actor::class.java
+                }
+
+                override fun process(
+                    parser: LmlParser,
+                    tag: LmlTag,
+                    actor: Actor,
+                    rawAttributeData: String
+                ) {
+                    actor.originX = rawAttributeData.toFloat()
+                }
+
+            }, "originX")
+
+            attribute(object : LmlAttribute<Actor> {
+                override fun getHandledType(): Class<Actor> {
+                    return Actor::class.java
+                }
+
+                override fun process(
+                    parser: LmlParser,
+                    tag: LmlTag,
+                    actor: Actor,
+                    rawAttributeData: String
+                ) {
+                    actor.originY = rawAttributeData.toFloat()
+                }
+
+            }, "originY")
         }
     }
 }
