@@ -20,6 +20,7 @@ class ClientMap(
 ) {
     private val tiles = ArrayListMultimap.create<Coordinate, Tile>()
     private val entitiesByNetworkId = HashMap<Int, Entity>()
+
     // TODO entitiesByCoordinate is never updated when entity is moved
     private val entitiesByCoordinate = ArrayListMultimap.create<Coordinate, Entity>()
 
@@ -83,6 +84,7 @@ class ClientMap(
         }
         entity.networkId = networkId
         entity.setCoordinate(coordinate)
+        grid.getDirection(coordinate, facing)?.let { entity.facing = it }
         entity.setupComponents(componentOverrides)
         entity.updateVisual()
     }
