@@ -67,13 +67,13 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     }
 
     fun moveTo(coordinate: Coordinate): Boolean {
+        this.facing = world.grid.getDirection(this.coordinate, coordinate)
         val dimension = dimension ?: return false
         if (world.collisionResolver.collidesAt(dimension, collisionViewer, coordinate)) {
             return false
         }
         val prevCoordinate = this.coordinate
         this.coordinate = coordinate
-        this.facing = world.grid.getDirection(prevCoordinate, coordinate)
         dimension.syncManager.entityMoved(this, prevCoordinate, coordinate, 0.2f)
         scripting.signals.entitySteppedOnTile.emit {
             it.push(luaProxy, Lua.Conversion.NONE)
