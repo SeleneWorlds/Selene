@@ -10,6 +10,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.checkInt
+import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
 import world.selene.common.lua.getFieldFloat
 import world.selene.common.lua.register
@@ -209,6 +210,27 @@ class LuaTexturesModule : LuaModule {
             } catch (e: Exception) {
                 return lua.error(RuntimeException("Failed to draw line: ${e.message}", e))
             }
+        }
+
+        fun CopyFrom(lua: Lua): Int {
+            if (disposed) {
+                return lua.error(IllegalStateException("Texture has been disposed"))
+            }
+
+            val sourceTexture = lua.checkJavaObject(2, TextureLuaProxy::class)
+            if (sourceTexture.disposed) {
+                return lua.error(IllegalStateException("Source texture has been disposed"))
+            }
+
+            val srcX = lua.checkInt(3)
+            val srcY = lua.checkInt(4)
+            val srcWidth = lua.checkInt(5)
+            val srcHeight = lua.checkInt(6)
+            val dstX = lua.checkInt(7)
+            val dstY = lua.checkInt(8)
+
+            pixmap.drawPixmap(sourceTexture.pixmap, srcX, srcY, srcWidth, srcHeight, dstX, dstY, srcWidth, srcHeight)
+            return 0
         }
 
         fun Update() {
