@@ -29,6 +29,7 @@ import com.github.czyzby.lml.util.LmlUtilities
 import com.github.czyzby.lml.vis.util.VisLml
 import com.github.czyzby.lml.vis.util.VisLmlParserBuilder
 import world.selene.client.ui.element.Canvas
+import world.selene.client.ui.element.InputMask
 
 
 object SeleneLmlParser {
@@ -59,6 +60,7 @@ object SeleneLmlParser {
             tag(WindowLmlTagProvider(), "window")
 
             tag(Canvas.CanvasLmlTagProvider, "canvas")
+            tag(InputMask.InputMaskLmlTagProvider, "inputMask")
 
             // For some reason these attributes are not supported by default, so we expose them to LML
             attribute(object : LmlAttribute<TextField> {
@@ -72,7 +74,7 @@ object SeleneLmlParser {
                     actor: TextField,
                     rawAttributeData: String
                 ) {
-                    actor.maxLength = rawAttributeData.toInt()
+                    actor.maxLength = parser.parseInt(rawAttributeData, actor)
                 }
 
             }, "maxLength")
@@ -122,7 +124,7 @@ object SeleneLmlParser {
                     actor: Container<*>,
                     rawAttributeData: String
                 ) {
-                    val width = rawAttributeData.toFloat()
+                    val width = parser.parseFloat(rawAttributeData, actor)
                     actor.width = width
                     actor.width(width)
                 }
@@ -140,7 +142,7 @@ object SeleneLmlParser {
                     actor: Container<*>,
                     rawAttributeData: String
                 ) {
-                    val height = rawAttributeData.toFloat()
+                    val height = parser.parseFloat(rawAttributeData, actor)
                     actor.height = height
                     actor.height(height)
                 }
@@ -158,7 +160,7 @@ object SeleneLmlParser {
                     actor: Actor,
                     rawAttributeData: String
                 ) {
-                    actor.originX = rawAttributeData.toFloat()
+                    actor.originX = parser.parseFloat(rawAttributeData, actor)
                 }
 
             }, "originX")
@@ -174,10 +176,26 @@ object SeleneLmlParser {
                     actor: Actor,
                     rawAttributeData: String
                 ) {
-                    actor.originY = rawAttributeData.toFloat()
+                    actor.originY = parser.parseFloat(rawAttributeData, actor)
                 }
 
             }, "originY")
+
+            attribute(object : LmlAttribute<InputMask> {
+                override fun getHandledType(): Class<InputMask> {
+                    return InputMask::class.java
+                }
+
+                override fun process(
+                    parser: LmlParser,
+                    tag: LmlTag,
+                    actor: InputMask,
+                    rawAttributeData: String
+                ) {
+                    actor.mask = parser.data.defaultSkin.getDrawable(parser.parseString(rawAttributeData, actor))
+                }
+
+            }, "mask")
         }
     }
 }
