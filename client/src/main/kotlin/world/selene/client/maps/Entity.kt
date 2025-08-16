@@ -172,6 +172,10 @@ class Entity(
         scene.updateSorting(this)
     }
 
+    fun addComponent(name: String, component: ConfiguredComponent) {
+        this.components[name] = component
+    }
+
     fun setupComponents(overrides: Map<String, ConfiguredComponent>) {
         entityDefinition?.components?.forEach {
             this.components[it.key] = it.value
@@ -203,7 +207,7 @@ class Entity(
             val componentName = lua.checkString(2)
             val componentData = lua.toMap(3)
             val component = delegate.objectMapper.convertValue(componentData, ConfiguredComponent::class.java)
-            delegate.components[componentName] = component
+            delegate.addComponent(componentName, component)
             return 0
         }
 
@@ -212,6 +216,10 @@ class Entity(
             val component = delegate.components[componentName]
             lua.push(if (component is LuaProxyProvider<*>) component.luaProxy else component, Lua.Conversion.NONE)
             return 1
+        }
+
+        fun UpdateVisual() {
+            delegate.updateVisual()
         }
 
         fun Spawn() {
