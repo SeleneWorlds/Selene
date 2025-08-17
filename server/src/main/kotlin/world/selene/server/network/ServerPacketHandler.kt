@@ -2,16 +2,23 @@ package world.selene.server.network
 
 import party.iroiro.luajava.Lua
 import world.selene.common.data.NameIdRegistry
+import world.selene.common.lua.LuaManager
+import world.selene.common.lua.LuaPayloadRegistry
 import world.selene.common.network.Packet
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.packet.AuthenticatePacket
+import world.selene.common.network.packet.CustomPayloadPacket
 import world.selene.common.network.packet.MoveEntityPacket
 import world.selene.common.network.packet.NameIdMappingsPacket
 import world.selene.common.network.packet.RequestMovePacket
 import world.selene.server.lua.ServerLuaSignals
 
-class ServerPacketHandler(private val signals: ServerLuaSignals, private val nameIdRegistry: NameIdRegistry) :
-    PacketHandler<NetworkClient> {
+class ServerPacketHandler(
+    private val signals: ServerLuaSignals,
+    private val nameIdRegistry: NameIdRegistry,
+    private val luaManager: LuaManager,
+    private val payloadRegistry: LuaPayloadRegistry
+) : PacketHandler<NetworkClient> {
     override fun handle(
         context: NetworkClient,
         packet: Packet
@@ -39,6 +46,36 @@ class ServerPacketHandler(private val signals: ServerLuaSignals, private val nam
                         0f
                     )
                 )
+            }
+        } else if (packet is CustomPayloadPacket) {
+            context.enqueueWork {
+                val handler = payloadRegistry.retrieveHandler(packet.payloadId)
+                if (handler != null) {
+                    handler.push(luaManager.lua)
+                    luaManager.lua.newTable()
+                    // Helper to recursively push Map<String, Any> to Lua table
+                    fun pushMapToLuaTable(map: Map<String, Any>) {
+                        for ((key, value) in map) {
+                            when (value) {
+                                is Int -> luaManager.lua.push(value)
+                                is Float -> luaManager.lua.push(value)
+                                is Double -> luaManager.lua.push(value)
+                                is String -> luaManager.lua.push(value)
+                                is Boolean -> luaManager.lua.push(value)
+                                is Map<*, *> -> {
+                                    luaManager.lua.newTable()
+                                    @Suppress("UNCHECKED_CAST")
+                                    pushMapToLuaTable(value as Map<String, Any>)
+                                }
+
+                                else -> luaManager.lua.push(value.toString()) // fallback
+                            }
+                            luaManager.lua.setField(-2, key)
+                        }
+                    }
+                    pushMapToLuaTable(packet.payload)
+                    luaManager.lua.pCall(1, 0)
+                }
             }
         }
     }
