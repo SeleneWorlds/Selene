@@ -4,13 +4,16 @@ import party.iroiro.luajava.Lua
 import world.selene.common.data.TileDefinition
 import world.selene.common.lua.checkString
 import world.selene.common.util.Coordinate
+import world.selene.server.dimensions.Dimension
 
 class TileLuaProxy(
     private val name: String,
     private val definition: TileDefinition,
+    private val dimension: Dimension.DimensionLuaProxy,
     private val coordinate: Coordinate
 ) {
     val Name get() = name
+    val Dimension get() = dimension
     val Coordinate get() = coordinate
     val X get() = coordinate.x
     val Y get() = coordinate.y

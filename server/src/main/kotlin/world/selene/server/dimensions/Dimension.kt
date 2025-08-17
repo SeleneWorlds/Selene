@@ -36,14 +36,14 @@ class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManag
                 val baseTileName = delegate.registries.mappings.getName("tiles", baseTile)
                 val baseTileDef = baseTileName?.let { delegate.registries.tiles.get(it) }
                 if (baseTileDef != null) {
-                    tiles.add(TileLuaProxy(baseTileName, baseTileDef, coordinate))
+                    tiles.add(TileLuaProxy(baseTileName, baseTileDef, this, coordinate))
                 }
                 val additionalTiles = chunkView.getAdditionalTilesAt(coordinate)
                 additionalTiles.forEach { tileId ->
                     val tileName = delegate.registries.mappings.getName("tiles", tileId)
                     val tileDef = tileName?.let { delegate.registries.tiles.get(it) }
                     if (tileDef != null) {
-                        tiles.add(TileLuaProxy(tileName, tileDef, coordinate))
+                        tiles.add(TileLuaProxy(tileName, tileDef, this, coordinate))
                     }
                 }
                 lua.push(tiles, Lua.Conversion.FULL)
