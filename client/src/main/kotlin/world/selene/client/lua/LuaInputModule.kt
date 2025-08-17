@@ -14,7 +14,14 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
 
     override fun register(table: LuaValue) {
         table.register("BindContinuousAction", this::luaBindContinuousAction)
+        table.register("BindAction", this::luaBindAction)
+        table.register("BindPressAction", this::luaBindPressAction)
+        table.register("BindReleaseAction", this::luaBindReleaseAction)
+        table.register("IsKeyPressed", this::luaIsKeyPressed)
+        table.register("IsMousePressed", this::luaIsMousePressed)
         table.register("GetMousePosition", this::luaGetMousePosition)
+        table.set("KEYBOARD", InputManager.InputType.KEYBOARD)
+        table.set("MOUSE", InputManager.InputType.MOUSE)
     }
 
     private fun luaBindContinuousAction(lua: Lua): Int {
@@ -28,6 +35,108 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
             lua.pCall(0, 0)
         }
         return 0
+    }
+
+    private fun luaBindAction(lua: Lua): Int {
+        val type = lua.checkEnum<InputManager.InputType>(1)
+        val input = lua.checkString(2)
+        lua.pushValue(3)
+        val function = lua.get()
+        when(type) {
+            InputManager.InputType.KEYBOARD -> {
+                val keyCode = inputManager.lookupKeyboardKey(input)
+                if (keyCode == -1) {
+                    return lua.error(IllegalArgumentException("Unknown keyboard key: $input"))
+                }
+                inputManager.bindKeyboardAction(keyCode) {
+                    val lua = function.state()
+                    lua.push(function)
+                    lua.pCall(0, 0)
+                }
+            }
+            InputManager.InputType.MOUSE -> {
+                inputManager.bindMouseAction(input) { screenX, screenY ->
+                    val lua = function.state()
+                    lua.push(function)
+                    lua.push(screenX)
+                    lua.push(screenY)
+                    lua.pCall(2, 0)
+                }
+            }
+        }
+        return 0
+    }
+
+    private fun luaBindPressAction(lua: Lua): Int {
+        val type = lua.checkEnum<InputManager.InputType>(1)
+        val input = lua.checkString(2)
+        lua.pushValue(3)
+        val function = lua.get()
+        when(type) {
+            InputManager.InputType.KEYBOARD -> {
+                val keyCode = inputManager.lookupKeyboardKey(input)
+                if (keyCode == -1) {
+                    return lua.error(IllegalArgumentException("Unknown keyboard key: $input"))
+                }
+                inputManager.bindKeyboardPressAction(keyCode) {
+                    val lua = function.state()
+                    lua.push(function)
+                    lua.pCall(0, 0)
+                }
+            }
+            InputManager.InputType.MOUSE -> {
+                inputManager.bindMousePressAction(input) { screenX, screenY ->
+                    val lua = function.state()
+                    lua.push(function)
+                    lua.push(screenX)
+                    lua.push(screenY)
+                    lua.pCall(2, 0)
+                }
+            }
+        }
+        return 0
+    }
+
+    private fun luaBindReleaseAction(lua: Lua): Int {
+        val type = lua.checkEnum<InputManager.InputType>(1)
+        val input = lua.checkString(2)
+        lua.pushValue(3)
+        val function = lua.get()
+        when(type) {
+            InputManager.InputType.KEYBOARD -> {
+                val keyCode = inputManager.lookupKeyboardKey(input)
+                if (keyCode == -1) {
+                    return lua.error(IllegalArgumentException("Unknown keyboard key: $input"))
+                }
+                inputManager.bindKeyboardReleaseAction(keyCode) {
+                    val lua = function.state()
+                    lua.push(function)
+                    lua.pCall(0, 0)
+                }
+            }
+            InputManager.InputType.MOUSE -> {
+                inputManager.bindMouseReleaseAction(input) { screenX, screenY ->
+                    val lua = function.state()
+                    lua.push(function)
+                    lua.push(screenX)
+                    lua.push(screenY)
+                    lua.pCall(2, 0)
+                }
+            }
+        }
+        return 0
+    }
+
+    private fun luaIsKeyPressed(lua: Lua): Int {
+        val key = lua.checkString(1)
+        lua.push(inputManager.isKeyPressed(key))
+        return 1
+    }
+
+    private fun luaIsMousePressed(lua: Lua): Int {
+        val button = lua.checkString(1)
+        lua.push(inputManager.isMousePressed(button))
+        return 1
     }
 
     private fun luaGetMousePosition(lua: Lua): Int {

@@ -29,10 +29,48 @@ class InputManager : InputProcessor {
     private val pressedMouseButtons = mutableSetOf<Int>()
 
     private val keyboardActions = mutableMapOf<Int, () -> Unit>()
+    private val keyboardPressActions = mutableMapOf<Int, () -> Unit>()
+    private val keyboardReleaseActions = mutableMapOf<Int, () -> Unit>()
+    private val mouseActions = mutableMapOf<Int, (Int, Int) -> Unit>()
+    private val mousePressActions = mutableMapOf<Int, (Int, Int) -> Unit>()
+    private val mouseReleaseActions = mutableMapOf<Int, (Int, Int) -> Unit>()
     private val continuousActions = mutableMapOf<Pair<InputType, Int>, () -> Unit>()
 
     fun bindKeyboardAction(keyCode: Int, function: () -> Unit) {
         keyboardActions[keyCode] = function
+    }
+
+    fun bindKeyboardPressAction(keyCode: Int, function: () -> Unit) {
+        keyboardPressActions[keyCode] = function
+    }
+
+    fun bindKeyboardReleaseAction(keyCode: Int, function: () -> Unit) {
+        keyboardReleaseActions[keyCode] = function
+    }
+
+    fun bindMouseAction(button: String, function: (Int, Int) -> Unit) {
+        val buttonCode = lookupMouseButton(button)
+        mouseActions[buttonCode] = function
+    }
+
+    fun bindMousePressAction(button: String, function: (Int, Int) -> Unit) {
+        val buttonCode = lookupMouseButton(button)
+        mousePressActions[buttonCode] = function
+    }
+
+    fun bindMouseReleaseAction(button: String, function: (Int, Int) -> Unit) {
+        val buttonCode = lookupMouseButton(button)
+        mouseReleaseActions[buttonCode] = function
+    }
+
+    fun isKeyPressed(key: String): Boolean {
+        val keyCode = lookupKeyboardKey(key)
+        return pressedKeys.contains(keyCode)
+    }
+
+    fun isMousePressed(button: String): Boolean {
+        val buttonCode = lookupMouseButton(button)
+        return pressedMouseButtons.contains(buttonCode)
     }
 
     fun bindContinuousAction(type: InputType, input: String, function: () -> Unit) {
@@ -82,11 +120,13 @@ class InputManager : InputProcessor {
 
     override fun keyDown(keycode: Int): Boolean {
         pressedKeys.add(keycode)
+        keyboardPressActions[keycode]?.invoke()
         return false
     }
 
     override fun keyUp(keycode: Int): Boolean {
         pressedKeys.remove(keycode)
+        keyboardReleaseActions[keycode]?.invoke()
         return false
     }
 
@@ -101,6 +141,7 @@ class InputManager : InputProcessor {
         button: Int
     ): Boolean {
         pressedMouseButtons.add(button)
+        mousePressActions[button]?.invoke(screenX, screenY)
         return false
     }
 
@@ -111,6 +152,8 @@ class InputManager : InputProcessor {
         button: Int
     ): Boolean {
         pressedMouseButtons.remove(button)
+        mouseActions[button]?.invoke(screenX, screenY)
+        mouseReleaseActions[button]?.invoke(screenX, screenY)
         return false
     }
 
