@@ -20,6 +20,7 @@ import world.selene.common.data.ComponentRegistry
 import world.selene.common.data.NameIdRegistry
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaMixinModule
+import world.selene.common.lua.LuaRegistriesModule
 import world.selene.common.lua.LuaMixinRegistry
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.LuaPayloadRegistry
@@ -39,6 +40,7 @@ import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.collision.CollisionResolver
 import world.selene.server.data.PersistentNameIdRegistry
 import world.selene.server.data.Registries
+import world.selene.common.data.RegistryProvider
 import world.selene.server.dimensions.Dimension
 import world.selene.server.dimensions.DimensionManager
 import world.selene.server.entities.Entity
@@ -95,6 +97,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaServerMapModule) { bind<LuaModule>() }
         singleOf(::LuaEntitiesModule) { bind<LuaModule>() }
         singleOf(::LuaDimensionsModule) { bind<LuaModule>() }
+        singleOf(::LuaRegistriesModule) { bind<LuaModule>() }
         singleOf(::Scripting)
     }
     val bundleModule = module {
@@ -117,7 +120,7 @@ fun main(args: Array<String>) {
         singleOf(::EntityRegistry)
         singleOf(::ComponentRegistry)
         singleOf(::PersistentNameIdRegistry) { bind<NameIdRegistry>() }
-        singleOf(::Registries)
+        singleOf(::Registries) { bind<RegistryProvider>() }
     }
     val worldModule = module {
         singleOf(::MapTreeFormatJsonV1) { bind<MapTreeFormat>() }

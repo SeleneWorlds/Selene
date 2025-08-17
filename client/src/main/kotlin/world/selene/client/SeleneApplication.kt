@@ -26,6 +26,7 @@ import world.selene.client.config.ClientRuntimeConfig
 import world.selene.client.controls.GridMovement
 import world.selene.client.controls.PlayerController
 import world.selene.client.data.Registries
+import world.selene.common.data.RegistryProvider
 import world.selene.client.data.SoundRegistry
 import world.selene.common.data.ComponentRegistry
 import world.selene.common.data.TileRegistry
@@ -48,6 +49,7 @@ import world.selene.common.bundles.BundleLoader
 import world.selene.common.bundles.BundleLocator
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaMixinModule
+import world.selene.common.lua.LuaRegistriesModule
 import world.selene.common.lua.LuaMixinRegistry
 import world.selene.common.lua.LuaModule
 import world.selene.client.lua.LuaClientNetworkModule
@@ -104,6 +106,7 @@ class SeleneApplication(
             singleOf(::LuaMovementGridModule) { bind<LuaModule>() }
             singleOf(::LuaGameModule) { bind<LuaModule>() }
             singleOf(::LuaEntitiesModule) { bind<LuaModule>() }
+            singleOf(::LuaRegistriesModule) { bind<LuaModule>() }
         }
         val bundleModule = module {
             singleOf(::BundleLoader)
@@ -124,7 +127,7 @@ class SeleneApplication(
             singleOf(::VisualRegistry)
             singleOf(::SoundRegistry)
             singleOf(::NameIdRegistry)
-            singleOf(::Registries)
+            singleOf(::Registries) { bind<RegistryProvider>() }
         }
         val clientModule = module {
             single { config }
