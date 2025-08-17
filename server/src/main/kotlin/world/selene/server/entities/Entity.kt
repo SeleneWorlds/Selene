@@ -88,6 +88,8 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         val Coordinate get() = delegate.coordinate
         val Dimension get() = delegate.dimension?.luaProxy
         val Map get() = delegate.dimension?.mapTree?.luaProxy
+        val Collision get() = delegate.collisionViewer
+        val Vision get() = delegate.visionViewer
 
         fun SetCoordinate(x: Int, y: Int, z: Int) {
             delegate.coordinate = Coordinate(x, y, z)
