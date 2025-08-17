@@ -20,7 +20,17 @@ class Scene {
     }
 
     fun add(renderable: Renderable) {
-        renderables.add(renderable)
+        val insertionIndex = renderables.binarySearch { existing ->
+            val sortLayerComparison = renderable.sortLayer.compareTo(existing.sortLayer)
+            if (sortLayerComparison != 0) {
+                sortLayerComparison
+            } else {
+                existing.localSortLayer.compareTo(renderable.localSortLayer)
+            }
+        }
+        
+        val actualIndex = if (insertionIndex < 0) -(insertionIndex + 1) else insertionIndex
+        renderables.add(actualIndex, renderable)
     }
 
     fun updateAllSorting() {
