@@ -45,7 +45,7 @@ import world.selene.server.entities.EntityManager
 import world.selene.server.http.HttpServer
 import world.selene.server.lua.LuaDimensionsModule
 import world.selene.server.lua.LuaEntitiesModule
-import world.selene.server.lua.LuaMapsModule
+import world.selene.server.lua.LuaServerMapModule
 import world.selene.server.lua.LuaPlayersModule
 import world.selene.server.lua.LuaServerModule
 import world.selene.server.lua.LuaServerNetworkModule
@@ -90,7 +90,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaGridModule) { bind<LuaModule>() }
         singleOf(::LuaResourcesModule) { bind<LuaModule>() }
         singleOf(::LuaSavesModule) { bind<LuaModule>() }
-        singleOf(::LuaMapsModule) { bind<LuaModule>() }
+        singleOf(::LuaServerMapModule) { bind<LuaModule>() }
         singleOf(::LuaEntitiesModule) { bind<LuaModule>() }
         singleOf(::LuaDimensionsModule) { bind<LuaModule>() }
         singleOf(::Scripting)

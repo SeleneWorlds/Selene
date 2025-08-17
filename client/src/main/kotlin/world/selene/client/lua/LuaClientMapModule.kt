@@ -10,7 +10,7 @@ import world.selene.common.lua.checkInt
 import world.selene.common.lua.register
 import world.selene.common.util.Coordinate
 
-class LuaMapModule(
+class LuaClientMapModule(
     private val clientMap: ClientMap,
     private val signals: ClientLuaSignals
 ) : LuaModule {

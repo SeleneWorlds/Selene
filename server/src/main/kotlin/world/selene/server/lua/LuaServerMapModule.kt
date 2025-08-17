@@ -9,8 +9,8 @@ import world.selene.server.maps.MapManager
 import world.selene.server.maps.MapTree
 import world.selene.server.sync.ScopedChunkView
 
-class LuaMapsModule(private val mapManager: MapManager) : LuaModule {
-    override val name = "selene.maps"
+class LuaServerMapModule(private val mapManager: MapManager) : LuaModule {
+    override val name = "selene.map"
 
     override fun register(table: LuaValue) {
         table.register("Create", this::luaCreate)
