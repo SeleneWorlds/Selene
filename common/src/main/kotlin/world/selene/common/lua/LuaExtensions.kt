@@ -138,6 +138,9 @@ fun <T : Enum<T>> Lua.checkEnum(index: Int, clazz: KClass<T>): T {
     }
     val type = type(index)
     return when (type) {
+        Lua.LuaType.USERDATA -> {
+            return checkJavaObject(index, clazz)
+        }
         Lua.LuaType.STRING -> {
             try {
                 enumValueOf(toString(index)!!, clazz)
