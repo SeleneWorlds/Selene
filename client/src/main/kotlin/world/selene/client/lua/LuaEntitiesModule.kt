@@ -2,16 +2,20 @@ package world.selene.client.lua
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
+import world.selene.client.maps.ClientMap
 import world.selene.client.maps.Entity
 import world.selene.client.maps.EntityPool
 import world.selene.common.data.EntityRegistry
 import world.selene.common.data.VisualComponent
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
+import world.selene.common.lua.checkInt
+import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
 import world.selene.common.lua.register
+import world.selene.common.util.Coordinate
 
-class LuaEntitiesModule(private val entityPool: EntityPool, private val entityRegistry: EntityRegistry) : LuaModule {
+class LuaEntitiesModule(private val entityPool: EntityPool, private val entityRegistry: EntityRegistry, private val clientMap: ClientMap) : LuaModule {
     override val name = "selene.entities"
 
     override fun initialize(luaManager: LuaManager) {
@@ -21,6 +25,7 @@ class LuaEntitiesModule(private val entityPool: EntityPool, private val entityRe
 
     override fun register(table: LuaValue) {
         table.register("Create", this::luaCreate)
+        table.register("GetEntitiesAt", this::luaGetEntitiesAt)
     }
 
     private fun luaCreate(lua: Lua): Int {
@@ -35,4 +40,18 @@ class LuaEntitiesModule(private val entityPool: EntityPool, private val entityRe
         lua.push(entity.luaProxy, Lua.Conversion.NONE)
         return 1
     }
+
+    private fun luaGetEntitiesAt(lua: Lua): Int {
+        val coordinate = lua.checkJavaObject(1, Coordinate::class)
+
+        try {
+            val entities = clientMap.getEntitiesAt(coordinate)
+            val entityProxies = entities.map { it.luaProxy }
+            lua.push(entityProxies, Lua.Conversion.FULL)
+            return 1
+        } catch (e: Exception) {
+            return lua.error(RuntimeException("Failed to get entities at $coordinate: ${e.message}", e))
+        }
+    }
+
 }

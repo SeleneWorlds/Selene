@@ -114,6 +114,10 @@ class ClientMap(
         return tiles.get(coordinate).isNotEmpty()
     }
 
+    fun getEntitiesAt(coordinate: Coordinate): List<Entity> {
+        return entitiesByCoordinate.get(coordinate)
+    }
+
     fun removeChunk(x: Int, y: Int, z: Int, width: Int, height: Int) {
         for (dy in 0 until height) {
             for (dx in 0 until width) {
