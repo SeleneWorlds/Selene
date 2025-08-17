@@ -108,12 +108,19 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
-        fun GetCustomData(key: String, defaultValue: Any): Any {
-            return delegate.customData.getOrDefault(key, defaultValue)
+        fun GetCustomData(lua: Lua): Int {
+            val key = lua.checkString(2)
+            val defaultValue = lua.toObject(3)
+            val value = delegate.customData.getOrDefault(key, defaultValue)
+            lua.push(value, Lua.Conversion.FULL)
+            return 1
         }
 
-        fun SetCustomData(key: String, value: Any) {
+        fun SetCustomData(lua: Lua): Int {
+            val key = lua.checkString(2)
+            val value = lua.toObject(3)!!
             delegate.customData[key] = value
+            return 0
         }
 
         fun CollisionMap(lua: Lua): Int {
