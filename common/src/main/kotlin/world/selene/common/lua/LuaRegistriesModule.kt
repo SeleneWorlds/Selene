@@ -16,7 +16,19 @@ class LuaRegistriesModule(
     }
 
     override fun register(table: LuaValue) {
+        table.register("FindAll", this::luaFindAll)
         table.register("FindByMetadata", this::luaFindByMetadata)
+    }
+
+    private fun luaFindAll(lua: Lua): Int {
+        val registryName = lua.checkString(1)
+        val registry = registryProvider.getRegistry(registryName)
+        if (registry == null) {
+            return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
+        }
+        val list = registry.getAll().map { RegistryObjectLuaProxy(it.key, it.value) }
+        lua.push(list, Lua.Conversion.FULL)
+        return 1
     }
 
     private fun luaFindByMetadata(lua: Lua): Int {
@@ -60,6 +72,7 @@ class LuaRegistriesModule(
                 is TileDefinition -> {
                     element.metadata[key]
                 }
+
                 is JsonNode -> {
                     element["metadata"]?.get(key)?.asText()
                 }

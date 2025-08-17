@@ -5,6 +5,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.data.ConfiguredComponent
 import world.selene.common.grid.Grid
 import world.selene.common.lua.checkBoolean
+import world.selene.common.lua.checkDirection
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
 import world.selene.common.util.Coordinate
@@ -86,6 +87,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     class EntityLuaProxy(val delegate: Entity) {
         val Name get() = delegate.name
         val Coordinate get() = delegate.coordinate
+        val Facing get() = delegate.facing
         val Dimension get() = delegate.dimension?.luaProxy
         val Map get() = delegate.dimension?.mapTree?.luaProxy
         val Collision get() = delegate.collisionViewer
@@ -94,6 +96,16 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         fun SetCoordinate(x: Int, y: Int, z: Int) {
             delegate.coordinate = Coordinate(x, y, z)
             delegate.dimension?.syncManager?.entityTeleported(delegate)
+        }
+
+        fun SetFacing(lua: Lua): Int {
+            val direction = lua.checkDirection(2, delegate.world.grid)
+            delegate.facing = direction
+            delegate.dimension?.syncManager?.entityTurned(
+                delegate,
+                direction
+            )
+            return 0
         }
 
         fun GetCustomData(key: String, defaultValue: Any): Any {
@@ -106,7 +118,11 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         fun CollisionMap(lua: Lua): Int {
             val coordinate = lua.checkJavaObject<Coordinate>(2)
-            val chunkView = delegate.world.chunkViewManager.atCoordinate(delegate.dimension!!, delegate.collisionViewer, coordinate).luaProxy
+            val chunkView = delegate.world.chunkViewManager.atCoordinate(
+                delegate.dimension!!,
+                delegate.collisionViewer,
+                coordinate
+            ).luaProxy
             lua.push(chunkView, Lua.Conversion.NONE)
             return 1
         }

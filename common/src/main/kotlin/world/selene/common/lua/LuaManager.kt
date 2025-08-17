@@ -7,6 +7,7 @@ import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.lua54.Lua54
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.bundles.LocatedBundle
+import world.selene.common.grid.Grid
 import world.selene.common.util.Coordinate
 import java.io.File
 import java.nio.Buffer
@@ -26,7 +27,8 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
     private val packages = mutableMapOf<String, LuaValue>()
     private val exposedClasses = mutableSetOf(
         LuaSignal::class,
-        Coordinate::class
+        Coordinate::class,
+        Grid.Direction::class
     )
     private val packageResolvers = mutableListOf<(Lua, String) -> LuaValue?>()
 
@@ -48,7 +50,10 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.openLibrary("string")
         packages["string"] = lua.get("string").also {
             it.register("trim", this::luaTrim)
+            it.register("startsWith", this::luaStartsWith)
         }
+        lua.openLibrary("bit32")
+        packages["bit32"] = lua.get("bit32")
         lua.openLibrary("math")
         packages["math"] = lua.get("math")
         lua.openLibrary("table")
@@ -144,13 +149,21 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.push { lua ->
             val obj = lua.toJavaObject(-3)!! // [obj, key, value]
             if (!exposedClasses.contains(obj::class)) {
-                return@push lua.error(IllegalArgumentException("Tried to access restricted class: ${obj::class}#${lua.checkString(-2)}"))
+                return@push lua.error(
+                    IllegalArgumentException(
+                        "Tried to access restricted class: ${obj::class}#${
+                            lua.checkString(
+                                -2
+                            )
+                        }"
+                    )
+                )
             }
 
             val key = lua.checkString(-2)
             val property = obj::class.memberProperties.find { it.name == key } as? KMutableProperty1<Any, Any?>
             if (property != null) {
-                val value = when(property.returnType.classifier) {
+                val value = when (property.returnType.classifier) {
                     Boolean::class -> lua.checkBoolean(-1)
                     Int::class -> lua.checkInt(-1)
                     String::class -> lua.checkString(-1)
@@ -191,33 +204,38 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.pop(1) // []
     }
 
+    private fun luaStartsWith(lua: Lua): Int {
+        lua.push(lua.checkString(1).startsWith(lua.checkString(2)))
+        return 1
+    }
+
     private fun luaTrim(lua: Lua): Int {
-        lua.push(lua.checkString(-1).trim())
+        lua.push(lua.checkString(1).trim())
         return 1
     }
 
     private fun luaTableFind(lua: Lua): Int {
         lua.checkType(1, Lua.LuaType.TABLE)
         lua.top = 2
-        
+
         var idx = 1
         lua.pushNil() // initial key for next call
-        
+
         // Stack: table(1), target(2), nil(3)
         while (lua.next(1) != 0) { // pushes key-value pair
             // Stack: table(1), target(2), key(3), value(4)
-            
+
             // Compare the value with target
             if (lua.equal(4, 2)) {
                 lua.pushValue(3) // push the key as return value
                 return 1
             }
-            
+
             lua.pop(1) // pop value, keep key for next iteration
             // Stack: table(1), target(2), key(3)
             idx++
         }
-        
+
         // Return nil if not found
         lua.pushNil()
         return 1
@@ -276,11 +294,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         try {
             lua.run(loadBuffer(script), name)
         } catch (e: LuaException) {
-            if (e.message == "no matching method found") {
-                throw LuaException(LuaException.LuaError.JAVA, "${e.message} ($lastAccessedMember)")
-            } else {
-                throw e
-            }
+            throw sanitizeException(e)
         }
     }
 
@@ -290,5 +304,12 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
     companion object {
         var lastAccessedMember: String? = null; private set
+
+        fun sanitizeException(e: Exception): Exception {
+            if (e.message == "no matching method found") {
+                return LuaException(LuaException.LuaError.JAVA, "${e.message} ($lastAccessedMember)")
+            }
+            return e
+        }
     }
 }

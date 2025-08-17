@@ -5,6 +5,7 @@ import party.iroiro.luajava.JFunction
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaFunction
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.grid.Grid
 import world.selene.common.util.Coordinate
 import kotlin.math.abs
 import kotlin.reflect.KClass
@@ -237,6 +238,20 @@ fun <T : Any> Lua.getFieldJavaObject(tableIndex: Int, fieldName: String, clazz: 
     }
     pop(1)
     return result
+}
+
+fun Lua.checkDirection(index: Int, grid: Grid): Grid.Direction {
+    return if (type(index) == Lua.LuaType.STRING) {
+        grid.getDirectionByName(toString(index)!!) ?: throwTypeError(
+            index,
+            Grid.Direction::class,
+            Lua.LuaType.STRING
+        )
+    } else if (type(index) == Lua.LuaType.USERDATA) {
+        checkJavaObject(index, Grid.Direction::class)
+    } else {
+        throwTypeError(index, Grid.Direction::class, type(index))
+    }
 }
 
 fun Lua.checkCoordinate(index: Int): Pair<Coordinate, Int> {

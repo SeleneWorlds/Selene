@@ -20,11 +20,7 @@ class LuaSignal {
                 lua.push(it)
                 lua.pCall(args(lua), 0)
             } catch (e: LuaException) {
-                if (e.message == "no matching method found") {
-                    throw LuaException(LuaException.LuaError.JAVA, "${e.message} (${LuaManager.lastAccessedMember})")
-                } else {
-                    throw e
-                }
+                throw LuaManager.sanitizeException(e)
             }
         }
     }
