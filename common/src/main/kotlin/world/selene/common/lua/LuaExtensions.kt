@@ -5,6 +5,7 @@ import party.iroiro.luajava.JFunction
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaFunction
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.util.Coordinate
 import kotlin.math.abs
 import kotlin.reflect.KClass
 
@@ -141,6 +142,7 @@ fun <T : Enum<T>> Lua.checkEnum(index: Int, clazz: KClass<T>): T {
         Lua.LuaType.USERDATA -> {
             return checkJavaObject(index, clazz)
         }
+
         Lua.LuaType.STRING -> {
             try {
                 enumValueOf(toString(index)!!, clazz)
@@ -195,6 +197,20 @@ fun Lua.getFieldFloat(tableIndex: Int, fieldName: String): Float? {
     return result
 }
 
+fun Lua.getFieldInt(tableIndex: Int, fieldName: String): Int? {
+    if (!isTable(tableIndex)) {
+        return null
+    }
+
+    var result: Int? = null
+    getField(tableIndex, fieldName)
+    if (!isNil(-1)) {
+        result = checkInt(-1)
+    }
+    pop(1)
+    return result
+}
+
 fun Lua.getFieldBoolean(tableIndex: Int, fieldName: String): Boolean? {
     if (!isTable(tableIndex)) {
         return null
@@ -209,7 +225,7 @@ fun Lua.getFieldBoolean(tableIndex: Int, fieldName: String): Boolean? {
     return result
 }
 
-fun <T: Any> Lua.getFieldJavaObject(tableIndex: Int, fieldName: String, clazz: KClass<out T>): T? {
+fun <T : Any> Lua.getFieldJavaObject(tableIndex: Int, fieldName: String, clazz: KClass<out T>): T? {
     if (!isTable(tableIndex)) {
         return null
     }
@@ -221,4 +237,17 @@ fun <T: Any> Lua.getFieldJavaObject(tableIndex: Int, fieldName: String, clazz: K
     }
     pop(1)
     return result
+}
+
+fun Lua.checkCoordinate(index: Int): Pair<Coordinate, Int> {
+    if (type(index) == Lua.LuaType.TABLE) {
+        val x = getFieldInt(index, "x") ?: 0
+        val y = getFieldInt(index, "y") ?: 0
+        val z = getFieldInt(index, "z") ?: 0
+        return Pair(Coordinate(x, y, z), index + 1)
+    } else if (type(index) == Lua.LuaType.USERDATA) {
+        return Pair(checkJavaObject(index, Coordinate::class), index + 1)
+    } else {
+        return Pair(Coordinate(checkInt(index), checkInt(index + 1), checkInt(index + 2)), index + 3)
+    }
 }
