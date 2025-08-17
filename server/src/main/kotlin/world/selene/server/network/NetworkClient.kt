@@ -8,4 +8,5 @@ interface NetworkClient {
     fun disconnect()
     val address: InetSocketAddress
     fun poll(): Packet?
+    fun enqueueWork(runnable: Runnable)
 }

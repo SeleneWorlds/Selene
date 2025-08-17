@@ -7,7 +7,6 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.socket.SocketChannel
 import io.netty.util.AttributeKey
 import world.selene.common.network.Packet
-import world.selene.server.player.Player
 import world.selene.server.player.PlayerManager
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -22,6 +21,11 @@ class NetworkClientImpl(
     private val incomingPackets = ConcurrentLinkedQueue<Packet>()
 
     override fun poll(): Packet? = incomingPackets.poll()
+
+    override fun enqueueWork(runnable: Runnable) {
+        // TODO Currently just runs immediately.
+        runnable.run()
+    }
 
     override fun send(packet: Packet) {
         channel.writeAndFlush(packet).addListener(this)
