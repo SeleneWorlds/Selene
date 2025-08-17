@@ -6,6 +6,7 @@ import world.selene.common.network.packet.CustomPayloadPacket
 import world.selene.common.network.packet.DisconnectPacket
 import world.selene.common.network.packet.EntityPacket
 import world.selene.common.network.packet.MapChunkPacket
+import world.selene.common.network.packet.UpdateMapTilesPacket
 import world.selene.common.network.packet.MoveEntityPacket
 import world.selene.common.network.packet.NameIdMappingsPacket
 import world.selene.common.network.packet.PlaySoundPacket
@@ -95,6 +96,12 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             StopSoundPacket::class,
             StopSoundPacket::encode,
             StopSoundPacket::decode
+        )
+        packetFactory.registerPacket(
+            14,
+            UpdateMapTilesPacket::class,
+            UpdateMapTilesPacket::encode,
+            UpdateMapTilesPacket::decode
         )
         packetFactory.registerPacket(
             254,

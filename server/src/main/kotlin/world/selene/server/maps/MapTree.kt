@@ -5,9 +5,11 @@ import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
+import world.selene.common.util.Coordinate
 import world.selene.server.data.Registries
 
 class MapTree(private val registries: Registries) {
+    private val listeners = mutableSetOf<MapTreeListener>()
     val luaProxy = MapTreeLuaProxy(this)
     val layers = mutableListOf<MapLayer>()
     var baseLayer: BaseMapLayer = EmptyMapLayer
@@ -113,27 +115,54 @@ class MapTree(private val registries: Registries) {
 
     fun placeTile(x: Int, y: Int, z: Int, tileId: Int, layerName: String = "default"): Boolean {
         val layer = getLayer(layerName)
-        return layer?.placeTile(x, y, z, tileId) == true
+        val result = layer?.placeTile(x, y, z, tileId) == true
+        if (result) {
+            notifyListeners(Coordinate(x, y, z))
+        }
+        return result
     }
 
     fun replaceTiles(x: Int, y: Int, z: Int, tileId: Int, layerName: String = "default"): Boolean {
         val layer = getLayer(layerName)
-        return layer?.replaceTiles(x, y, z, tileId) == true
+        val result = layer?.replaceTiles(x, y, z, tileId) == true
+        if (result) {
+            notifyListeners(Coordinate(x, y, z))
+        }
+        return result
     }
 
     fun removeTile(x: Int, y: Int, z: Int, tileId: Int, layerName: String = "default"): Boolean {
         val layer = getLayer(layerName)
-        return layer?.removeTile(x, y, z, tileId) == true
+        val result = layer?.removeTile(x, y, z, tileId) == true
+        if (result) {
+            notifyListeners(Coordinate(x, y, z))
+        }
+        return result
     }
 
     fun resetTile(x: Int, y: Int, z: Int, layerName: String) {
         val layer = getLayer(layerName)
         layer?.resetTile(x, y, z)
+        notifyListeners(Coordinate(x, y, z))
     }
 
     fun annotateTile(x: Int, y: Int, z: Int, key: String, data: Map<*, *>, layerName: String = "default") {
         val layer = getLayer(layerName)
         layer?.annotateTile(x, y, z, key, data)
+    }
+    
+    fun addListener(listener: MapTreeListener) {
+        listeners.add(listener)
+    }
+    
+    fun removeListener(listener: MapTreeListener) {
+        listeners.remove(listener)
+    }
+    
+    private fun notifyListeners(coordinate: Coordinate) {
+        listeners.forEach { listener ->
+            listener.onTileUpdated(coordinate)
+        }
     }
 
     fun applyOperation(operation: SparseOperation, layerName: String = "default") {

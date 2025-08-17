@@ -7,12 +7,14 @@ import world.selene.server.cameras.DefaultViewer
 import world.selene.server.cameras.Viewer
 import world.selene.server.data.Registries
 import world.selene.server.maps.MapTree
+import world.selene.server.maps.MapTreeListener
 import world.selene.server.maps.TileLuaProxy
+import world.selene.common.util.Coordinate
 import world.selene.server.sync.ChunkViewManager
 import world.selene.server.sync.DimensionSyncManager
 
-class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManager) {
-    var mapTree: MapTree = MapTree(registries)
+class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManager) : MapTreeListener {
+    var mapTree: MapTree = MapTree(registries).also { it.addListener(this) }
     val luaProxy = DimensionLuaProxy(this)
     val syncManager = DimensionSyncManager()
 
@@ -21,7 +23,9 @@ class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManag
 
         fun SetMap(lua: Lua): Int {
             val mapTree = lua.checkJavaObject<MapTree.MapTreeLuaProxy>(-1)
+            delegate.mapTree.removeListener(delegate)
             delegate.mapTree = mapTree.delegate
+            delegate.mapTree.addListener(delegate)
             return 0
         }
 
@@ -52,6 +56,10 @@ class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManag
                 return lua.error(RuntimeException("Failed to get tiles at $coordinate: ${e.message}", e))
             }
         }
+    }
+
+    override fun onTileUpdated(coordinate: Coordinate) {
+        syncManager.tileUpdated(coordinate)
     }
 }
 

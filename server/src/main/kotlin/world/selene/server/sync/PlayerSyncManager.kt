@@ -6,6 +6,7 @@ import world.selene.common.network.packet.EntityPacket
 import world.selene.common.network.packet.MapChunkPacket
 import world.selene.common.network.packet.RemoveEntityPacket
 import world.selene.common.network.packet.RemoveMapChunkPacket
+import world.selene.common.network.packet.UpdateMapTilesPacket
 import world.selene.common.util.ChunkWindow
 import world.selene.common.util.Coordinate
 import world.selene.server.cameras.Camera
@@ -40,7 +41,12 @@ class PlayerSyncManager(
 
     fun sendMissingChunks() {
         val dimension = player.camera.dimension ?: return
-        val windows = ChunkWindow.around(player.camera.coordinate, chunkViewManager.chunkSize, chunkViewRange, verticalChunkViewRange)
+        val windows = ChunkWindow.around(
+            player.camera.coordinate,
+            chunkViewManager.chunkSize,
+            chunkViewRange,
+            verticalChunkViewRange
+        )
         windows.asSequence().filter { it !in syncedChunks }.forEach { window ->
             val chunk = chunkViewManager.atWindow(dimension, player.camera, window)
             player.client.send(
@@ -70,6 +76,12 @@ class PlayerSyncManager(
 
     fun sendIfWatching(networkId: Int, packet: Packet) {
         if (syncedEntities.contains(networkId)) {
+            player.client.send(packet)
+        }
+    }
+
+    fun sendIfWatching(coordinate: Coordinate, packet: Packet) {
+        if (shouldSync(ChunkWindow.at(coordinate, 1))) {
             player.client.send(packet)
         }
     }
@@ -106,7 +118,8 @@ class PlayerSyncManager(
                     entityId = registries.mappings.getId("entities", entity.entityType) ?: 0,
                     coordinate = entity.coordinate,
                     facing = entity.facing?.angle ?: 0f,
-                    components = entity.resolveComponentsFor(player).mapValues { objectMapper.writeValueAsString(it.value) }
+                    components = entity.resolveComponentsFor(player)
+                        .mapValues { objectMapper.writeValueAsString(it.value) }
                 )
             )
         }
@@ -152,5 +165,18 @@ class PlayerSyncManager(
         }
         sendMissingChunks()
         syncNearbyEntities()
+    }
+
+    fun tileUpdated(coordinate: Coordinate) {
+        val dimension = player.camera.dimension ?: return
+        val window = ChunkWindow.at(coordinate, chunkViewManager.chunkSize)
+        val chunk = chunkViewManager.atWindow(dimension, player.camera, window)
+        player.client.send(
+            UpdateMapTilesPacket(
+                coordinate,
+                chunk.getBaseTileAt(coordinate),
+                chunk.getAdditionalTilesAt(coordinate)
+            )
+        )
     }
 }

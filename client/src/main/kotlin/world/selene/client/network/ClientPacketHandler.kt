@@ -7,6 +7,7 @@ import world.selene.common.lua.LuaPayloadRegistry
 import world.selene.common.network.Packet
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.packet.MapChunkPacket
+import world.selene.common.network.packet.UpdateMapTilesPacket
 import world.selene.common.network.packet.NameIdMappingsPacket
 import world.selene.client.camera.CameraManager
 import world.selene.client.controls.GridMovement
@@ -57,6 +58,14 @@ class ClientPacketHandler(
         } else if (packet is RemoveMapChunkPacket) {
             context.enqueueWork {
                 clientMap.removeChunk(packet.x, packet.y, packet.z, packet.width, packet.height)
+            }
+        } else if (packet is UpdateMapTilesPacket) {
+            context.enqueueWork {
+                clientMap.updateTile(
+                    packet.coordinate,
+                    packet.baseTileId,
+                    packet.additionalTileIds
+                )
             }
         } else if (packet is EntityPacket) {
             context.enqueueWork {

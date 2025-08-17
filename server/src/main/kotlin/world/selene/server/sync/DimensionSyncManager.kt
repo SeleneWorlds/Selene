@@ -2,6 +2,7 @@ package world.selene.server.sync
 
 import world.selene.common.network.Packet
 import world.selene.common.network.packet.MoveEntityPacket
+import world.selene.common.network.packet.UpdateMapTilesPacket
 import world.selene.common.util.Coordinate
 import world.selene.server.entities.Entity
 
@@ -15,6 +16,12 @@ class DimensionSyncManager {
     fun sendToAllWatching(networkId: Int, packet: Packet) {
         for (manager in playerSyncManagers) {
             manager.sendIfWatching(networkId, packet)
+        }
+    }
+
+    fun sendToAllWatching(coordinate: Coordinate, packet: Packet) {
+        for (manager in playerSyncManagers) {
+            manager.sendIfWatching(coordinate, packet)
         }
     }
 
@@ -32,5 +39,11 @@ class DimensionSyncManager {
             entity.networkId,
             MoveEntityPacket(entity.networkId, entity.coordinate, entity.coordinate, entity.facing?.angle ?: 0f,0f)
         )
+    }
+
+    fun tileUpdated(coordinate: Coordinate) {
+        for (manager in playerSyncManagers) {
+            manager.tileUpdated(coordinate)
+        }
     }
 }
