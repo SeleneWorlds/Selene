@@ -3,9 +3,9 @@ package world.selene.server.saves
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.ObjectMapper
+import world.selene.server.data.Registries
 import world.selene.server.maps.ChunkedMapLayer
 import world.selene.server.maps.DenseMapLayer
-import world.selene.server.maps.MapManager
 import world.selene.server.maps.MapTree
 import world.selene.server.maps.SparseMapLayer
 import world.selene.server.maps.SparseTilePlacement
@@ -13,7 +13,7 @@ import world.selene.server.maps.SparseTileRemoval
 import world.selene.server.maps.SparseTilesReplacement
 import java.io.File
 
-class MapTreeFormatJsonV1(private val mapManager: MapManager, private val objectMapper: ObjectMapper) : MapTreeFormat {
+class MapTreeFormatJsonV1(private val registries: Registries, private val objectMapper: ObjectMapper) : MapTreeFormat {
 
     data class MapTreeFileHeader(val version: Int)
     data class MapTreeFileLayer(val chunks: List<MapTreeFileChunk>)
@@ -67,7 +67,7 @@ class MapTreeFormatJsonV1(private val mapManager: MapManager, private val object
     data class MapTreeFile(val header: MapTreeFileHeader, val layers: List<MapTreeFileLayer>)
 
     override fun load(file: File): MapTree {
-        val result = mapManager.createMapTree()
+        val result = MapTree(registries)
         val mapTreeFile = objectMapper.readValue(file, MapTreeFile::class.java)
         for (layer in mapTreeFile.layers) {
             for (chunk in layer.chunks) {

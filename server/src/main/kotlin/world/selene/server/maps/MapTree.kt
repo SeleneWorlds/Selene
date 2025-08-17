@@ -1,15 +1,13 @@
 package world.selene.server.maps
 
 import party.iroiro.luajava.Lua
-import world.selene.common.bundles.BundleDatabase
-import world.selene.common.data.NameIdRegistry
-import world.selene.common.data.TileRegistry
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
+import world.selene.server.data.Registries
 
-class MapTree(private val tileRegistry: TileRegistry, private val nameIdRegistry: NameIdRegistry) {
+class MapTree(private val registries: Registries) {
     val luaProxy = MapTreeLuaProxy(this)
     val layers = mutableListOf<MapLayer>()
     var baseLayer: BaseMapLayer = EmptyMapLayer
@@ -219,9 +217,9 @@ class MapTree(private val tileRegistry: TileRegistry, private val nameIdRegistry
             val z = lua.checkInt(4)
             val tileName = lua.checkString(5)
             val layerName = lua.toString(6)
-            val tile = delegate.tileRegistry.get(tileName)
+            val tile = delegate.registries.tiles.get(tileName)
             if (tile != null) {
-                val tileId = delegate.nameIdRegistry.getId("tiles", tileName)
+                val tileId = delegate.registries.mappings.getId("tiles", tileName)
                 if (tileId != null) {
                     delegate.placeTile(x, y, z, tileId, layerName ?: "default")
                     return 0
@@ -239,9 +237,9 @@ class MapTree(private val tileRegistry: TileRegistry, private val nameIdRegistry
             val z = lua.checkInt(4)
             val tileName = lua.checkString(5)
             val layerName = lua.toString(6)
-            val tile = delegate.tileRegistry.get(tileName)
+            val tile = delegate.registries.tiles.get(tileName)
             if (tile != null) {
-                val tileId = delegate.nameIdRegistry.getId("tiles", tileName)
+                val tileId = delegate.registries.mappings.getId("tiles", tileName)
                 if (tileId != null) {
                     delegate.replaceTiles(x, y, z, tileId, layerName ?: "default")
                     return 0
@@ -259,9 +257,9 @@ class MapTree(private val tileRegistry: TileRegistry, private val nameIdRegistry
             val z = lua.checkInt(4)
             val tileName = lua.checkString(5)
             val layerName = lua.toString(6)
-            val tile = delegate.tileRegistry.get(tileName)
+            val tile = delegate.registries.tiles.get(tileName)
             if (tile != null) {
-                val tileId = delegate.nameIdRegistry.getId("tiles", tileName)
+                val tileId = delegate.registries.mappings.getId("tiles", tileName)
                 if (tileId != null) {
                     delegate.removeTile(x, y, z, tileId, layerName ?: "default")
                     return 0

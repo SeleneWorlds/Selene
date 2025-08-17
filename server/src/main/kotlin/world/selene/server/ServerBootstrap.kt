@@ -39,6 +39,7 @@ import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.collision.CollisionResolver
 import world.selene.server.data.PersistentNameIdRegistry
 import world.selene.server.data.Registries
+import world.selene.server.dimensions.Dimension
 import world.selene.server.dimensions.DimensionManager
 import world.selene.server.entities.Entity
 import world.selene.server.entities.EntityManager
@@ -54,7 +55,6 @@ import world.selene.server.management.ExportMapImage
 import world.selene.server.login.LoginQueue
 import world.selene.server.login.SessionAuthentication
 import world.selene.server.lua.Scripting
-import world.selene.server.maps.MapManager
 import world.selene.server.maps.TransitionResolver
 import world.selene.server.network.NetworkServer
 import world.selene.server.network.NetworkServerImpl
@@ -121,7 +121,6 @@ fun main(args: Array<String>) {
         singleOf(::MapTreeFormatJsonV1) { bind<MapTreeFormat>() }
         // singleOf(::MapTreeFormatBinaryV1) { bind<MapTreeFormat>() }
         singleOf(::SaveManager)
-        singleOf(::MapManager)
         singleOf(::DimensionManager)
         singleOf(::EntityManager)
         singleOf(::PlayerManager)
@@ -131,6 +130,7 @@ fun main(args: Array<String>) {
         singleOf(::Grid)
         singleOf(::World)
         factoryOf(::Entity)
+        factoryOf(::Dimension)
     }
     val managementModule = module {
         singleOf(::ExportMapImage)

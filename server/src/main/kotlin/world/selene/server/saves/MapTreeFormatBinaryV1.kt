@@ -1,8 +1,8 @@
 package world.selene.server.saves
 
+import world.selene.server.data.Registries
 import world.selene.server.maps.ChunkedMapLayer
 import world.selene.server.maps.DenseMapLayer
-import world.selene.server.maps.MapManager
 import world.selene.server.maps.MapTree
 import world.selene.server.maps.SparseMapLayer
 import world.selene.server.maps.SparseTilePlacement
@@ -11,9 +11,9 @@ import world.selene.server.maps.SparseTilesReplacement
 import java.io.File
 import java.io.RandomAccessFile
 
-class MapTreeFormatBinaryV1(private val mapManager: MapManager) : MapTreeFormat {
+class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat {
     override fun load(file: File): MapTree {
-        val result = mapManager.createMapTree()
+        val result = MapTree(registries)
         
         return result
     }

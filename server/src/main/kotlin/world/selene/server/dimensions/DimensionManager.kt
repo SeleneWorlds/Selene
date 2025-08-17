@@ -1,8 +1,8 @@
 package world.selene.server.dimensions
 
-import world.selene.server.maps.MapManager
+import org.koin.mp.KoinPlatform.getKoin
 
-class DimensionManager(private val mapManager: MapManager) {
+class DimensionManager() {
     val dimensions = mutableMapOf<Int, Dimension>()
 
     init {
@@ -10,6 +10,6 @@ class DimensionManager(private val mapManager: MapManager) {
     }
 
     fun getOrCreateDimension(id: Int): Dimension {
-        return dimensions.getOrPut(id) { Dimension(mapManager.createMapTree()) }
+        return dimensions.getOrPut(id) { getKoin().get<Dimension>() }
     }
 }

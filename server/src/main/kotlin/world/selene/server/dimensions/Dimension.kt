@@ -1,11 +1,18 @@
 package world.selene.server.dimensions
 
 import party.iroiro.luajava.Lua
+import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkJavaObject
+import world.selene.common.util.Coordinate
+import world.selene.server.cameras.DefaultViewer
+import world.selene.server.data.Registries
 import world.selene.server.maps.MapTree
+import world.selene.server.maps.TileLuaProxy
+import world.selene.server.sync.ChunkViewManager
 import world.selene.server.sync.DimensionSyncManager
 
-class Dimension(var mapTree: MapTree) {
+class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManager) {
+    var mapTree: MapTree = MapTree(registries)
     val luaProxy = DimensionLuaProxy(this)
     val syncManager = DimensionSyncManager()
 
@@ -17,5 +24,30 @@ class Dimension(var mapTree: MapTree) {
             delegate.mapTree = mapTree.delegate
             return 0
         }
+
+        fun GetTilesAt(lua: Lua): Int {
+            val x = lua.checkInt(2)
+            val y = lua.checkInt(3)
+            val z = lua.checkInt(4)
+            val coordinate = Coordinate(x, y, z)
+
+            try {
+                val tiles = mutableListOf<TileLuaProxy>()
+                val chunkView = delegate.chunkViewManager.atCoordinate(delegate, DefaultViewer, coordinate)
+                val baseTile = chunkView.getBaseTileAt(coordinate)
+                val baseTileName = delegate.registries.mappings.getName("tiles", baseTile)
+                baseTileName?.let { tiles.add(TileLuaProxy(it, x, y, z)) }
+                val additionalTiles = chunkView.getAdditionalTilesAt(coordinate)
+                additionalTiles.forEach { tileId ->
+                    val tileName = delegate.registries.mappings.getName("tiles", tileId)
+                    tileName?.let { tiles.add(TileLuaProxy(it, x, y, z)) }
+                }
+                lua.push(tiles, Lua.Conversion.FULL)
+                return 1
+            } catch (e: Exception) {
+                return lua.error(RuntimeException("Failed to get tiles at ($x, $y, $z): ${e.message}", e))
+            }
+        }
     }
 }
+
