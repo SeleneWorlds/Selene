@@ -51,7 +51,9 @@ class ServerPacketHandler(
             context.enqueueWork {
                 val handler = payloadRegistry.retrieveHandler(packet.payloadId)
                 if (handler != null) {
+                    val player = (context as NetworkClientImpl).player
                     handler.push(luaManager.lua)
+                    luaManager.lua.push(player.luaProxy, Lua.Conversion.NONE)
                     luaManager.lua.newTable()
                     // Helper to recursively push Map<String, Any> to Lua table
                     fun pushMapToLuaTable(map: Map<String, Any>) {
@@ -74,7 +76,7 @@ class ServerPacketHandler(
                         }
                     }
                     pushMapToLuaTable(packet.payload)
-                    luaManager.lua.pCall(1, 0)
+                    luaManager.lua.pCall(2, 0)
                 }
             }
         }
