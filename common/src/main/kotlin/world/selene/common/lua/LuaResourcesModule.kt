@@ -11,6 +11,7 @@ class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule
     override fun register(table: LuaValue) {
         table.register("ListFiles", this::luaListFiles)
         table.register("LoadAsString", this::luaLoadAsString)
+        table.register("FileExists", this::luaFileExists)
     }
 
     private fun globToRegex(glob: String): Regex {
@@ -68,4 +69,22 @@ class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule
         lua.push(content)
         return 1
     }
+
+    private fun luaFileExists(lua: Lua): Int {
+        val path = lua.checkString(-1)
+        val bundleName = path.substringBefore("/")
+        val remainingPath = path.substringAfter("/")
+        val baseDir = bundleDatabase.getBundle(bundleName)?.dir
+        if (baseDir == null) {
+            lua.push(false)
+            return 1
+        }
+
+        val file = baseDir.resolve(remainingPath)
+        // Restrict file to files inside baseDir
+        val exists = file.exists() && file.isFile && file.path.startsWith(baseDir.path)
+        lua.push(exists)
+        return 1
+    }
+
 }
