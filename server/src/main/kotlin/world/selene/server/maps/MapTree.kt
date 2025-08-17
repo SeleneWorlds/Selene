@@ -2,7 +2,7 @@ package world.selene.server.maps
 
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.checkBoolean
-import world.selene.common.lua.checkInt
+import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
 import world.selene.server.data.Registries
@@ -212,16 +212,14 @@ class MapTree(private val registries: Registries) {
         }
 
         fun PlaceTile(lua: Lua): Int {
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val z = lua.checkInt(4)
-            val tileName = lua.checkString(5)
-            val layerName = lua.toString(6)
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val tileName = lua.checkString(index + 1)
+            val layerName = lua.toString(index + 2)
             val tile = delegate.registries.tiles.get(tileName)
             if (tile != null) {
                 val tileId = delegate.registries.mappings.getId("tiles", tileName)
                 if (tileId != null) {
-                    delegate.placeTile(x, y, z, tileId, layerName ?: "default")
+                    delegate.placeTile(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
                     return 0
                 } else {
                     throw IllegalStateException("Tile $tileName has no id")
@@ -232,16 +230,14 @@ class MapTree(private val registries: Registries) {
         }
 
         fun ReplaceTiles(lua: Lua): Int {
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val z = lua.checkInt(4)
-            val tileName = lua.checkString(5)
-            val layerName = lua.toString(6)
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val tileName = lua.checkString(index + 1)
+            val layerName = lua.toString(index + 2)
             val tile = delegate.registries.tiles.get(tileName)
             if (tile != null) {
                 val tileId = delegate.registries.mappings.getId("tiles", tileName)
                 if (tileId != null) {
-                    delegate.replaceTiles(x, y, z, tileId, layerName ?: "default")
+                    delegate.replaceTiles(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
                     return 0
                 } else {
                     throw IllegalStateException("Tile $tileName has no id")
@@ -252,16 +248,14 @@ class MapTree(private val registries: Registries) {
         }
 
         fun RemoveTile(lua: Lua): Int {
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val z = lua.checkInt(4)
-            val tileName = lua.checkString(5)
-            val layerName = lua.toString(6)
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val tileName = lua.checkString(index + 1)
+            val layerName = lua.toString(index + 2)
             val tile = delegate.registries.tiles.get(tileName)
             if (tile != null) {
                 val tileId = delegate.registries.mappings.getId("tiles", tileName)
                 if (tileId != null) {
-                    delegate.removeTile(x, y, z, tileId, layerName ?: "default")
+                    delegate.removeTile(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
                     return 0
                 } else {
                     throw IllegalStateException("Tile $tileName has no id")
@@ -272,22 +266,18 @@ class MapTree(private val registries: Registries) {
         }
 
         fun ResetTile(lua: Lua): Int {
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val z = lua.checkInt(4)
-            val layerName = lua.toString(5)
-            delegate.resetTile(x, y, z, layerName ?: "default")
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val layerName = lua.toString(index + 1)
+            delegate.resetTile(coordinate.x, coordinate.y, coordinate.z, layerName ?: "default")
             return 0
         }
 
         fun AnnotateTile(lua: Lua): Int {
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val z = lua.checkInt(4)
-            val key = lua.checkString(5)
-            val table = lua.toMap(6) ?: emptyMap()
-            val layerName = lua.toString(7)
-            delegate.annotateTile(x, y, z, key, table, layerName ?: "default")
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val key = lua.checkString(index + 1)
+            val table = lua.toMap(index + 2) ?: emptyMap()
+            val layerName = lua.toString(index + 3)
+            delegate.annotateTile(coordinate.x, coordinate.y, coordinate.z, key, table, layerName ?: "default")
             return 0
         }
 
