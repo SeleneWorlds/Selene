@@ -1,6 +1,5 @@
 package world.selene.client.network
 
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import world.selene.common.data.NameIdRegistry
 import world.selene.common.lua.LuaManager
@@ -17,11 +16,14 @@ import world.selene.common.data.ConfiguredComponent
 import world.selene.common.network.packet.CustomPayloadPacket
 import world.selene.common.network.packet.EntityPacket
 import world.selene.common.network.packet.MoveEntityPacket
+import world.selene.common.network.packet.PlaySoundPacket
 import world.selene.common.network.packet.RemoveEntityPacket
 import world.selene.common.network.packet.RemoveMapChunkPacket
 import world.selene.common.network.packet.SetCameraFollowEntityPacket
 import world.selene.common.network.packet.SetCameraPositionPacket
 import world.selene.common.network.packet.SetControlledEntityPacket
+import world.selene.common.network.packet.StopSoundPacket
+import world.selene.client.sound.SoundManager
 
 class ClientPacketHandler(
     private val objectMapper: ObjectMapper,
@@ -31,7 +33,8 @@ class ClientPacketHandler(
     private val clientMap: ClientMap,
     private val cameraManager: CameraManager,
     private val playerController: PlayerController,
-    private val gridMovement: GridMovement
+    private val gridMovement: GridMovement,
+    private val soundManager: SoundManager
 ) : PacketHandler<NetworkClient> {
     override fun handle(
         context: NetworkClient,
@@ -88,6 +91,18 @@ class ClientPacketHandler(
                 clientMap.getEntityByNetworkId(packet.networkId)?.move(packet.end, packet.duration, packet.facing)
                 if (playerController.controlledEntityNetworkId == packet.networkId) {
                     gridMovement.confirmMove()
+                }
+            }
+        } else if (packet is PlaySoundPacket) {
+            context.enqueueWork {
+                soundManager.playSound(packet.soundName, packet.volume, packet.pitch)
+            }
+        } else if (packet is StopSoundPacket) {
+            context.enqueueWork {
+                if (packet.soundName == "*") {
+                    soundManager.stopAllSounds()
+                } else {
+                    soundManager.stopSound(packet.soundName)
                 }
             }
         } else if (packet is CustomPayloadPacket) {

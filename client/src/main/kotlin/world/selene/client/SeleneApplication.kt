@@ -26,6 +26,7 @@ import world.selene.client.config.ClientRuntimeConfig
 import world.selene.client.controls.GridMovement
 import world.selene.client.controls.PlayerController
 import world.selene.client.data.Registries
+import world.selene.client.data.SoundRegistry
 import world.selene.common.data.ComponentRegistry
 import world.selene.common.data.TileRegistry
 import world.selene.client.data.VisualRegistry
@@ -34,8 +35,10 @@ import world.selene.client.input.InputManager
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.lua.LuaCameraModule
 import world.selene.client.lua.LuaClientMapModule
+import world.selene.client.lua.LuaSoundsModule
 import world.selene.client.lua.LuaTexturesModule
 import world.selene.client.lua.LuaUIModule
+import world.selene.client.sound.SoundManager
 import world.selene.client.network.ClientPacketHandler
 import world.selene.client.network.NetworkClient
 import world.selene.client.network.NetworkClientImpl
@@ -93,6 +96,7 @@ class SeleneApplication(
             singleOf(::LuaClientNetworkModule) { bind<LuaModule>() }
             singleOf(::LuaCameraModule) { bind<LuaModule>() }
             singleOf(::LuaClientMapModule) { bind<LuaModule>() }
+            singleOf(::LuaSoundsModule) { bind<LuaModule>() }
             singleOf(::LuaTexturesModule) { bind<LuaModule>() }
             singleOf(::LuaResourcesModule) { bind<LuaModule>() }
             singleOf(::LuaInputModule) { bind<LuaModule>() }
@@ -118,6 +122,7 @@ class SeleneApplication(
             singleOf(::EntityRegistry)
             singleOf(::ComponentRegistry)
             singleOf(::VisualRegistry)
+            singleOf(::SoundRegistry)
             singleOf(::NameIdRegistry)
             singleOf(::Registries)
         }
@@ -147,6 +152,9 @@ class SeleneApplication(
             singleOf(::SceneRenderer)
             singleOf(::DebugRenderer)
         }
+        val audioModule = module {
+            singleOf(::SoundManager)
+        }
         val inputModule = module {
             single { InputMultiplexer() }
             singleOf(::InputManager)
@@ -165,6 +173,7 @@ class SeleneApplication(
                 gdxModule,
                 worldModule,
                 renderingModule,
+                audioModule,
                 inputModule
             )
         }

@@ -8,11 +8,13 @@ import world.selene.common.network.packet.EntityPacket
 import world.selene.common.network.packet.MapChunkPacket
 import world.selene.common.network.packet.MoveEntityPacket
 import world.selene.common.network.packet.NameIdMappingsPacket
+import world.selene.common.network.packet.PlaySoundPacket
 import world.selene.common.network.packet.RemoveEntityPacket
 import world.selene.common.network.packet.RemoveMapChunkPacket
 import world.selene.common.network.packet.RequestMovePacket
 import world.selene.common.network.packet.SetCameraFollowEntityPacket
 import world.selene.common.network.packet.SetControlledEntityPacket
+import world.selene.common.network.packet.StopSoundPacket
 
 class PacketRegistrations(private val packetFactory: PacketFactory) {
     fun register() {
@@ -81,6 +83,18 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             RemoveMapChunkPacket::class,
             RemoveMapChunkPacket::encode,
             RemoveMapChunkPacket::decode
+        )
+        packetFactory.registerPacket(
+            12,
+            PlaySoundPacket::class,
+            PlaySoundPacket::encode,
+            PlaySoundPacket::decode
+        )
+        packetFactory.registerPacket(
+            13,
+            StopSoundPacket::class,
+            StopSoundPacket::encode,
+            StopSoundPacket::decode
         )
         packetFactory.registerPacket(
             254,

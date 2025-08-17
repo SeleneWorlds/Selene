@@ -50,6 +50,7 @@ import world.selene.server.lua.LuaServerMapModule
 import world.selene.server.lua.LuaPlayersModule
 import world.selene.server.lua.LuaServerModule
 import world.selene.server.lua.LuaServerNetworkModule
+import world.selene.server.lua.LuaSoundsModule
 import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.management.ExportMapImage
 import world.selene.server.login.LoginQueue
@@ -87,6 +88,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaPlayersModule) { bind<LuaModule>() }
         singleOf(::LuaMixinModule) { bind<LuaModule>() }
         singleOf(::LuaServerNetworkModule) { bind<LuaModule>() }
+        singleOf(::LuaSoundsModule) { bind<LuaModule>() }
         singleOf(::LuaGridModule) { bind<LuaModule>() }
         singleOf(::LuaResourcesModule) { bind<LuaModule>() }
         singleOf(::LuaSavesModule) { bind<LuaModule>() }
