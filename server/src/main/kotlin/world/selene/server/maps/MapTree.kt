@@ -247,6 +247,32 @@ class MapTree(private val registries: Registries) {
             }
         }
 
+        fun SwapTile(lua: Lua): Int {
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val sourceTileName = lua.checkString(index + 1)
+            val targetTileName = lua.checkString(index + 2)
+            val layerName = lua.toString(index + 3)
+            val sourceTile = delegate.registries.tiles.get(sourceTileName)
+            if (sourceTile == null) {
+                return lua.error(IllegalArgumentException("Unknown tile: $sourceTileName"))
+            }
+            val sourceTileId = delegate.registries.mappings.getId("tiles", sourceTileName)
+            if (sourceTileId == null) {
+                throw IllegalStateException("Tile $sourceTileName has no id")
+            }
+            val targetTile = delegate.registries.tiles.get(targetTileName)
+            if (targetTile == null) {
+                return lua.error(IllegalArgumentException("Unknown tile: $targetTileName"))
+            }
+            val targetTileId = delegate.registries.mappings.getId("tiles", targetTileName)
+            if (targetTileId == null) {
+                throw IllegalStateException("Tile $targetTileName has no id")
+            }
+            delegate.removeTile(coordinate.x, coordinate.y, coordinate.z, sourceTileId, layerName ?: "default")
+            delegate.placeTile(coordinate.x, coordinate.y, coordinate.z, targetTileId, layerName ?: "default")
+            return 0
+        }
+
         fun RemoveTile(lua: Lua): Int {
             val (coordinate, index) = lua.checkCoordinate(2)
             val tileName = lua.checkString(index + 1)
