@@ -5,5 +5,6 @@ data class BundleManifest(
     val description: String = name,
     val entrypoints: List<String> = emptyList(),
     val dependencies: List<String> = emptyList(),
-    val preloads: Map<String, String> = emptyMap()
+    val preloads: Map<String, String> = emptyMap(),
+    val transformers: List<String> = emptyList()
 )

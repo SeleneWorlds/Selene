@@ -247,19 +247,32 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         return module
     }
 
-    fun preloadModule(moduleName: String, file: File) {
+    fun preloadModule(moduleName: String, script: String) {
         if (packages.containsKey(moduleName)) {
             logger.warn("Module $moduleName already loaded, skipping preload")
             return
         }
 
-        lua.load(file.readText())
+        lua.load(script)
         packages[moduleName] = lua.get()
     }
 
-    fun executeEntrypoint(file: File) {
+    fun loadScript(script: String): LuaValue {
         try {
-            lua.run(file.readText())
+            lua.load(script)
+            return lua.get()
+        } catch (e: LuaException) {
+            if (e.message == "no matching method found") {
+                throw LuaException(LuaException.LuaError.JAVA, "${e.message} ($lastAccessedMember)")
+            } else {
+                throw e
+            }
+        }
+    }
+
+    fun runScript(script: String) {
+        try {
+            lua.run(script)
         } catch (e: LuaException) {
             if (e.message == "no matching method found") {
                 throw LuaException(LuaException.LuaError.JAVA, "${e.message} ($lastAccessedMember)")
