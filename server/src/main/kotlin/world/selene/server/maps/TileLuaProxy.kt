@@ -4,13 +4,11 @@ import world.selene.common.util.Coordinate
 
 class TileLuaProxy(
     private val name: String,
-    private val x: Int,
-    private val y: Int,
-    private val z: Int
+    private val coordinate: Coordinate
 ) {
     val Name get() = name
-    val Coordinate get() = Coordinate(x, y, z)
-    val X get() = x
-    val Y get() = y
-    val Z get() = z
+    val Coordinate get() = coordinate
+    val X get() = coordinate.x
+    val Y get() = coordinate.y
+    val Z get() = coordinate.z
 }
