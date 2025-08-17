@@ -71,7 +71,7 @@ class BundleLoader(
                         File(locatedBundle.dir, "init.lua")
                     if (luaInitFile.exists()) {
                         val top = lua.top
-                        lua.run(readBundleFileText(locatedBundle, luaInitFile))
+                        luaManager.runScript(locatedBundle, luaInitFile, readBundleFileText(locatedBundle, luaInitFile))
                         return@addPackageResolver if (lua.top > top) lua.get() else null
                     }
                 }
@@ -82,7 +82,7 @@ class BundleLoader(
                     File(locatedBundle.dir, path.substringAfter('.').replace('.', File.separatorChar) + ".lua")
                 if (luaFile.exists()) {
                     val top = lua.top
-                    lua.run(readBundleFileText(locatedBundle, luaFile))
+                    luaManager.runScript(locatedBundle, luaFile, readBundleFileText(locatedBundle, luaFile))
                     return@addPackageResolver if (lua.top > top) lua.get() else null
                 }
                 null
@@ -139,7 +139,7 @@ class BundleLoader(
             val bundleDir = locatedBundle.dir
             for (transformerPath in manifest.transformers) {
                 val transformerFile = File(bundleDir, transformerPath)
-                luaManager.runScript(transformerFile.path, transformerFile.readText())
+                luaManager.runScript(locatedBundle, transformerFile, transformerFile.readText())
                 val transformer = luaManager.lua.get()
                 locatedBundle.transformers[transformerPath] = transformer
             }
@@ -173,7 +173,7 @@ class BundleLoader(
                 val scriptFile = File(bundleDir, entrypoint)
                 if (scriptFile.exists()) {
                     try {
-                        luaManager.runScript(scriptFile.path, readBundleFileText(bundle, scriptFile))
+                        luaManager.runScript(bundle, scriptFile, readBundleFileText(bundle, scriptFile))
                     } catch (e: Exception) {
                         logger.error("Error loading ${bundle.manifest.name} entrypoint $entrypoint: ${e.message}", e)
                     }

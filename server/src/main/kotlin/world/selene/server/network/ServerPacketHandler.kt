@@ -1,5 +1,6 @@
 package world.selene.server.network
 
+import org.slf4j.Logger
 import party.iroiro.luajava.Lua
 import world.selene.common.data.NameIdRegistry
 import world.selene.common.lua.LuaManager
@@ -14,6 +15,7 @@ import world.selene.common.network.packet.RequestMovePacket
 import world.selene.server.lua.ServerLuaSignals
 
 class ServerPacketHandler(
+    private val logger: Logger,
     private val signals: ServerLuaSignals,
     private val nameIdRegistry: NameIdRegistry,
     private val luaManager: LuaManager,
@@ -76,7 +78,11 @@ class ServerPacketHandler(
                         }
                     }
                     pushMapToLuaTable(packet.payload)
-                    luaManager.lua.pCall(2, 0)
+                    try {
+                        luaManager.lua.pCall(2, 0)
+                    } catch (e: Exception) {
+                        logger.error("Error while handling custom payload", e)
+                    }
                 }
             }
         }

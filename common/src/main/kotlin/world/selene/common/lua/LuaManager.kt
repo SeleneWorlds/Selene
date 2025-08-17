@@ -6,7 +6,9 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.lua54.Lua54
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.bundles.LocatedBundle
 import world.selene.common.util.Coordinate
+import java.io.File
 import java.nio.Buffer
 import java.nio.ByteBuffer
 import kotlin.reflect.KClass
@@ -266,7 +268,11 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         packages[moduleName] = lua.get()
     }
 
-    fun runScript(name: String, script: String) {
+    fun runScript(bundle: LocatedBundle, file: File, script: String) {
+        return runScript(bundle.manifest.name + ":" + file.name, script)
+    }
+
+    private fun runScript(name: String, script: String) {
         try {
             lua.run(loadBuffer(script), name)
         } catch (e: LuaException) {
