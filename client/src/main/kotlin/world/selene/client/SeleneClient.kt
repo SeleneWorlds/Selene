@@ -13,6 +13,7 @@ import world.selene.client.network.NetworkClientImpl
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.bundles.BundleLoader
 import world.selene.common.data.ComponentRegistry
+import world.selene.common.data.CustomRegistries
 import world.selene.common.data.EntityRegistry
 import world.selene.common.lua.LuaManager
 import world.selene.common.network.PacketHandler
@@ -30,6 +31,7 @@ class SeleneClient(
     private val entityRegistry: EntityRegistry,
     private val visualRegistry: VisualRegistry,
     private val soundRegistry: SoundRegistry,
+    private val customRegistries: CustomRegistries,
     private val signals: ClientLuaSignals,
     private val config: ClientConfig,
     private val runtimeConfig: ClientRuntimeConfig,
@@ -49,6 +51,9 @@ class SeleneClient(
         entityRegistry.load(bundleDatabase)
         visualRegistry.load(bundleDatabase)
         soundRegistry.load(bundleDatabase)
+        customRegistries.load(bundleDatabase)
+        customRegistries.loadCustomRegistries(bundleDatabase, "common")
+        customRegistries.loadCustomRegistries(bundleDatabase, "client")
         bundleLoader.loadBundleEntrypoints(bundles, listOf("common/", "client/", "init.lua"))
         (networkClient as NetworkClientImpl).packetHandler = packetHandler
         runBlocking {

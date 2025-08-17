@@ -5,6 +5,7 @@ import world.selene.common.data.EntityRegistry
 import world.selene.common.data.NameIdRegistry
 import world.selene.common.data.Registry
 import world.selene.common.data.RegistryProvider
+import world.selene.common.data.CustomRegistries
 import world.selene.common.data.TileRegistry
 import world.selene.common.data.TransitionRegistry
 
@@ -13,7 +14,8 @@ class Registries(
     val tiles: TileRegistry,
     val transitions: TransitionRegistry,
     val entities: EntityRegistry,
-    val components: ComponentRegistry
+    val components: ComponentRegistry,
+    val customRegistries: CustomRegistries
 ) : RegistryProvider {
     
     override fun getRegistry(name: String): Registry<*>? {
@@ -22,7 +24,8 @@ class Registries(
             "transitions" -> transitions
             "entities" -> entities
             "components" -> components
-            else -> null
+            "registries" -> customRegistries
+            else -> customRegistries.getCustomRegistry(name)
         }
     }
 }

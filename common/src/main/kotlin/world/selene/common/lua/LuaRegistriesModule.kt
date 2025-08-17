@@ -1,5 +1,6 @@
 package world.selene.common.lua
 
+import com.fasterxml.jackson.databind.JsonNode
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.data.RegistryProvider
@@ -9,6 +10,10 @@ class LuaRegistriesModule(
     private val registryProvider: RegistryProvider
 ) : LuaModule {
     override val name = "selene.registries"
+
+    override fun initialize(luaManager: LuaManager) {
+        luaManager.exposeClass(RegistryObjectLuaProxy::class)
+    }
 
     override fun register(table: LuaValue) {
         table.register("FindByMetadata", this::luaFindByMetadata)
@@ -35,12 +40,12 @@ class LuaRegistriesModule(
         return 0
     }
 
-    class RegistryObjectLuaProxy(val name: String, val definition: Any) {
-        val Name: String get() = name
+    class RegistryObjectLuaProxy(val elementName: String, val element: Any) {
+        val Name: String get() = elementName
 
         fun GetMetadata(lua: Lua): Int {
             val key = lua.checkString(2)
-            val value = getMetadata(definition, key)
+            val value = getMetadata(element, key)
             if (value != null) {
                 lua.push(value)
                 return 1
@@ -54,6 +59,9 @@ class LuaRegistriesModule(
             return when (element) {
                 is TileDefinition -> {
                     element.metadata[key]
+                }
+                is JsonNode -> {
+                    element["metadata"]?.get(key)?.asText()
                 }
 
                 else -> null

@@ -12,6 +12,7 @@ import org.slf4j.Logger
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.bundles.BundleLoader
 import world.selene.common.data.ComponentRegistry
+import world.selene.common.data.CustomRegistries
 import world.selene.common.lua.LuaManager
 import world.selene.common.network.PacketRegistrations
 import world.selene.server.config.ServerConfig
@@ -40,6 +41,7 @@ class SeleneServer(
     private val transitionRegistry: TransitionRegistry,
     private val componentRegistry: ComponentRegistry,
     private val entityRegistry: EntityRegistry,
+    private val customRegistries: CustomRegistries,
     private val luaManager: LuaManager,
     private val signals: ServerLuaSignals,
     private val config: ServerConfig,
@@ -58,6 +60,9 @@ class SeleneServer(
         transitionRegistry.load(bundleDatabase)
         componentRegistry.load(bundleDatabase)
         entityRegistry.load(bundleDatabase)
+        customRegistries.load(bundleDatabase)
+        customRegistries.loadCustomRegistries(bundleDatabase, "common")
+        customRegistries.loadCustomRegistries(bundleDatabase, "server")
         nameIdRegistry.load()
         nameIdRegistry.populate(tileRegistry)
         nameIdRegistry.populate(componentRegistry)

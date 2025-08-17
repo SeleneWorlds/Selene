@@ -17,6 +17,7 @@ import world.selene.common.bundles.BundleDatabase
 import world.selene.common.bundles.BundleLoader
 import world.selene.common.bundles.BundleLocator
 import world.selene.common.data.ComponentRegistry
+import world.selene.common.data.CustomRegistries
 import world.selene.common.data.NameIdRegistry
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaMixinModule
@@ -119,6 +120,7 @@ fun main(args: Array<String>) {
         singleOf(::TransitionRegistry)
         singleOf(::EntityRegistry)
         singleOf(::ComponentRegistry)
+        singleOf(::CustomRegistries)
         singleOf(::PersistentNameIdRegistry) { bind<NameIdRegistry>() }
         singleOf(::Registries) { bind<RegistryProvider>() }
     }

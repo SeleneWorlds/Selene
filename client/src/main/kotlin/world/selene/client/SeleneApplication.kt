@@ -66,6 +66,7 @@ import world.selene.client.rendering.DebugRenderer
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.scene.Scene
 import world.selene.client.visual.VisualManager
+import world.selene.common.data.CustomRegistries
 import world.selene.common.data.EntityRegistry
 import world.selene.common.data.NameIdRegistry
 import world.selene.common.lua.LuaPayloadRegistry
@@ -126,6 +127,7 @@ class SeleneApplication(
             singleOf(::ComponentRegistry)
             singleOf(::VisualRegistry)
             singleOf(::SoundRegistry)
+            singleOf(::CustomRegistries)
             singleOf(::NameIdRegistry)
             singleOf(::Registries) { bind<RegistryProvider>() }
         }
