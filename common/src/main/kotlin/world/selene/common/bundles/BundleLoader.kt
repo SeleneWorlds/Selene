@@ -16,6 +16,7 @@ class BundleLoader(
     fun readBundleFileText(bundle: LocatedBundle, file: File): String {
         var byteContent = file.readBytes()
         val lua = luaManager.lua
+        
         for ((_, transformer) in bundle.transformers) {
             transformer.push(lua)
             lua.getField(-1, "transformBytes")
@@ -28,7 +29,22 @@ class BundleLoader(
             }
             lua.pop(2) // transformer and result
         }
-        return String(byteContent, Charsets.UTF_8)
+        
+        var textContent = String(byteContent, Charsets.UTF_8)
+        for ((_, transformer) in bundle.transformers) {
+            transformer.push(lua)
+            lua.getField(-1, "transformText")
+            if (lua.isFunction(-1)) {
+                lua.push(textContent)
+                lua.pCall(1, 1)
+                if (lua.isString(-1)) {
+                    textContent = lua.toString(-1)!!
+                }
+            }
+            lua.pop(2) // transformer and result
+        }
+        
+        return textContent
     }
 
     fun loadBundles(bundles: Set<String>): List<LocatedBundle> {
@@ -121,10 +137,11 @@ class BundleLoader(
             val locatedBundle = bundleManifests[bundle] ?: continue
             val manifest = locatedBundle.manifest
             val bundleDir = locatedBundle.dir
-            for (transformerFile in manifest.transformers) {
-                luaManager.runScript(File(bundleDir, transformerFile).readText())
+            for (transformerPath in manifest.transformers) {
+                val transformerFile = File(bundleDir, transformerPath)
+                luaManager.runScript(transformerFile.path, transformerFile.readText())
                 val transformer = luaManager.lua.get()
-                locatedBundle.transformers[transformerFile] = transformer
+                locatedBundle.transformers[transformerPath] = transformer
             }
             for ((moduleName, preloadFile) in manifest.preloads) {
                 val scriptFile = File(bundleDir, preloadFile)
@@ -156,9 +173,9 @@ class BundleLoader(
                 val scriptFile = File(bundleDir, entrypoint)
                 if (scriptFile.exists()) {
                     try {
-                        luaManager.runScript(readBundleFileText(bundle, scriptFile))
+                        luaManager.runScript(scriptFile.path, readBundleFileText(bundle, scriptFile))
                     } catch (e: Exception) {
-                        logger.error("Error loading Lua entrypoint $entrypoint: ${e.message}", e)
+                        logger.error("Error loading ${bundle.manifest.name} entrypoint $entrypoint: ${e.message}", e)
                     }
                 } else {
                     logger.error("Entrypoint $entrypoint not found in bundle $bundle")
