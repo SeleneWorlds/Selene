@@ -244,10 +244,10 @@ fun Lua.checkCoordinate(index: Int): Pair<Coordinate, Int> {
         val x = getFieldInt(index, "x") ?: 0
         val y = getFieldInt(index, "y") ?: 0
         val z = getFieldInt(index, "z") ?: 0
-        return Pair(Coordinate(x, y, z), index + 1)
+        return Pair(Coordinate(x, y, z), index)
     } else if (type(index) == Lua.LuaType.USERDATA) {
-        return Pair(checkJavaObject(index, Coordinate::class), index + 1)
+        return Pair(checkJavaObject(index, Coordinate::class), index)
     } else {
-        return Pair(Coordinate(checkInt(index), checkInt(index + 1), checkInt(index + 2)), index + 3)
+        return Pair(Coordinate(checkInt(index), checkInt(index + 1), checkInt(index + 2)), index + 2)
     }
 }

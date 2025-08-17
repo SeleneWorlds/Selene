@@ -36,11 +36,11 @@ class LuaSoundsModule(private val networkServer: NetworkServer) : LuaModule {
 
     private fun luaPlaySoundAt(lua: Lua): Int {
         val (coordinate, index) = lua.checkCoordinate(1)
-        val soundName = lua.checkString(index)
-        if (lua.top >= index + 1) lua.checkType(index + 1, Lua.LuaType.TABLE)
+        val soundName = lua.checkString(index + 1)
+        if (lua.top >= index + 2) lua.checkType(index + 2, Lua.LuaType.TABLE)
 
-        val volume = lua.getFieldFloat(index + 1, "volume") ?: 1f
-        val pitch = lua.getFieldFloat(index + 1, "pitch") ?: 1f
+        val volume = lua.getFieldFloat(index + 2, "volume") ?: 1f
+        val pitch = lua.getFieldFloat(index + 2, "pitch") ?: 1f
 
         // TODO Check if player is nearby to hear
         networkServer.clients.forEach { client ->

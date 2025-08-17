@@ -27,7 +27,7 @@ class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManag
 
         fun GetTilesAt(lua: Lua): Int {
             val (coordinate, index) = lua.checkCoordinate(2)
-            val viewer = if (lua.isUserdata(index)) lua.checkJavaObject<Viewer>(index) else DefaultViewer
+            val viewer = if (lua.isUserdata(index)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
 
             try {
                 val tiles = mutableListOf<TileLuaProxy>()
