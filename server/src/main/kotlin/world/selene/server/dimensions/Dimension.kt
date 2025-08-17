@@ -27,18 +27,24 @@ class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManag
 
         fun GetTilesAt(lua: Lua): Int {
             val (coordinate, index) = lua.checkCoordinate(2)
-            val viewer = if(lua.isUserdata(index)) lua.checkJavaObject<Viewer>(index) else DefaultViewer
+            val viewer = if (lua.isUserdata(index)) lua.checkJavaObject<Viewer>(index) else DefaultViewer
 
             try {
                 val tiles = mutableListOf<TileLuaProxy>()
                 val chunkView = delegate.chunkViewManager.atCoordinate(delegate, viewer, coordinate)
                 val baseTile = chunkView.getBaseTileAt(coordinate)
                 val baseTileName = delegate.registries.mappings.getName("tiles", baseTile)
-                baseTileName?.let { tiles.add(TileLuaProxy(it, coordinate)) }
+                val baseTileDef = baseTileName?.let { delegate.registries.tiles.get(it) }
+                if (baseTileDef != null) {
+                    tiles.add(TileLuaProxy(baseTileName, baseTileDef, coordinate))
+                }
                 val additionalTiles = chunkView.getAdditionalTilesAt(coordinate)
                 additionalTiles.forEach { tileId ->
                     val tileName = delegate.registries.mappings.getName("tiles", tileId)
-                    tileName?.let { tiles.add(TileLuaProxy(it, coordinate)) }
+                    val tileDef = tileName?.let { delegate.registries.tiles.get(it) }
+                    if (tileDef != null) {
+                        tiles.add(TileLuaProxy(tileName, tileDef, coordinate))
+                    }
                 }
                 lua.push(tiles, Lua.Conversion.FULL)
                 return 1
