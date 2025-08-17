@@ -7,7 +7,8 @@ import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.lua54.Lua54
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.util.Coordinate
-import java.io.File
+import java.nio.Buffer
+import java.nio.ByteBuffer
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
@@ -247,32 +248,27 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         return module
     }
 
+    private fun loadBuffer(script: String): Buffer {
+        val bytes = script.toByteArray()
+        val buffer = ByteBuffer.allocateDirect(bytes.size)
+        buffer.put(bytes)
+        buffer.flip()
+        return buffer
+    }
+
     fun preloadModule(moduleName: String, script: String) {
         if (packages.containsKey(moduleName)) {
             logger.warn("Module $moduleName already loaded, skipping preload")
             return
         }
 
-        lua.load(script)
+        lua.load(loadBuffer(script), moduleName)
         packages[moduleName] = lua.get()
     }
 
-    fun loadScript(script: String): LuaValue {
+    fun runScript(name: String, script: String) {
         try {
-            lua.load(script)
-            return lua.get()
-        } catch (e: LuaException) {
-            if (e.message == "no matching method found") {
-                throw LuaException(LuaException.LuaError.JAVA, "${e.message} ($lastAccessedMember)")
-            } else {
-                throw e
-            }
-        }
-    }
-
-    fun runScript(script: String) {
-        try {
-            lua.run(script)
+            lua.run(loadBuffer(script), name)
         } catch (e: LuaException) {
             if (e.message == "no matching method found") {
                 throw LuaException(LuaException.LuaError.JAVA, "${e.message} ($lastAccessedMember)")
