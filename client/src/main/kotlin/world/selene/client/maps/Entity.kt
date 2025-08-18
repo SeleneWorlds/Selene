@@ -133,8 +133,15 @@ class Entity(
 
     override fun reset() {
         networkId = 0
+        entityName = null
+        entityDefinition = null
+        components.clear()
+        motionQueue.clear()
         coordinate = Coordinate.Zero
+        facing = 0f
+        localSortLayer = 0
         visualInstances.clear()
+        position = Vector3.Zero
     }
 
     fun updateVisual() {
@@ -183,6 +190,10 @@ class Entity(
         map.removeEntity(this)
     }
 
+    fun hasTag(tag: String): Boolean {
+        return entityDefinition?.tags?.contains(tag) ?: false
+    }
+
     val luaMeta = LuaMappedMetatable(this) {
         readOnly(::coordinate)
         callable(::updateVisual)
@@ -216,9 +227,5 @@ class Entity(
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
-    }
-
-    fun hasTag(tag: String): Boolean {
-        return entityDefinition?.tags?.contains(tag) ?: false
     }
 }

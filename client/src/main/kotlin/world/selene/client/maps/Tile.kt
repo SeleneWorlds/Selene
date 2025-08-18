@@ -2,16 +2,20 @@ package world.selene.client.maps
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.Pool
+import party.iroiro.luajava.Lua
 import world.selene.client.grid.ClientGrid
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.scene.Renderable
 import world.selene.client.visual.VisualContext
 import world.selene.client.visual.VisualInstance
 import world.selene.common.data.TileDefinition
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.util.Coordinate
 import kotlin.math.min
 
-class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable {
+class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable, LuaMetatableProvider {
     var tileName: String? = null
     var tileDefinition: TileDefinition? = null
 
@@ -21,8 +25,6 @@ class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable {
     override var coordinate: Coordinate = Coordinate.Zero
     var visualInstance: VisualInstance? = null
     
-    val luaProxy = TileLuaProxy(this)
-
     val screenX get() = grid.getScreenX(coordinate)
     val screenY get() = grid.getScreenY(coordinate)
 
@@ -64,22 +66,19 @@ class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable {
         localSortLayer = 0
         coordinate = Coordinate.Zero
         visualInstance = null
+        currentOcclusionAlpha = 1f
+        targetOcclusionAlpha = 1f
     }
 
-    class TileLuaProxy(private val tile: Tile) {
-        val Name: String?
-            get() = tile.tileName
+    val luaMeta = LuaMappedMetatable(this) {
+        readOnly(::coordinate)
+        readOnly(::tileName, "Name")
+        readOnly(coordinate::x)
+        readOnly(coordinate::y)
+        readOnly(coordinate::z)
+    }
 
-        val X: Int
-            get() = tile.coordinate.x
-
-        val Y: Int
-            get() = tile.coordinate.y
-
-        val Z: Int
-            get() = tile.coordinate.z
-
-        val Coordinate: Coordinate
-            get() = tile.coordinate
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
     }
 }

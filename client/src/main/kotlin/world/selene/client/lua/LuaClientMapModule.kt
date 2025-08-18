@@ -16,10 +16,6 @@ class LuaClientMapModule(
 ) : LuaModule {
     override val name = "selene.map"
 
-    override fun initialize(luaManager: LuaManager) {
-        luaManager.exposeClass(Tile.TileLuaProxy::class)
-    }
-
     override fun register(table: LuaValue) {
         table.register("GetTilesAt", this::luaGetTilesAt)
         table.register("HasTileAt", this::luaHasTileAt)
@@ -33,8 +29,7 @@ class LuaClientMapModule(
         val coordinate = Coordinate(x, y, z)
 
         val tiles = clientMap.getTilesAt(coordinate)
-        val tileProxies = tiles.map { it.luaProxy }
-        lua.push(tileProxies, Lua.Conversion.FULL)
+        lua.push(tiles, Lua.Conversion.FULL)
         return 1
     }
 
