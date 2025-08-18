@@ -30,6 +30,8 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     val customData = mutableMapOf<String, Any>()
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
 
+    val transient get() = networkId == -1
+
     val visionViewer = object : Viewer {
         override fun canView(layer: MapLayer): Boolean {
             return layer.visibilityTags.any { visionTags.contains(it) }
@@ -242,6 +244,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
                     0
                 )
             delegate.dimension = dimension
+            dimension.syncManager.entityAdded(delegate)
             return 0
         }
 

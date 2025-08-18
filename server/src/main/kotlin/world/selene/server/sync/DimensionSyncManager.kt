@@ -25,6 +25,10 @@ class DimensionSyncManager {
         }
     }
 
+    fun entityAdded(entity: Entity) {
+        updateEntityWatches(entity)
+    }
+
     fun entityTurned(entity: Entity, direction: Grid.Direction) {
         sendToAllWatching(
             entity.networkId,
@@ -53,4 +57,5 @@ class DimensionSyncManager {
             manager.tileUpdated(coordinate)
         }
     }
+
 }

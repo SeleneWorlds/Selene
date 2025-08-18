@@ -79,7 +79,9 @@ class ClientMap(
     ) {
         val entity = entitiesByNetworkId[networkId] ?: entityPool.obtain(entityId).also {
             entitiesByCoordinate.put(coordinate, it)
-            entitiesByNetworkId[networkId] = it
+            if (networkId != -1) {
+                entitiesByNetworkId[networkId] = it
+            }
             scene.add(it)
         }
         entity.networkId = networkId
@@ -120,17 +122,17 @@ class ClientMap(
 
     fun updateTile(coordinate: Coordinate, baseTileId: Int, additionalTileIds: List<Int>) {
         resetTiles(coordinate)
-        
+
         if (baseTileId != 0) {
             placeTile(coordinate, baseTileId)
         }
-        
+
         additionalTileIds.forEach { tileId ->
             if (tileId != 0) {
                 placeTile(coordinate, tileId)
             }
         }
-        
+
         signals.mapChunkChanged.emit { lua ->
             lua.push(coordinate, Lua.Conversion.NONE)
             lua.push(1) // width = 1 for single tile

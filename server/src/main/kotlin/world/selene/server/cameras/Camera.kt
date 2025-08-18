@@ -30,9 +30,9 @@ class Camera : Viewer {
     val viewer get() = visionEntity?.visionViewer ?: DefaultViewer
 
     fun followEntity(entity: Entity) {
-        dimension = entity.dimension
         followEntity = entity
         visionEntity = entity
+        dimension = entity.dimension
         coordinate = entity.coordinate
     }
 

@@ -42,7 +42,9 @@ class ClientPacketHandler(
         packet: Packet
     ) {
         if (packet is NameIdMappingsPacket) {
-            packet.mappings.forEach { nameIdRegistry.addExisting(packet.scope, it.key, it.value) }
+            context.enqueueWork {
+                packet.mappings.forEach { nameIdRegistry.addExisting(packet.scope, it.key, it.value) }
+            }
         } else if (packet is MapChunkPacket) {
             context.enqueueWork {
                 clientMap.setChunk(

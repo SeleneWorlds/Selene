@@ -26,15 +26,15 @@ class ServerPacketHandler(
         packet: Packet
     ) {
         if (packet is AuthenticatePacket) {
-            signals.playerJoined.emit { lua ->
-                lua.push((context as NetworkClientImpl).player.luaProxy, Lua.Conversion.NONE)
-                1
-            }
             for (scope in nameIdRegistry.mappings.rowKeySet()) {
                 val mappings = nameIdRegistry.mappings.row(scope)
                 mappings.entries.windowed(500, partialWindows = true).forEach { chunk ->
                     context.send(NameIdMappingsPacket(scope, chunk))
                 }
+            }
+            signals.playerJoined.emit { lua ->
+                lua.push((context as NetworkClientImpl).player.luaProxy, Lua.Conversion.NONE)
+                1
             }
         } else if (packet is RequestMovePacket) {
             val controlledEntity = (context as NetworkClientImpl).player.controlledEntity ?: return

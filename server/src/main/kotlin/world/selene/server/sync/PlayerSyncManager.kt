@@ -31,11 +31,41 @@ class PlayerSyncManager(
     val verticalChunkViewRange = 2
     val entitySyncRadius = 64
 
+    var dimensionDirty = false
+    var coordinateDirty = false
+
     fun update() {
         if (!initialSync) {
             sendMissingChunks()
             syncNearbyEntities()
             initialSync = true
+            dimensionDirty = false
+            coordinateDirty = false
+        } else if (dimensionDirty) {
+            syncedChunks.forEach {
+                player.client.send(RemoveMapChunkPacket(it.x, it.y, it.z, it.width, it.height))
+            }
+            syncedChunks.clear()
+            syncedEntities.forEach {
+                player.client.send(RemoveEntityPacket(it))
+            }
+            syncedEntities.clear()
+            sendMissingChunks()
+            syncNearbyEntities()
+            dimensionDirty = false
+            coordinateDirty = false
+        } else if (coordinateDirty) {
+            val iterator = syncedChunks.iterator()
+            while (iterator.hasNext()) {
+                val window = iterator.next()
+                if (!shouldSync(window)) {
+                    iterator.remove()
+                    player.client.send(RemoveMapChunkPacket(window.x, window.y, window.z, window.width, window.height))
+                }
+            }
+            sendMissingChunks()
+            syncNearbyEntities()
+            coordinateDirty = false
         }
     }
 
@@ -111,7 +141,7 @@ class PlayerSyncManager(
     }
 
     private fun syncEntity(entity: Entity) {
-        if (syncedEntities.add(entity.networkId)) {
+        if (entity.transient || syncedEntities.add(entity.networkId)) {
             player.client.send(
                 EntityPacket(
                     networkId = entity.networkId,
@@ -138,16 +168,7 @@ class PlayerSyncManager(
     ) {
         oldDimension?.syncManager?.playerSyncManagers?.remove(this)
         dimension?.syncManager?.playerSyncManagers?.add(this)
-        syncedChunks.forEach {
-            player.client.send(RemoveMapChunkPacket(it.x, it.y, it.z, it.width, it.height))
-        }
-        syncedChunks.clear()
-        syncedEntities.forEach {
-            player.client.send(RemoveEntityPacket(it))
-        }
-        syncedEntities.clear()
-        sendMissingChunks()
-        syncNearbyEntities()
+        dimensionDirty = true
     }
 
     override fun cameraCoordinateChanged(
@@ -155,16 +176,7 @@ class PlayerSyncManager(
         prev: Coordinate,
         value: Coordinate
     ) {
-        val iterator = syncedChunks.iterator()
-        while (iterator.hasNext()) {
-            val window = iterator.next()
-            if (!shouldSync(window)) {
-                iterator.remove()
-                player.client.send(RemoveMapChunkPacket(window.x, window.y, window.z, window.width, window.height))
-            }
-        }
-        sendMissingChunks()
-        syncNearbyEntities()
+        coordinateDirty = true
     }
 
     fun tileUpdated(coordinate: Coordinate) {

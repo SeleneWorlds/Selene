@@ -21,6 +21,7 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val en
 
     override fun register(table: LuaValue) {
         table.register("Create", this::luaCreate)
+        table.register("CreateTransient", this::luaCreateTransient)
         table.set("SteppedOnTile", signals.entitySteppedOnTile)
     }
 
@@ -32,6 +33,18 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val en
         }
 
         val entity = entityManager.createEntity(entityType)
+        lua.push(entity.luaProxy, Lua.Conversion.NONE)
+        return 1
+    }
+
+    private fun luaCreateTransient(lua: Lua): Int {
+        val entityType = lua.checkString(-1)
+        val entityDefinition = entityRegistry.get(entityType)
+        if (entityDefinition == null) {
+            return lua.error(IllegalArgumentException("Unknown entity type: $entityType"))
+        }
+
+        val entity = entityManager.createTransientEntity(entityType)
         lua.push(entity.luaProxy, Lua.Conversion.NONE)
         return 1
     }

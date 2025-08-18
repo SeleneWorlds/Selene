@@ -34,4 +34,11 @@ class EntityManager {
         addEntity(entity)
         return entity
     }
+
+    fun createTransientEntity(entityType: String): Entity {
+        val entity = getKoin().get<Entity>()
+        entity.networkId = -1
+        entity.entityType = entityType
+        return entity
+    }
 }
