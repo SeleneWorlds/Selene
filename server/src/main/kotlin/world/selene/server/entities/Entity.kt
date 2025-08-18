@@ -108,6 +108,12 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        fun Move(lua: Lua): Int {
+            val direction = lua.checkDirection(2, delegate.world.grid)
+            val coordinate = delegate.coordinate + direction.vector
+            return if (delegate.moveTo(coordinate)) 0 else 1
+        }
+
         fun GetCustomData(lua: Lua): Int {
             val key = lua.checkString(2)
             val defaultValue = lua.toObject(3)
