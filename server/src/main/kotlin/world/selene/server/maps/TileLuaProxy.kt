@@ -28,4 +28,10 @@ class TileLuaProxy(
         }
         return 0
     }
+
+    fun HasTag(lua: Lua): Int {
+        val key = lua.checkString(2)
+        lua.push(definition.tags.contains(key))
+        return 1
+    }
 }
