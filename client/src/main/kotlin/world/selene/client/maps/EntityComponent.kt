@@ -23,15 +23,17 @@ class VisualComponent(val configuration: VisualComponentConfiguration) : EntityC
     var blue = 1f
     var alpha = 1f
 
-    val luaMeta = LuaMappedMetatable(this) {
-        writable(::red)
-        writable(::green)
-        writable(::blue)
-        writable(::alpha)
-    }
-
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
+    }
+
+    companion object {
+        val luaMeta = LuaMappedMetatable(VisualComponent::class) {
+            writable(VisualComponent::red)
+            writable(VisualComponent::green)
+            writable(VisualComponent::blue)
+            writable(VisualComponent::alpha)
+        }
     }
 }
 

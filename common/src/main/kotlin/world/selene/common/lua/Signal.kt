@@ -6,14 +6,6 @@ import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 
 class Signal(private val name: String) : LuaMetatableProvider {
-    val luaMeta = LuaMappedMetatable(this) {
-        callable(::connect)
-    }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
-
     data class NamedCallback(val callback: LuaValue, val registrationSite: CallerInfo)
 
     private val logger = LoggerFactory.getLogger(Signal::class.java)
@@ -39,5 +31,15 @@ class Signal(private val name: String) : LuaMetatableProvider {
 
     fun hasListeners(): Boolean {
         return callbacks.isNotEmpty()
+    }
+
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
+
+    companion object {
+        val luaMeta = LuaMappedMetatable(Signal::class) {
+            callable(Signal::connect)
+        }
     }
 }

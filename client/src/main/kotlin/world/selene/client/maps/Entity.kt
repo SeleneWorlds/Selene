@@ -200,38 +200,44 @@ class Entity(
         return entityDefinition?.tags?.contains(tag) ?: false
     }
 
-    val luaMeta = LuaMappedMetatable(this) {
-        readOnly(::coordinate)
-        callable(::updateVisual)
-        callable(::spawn)
-        callable(::despawn)
-        callable("SetCoordinate") {
-            val (coordinate, _) = it.checkCoordinate(2)
-            setCoordinateAndUpdate(coordinate)
-            0
-        }
-        callable("AddComponent") {
-            val componentName = it.checkString(2)
-            val componentData = it.toMap(3)
-            val componentConfiguration = objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
-            components[componentName] = componentConfiguration.create()
-            0
-        }
-        callable("GetComponent") {
-            val componentName = it.checkString(2)
-            val component = components[componentName]
-            it.push(component, Lua.Conversion.NONE)
-            1
-        }
-        callable("GetVisual") { lua ->
-            val componentName = lua.checkString(2)
-            val visualInstance = visualInstances.firstOrNull { it.componentName == componentName }?.visualInstance
-            lua.push(visualInstance, Lua.Conversion.NONE)
-            1
-        }
-    }
-
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
+    }
+
+    companion object {
+        val luaMeta = LuaMappedMetatable(Entity::class) {
+            readOnly(Entity::coordinate)
+            callable(Entity::updateVisual)
+            callable(Entity::spawn)
+            callable(Entity::despawn)
+            callable("SetCoordinate") {
+                val self = it.checkSelf()
+                val (coordinate, _) = it.checkCoordinate(2)
+                self.setCoordinateAndUpdate(coordinate)
+                0
+            }
+            callable("AddComponent") {
+                val self = it.checkSelf()
+                val componentName = it.checkString(2)
+                val componentData = it.toMap(3)
+                val componentConfiguration = self.objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
+                self.components[componentName] = componentConfiguration.create()
+                0
+            }
+            callable("GetComponent") {
+                val self = it.checkSelf()
+                val componentName = it.checkString(2)
+                val component = self.components[componentName]
+                it.push(component, Lua.Conversion.NONE)
+                1
+            }
+            callable("GetVisual") { lua ->
+                val self = lua.checkSelf()
+                val componentName = lua.checkString(2)
+                val visualInstance = self.visualInstances.firstOrNull { it.componentName == componentName }?.visualInstance
+                lua.push(visualInstance, Lua.Conversion.NONE)
+                1
+            }
+        }
     }
 }

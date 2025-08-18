@@ -28,6 +28,10 @@ class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable, LuaMetatab
     val screenX get() = grid.getScreenX(coordinate)
     val screenY get() = grid.getScreenY(coordinate)
 
+    val x get() = coordinate.x
+    val y get() = coordinate.y
+    val z get() = coordinate.z
+
     private var currentOcclusionAlpha: Float = 1f
     private var targetOcclusionAlpha: Float = 1f
     private val fadeSpeed: Float = 5f
@@ -70,15 +74,17 @@ class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable, LuaMetatab
         targetOcclusionAlpha = 1f
     }
 
-    val luaMeta = LuaMappedMetatable(this) {
-        readOnly(::coordinate)
-        readOnly(::tileName, "Name")
-        readOnly(coordinate::x)
-        readOnly(coordinate::y)
-        readOnly(coordinate::z)
-    }
-
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
+    }
+
+    companion object {
+        val luaMeta = LuaMappedMetatable(Tile::class) {
+            readOnly(Tile::coordinate)
+            readOnly(Tile::tileName, "Name")
+            readOnly(Tile::x)
+            readOnly(Tile::y)
+            readOnly(Tile::z)
+        }
     }
 }

@@ -203,10 +203,10 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.push {
             val obj = it.toJavaObject(-1)!! // [obj]
             if (obj is LuaMetatable) {
-                it.push(obj.luaToString())
+                it.push(obj.luaToString(it))
                 return@push 1
             } else if (obj is LuaMetatableProvider) {
-                it.push(obj.luaMetatable(it).luaToString())
+                it.push(obj.luaMetatable(it).luaToString(it))
                 return@push 1
             }
             if (!exposedClasses.contains(obj::class)) {

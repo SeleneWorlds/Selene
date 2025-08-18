@@ -163,15 +163,6 @@ data class AnimatedVisualInstance(
     private val luaManager: LuaManager
 ) : TextureBasedVisualInstance(), SizedVisualInstance, LuaMetatableProvider {
     val animationCompleted = Signal("AnimationCompleted")
-    val luaMeta = LuaMappedMetatable(this) {
-        readOnly(::currentFrame)
-        readOnly(::elapsedTime)
-        readOnly(::animationCompleted)
-    }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
 
     private val textureRegions: List<TextureRegion> by lazy {
         visualDef.textures.map { path ->
@@ -202,6 +193,18 @@ data class AnimatedVisualInstance(
     override fun render(spriteBatch: SpriteBatch, x: Float, y: Float, context: VisualContext) {
         super.render(spriteBatch, x, y, context)
         context.offsetY += visualDef.surfaceOffsetY
+    }
+
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
+
+    companion object {
+        val luaMeta = LuaMappedMetatable(AnimatedVisualInstance::class) {
+            readOnly(AnimatedVisualInstance::currentFrame)
+            readOnly(AnimatedVisualInstance::elapsedTime)
+            readOnly(AnimatedVisualInstance::animationCompleted)
+        }
     }
 }
 
