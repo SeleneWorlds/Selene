@@ -3,7 +3,7 @@ package world.selene.server.lua
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.data.EntityRegistry
-import world.selene.common.data.VisualComponent
+import world.selene.common.data.VisualComponentConfiguration
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.checkString
@@ -16,7 +16,6 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val en
 
     override fun initialize(luaManager: LuaManager) {
         luaManager.exposeClass(Entity.EntityLuaProxy::class)
-        luaManager.exposeClass(VisualComponent.VisualComponentLuaProxy::class)
     }
 
     override fun register(table: LuaValue) {

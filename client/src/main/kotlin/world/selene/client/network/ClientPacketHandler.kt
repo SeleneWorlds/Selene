@@ -13,7 +13,6 @@ import world.selene.client.camera.CameraManager
 import world.selene.client.controls.GridMovement
 import world.selene.client.controls.PlayerController
 import world.selene.client.maps.ClientMap
-import world.selene.common.data.ConfiguredComponent
 import world.selene.common.network.packet.CustomPayloadPacket
 import world.selene.common.network.packet.EntityPacket
 import world.selene.common.network.packet.MoveEntityPacket
@@ -25,6 +24,7 @@ import world.selene.common.network.packet.SetCameraPositionPacket
 import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.network.packet.StopSoundPacket
 import world.selene.client.sound.SoundManager
+import world.selene.common.data.ComponentConfiguration
 
 class ClientPacketHandler(
     private val objectMapper: ObjectMapper,
@@ -72,7 +72,7 @@ class ClientPacketHandler(
         } else if (packet is EntityPacket) {
             context.enqueueWork {
                 val componentOverrides =
-                    packet.components.mapValues { objectMapper.readValue(it.value, ConfiguredComponent::class.java) }
+                    packet.components.mapValues { objectMapper.readValue(it.value, ComponentConfiguration::class.java) }
                 clientMap.placeOrUpdateEntity(
                     packet.entityId,
                     packet.networkId,

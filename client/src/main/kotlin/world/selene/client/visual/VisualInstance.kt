@@ -163,7 +163,7 @@ data class AnimatedVisualInstance(
     private val luaManager: LuaManager
 ) : TextureBasedVisualInstance(), SizedVisualInstance, LuaMetatableProvider {
     val animationCompleted = Signal("AnimationCompleted")
-    val luaMeta = LuaMappedMetatable {
+    val luaMeta = LuaMappedMetatable(this) {
         readOnly(::currentFrame)
         readOnly(::elapsedTime)
         readOnly(::animationCompleted)

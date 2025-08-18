@@ -6,7 +6,7 @@ import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 
 class Signal(private val name: String) : LuaMetatableProvider {
-    val luaMeta = LuaMappedMetatable {
+    val luaMeta = LuaMappedMetatable(this) {
         callable(::connect)
     }
 

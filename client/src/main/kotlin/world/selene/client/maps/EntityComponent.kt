@@ -1,0 +1,80 @@
+package world.selene.client.maps
+
+import com.badlogic.gdx.Gdx
+import org.koin.mp.KoinPlatform.getKoin
+import party.iroiro.luajava.Lua
+import party.iroiro.luajava.value.LuaValue
+import world.selene.common.data.ClientScriptComponentConfiguration
+import world.selene.common.data.ComponentConfiguration
+import world.selene.common.data.VisualComponentConfiguration
+import world.selene.common.lua.LuaManager
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.newTable
+
+interface EntityComponent {
+    fun update(entity: Entity) = Unit
+}
+
+class VisualComponent(val configuration: VisualComponentConfiguration) : EntityComponent, LuaMetatableProvider {
+    var red = 1f
+    var green = 1f
+    var blue = 1f
+    var alpha = 1f
+
+    val luaMeta = LuaMappedMetatable(this) {
+        writable(::red)
+        writable(::green)
+        writable(::blue)
+        writable(::alpha)
+    }
+
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
+}
+
+class ClientScriptComponent(val configuration: ClientScriptComponentConfiguration) : EntityComponent {
+    private val luaManager: LuaManager by getKoin().inject()
+    private var module: LuaValue? = null
+    private var data: LuaValue? = null
+
+    override fun update(entity: Entity) {
+        val lua = luaManager.lua
+        val initPending = module == null
+        val data = data ?: lua.newTable {}.also {
+            data = it
+        }
+        val module = module ?: luaManager.requireModule(configuration.script).also {
+            module = it
+        }
+        if (initPending) {
+            lua.push(module)
+            lua.getField(-1, "Initialize")
+            if (lua.isFunction(-1)) {
+                lua.push(entity, Lua.Conversion.NONE)
+                lua.push(data)
+                lua.pCall(2, 0)
+            }
+            lua.pop(1)
+        }
+        lua.push(module)
+        lua.getField(-1, "TickEntity")
+        if (lua.isFunction(-1)) {
+            lua.push(entity, Lua.Conversion.NONE)
+            lua.push(data)
+            lua.push(Gdx.graphics.deltaTime)
+            lua.pCall(3, 0)
+        }
+        lua.pop(1)
+    }
+}
+
+fun ComponentConfiguration.create(): EntityComponent {
+    return when (this) {
+        is VisualComponentConfiguration -> VisualComponent(this)
+        is ClientScriptComponentConfiguration -> ClientScriptComponent(this)
+        else -> throw IllegalArgumentException("Unknown component configuration: $this")
+    }
+}

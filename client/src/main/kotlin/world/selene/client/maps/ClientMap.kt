@@ -3,21 +3,15 @@ package world.selene.client.maps
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import party.iroiro.luajava.Lua
-import world.selene.client.grid.ClientGrid
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.scene.Scene
-import world.selene.client.visual.VisualManager
-import world.selene.common.data.ConfiguredComponent
-import world.selene.common.lua.LuaManager
+import world.selene.common.data.ComponentConfiguration
 import world.selene.common.util.Coordinate
 
 class ClientMap(
     private val tilePool: TilePool,
-    private val grid: ClientGrid,
     private val entityPool: EntityPool,
     private val scene: Scene,
-    private val luaManager: LuaManager,
-    private val visualManager: VisualManager,
     private val signals: ClientLuaSignals
 ) {
     private val tiles = ArrayListMultimap.create<Coordinate, Tile>()
@@ -47,7 +41,7 @@ class ClientMap(
         additionalTiles.forEach { coordinate, tileId ->
             placeTile(coordinate, tileId)
         }
-        signals.mapChunkChanged.emit() { lua ->
+        signals.mapChunkChanged.emit { lua ->
             lua.push(Coordinate(x, y, z), Lua.Conversion.NONE)
             lua.push(width)
             lua.push(height)
@@ -77,30 +71,35 @@ class ClientMap(
         networkId: Int,
         coordinate: Coordinate,
         facing: Float,
-        componentOverrides: Map<String, ConfiguredComponent>
+        componentOverrides: Map<String, ComponentConfiguration>
     ) {
         val entity = entitiesByNetworkId[networkId] ?: entityPool.obtain(entityId).also {
-            entitiesByCoordinate.put(coordinate, it)
-            if (networkId != -1) {
-                entitiesByNetworkId[networkId] = it
-            }
-            scene.add(it)
+            it.networkId = networkId
+            it.setCoordinate(coordinate)
+            addEntity(it)
         }
-        entity.networkId = networkId
         entity.setCoordinate(coordinate)
         entity.facing = facing
         entity.setupComponents(componentOverrides)
         entity.updateVisual()
     }
 
+    fun addEntity(entity: Entity) {
+        entitiesByCoordinate.put(entity.coordinate, entity)
+        if (entity.networkId != -1) {
+            entitiesByNetworkId[entity.networkId] = entity
+        }
+        scene.add(entity)
+    }
+
     fun removeEntityByNetworkId(networkId: Int) {
         entitiesByNetworkId[networkId]?.let {
-            removeEntity(it.coordinate, it)
+            removeEntity(it)
         }
     }
 
-    fun removeEntity(coordinate: Coordinate, entity: Entity) {
-        entitiesByCoordinate.remove(coordinate, entity)
+    fun removeEntity(entity: Entity) {
+        entitiesByCoordinate.remove(entity.coordinate, entity)
         entitiesByNetworkId.remove(entity.networkId)
         scene.remove(entity)
         entityPool.free(entity)
@@ -135,7 +134,7 @@ class ClientMap(
             }
         }
 
-        signals.mapChunkChanged.emit() { lua ->
+        signals.mapChunkChanged.emit { lua ->
             lua.push(coordinate, Lua.Conversion.NONE)
             lua.push(1) // width = 1 for single tile
             lua.push(1) // height = 1 for single tile

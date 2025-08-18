@@ -2,7 +2,7 @@ package world.selene.server.entities
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.data.ConfiguredComponent
+import world.selene.common.data.ComponentConfiguration
 import world.selene.common.grid.Grid
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
@@ -52,7 +52,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     }
 
     interface ComponentResolver {
-        fun resolveForPlayer(player: Player): ConfiguredComponent?
+        fun resolveForPlayer(player: Player): ComponentConfiguration?
     }
 
     val visibilityTags = mutableSetOf("default")
@@ -60,8 +60,8 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     val collisionTags = mutableSetOf("default")
 
 
-    fun resolveComponentsFor(player: Player): Map<String, ConfiguredComponent> {
-        val components = mutableMapOf<String, ConfiguredComponent>()
+    fun resolveComponentsFor(player: Player): Map<String, ComponentConfiguration> {
+        val components = mutableMapOf<String, ComponentConfiguration>()
         dynamicComponents.forEach { (key, value) ->
             value.resolveForPlayer(player)?.let {
                 components[key] = it
@@ -258,13 +258,13 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         fun AddDynamicComponent(name: String, callback: LuaValue) {
             delegate.dynamicComponents[name] = object : ComponentResolver {
-                override fun resolveForPlayer(player: Player): ConfiguredComponent? {
+                override fun resolveForPlayer(player: Player): ComponentConfiguration? {
                     val lua = callback.state()
                     lua.push(callback)
                     lua.push(this@EntityLuaProxy, Lua.Conversion.NONE)
                     lua.push(player.luaProxy, Lua.Conversion.NONE)
                     lua.pCall(2, 1)
-                    return objectMapper.convertValue(lua.toMap(-1), ConfiguredComponent::class.java)
+                    return objectMapper.convertValue(lua.toMap(-1), ComponentConfiguration::class.java)
                 }
             }
         }

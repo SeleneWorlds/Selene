@@ -6,7 +6,7 @@ import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
 import kotlin.reflect.jvm.isAccessible
 
-class LuaMappedMetatable(body: (LuaMappedMetatable.() -> Unit)) : LuaMetatable {
+class LuaMappedMetatable(private val element: Any, body: (LuaMappedMetatable.() -> Unit)) : LuaMetatable {
     private val properties = mutableMapOf<String, KProperty<*>>()
     private val mutableProperties = mutableMapOf<String, KMutableProperty<*>>()
     private val callables = mutableMapOf<String, KFunction<*>>()
@@ -36,6 +36,7 @@ class LuaMappedMetatable(body: (LuaMappedMetatable.() -> Unit)) : LuaMetatable {
         require(function.parameters[0].type.classifier == Lua::class) { "Getter '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
         require(function.returnType.classifier == Int::class) { "Getter '${function.name}' has invalid return type: ${function.returnType}" }
         getters[capitalize(function.name)] = function
+        function.isAccessible = true
     }
 
     fun setter(function: KFunction<*>) {
@@ -44,6 +45,7 @@ class LuaMappedMetatable(body: (LuaMappedMetatable.() -> Unit)) : LuaMetatable {
         require(function.parameters[0].type.classifier == Lua::class) { "Setter '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
         require(function.returnType.classifier == Int::class) { "Setter '${function.name}' has invalid return type: ${function.returnType}" }
         setters[capitalize(function.name)] = function
+        function.isAccessible = true
     }
 
     fun writable(property: KMutableProperty<*>, alias: String? = null) {
@@ -60,6 +62,7 @@ class LuaMappedMetatable(body: (LuaMappedMetatable.() -> Unit)) : LuaMetatable {
             require(function.parameters[0].type.classifier == Lua::class) { "Method '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
         }
         callables[capitalize(function.name)] = function
+        function.isAccessible = true
     }
 
     fun callable(key: String, function: (Lua) -> Int) {
@@ -134,5 +137,9 @@ class LuaMappedMetatable(body: (LuaMappedMetatable.() -> Unit)) : LuaMetatable {
         }
 
         return lua.error(NoSuchFieldError("Property '$key' does not exist on ${luaTypeName()}"))
+    }
+
+    override fun luaTypeName(): String {
+        return element.javaClass.simpleName
     }
 }

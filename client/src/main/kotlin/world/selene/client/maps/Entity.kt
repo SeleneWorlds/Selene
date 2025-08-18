@@ -1,6 +1,5 @@
 package world.selene.client.maps
 
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.math.Vector3
@@ -19,17 +18,14 @@ import world.selene.client.visual.SizedVisualInstance
 import world.selene.client.visual.VisualContext
 import world.selene.client.visual.VisualInstance
 import world.selene.client.visual.VisualManager
-import world.selene.common.data.ClientScriptComponent
-import world.selene.common.data.ConfiguredComponent
-import world.selene.common.data.VisualComponent
+import world.selene.common.data.ComponentConfiguration
 import world.selene.common.data.EntityDefinition
-import world.selene.common.data.InstancedComponent
 import world.selene.common.lua.LuaManager
-import world.selene.common.lua.LuaProxyProvider
-import world.selene.common.lua.checkInt
-import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkString
-import world.selene.common.lua.newTable
 import world.selene.common.util.Coordinate
 import kotlin.collections.forEach
 import kotlin.math.max
@@ -39,15 +35,15 @@ class Entity(
     val objectMapper: ObjectMapper,
     val visualManager: VisualManager,
     val scene: Scene,
+    val map: ClientMap,
     val grid: ClientGrid
 ) :
-    Pool.Poolable, Renderable {
+    Pool.Poolable, Renderable, LuaMetatableProvider {
     var networkId: Int = 0
     var entityName: String? = null
     var entityDefinition: EntityDefinition? = null
-    var components: MutableMap<String, ConfiguredComponent> = mutableMapOf()
+    var components: MutableMap<String, EntityComponent> = mutableMapOf()
     val motionQueue: ArrayDeque<EntityMotion> = ArrayDeque()
-    val luaProxy = EntityLuaProxy(this)
 
     override var coordinate: Coordinate = Coordinate.Zero; private set
     var facing: Float = 0f
@@ -116,34 +112,8 @@ class Entity(
     }
 
     override fun render(sceneRenderer: SceneRenderer, spriteBatch: SpriteBatch, visualContext: VisualContext) {
-        components.values.forEach { script ->
-            if (script is ClientScriptComponent) {
-                val lua = luaManager.lua
-                if (script.data == null) {
-                    script.data = lua.newTable {}
-                }
-                if (script.module == null) {
-                    script.module = luaManager.requireModule(script.script).also {
-                        lua.push(it)
-                    }
-                    lua.getField(-1, "Initialize")
-                    if (lua.isFunction(-1)) {
-                        lua.push(luaProxy, Lua.Conversion.NONE)
-                        lua.push(script.data!!)
-                        lua.pCall(2, 0)
-                    }
-                    lua.pop(1)
-                }
-                lua.push(script.module!!)
-                lua.getField(-1, "TickEntity")
-                if (lua.isFunction(-1)) {
-                    lua.push(luaProxy, Lua.Conversion.NONE)
-                    lua.push(script.data!!)
-                    lua.push(Gdx.graphics.deltaTime)
-                    lua.pCall(3, 0)
-                }
-                lua.pop(1)
-            }
+        components.values.forEach { component ->
+            component.update(this)
         }
 
         val displayX = screenX
@@ -155,7 +125,7 @@ class Entity(
                 context.maxHeight = max(context.maxHeight, visualInstance.height)
             }
             if (visualInstance.shouldRender(sceneRenderer, displayX, displayY, context)) {
-                context.color.set(component.r, component.g, component.b, component.a)
+                context.color.set(component.red, component.green, component.blue, component.alpha)
                 visualInstance.render(spriteBatch, displayX, displayY, context)
             }
         }
@@ -171,7 +141,7 @@ class Entity(
         visualInstances.clear()
         components.entries.forEach { (name, component) ->
             if (component is VisualComponent) {
-                visualManager.buildInstance(component.visual, component.properties)?.let {
+                visualManager.buildInstance(component.configuration.visual, component.configuration.properties)?.let {
                     if (it is AnimatorVisualInstance) {
                         it.animator = HumanoidAnimator(this)
                     }
@@ -182,6 +152,10 @@ class Entity(
     }
 
     fun setCoordinate(coordinate: Coordinate) {
+        if (this.coordinate == coordinate) {
+            return
+        }
+
         this.coordinate = coordinate
         position.x = coordinate.x.toFloat()
         position.y = coordinate.y.toFloat()
@@ -189,73 +163,62 @@ class Entity(
         scene.updateSorting(this)
     }
 
-    fun addComponent(name: String, component: ConfiguredComponent) {
-        this.components[name] = component
-    }
-
-    fun setupComponents(overrides: Map<String, ConfiguredComponent>) {
+    fun setupComponents(overrides: Map<String, ComponentConfiguration>) {
         entityDefinition?.components?.forEach {
-            this.components[it.key] = it.value
+            this.components[it.key] = it.value.create()
         }
         overrides.forEach {
-            this.components[it.key] = it.value
-        }
-        this.components.forEach { (key, value) ->
-            if (value is InstancedComponent<*>) {
-                this.components[key] = value.instantiate()
-            }
+            this.components[it.key] = it.value.create()
         }
     }
 
-    class EntityLuaProxy(private val delegate: Entity) {
-        val Coordinate get() = delegate.coordinate
-
-        fun SetCoordinate(lua: Lua): Int {
-            val coordinate: Coordinate = if (lua.isNumber(2)) {
-                Coordinate(lua.checkInt(2), lua.checkInt(3), lua.checkInt(4))
-            } else {
-                lua.checkJavaObject(2, Coordinate::class)
-            }
-            delegate.setCoordinate(coordinate)
-            return 0
+    private fun spawn() {
+        if (visualInstances.isEmpty()) {
+            updateVisual()
         }
+        map.addEntity(this)
+    }
 
-        fun AddComponent(lua: Lua): Int {
-            val componentName = lua.checkString(2)
-            val componentData = lua.toMap(3)
-            val component = delegate.objectMapper.convertValue(componentData, ConfiguredComponent::class.java)
-            delegate.addComponent(componentName, component)
-            return 0
+    private fun despawn() {
+        map.removeEntity(this)
+    }
+
+    val luaMeta = LuaMappedMetatable(this) {
+        readOnly(::coordinate)
+        callable(::updateVisual)
+        callable(::spawn)
+        callable(::despawn)
+        callable("SetCoordinate") {
+            val (coordinate, _) = it.checkCoordinate(2)
+            setCoordinate(coordinate)
+            0
         }
-
-        fun GetComponent(lua: Lua): Int {
-            val componentName = lua.checkString(2)
-            val component = delegate.components[componentName]
-            lua.push(if (component is LuaProxyProvider<*>) component.luaProxy else component, Lua.Conversion.NONE)
-            return 1
+        callable("AddComponent") {
+            val componentName = it.checkString(2)
+            val componentData = it.toMap(3)
+            val componentConfiguration = objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
+            components[componentName] = componentConfiguration.create()
+            0
         }
-
-        fun GetVisual(lua: Lua): Int {
+        callable("GetComponent") {
+            val componentName = it.checkString(2)
+            val component = components[componentName]
+            it.push(component, Lua.Conversion.NONE)
+            1
+        }
+        callable("GetVisual") { lua ->
             val componentName = lua.checkString(2)
-            val visualInstance =
-                delegate.visualInstances.firstOrNull { it.componentName == componentName }?.visualInstance
+            val visualInstance = visualInstances.firstOrNull { it.componentName == componentName }?.visualInstance
             lua.push(visualInstance, Lua.Conversion.NONE)
-            return 1
+            1
         }
+    }
 
-        fun UpdateVisual() {
-            delegate.updateVisual()
-        }
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
 
-        fun Spawn() {
-            // TODO should be added to entitiesByCoordinate too
-            delegate.updateVisual()
-            delegate.scene.add(delegate)
-        }
-
-        fun Despawn() {
-            // TODO should be removed from entitiesByCoordinate too
-            delegate.scene.remove(delegate)
-        }
+    fun hasTag(tag: String): Boolean {
+        return entityDefinition?.tags?.contains(tag) ?: false
     }
 }
