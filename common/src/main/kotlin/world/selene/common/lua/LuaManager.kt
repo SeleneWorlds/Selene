@@ -302,14 +302,12 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.set(key, value)
     }
 
-    companion object {
-        var lastAccessedMember: String? = null; private set
+    var lastAccessedMember: String? = null; private set
 
-        fun sanitizeException(e: Exception): Exception {
-            if (e.message == "no matching method found") {
-                return LuaException(LuaException.LuaError.JAVA, "${e.message} ($lastAccessedMember)")
-            }
-            return e
+    fun sanitizeException(e: Exception): Exception {
+        if (e.message == "no matching method found") {
+            return LuaException(LuaException.LuaError.JAVA, "${e.message} ($lastAccessedMember)")
         }
+        return e
     }
 }

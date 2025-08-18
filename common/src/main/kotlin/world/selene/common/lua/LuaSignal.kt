@@ -6,14 +6,10 @@ import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 
 @Suppress("FunctionName", "unused")
-class LuaSignal {
+class LuaSignal(private val luaManager: LuaManager) {
 
     private val logger = LoggerFactory.getLogger(LuaSignal::class.java)
     private val callbacks = mutableListOf<LuaValue>()
-
-    fun emit(args: Array<LuaValue>) {
-        callbacks.forEach { it.call(*args) }
-    }
 
     fun emit(args: (Lua) -> Int) {
         callbacks.forEach {
@@ -22,7 +18,7 @@ class LuaSignal {
                 lua.push(it)
                 lua.pCall(args(lua), 0)
             } catch (e: LuaException) {
-                logger.error("Error firing lua signal", LuaManager.sanitizeException(e))
+                logger.error("Error firing lua signal", luaManager.sanitizeException(e))
             }
         }
     }

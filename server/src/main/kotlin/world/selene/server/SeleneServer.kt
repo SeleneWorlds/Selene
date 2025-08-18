@@ -72,8 +72,8 @@ class SeleneServer(
 
         clientBundleCache.watchBundles(config.bundles)
 
-        signals.serverStarted.emit(arrayOf())
-        signals.serverReloaded.emit(arrayOf())
+        signals.serverStarted.emit { 0 }
+        signals.serverReloaded.emit { 0 }
 
         httpServer.start()
         networkServer.start(config.port)
