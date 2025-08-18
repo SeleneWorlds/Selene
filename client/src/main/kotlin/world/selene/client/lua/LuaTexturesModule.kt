@@ -39,15 +39,11 @@ class LuaTexturesModule : LuaModule {
             else -> Pixmap.Format.RGBA8888
         }
 
-        try {
-            val pixmap = Pixmap(width, height, format)
-            val texture = Texture(pixmap)
-            val proxy = TextureLuaProxy(texture, pixmap)
-            lua.push(proxy, Lua.Conversion.NONE)
-            return 1
-        } catch (e: Exception) {
-            return lua.error(RuntimeException("Failed to create texture: ${e.message}", e))
-        }
+        val pixmap = Pixmap(width, height, format)
+        val texture = Texture(pixmap)
+        val proxy = TextureLuaProxy(texture, pixmap)
+        lua.push(proxy, Lua.Conversion.NONE)
+        return 1
     }
 
     class TextureLuaProxy(val texture: Texture, private val pixmap: Pixmap) : Disposable {
@@ -67,14 +63,9 @@ class LuaTexturesModule : LuaModule {
             val x = lua.checkInt(2)
             val y = lua.checkInt(3)
             val color = parseColor(lua, 4)
-
-            try {
-                pixmap.setColor(color)
-                pixmap.drawPixel(x, y)
-                return 0
-            } catch (e: Exception) {
-                return lua.error(RuntimeException("Failed to set pixel: ${e.message}", e))
-            }
+            pixmap.setColor(color)
+            pixmap.drawPixel(x, y)
+            return 0
         }
 
         fun GetPixel(lua: Lua): Int {
@@ -84,18 +75,13 @@ class LuaTexturesModule : LuaModule {
 
             val x = lua.checkInt(2)
             val y = lua.checkInt(3)
-
-            try {
-                val colorInt = pixmap.getPixel(x, y)
-                val color = Color(colorInt)
-                lua.push(color.r)
-                lua.push(color.g)
-                lua.push(color.b)
-                lua.push(color.a)
-                return 4
-            } catch (e: Exception) {
-                return lua.error(RuntimeException("Failed to get pixel: ${e.message}", e))
-            }
+            val colorInt = pixmap.getPixel(x, y)
+            val color = Color(colorInt)
+            lua.push(color.r)
+            lua.push(color.g)
+            lua.push(color.b)
+            lua.push(color.a)
+            return 4
         }
 
         fun Fill(lua: Lua): Int {
@@ -104,14 +90,9 @@ class LuaTexturesModule : LuaModule {
             }
 
             val color = parseColor(lua, 2)
-
-            try {
-                pixmap.setColor(color)
-                pixmap.fill()
-                return 0
-            } catch (e: Exception) {
-                return lua.error(RuntimeException("Failed to fill texture: ${e.message}", e))
-            }
+            pixmap.setColor(color)
+            pixmap.fill()
+            return 0
         }
 
         fun DrawRect(lua: Lua): Int {
@@ -124,14 +105,9 @@ class LuaTexturesModule : LuaModule {
             val width = lua.checkInt(4)
             val height = lua.checkInt(5)
             val color = parseColor(lua, 6)
-
-            try {
-                pixmap.setColor(color)
-                pixmap.drawRectangle(x, y, width, height)
-                return 0
-            } catch (e: Exception) {
-                return lua.error(RuntimeException("Failed to draw rectangle: ${e.message}", e))
-            }
+            pixmap.setColor(color)
+            pixmap.drawRectangle(x, y, width, height)
+            return 0
         }
 
         fun FillRect(lua: Lua): Int {
@@ -144,14 +120,9 @@ class LuaTexturesModule : LuaModule {
             val width = lua.checkInt(4)
             val height = lua.checkInt(5)
             val color = parseColor(lua, 6)
-
-            try {
-                pixmap.setColor(color)
-                pixmap.fillRectangle(x, y, width, height)
-                return 0
-            } catch (e: Exception) {
-                return lua.error(RuntimeException("Failed to fill rectangle: ${e.message}", e))
-            }
+            pixmap.setColor(color)
+            pixmap.fillRectangle(x, y, width, height)
+            return 0
         }
 
         fun DrawCircle(lua: Lua): Int {
@@ -163,14 +134,9 @@ class LuaTexturesModule : LuaModule {
             val y = lua.checkInt(3)
             val radius = lua.checkInt(4)
             val color = parseColor(lua, 5)
-
-            try {
-                pixmap.setColor(color)
-                pixmap.drawCircle(x, y, radius)
-                return 0
-            } catch (e: Exception) {
-                return lua.error(RuntimeException("Failed to draw circle: ${e.message}", e))
-            }
+            pixmap.setColor(color)
+            pixmap.drawCircle(x, y, radius)
+            return 0
         }
 
         fun FillCircle(lua: Lua): Int {
@@ -182,14 +148,9 @@ class LuaTexturesModule : LuaModule {
             val y = lua.checkInt(3)
             val radius = lua.checkInt(4)
             val color = parseColor(lua, 5)
-
-            try {
-                pixmap.setColor(color)
-                pixmap.fillCircle(x, y, radius)
-                return 0
-            } catch (e: Exception) {
-                return lua.error(RuntimeException("Failed to fill circle: ${e.message}", e))
-            }
+            pixmap.setColor(color)
+            pixmap.fillCircle(x, y, radius)
+            return 0
         }
 
         fun DrawLine(lua: Lua): Int {
@@ -202,14 +163,9 @@ class LuaTexturesModule : LuaModule {
             val x2 = lua.checkInt(4)
             val y2 = lua.checkInt(5)
             val color = parseColor(lua, 6)
-
-            try {
-                pixmap.setColor(color)
-                pixmap.drawLine(x1, y1, x2, y2)
-                return 0
-            } catch (e: Exception) {
-                return lua.error(RuntimeException("Failed to draw line: ${e.message}", e))
-            }
+            pixmap.setColor(color)
+            pixmap.drawLine(x1, y1, x2, y2)
+            return 0
         }
 
         fun CopyFrom(lua: Lua): Int {

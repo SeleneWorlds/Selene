@@ -32,14 +32,10 @@ class LuaClientMapModule(
         val z = lua.checkInt(3)
         val coordinate = Coordinate(x, y, z)
 
-        try {
-            val tiles = clientMap.getTilesAt(coordinate)
-            val tileProxies = tiles.map { it.luaProxy }
-            lua.push(tileProxies, Lua.Conversion.FULL)
-            return 1
-        } catch (e: Exception) {
-            return lua.error(RuntimeException("Failed to get tiles at ($x, $y, $z): ${e.message}", e))
-        }
+        val tiles = clientMap.getTilesAt(coordinate)
+        val tileProxies = tiles.map { it.luaProxy }
+        lua.push(tileProxies, Lua.Conversion.FULL)
+        return 1
     }
 
     private fun luaHasTileAt(lua: Lua): Int {
@@ -48,13 +44,9 @@ class LuaClientMapModule(
         val z = lua.checkInt(3)
         val coordinate = Coordinate(x, y, z)
 
-        try {
-            val hasTile = clientMap.hasTileAt(coordinate)
-            lua.push(hasTile)
-            return 1
-        } catch (e: Exception) {
-            return lua.error(RuntimeException("Failed to check tile at ($x, $y, $z): ${e.message}", e))
-        }
+        val hasTile = clientMap.hasTileAt(coordinate)
+        lua.push(hasTile)
+        return 1
     }
 
 }

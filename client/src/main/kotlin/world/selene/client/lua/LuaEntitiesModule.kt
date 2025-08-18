@@ -43,15 +43,10 @@ class LuaEntitiesModule(private val entityPool: EntityPool, private val entityRe
 
     private fun luaGetEntitiesAt(lua: Lua): Int {
         val coordinate = lua.checkJavaObject(1, Coordinate::class)
-
-        try {
-            val entities = clientMap.getEntitiesAt(coordinate)
-            val entityProxies = entities.map { it.luaProxy }
-            lua.push(entityProxies, Lua.Conversion.FULL)
-            return 1
-        } catch (e: Exception) {
-            return lua.error(RuntimeException("Failed to get entities at $coordinate: ${e.message}", e))
-        }
+        val entities = clientMap.getEntitiesAt(coordinate)
+        val entityProxies = entities.map { it.luaProxy }
+        lua.push(entityProxies, Lua.Conversion.FULL)
+        return 1
     }
 
 }

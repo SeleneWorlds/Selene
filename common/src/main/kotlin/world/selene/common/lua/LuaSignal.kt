@@ -6,7 +6,7 @@ import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 
 @Suppress("FunctionName", "unused")
-class LuaSignal(private val luaManager: LuaManager) {
+class LuaSignal(private val luaManager: LuaManager, private val name: String) {
 
     data class LuaSignalCallback(val callback: LuaValue, val registrationSite: CallerInfo)
 
@@ -20,7 +20,7 @@ class LuaSignal(private val luaManager: LuaManager) {
                 lua.push(callback)
                 lua.pCall(args(lua), 0)
             } catch (e: LuaException) {
-                logger.error("Error firing lua signal (connected at $registrationSite)", luaManager.sanitizeException(e))
+                logger.error("Error firing $name (connected at $registrationSite)", luaManager.sanitizeException(e))
             }
         }
     }
