@@ -16,8 +16,6 @@ class ClientMap(
 ) {
     private val tiles = ArrayListMultimap.create<Coordinate, Tile>()
     private val entitiesByNetworkId = HashMap<Int, Entity>()
-
-    // TODO entitiesByCoordinate is never updated when entity is moved
     private val entitiesByCoordinate = ArrayListMultimap.create<Coordinate, Entity>()
 
     fun setChunk(
@@ -75,10 +73,10 @@ class ClientMap(
     ) {
         val entity = entitiesByNetworkId[networkId] ?: entityPool.obtain(entityId).also {
             it.networkId = networkId
-            it.setCoordinate(coordinate)
+            it.setCoordinateAndUpdate(coordinate)
             addEntity(it)
         }
-        entity.setCoordinate(coordinate)
+        entity.setCoordinateAndUpdate(coordinate)
         entity.facing = facing
         entity.setupComponents(componentOverrides)
         entity.updateVisual()
@@ -90,6 +88,12 @@ class ClientMap(
             entitiesByNetworkId[entity.networkId] = entity
         }
         scene.add(entity)
+    }
+
+    fun entityMoved(entity: Entity, oldCoordinate: Coordinate) {
+        if (entitiesByCoordinate.remove(oldCoordinate, entity)) {
+            entitiesByCoordinate.put(entity.coordinate, entity)
+        }
     }
 
     fun removeEntityByNetworkId(networkId: Int) {

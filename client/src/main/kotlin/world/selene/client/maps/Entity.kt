@@ -45,7 +45,15 @@ class Entity(
     var components: MutableMap<String, EntityComponent> = mutableMapOf()
     val motionQueue: ArrayDeque<EntityMotion> = ArrayDeque()
 
-    override var coordinate: Coordinate = Coordinate.Zero; private set
+    override var coordinate: Coordinate = Coordinate.Zero
+        private set(value) {
+            val prev = field
+            field = value
+            if (prev != value) {
+                map.entityMoved(this, prev)
+            }
+        }
+
     var facing: Float = 0f
     val direction get() = grid.getDirection(facing)
     override val sortLayerOffset: Int get() = visualInstances.maxOfOrNull { it.visualInstance.sortLayerOffset } ?: 0
@@ -158,16 +166,14 @@ class Entity(
         }
     }
 
-    fun setCoordinate(coordinate: Coordinate) {
-        if (this.coordinate == coordinate) {
-            return
+    fun setCoordinateAndUpdate(coordinate: Coordinate) {
+        if (this.coordinate != coordinate) {
+            this.coordinate = coordinate
+            position.x = coordinate.x.toFloat()
+            position.y = coordinate.y.toFloat()
+            position.z = coordinate.z.toFloat()
+            scene.updateSorting(this)
         }
-
-        this.coordinate = coordinate
-        position.x = coordinate.x.toFloat()
-        position.y = coordinate.y.toFloat()
-        position.z = coordinate.z.toFloat()
-        scene.updateSorting(this)
     }
 
     fun setupComponents(overrides: Map<String, ComponentConfiguration>) {
@@ -201,7 +207,7 @@ class Entity(
         callable(::despawn)
         callable("SetCoordinate") {
             val (coordinate, _) = it.checkCoordinate(2)
-            setCoordinate(coordinate)
+            setCoordinateAndUpdate(coordinate)
             0
         }
         callable("AddComponent") {
