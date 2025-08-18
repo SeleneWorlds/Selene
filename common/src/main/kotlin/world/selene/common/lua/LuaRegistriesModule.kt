@@ -18,6 +18,7 @@ class LuaRegistriesModule(
     override fun register(table: LuaValue) {
         table.register("FindAll", this::luaFindAll)
         table.register("FindByMetadata", this::luaFindByMetadata)
+        table.register("FindByName", this::luaFindByName)
     }
 
     private fun luaFindAll(lua: Lua): Int {
@@ -50,6 +51,18 @@ class LuaRegistriesModule(
         }
 
         return 0
+    }
+
+    private fun luaFindByName(lua: Lua): Int {
+        val registryName = lua.checkString(1)
+        val name = lua.checkString(2)
+        val registry = registryProvider.getRegistry(registryName)
+        if (registry == null) {
+            return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
+        }
+        val element = registry.get(name) ?: return 0
+        lua.push(RegistryObjectLuaProxy(name, element), Lua.Conversion.NONE)
+        return 1
     }
 
     class RegistryObjectLuaProxy(val elementName: String, val element: Any) {
