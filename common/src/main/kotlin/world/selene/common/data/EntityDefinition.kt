@@ -6,7 +6,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaProxyProvider
 
-data class EntityDefinition(val components: Map<String, ConfiguredComponent> = emptyMap())
+data class EntityDefinition(
+    val components: Map<String, ConfiguredComponent> = emptyMap(),
+    override val metadata: Map<String, String> = emptyMap(),
+    override val tags: Set<String> = emptySet()
+) : MetadataHolder, TagHolder
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(

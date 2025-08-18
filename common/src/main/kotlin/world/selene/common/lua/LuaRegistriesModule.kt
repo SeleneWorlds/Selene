@@ -3,8 +3,8 @@ package world.selene.common.lua
 import com.fasterxml.jackson.databind.JsonNode
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.data.MetadataHolder
 import world.selene.common.data.RegistryProvider
-import world.selene.common.data.TileDefinition
 
 class LuaRegistriesModule(
     private val registryProvider: RegistryProvider
@@ -69,7 +69,7 @@ class LuaRegistriesModule(
     companion object {
         fun getMetadata(element: Any, key: String): String? {
             return when (element) {
-                is TileDefinition -> {
+                is MetadataHolder -> {
                     element.metadata[key]
                 }
 
