@@ -22,6 +22,12 @@ class Player(val playerManager: PlayerManager, val client: NetworkClient) {
     var controlledEntity: Entity? = null
     var cameraEntity: Entity? = null
 
+    var lastInputTime = System.currentTimeMillis()
+
+    fun resetLastInputTime() {
+        lastInputTime = System.currentTimeMillis()
+    }
+
     fun update() {
         camera.update()
         syncManager.update()
@@ -67,6 +73,10 @@ class Player(val playerManager: PlayerManager, val client: NetworkClient) {
 
         fun SetCameraEntity(entity: Entity.EntityLuaProxy?) {
             delegate.cameraEntity = entity?.delegate
+        }
+
+        fun GetIdleTime(): Int {
+            return ((System.currentTimeMillis() - delegate.lastInputTime) / 1000L).toInt()
         }
     }
 }

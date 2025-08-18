@@ -37,7 +37,9 @@ class ServerPacketHandler(
                 1
             }
         } else if (packet is RequestMovePacket) {
-            val controlledEntity = (context as NetworkClientImpl).player.controlledEntity ?: return
+            val player = (context as NetworkClientImpl).player
+            player.resetLastInputTime()
+            val controlledEntity = player.controlledEntity ?: return
             if (!controlledEntity.moveTo(packet.coordinate)) {
                 context.send(
                     MoveEntityPacket(
