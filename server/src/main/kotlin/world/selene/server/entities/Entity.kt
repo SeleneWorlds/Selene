@@ -5,6 +5,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.data.ConfiguredComponent
 import world.selene.common.grid.Grid
 import world.selene.common.lua.checkBoolean
+import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkDirection
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
@@ -93,9 +94,11 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         val Collision get() = delegate.collisionViewer
         val Vision get() = delegate.visionViewer
 
-        fun SetCoordinate(x: Int, y: Int, z: Int) {
-            delegate.coordinate = Coordinate(x, y, z)
+        fun SetCoordinate(lua: Lua): Int {
+            val (coordinate, _) = lua.checkCoordinate(2)
+            delegate.coordinate = coordinate
             delegate.dimension?.syncManager?.entityTeleported(delegate)
+            return 0
         }
 
         fun SetFacing(lua: Lua): Int {
