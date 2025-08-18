@@ -8,7 +8,6 @@ import party.iroiro.luajava.lua54.Lua54
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.bundles.LocatedBundle
 import world.selene.common.grid.Grid
-import world.selene.common.util.Coordinate
 import java.io.File
 import java.nio.Buffer
 import java.nio.ByteBuffer
@@ -25,8 +24,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
     val lua = Lua54()
     private val packages = mutableMapOf<String, LuaValue>()
-    private val exposedClasses = mutableSetOf(
-        Coordinate::class,
+    private val exposedClasses = mutableSetOf<KClass<*>>(
         Grid.Direction::class
     )
     private val packageResolvers = mutableListOf<(Lua, String) -> LuaValue?>()
