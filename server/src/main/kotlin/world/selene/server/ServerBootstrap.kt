@@ -24,6 +24,8 @@ import world.selene.common.lua.LuaMixinModule
 import world.selene.common.lua.LuaRegistriesModule
 import world.selene.common.lua.LuaMixinRegistry
 import world.selene.common.lua.LuaModule
+import world.selene.common.lua.LuaSchedulesModule
+import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.lua.LuaPayloadRegistry
 import world.selene.common.lua.LuaResourcesModule
 import world.selene.server.lua.LuaSavesModule
@@ -42,6 +44,7 @@ import world.selene.server.collision.CollisionResolver
 import world.selene.server.data.PersistentNameIdRegistry
 import world.selene.server.data.Registries
 import world.selene.common.data.RegistryProvider
+import world.selene.common.util.Disposable
 import world.selene.server.dimensions.Dimension
 import world.selene.server.dimensions.DimensionManager
 import world.selene.server.entities.Entity
@@ -99,6 +102,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaEntitiesModule) { bind<LuaModule>() }
         singleOf(::LuaDimensionsModule) { bind<LuaModule>() }
         singleOf(::LuaRegistriesModule) { bind<LuaModule>() }
+        singleOf(::LuaSchedulesModule) { bind<LuaModule>(); bind<Disposable>() }
         singleOf(::Scripting)
     }
     val bundleModule = module {
@@ -149,9 +153,10 @@ fun main(args: Array<String>) {
                 .build()
                 .loadConfigOrThrow<ServerConfig>("server.properties")
         }
-        singleOf(::SeleneServer) { createdAtStart() }
+        singleOf(::MainThreadDispatcher)
+        singleOf(::SeleneServer)
     }
-    startKoin {
+    val koinApp = startKoin {
         slf4jLogger()
         modules(
             coreModule,
@@ -164,5 +169,9 @@ fun main(args: Array<String>) {
             httpModule,
             managementModule
         )
-    }.createEagerInstances()
+    }
+
+    koinApp.createEagerInstances()
+    val server = koinApp.koin.get<SeleneServer>()
+    server.start()
 }

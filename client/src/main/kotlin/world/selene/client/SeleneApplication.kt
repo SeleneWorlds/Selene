@@ -52,6 +52,8 @@ import world.selene.common.lua.LuaMixinModule
 import world.selene.common.lua.LuaRegistriesModule
 import world.selene.common.lua.LuaMixinRegistry
 import world.selene.common.lua.LuaModule
+import world.selene.common.lua.LuaSchedulesModule
+import world.selene.common.threading.MainThreadDispatcher
 import world.selene.client.lua.LuaClientNetworkModule
 import world.selene.client.lua.LuaEntitiesModule
 import world.selene.client.lua.LuaGameModule
@@ -108,6 +110,7 @@ class SeleneApplication(
             singleOf(::LuaGameModule) { bind<LuaModule>() }
             singleOf(::LuaEntitiesModule) { bind<LuaModule>() }
             singleOf(::LuaRegistriesModule) { bind<LuaModule>() }
+            singleOf(::LuaSchedulesModule) { bind<LuaModule>() }
         }
         val bundleModule = module {
             singleOf(::BundleLoader)
@@ -135,6 +138,7 @@ class SeleneApplication(
             single { config }
             single { runtimeConfig }
             singleOf(::UI)
+            singleOf(::MainThreadDispatcher)
             singleOf(::SeleneClient)
         }
         val gdxModule = module {

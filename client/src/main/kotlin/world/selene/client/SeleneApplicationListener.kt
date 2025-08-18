@@ -24,6 +24,7 @@ import world.selene.client.ui.UI
 import world.selene.client.visual.VisualManager
 import world.selene.common.bundles.BundleLoader
 import world.selene.common.lua.LuaManager
+import world.selene.common.threading.MainThreadDispatcher
 
 class SeleneApplicationListener(
     private val client: SeleneClient,
@@ -43,13 +44,14 @@ class SeleneApplicationListener(
     private val gridMovement: GridMovement,
     private val sceneRenderer: SceneRenderer,
     private val debugRenderer: DebugRenderer,
-    private val signals: ClientLuaSignals
+    private val signals: ClientLuaSignals,
+    private val mainThreadDispatcher: MainThreadDispatcher
 ) : ApplicationListener {
 
     lateinit var systemFont: BitmapFont
     lateinit var spriteBatch: SpriteBatch
     lateinit var markerTexture: Texture
-
+    
     override fun create() {
         debugRenderer.initialize()
         spriteBatch = SpriteBatch()
@@ -74,6 +76,8 @@ class SeleneApplicationListener(
     }
 
     override fun render() {
+        mainThreadDispatcher.process()
+
         signals.gamePreTick.emit()
 
         networkClient.processWork()

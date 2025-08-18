@@ -1,8 +1,10 @@
 package world.selene.server
 
+import arrow.core.prependTo
 import org.jline.reader.EndOfFileException
 import org.jline.reader.LineReaderBuilder
 import org.jline.terminal.TerminalBuilder
+import org.koin.mp.KoinPlatform.getKoin
 import org.slf4j.Logger
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.bundles.BundleLoader
@@ -16,12 +18,13 @@ import world.selene.common.data.TileRegistry
 import world.selene.common.data.TransitionRegistry
 import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.data.PersistentNameIdRegistry
-import world.selene.server.dimensions.DimensionManager
 import world.selene.server.http.HttpServer
 import world.selene.server.lua.ServerLuaSignals
-import world.selene.server.management.ExportMapImage
 import world.selene.server.network.NetworkServer
-import java.io.File
+import world.selene.common.threading.MainThreadDispatcher
+import world.selene.common.util.Disposable
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
 
 class SeleneServer(
     private val httpServer: HttpServer,
@@ -40,9 +43,11 @@ class SeleneServer(
     private val signals: ServerLuaSignals,
     private val config: ServerConfig,
     private val logger: Logger,
-    dimensionManager: DimensionManager,
-    exportMapImage: ExportMapImage
-) {
+    private val mainThreadDispatcher: MainThreadDispatcher
+)  {
+
+    private val running = AtomicBoolean(true)
+
     init {
         logger.info("Starting Selene server")
         packetRegistrations.register()
@@ -65,32 +70,59 @@ class SeleneServer(
         bundleLoader.loadBundleEntrypoints(bundles, listOf("common/", "server/", "init.lua"))
 
         clientBundleCache.watchBundles(config.bundles)
+    }
 
+    fun start() {
         signals.serverStarted.emit()
         signals.serverReloaded.emit()
 
         httpServer.start()
         networkServer.start(config.port)
 
-        exportMapImage.export(dimensionManager.getOrCreateDimension(0).mapTree, File("exported-map.png"))
+        startConsoleThread()
+        startMainEventLoop()
+    }
 
-        val terminal = TerminalBuilder.builder()
-            .system(true)
-            .build()
+    private fun startConsoleThread() {
+        thread(name = "Console Thread") {
+            val terminal = TerminalBuilder.builder()
+                .system(true)
+                .build()
 
-        val reader = LineReaderBuilder.builder()
-            .terminal(terminal)
-            .build()
+            val reader = LineReaderBuilder.builder()
+                .terminal(terminal)
+                .build()
 
-        try {
-            var line = reader.readLine()
-            while (line != null) {
-                if (line.equals("exit", ignoreCase = true)) {
-                    break
+            try {
+                var line = reader.readLine()
+                while (line != null && running.get()) {
+                    if (line.equals("exit", ignoreCase = true)) {
+                        running.set(false)
+                        break
+                    }
+                    line = reader.readLine()
                 }
-                line = reader.readLine()
+            } catch (_: EndOfFileException) {
+                running.set(false)
             }
-        } catch (_: EndOfFileException) {
         }
+    }
+
+    private fun startMainEventLoop() {
+        while (running.get()) {
+            mainThreadDispatcher.process()
+            networkServer.process()
+
+            Thread.sleep(10)
+        }
+
+        shutdown()
+    }
+
+    fun shutdown() {
+        running.set(false)
+        networkServer.stop()
+
+        getKoin().getAll<Disposable>().forEach { it.dispose() }
     }
 }

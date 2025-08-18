@@ -24,7 +24,6 @@ class NetworkServerImpl(
     private val packetFactory: PacketFactory,
     private val packetHandler: PacketHandler<NetworkClient>,
     private val playerManager: PlayerManager,
-    private val luaManager: LuaManager,
     private val luaSignals: ServerLuaSignals,
     private val logger: Logger
 ) : ChannelInboundHandlerAdapter(), NetworkServer {
@@ -73,25 +72,21 @@ class NetworkServerImpl(
         bootstrap.bind(port).addListener {
             if (it.isSuccess) {
                 logger.info("Server is listening on port $port")
-                // TODO This thread should probably be in SeleneServer, and be the main "game thread"
-                Thread({
-                    while (!bossGroup.isShutdown) {
-                        clients.forEach { client ->
-                            var packet = client.poll()
-                            while (packet != null) {
-                                packetHandler.handle(client, packet)
-                                packet = client.poll()
-                            }
-
-                            (client as NetworkClientImpl).player.update()
-                        }
-
-                        Thread.sleep(10)
-                    }
-                }, "Server Thread").start()
             } else {
                 logger.error("Failed to start server on port $port", it.cause())
             }
+        }
+    }
+
+    override fun process() {
+        clients.forEach { client ->
+            var packet = client.poll()
+            while (packet != null) {
+                packetHandler.handle(client, packet)
+                packet = client.poll()
+            }
+
+            (client as NetworkClientImpl).player.update()
         }
     }
 
