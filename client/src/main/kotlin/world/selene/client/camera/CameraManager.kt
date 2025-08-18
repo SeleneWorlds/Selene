@@ -8,9 +8,15 @@ import party.iroiro.luajava.Lua
 import world.selene.client.grid.ClientGrid
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.maps.ClientMap
+import world.selene.common.lua.LuaManager
 import world.selene.common.util.Coordinate
 
-class CameraManager(private val map: ClientMap, private val grid: ClientGrid, private val signals: ClientLuaSignals) {
+class CameraManager(
+    private val map: ClientMap,
+    private val grid: ClientGrid,
+    private val luaManager: LuaManager,
+    private val signals: ClientLuaSignals
+) {
     val camera = OrthographicCamera().apply {
         setToOrtho(true)
     }
@@ -19,7 +25,7 @@ class CameraManager(private val map: ClientMap, private val grid: ClientGrid, pr
         set(value) {
             if (field != value) {
                 field = value
-                signals.cameraCoordinateChanged.emit { lua -> lua.push(field, Lua.Conversion.NONE); 1 }
+                signals.cameraCoordinateChanged.emit() { lua -> lua.push(field, Lua.Conversion.NONE); 1 }
             }
         }
     var viewportOffsetX = 0

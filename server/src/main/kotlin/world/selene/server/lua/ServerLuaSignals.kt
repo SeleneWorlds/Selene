@@ -1,14 +1,13 @@
 package world.selene.server.lua
 
-import world.selene.common.lua.LuaManager
-import world.selene.common.lua.LuaSignal
+import world.selene.common.lua.Signal
 
-class ServerLuaSignals(luaManager: LuaManager) {
-    val serverStarted = LuaSignal(luaManager, "serverStarted")
-    val serverReloaded = LuaSignal(luaManager, "serverReloaded")
-    val playerQueued = LuaSignal(luaManager, "playerQueued")
-    val playerDequeued = LuaSignal(luaManager, "playerDequeued")
-    val playerJoined = LuaSignal(luaManager, "playerJoined")
-    val playerLeft = LuaSignal(luaManager, "playerLeft")
-    val entitySteppedOnTile = LuaSignal(luaManager, "entitySteppedOnTile")
+class ServerLuaSignals {
+    val serverStarted = Signal("serverStarted")
+    val serverReloaded = Signal("serverReloaded")
+    val playerQueued = Signal("playerQueued")
+    val playerDequeued = Signal("playerDequeued")
+    val playerJoined = Signal("playerJoined")
+    val playerLeft = Signal("playerLeft")
+    val entitySteppedOnTile = Signal("entitySteppedOnTile")
 }

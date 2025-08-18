@@ -10,6 +10,7 @@ import io.netty.handler.codec.LengthFieldPrepender
 import io.netty.handler.timeout.ReadTimeoutHandler
 import org.slf4j.Logger
 import party.iroiro.luajava.Lua
+import world.selene.common.lua.LuaManager
 import world.selene.common.network.PacketDecoder
 import world.selene.common.network.PacketEncoder
 import world.selene.common.network.PacketFactory
@@ -23,6 +24,7 @@ class NetworkServerImpl(
     private val packetFactory: PacketFactory,
     private val packetHandler: PacketHandler<NetworkClient>,
     private val playerManager: PlayerManager,
+    private val luaManager: LuaManager,
     private val luaSignals: ServerLuaSignals,
     private val logger: Logger
 ) : ChannelInboundHandlerAdapter(), NetworkServer {
@@ -97,7 +99,7 @@ class NetworkServerImpl(
         super.channelInactive(ctx)
         val client = ctx.channel().attr(NetworkClientImpl.ATTRIBUTE).get()
         clients.remove(client)
-        luaSignals.playerLeft.emit { lua ->
+        luaSignals.playerLeft.emit() { lua ->
             lua.push(client.player.luaProxy, Lua.Conversion.NONE)
             1
         }

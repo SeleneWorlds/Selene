@@ -32,7 +32,7 @@ data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var
 data class CompletedLogin(val token: String)
 
 class LoginQueue(
-    luaManager: LuaManager,
+    private val luaManager: LuaManager,
     private val signals: ServerLuaSignals,
     private val sessionAuth: SessionAuthentication
 ) {
@@ -48,7 +48,7 @@ class LoginQueue(
             LoginQueueEntry(userId, LoginQueueStatus.Pending, null)
         }
         if (signals.playerQueued.hasListeners()) {
-            signals.playerQueued.emit {
+            signals.playerQueued.emit() {
                 it.push(entry.luaProxy, Lua.Conversion.NONE)
                 1
             }
@@ -65,7 +65,7 @@ class LoginQueue(
     fun removeUser(userId: String) {
         val entry = entries.remove(userId)
         if (entry != null) {
-            signals.playerDequeued.emit {
+            signals.playerDequeued.emit() {
                 it.push(entry.luaProxy, Lua.Conversion.NONE)
                 1
             }

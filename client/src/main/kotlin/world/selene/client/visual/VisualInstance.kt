@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Rectangle
+import party.iroiro.luajava.Lua
 import world.selene.client.animator.Animator
 import world.selene.client.assets.AssetProvider
 import world.selene.client.data.Anchor
@@ -16,6 +17,11 @@ import world.selene.client.data.SimpleVisualDefinition
 import world.selene.client.data.VariantsVisualDefinition
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.rendering.VisualContextProvider
+import world.selene.common.lua.LuaManager
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.Signal
 import world.selene.common.util.Coordinate
 
 interface VisualInstance {
@@ -153,8 +159,20 @@ data class VariantsVisualInstance(
 
 data class AnimatedVisualInstance(
     private val visualDef: AnimatedVisualDefinition,
-    private val assetProvider: AssetProvider
-) : TextureBasedVisualInstance(), SizedVisualInstance {
+    private val assetProvider: AssetProvider,
+    private val luaManager: LuaManager
+) : TextureBasedVisualInstance(), SizedVisualInstance, LuaMetatableProvider {
+    val animationCompleted = Signal("AnimationCompleted")
+    val luaMeta = LuaMappedMetatable {
+        readOnly(::currentFrame)
+        readOnly(::elapsedTime)
+        readOnly(::animationCompleted)
+    }
+
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
+
     private val textureRegions: List<TextureRegion> by lazy {
         visualDef.textures.map { path ->
             assetProvider.loadTextureRegion(path) ?: assetProvider.missingTexture
@@ -175,6 +193,9 @@ data class AnimatedVisualInstance(
         while (elapsedTime >= frameDuration) {
             elapsedTime -= frameDuration
             currentFrame = (currentFrame + 1) % textureRegions.size
+            if (currentFrame == 0) {
+                animationCompleted.emit()
+            }
         }
     }
 

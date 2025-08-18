@@ -10,9 +10,11 @@ import world.selene.client.data.LabelVisualDefinition
 import world.selene.client.data.SimpleVisualDefinition
 import world.selene.client.data.VariantsVisualDefinition
 import world.selene.common.data.EntityRegistry
+import world.selene.common.lua.LuaManager
 
 class VisualManager(
     private val assetProvider: AssetProvider,
+    private val luaManager: LuaManager,
     private val tileRegistry: TileRegistry,
     private val entityRegistry: EntityRegistry,
     private val visualRegistry: VisualRegistry
@@ -42,7 +44,7 @@ class VisualManager(
         val instance = when (visualDef) {
             is SimpleVisualDefinition -> SimpleVisualInstance(visualDef, assetProvider)
             is VariantsVisualDefinition -> VariantsVisualInstance(visualDef, assetProvider)
-            is AnimatedVisualDefinition -> AnimatedVisualInstance(visualDef, assetProvider)
+            is AnimatedVisualDefinition -> AnimatedVisualInstance(visualDef, assetProvider, luaManager)
             is AnimatorVisualDefinition -> {
                 AnimatorVisualInstance(visualDef, assetProvider)
             }

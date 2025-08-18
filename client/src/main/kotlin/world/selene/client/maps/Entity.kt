@@ -52,12 +52,18 @@ class Entity(
     override var coordinate: Coordinate = Coordinate.Zero; private set
     var facing: Float = 0f
     val direction get() = grid.getDirection(facing)
-    override val sortLayerOffset: Int get() = visualInstances.maxOfOrNull { it.second.sortLayerOffset } ?: 0
+    override val sortLayerOffset: Int get() = visualInstances.maxOfOrNull { it.visualInstance.sortLayerOffset } ?: 0
     override val sortLayer: Int get() = grid.getSortLayer(position, sortLayerOffset)
     override var localSortLayer: Int = 0
 
-    val visualInstances = mutableListOf<Pair<VisualComponent, VisualInstance>>()
-    val mainVisualInstance get() = visualInstances.firstOrNull()?.second
+    data class ComponentVisualInstance(
+        val componentName: String,
+        val component: VisualComponent,
+        val visualInstance: VisualInstance
+    )
+
+    val visualInstances = mutableListOf<ComponentVisualInstance>()
+    val mainVisualInstance get() = visualInstances.firstOrNull()?.visualInstance
 
     var position: Vector3 = Vector3(coordinate.x.toFloat(), coordinate.y.toFloat(), coordinate.z.toFloat())
 
@@ -106,25 +112,36 @@ class Entity(
             }
             scene.updateSorting(this)
         }
-        visualInstances.forEach { it.second.update(delta) }
+        visualInstances.forEach { it.visualInstance.update(delta) }
     }
 
     override fun render(sceneRenderer: SceneRenderer, spriteBatch: SpriteBatch, visualContext: VisualContext) {
-        components.values.forEach {
-            if (it is ClientScriptComponent) {
+        components.values.forEach { script ->
+            if (script is ClientScriptComponent) {
                 val lua = luaManager.lua
-                if (it.module == null) {
-                    it.module = luaManager.requireModule(it.script)
+                if (script.data == null) {
+                    script.data = lua.newTable {}
                 }
-                lua.push(it.module!!)
+                if (script.module == null) {
+                    script.module = luaManager.requireModule(script.script).also {
+                        lua.push(it)
+                    }
+                    lua.getField(-1, "Initialize")
+                    if (lua.isFunction(-1)) {
+                        lua.push(luaProxy, Lua.Conversion.NONE)
+                        lua.push(script.data!!)
+                        lua.pCall(2, 0)
+                    }
+                    lua.pop(1)
+                }
+                lua.push(script.module!!)
                 lua.getField(-1, "TickEntity")
-                if (it.data == null) {
-                    it.data = lua.newTable {}
+                if (lua.isFunction(-1)) {
+                    lua.push(luaProxy, Lua.Conversion.NONE)
+                    lua.push(script.data!!)
+                    lua.push(Gdx.graphics.deltaTime)
+                    lua.pCall(3, 0)
                 }
-                lua.push(luaProxy, Lua.Conversion.NONE)
-                lua.push(it.data!!)
-                lua.push(Gdx.graphics.deltaTime)
-                lua.pCall(3, 0)
                 lua.pop(1)
             }
         }
@@ -132,7 +149,7 @@ class Entity(
         val displayX = screenX
         val displayY = screenY
         val context = visualContext.copy(maxWidth = 0f, maxHeight = 0f, color = Color.WHITE.cpy())
-        visualInstances.forEach { (component, visualInstance) ->
+        visualInstances.forEach { (_, component, visualInstance) ->
             if (visualInstance is SizedVisualInstance) {
                 context.maxWidth = max(context.maxWidth, visualInstance.width)
                 context.maxHeight = max(context.maxHeight, visualInstance.height)
@@ -152,13 +169,13 @@ class Entity(
 
     fun updateVisual() {
         visualInstances.clear()
-        components.values.forEach { component ->
+        components.entries.forEach { (name, component) ->
             if (component is VisualComponent) {
                 visualManager.buildInstance(component.visual, component.properties)?.let {
                     if (it is AnimatorVisualInstance) {
                         it.animator = HumanoidAnimator(this)
                     }
-                    visualInstances.add(Pair(component, it))
+                    visualInstances.add(ComponentVisualInstance(name, component, it))
                 }
             }
         }
@@ -215,6 +232,14 @@ class Entity(
             val componentName = lua.checkString(2)
             val component = delegate.components[componentName]
             lua.push(if (component is LuaProxyProvider<*>) component.luaProxy else component, Lua.Conversion.NONE)
+            return 1
+        }
+
+        fun GetVisual(lua: Lua): Int {
+            val componentName = lua.checkString(2)
+            val visualInstance =
+                delegate.visualInstances.firstOrNull { it.componentName == componentName }?.visualInstance
+            lua.push(visualInstance, Lua.Conversion.NONE)
             return 1
         }
 

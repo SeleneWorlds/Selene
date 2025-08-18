@@ -1,10 +1,5 @@
 package world.selene.server
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope.coroutineContext
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jline.reader.EndOfFileException
 import org.jline.reader.LineReaderBuilder
 import org.jline.terminal.TerminalBuilder
@@ -27,7 +22,6 @@ import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.management.ExportMapImage
 import world.selene.server.network.NetworkServer
 import java.io.File
-import kotlin.coroutines.coroutineContext
 
 class SeleneServer(
     private val httpServer: HttpServer,
@@ -72,8 +66,8 @@ class SeleneServer(
 
         clientBundleCache.watchBundles(config.bundles)
 
-        signals.serverStarted.emit { 0 }
-        signals.serverReloaded.emit { 0 }
+        signals.serverStarted.emit()
+        signals.serverReloaded.emit()
 
         httpServer.start()
         networkServer.start(config.port)

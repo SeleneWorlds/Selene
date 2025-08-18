@@ -302,3 +302,8 @@ fun Lua.getCallerInfo(): CallerInfo {
     pop(1) // debug
     return CallerInfo(source, line)
 }
+
+fun Lua.toLuaValue(index: Int): LuaValue {
+    pushValue(index)
+    return get()
+}

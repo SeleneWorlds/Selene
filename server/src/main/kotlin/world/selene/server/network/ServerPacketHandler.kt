@@ -32,7 +32,7 @@ class ServerPacketHandler(
                     context.send(NameIdMappingsPacket(scope, chunk))
                 }
             }
-            signals.playerJoined.emit { lua ->
+            signals.playerJoined.emit() { lua ->
                 lua.push((context as NetworkClientImpl).player.luaProxy, Lua.Conversion.NONE)
                 1
             }

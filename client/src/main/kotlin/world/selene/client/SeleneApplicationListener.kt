@@ -23,11 +23,13 @@ import world.selene.client.rendering.SceneRenderer
 import world.selene.client.ui.UI
 import world.selene.client.visual.VisualManager
 import world.selene.common.bundles.BundleLoader
+import world.selene.common.lua.LuaManager
 
 class SeleneApplicationListener(
     private val client: SeleneClient,
     private val assetStorage: AssetStorage,
     private val bundleLoader: BundleLoader,
+    private val luaManager: LuaManager,
     private val networkClient: NetworkClient,
     private val runtimeConfig: ClientRuntimeConfig,
     private val visualManager: VisualManager,
@@ -72,9 +74,7 @@ class SeleneApplicationListener(
     }
 
     override fun render() {
-        signals.gamePreTick.emit { lua ->
-            0
-        }
+        signals.gamePreTick.emit()
 
         networkClient.processWork()
 

@@ -45,8 +45,11 @@ data class AnimatedVisualDefinition(
     val offsetY: Int = 0,
     val surfaceOffsetY: Int = 0,
     val sortLayerOffset: Int = 0,
-    val metadata: Map<String, String> = emptyMap()
+    val metadata: Map<String, String> = emptyMap(),
+    val instance: Boolean = false
 ) : VisualDefinition {
+    override val isShared: Boolean
+        get() = !instance
 }
 
 data class AnimatorVisualDefinition(
