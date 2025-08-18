@@ -1,6 +1,7 @@
 package world.selene.server.dimensions
 
 import party.iroiro.luajava.Lua
+import world.selene.common.lua.LuaManager
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
@@ -33,7 +34,7 @@ class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManag
         fun HasTile(lua: Lua): Int {
             val (coordinate, index) = lua.checkCoordinate(2)
             val tileName = lua.checkString(index + 1)
-            val viewer = if (lua.isUserdata(index)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
+            val viewer = if (lua.isUserdata(index + 1)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
             val tileId = delegate.registries.mappings.getId("tiles", tileName)
             val chunkView = delegate.chunkViewManager.atCoordinate(delegate, viewer, coordinate)
             val baseTile = chunkView.getBaseTileAt(coordinate)
@@ -48,7 +49,7 @@ class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManag
 
         fun GetTilesAt(lua: Lua): Int {
             val (coordinate, index) = lua.checkCoordinate(2)
-            val viewer = if (lua.isUserdata(index)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
+            val viewer = if (lua.isUserdata(index + 1)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
 
             try {
                 val tiles = mutableListOf<TileLuaProxy>()

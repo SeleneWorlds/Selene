@@ -52,10 +52,17 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
             it.register("trim", this::luaTrim)
             it.register("startsWith", this::luaStartsWith)
         }
+
         lua.openLibrary("bit32")
         packages["bit32"] = lua.get("bit32")
+
         lua.openLibrary("math")
         packages["math"] = lua.get("math")
+
+        lua.openLibrary("debug")
+        debugLibrary = lua.get("debug")
+        lua.set("debug", null)
+
         lua.openLibrary("table")
         packages["table"] = lua.get("table").also {
             it.register("find", this::luaTableFind)
@@ -309,5 +316,9 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
             return LuaException(LuaException.LuaError.JAVA, "${e.message} ($lastAccessedMember)")
         }
         return e
+    }
+
+    companion object {
+        lateinit var debugLibrary: LuaValue
     }
 }

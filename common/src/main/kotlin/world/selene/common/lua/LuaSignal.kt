@@ -8,23 +8,25 @@ import party.iroiro.luajava.value.LuaValue
 @Suppress("FunctionName", "unused")
 class LuaSignal(private val luaManager: LuaManager) {
 
+    data class LuaSignalCallback(val callback: LuaValue, val registrationSite: CallerInfo)
+
     private val logger = LoggerFactory.getLogger(LuaSignal::class.java)
-    private val callbacks = mutableListOf<LuaValue>()
+    private val callbacks = mutableListOf<LuaSignalCallback>()
 
     fun emit(args: (Lua) -> Int) {
-        callbacks.forEach {
-            val lua = it.state()
+        callbacks.forEach { (callback, registrationSite) ->
+            val lua = callback.state()
             try {
-                lua.push(it)
+                lua.push(callback)
                 lua.pCall(args(lua), 0)
             } catch (e: LuaException) {
-                logger.error("Error firing lua signal", luaManager.sanitizeException(e))
+                logger.error("Error firing lua signal (connected at $registrationSite)", luaManager.sanitizeException(e))
             }
         }
     }
 
     fun Connect(callback: LuaValue) {
-        callbacks.add(callback)
+        callbacks.add(LuaSignalCallback(callback, callback.state().getCallerInfo()))
     }
 
     fun hasListeners(): Boolean {

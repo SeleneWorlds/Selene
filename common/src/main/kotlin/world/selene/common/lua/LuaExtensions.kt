@@ -3,6 +3,7 @@ package world.selene.common.lua
 import party.iroiro.luajava.AbstractLua
 import party.iroiro.luajava.JFunction
 import party.iroiro.luajava.Lua
+import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaFunction
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.grid.Grid
@@ -54,16 +55,21 @@ fun Lua.luaTableToMap(index: Int): Map<String, Any> {
     return result
 }
 
-fun throwTypeError(index: Int, expectedType: Lua.LuaType, actualType: Lua.LuaType?): Nothing {
-    throw IllegalArgumentException("Expected $expectedType, got $actualType at index $index")
+fun Lua.throwError(message: String): Nothing {
+    val callerInfo = getCallerInfo()
+    throw LuaException(LuaException.LuaError.RUNTIME, "$callerInfo: $message")
 }
 
-fun throwTypeError(index: Int, expectedType: KClass<*>, actualType: Lua.LuaType?): Nothing {
-    throw IllegalArgumentException("Expected ${expectedType.simpleName}, got $actualType at index $index")
+fun Lua.throwTypeError(index: Int, expectedType: Lua.LuaType, actualType: Lua.LuaType?): Nothing {
+    throwError("Expected $expectedType, got $actualType at index $index")
 }
 
-fun throwTypeError(index: Int, expectedType: KClass<*>, actualType: KClass<*>): Nothing {
-    throw IllegalArgumentException("Expected ${expectedType.simpleName}, got ${actualType.simpleName} at index $index")
+fun Lua.throwTypeError(index: Int, expectedType: KClass<*>, actualType: Lua.LuaType?): Nothing {
+    throwError("Expected ${expectedType.simpleName}, got $actualType at index $index")
+}
+
+fun Lua.throwTypeError(index: Int, expectedType: KClass<*>, actualType: KClass<*>): Nothing {
+    throwError("Expected ${expectedType.simpleName}, got ${actualType.simpleName} at index $index")
 }
 
 fun Lua.checkBoolean(index: Int): Boolean {
@@ -265,4 +271,34 @@ fun Lua.checkCoordinate(index: Int): Pair<Coordinate, Int> {
     } else {
         return Pair(Coordinate(checkInt(index), checkInt(index + 1), checkInt(index + 2)), index + 2)
     }
+}
+
+data class CallerInfo(val source: String, val line: Int) {
+    override fun toString(): String {
+        return "$source:$line"
+    }
+}
+
+fun Lua.getCallerInfo(): CallerInfo {
+    LuaManager.debugLibrary.push(this)
+    getField(-1, "getinfo")
+    push(2)
+    push("Sl")
+    pCall(2, 1)
+
+    if (isNil(-1)) {
+        pop(2)
+        return CallerInfo("?", 0)
+    }
+
+    getField(-1, "short_src")
+    val source = toString(-1)!!
+    pop(1) // short_src
+
+    getField(-1, "currentline")
+    val line = toNumber(-1).toInt()
+    pop(1) // currentline
+
+    pop(1) // debug
+    return CallerInfo(source, line)
 }
