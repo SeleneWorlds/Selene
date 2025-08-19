@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 data class EntityDefinition(
     val components: Map<String, ComponentConfiguration> = emptyMap(),
-    override val metadata: Map<String, String> = emptyMap(),
+    override val metadata: Map<String, Any> = emptyMap(),
     override val tags: Set<String> = emptySet()
 ) : MetadataHolder, TagHolder
 

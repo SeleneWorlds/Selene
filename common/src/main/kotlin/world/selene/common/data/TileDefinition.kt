@@ -6,6 +6,6 @@ data class TileDefinition(
     val slowFactor: Int = 0,
     val impassable: Boolean = false,
     val passableAbove: Boolean = false,
-    override val metadata: Map<String, String> = emptyMap(),
+    override val metadata: Map<String, Any> = emptyMap(),
     override val tags: Set<String> = emptySet()
 ): MetadataHolder, TagHolder
