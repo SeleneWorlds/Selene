@@ -3,20 +3,13 @@ package world.selene.common.lua
 import org.koin.mp.KoinPlatform.getKoin
 import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
-import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.lua54.Lua54
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.bundles.LocatedBundle
-import world.selene.common.grid.Grid
 import java.io.File
 import java.nio.Buffer
 import java.nio.ByteBuffer
 import kotlin.reflect.KClass
-import kotlin.reflect.KMutableProperty1
-import kotlin.reflect.KProperty1
-import kotlin.reflect.full.memberFunctions
-import kotlin.reflect.full.memberProperties
-import kotlin.reflect.typeOf
 
 class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
@@ -25,9 +18,6 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
     val lua = Lua54()
     private val packages = mutableMapOf<String, LuaValue>()
     private val metatables = mutableMapOf<KClass<*>, LuaMetatable>()
-    private val exposedClasses = mutableSetOf<KClass<*>>(
-        Grid.Direction::class
-    )
     private val packageResolvers = mutableListOf<(Lua, String) -> LuaValue?>()
 
     init {
@@ -97,29 +87,23 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         metatables[clazz] = metatable
     }
 
-    fun exposeClass(clazz: KClass<*>) {
-        exposedClasses.add(clazz)
-    }
-
     fun addPackageResolver(resolver: (Lua, String) -> LuaValue?) {
         packageResolvers.add(resolver)
     }
 
     private fun secureClassMetatable() {
-        lua.getRegisteredMetatable("__jclass__") // [metatable]
-        lua.pushNil() // [metatable, nil]
-        lua.setField(-2, "__index") // [metatable]
-        lua.pushNil() // [metatable, nil]
-        lua.setField(-2, "__newindex") // [metatable]
-        lua.pushNil() // [metatable, nil]
-        lua.setField(-2, "__call") // [metatable]
+        lua.getRegisteredMetatable("__jclass__")
+        lua.pushNil()
+        lua.setField(-2, "__index")
+        lua.pushNil()
+        lua.setField(-2, "__newindex")
+        lua.pushNil()
+        lua.setField(-2, "__call")
         lua.pop(1)
     }
 
     private fun secureObjectMetatable() {
-        lua.getRegisteredMetatable("__jobject__") // [metatable]
-        lua.getField(-1, "__index") // [metatable, index]
-        val nativeIndex = lua.get() // [metatable]
+        lua.getRegisteredMetatable("__jobject__")
         lua.push { lua ->
             val obj = lua.toJavaObject(1)!!
             val mixinFunction = obj::class.simpleName?.let { mixinRegistry.getMixin(it, lua.toString(2)!!) }
@@ -138,40 +122,13 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
                 return@push metatable.luaGet(lua)
             }
 
-            // Legacy handling
-            val key = lua.toString(2)!!
-            lastAccessedMember = "${obj::class.simpleName}.$key"
-            if (!exposedClasses.contains(obj::class)) {
-                logger.warn("Tried to access restricted class: ${obj::class}#${key}")
-                lua.pushNil() // [key, obj, nil]
-                return@push 1
-            }
-            // TODO Would be nice to have a cache of this. Maybe proxies can extend a superclass to provide it.
-            val property = obj::class.memberProperties.find { it.name == key } as? KProperty1<Any, *>
-            if (property != null) {
-                val value = property.get(obj)
-                lua.push(value, Lua.Conversion.FULL)
-                return@push 1
-            }
-            val luaMethod = obj::class.memberFunctions.find { it.name == key }
-            if (luaMethod != null && luaMethod.returnType == typeOf<Int>() && luaMethod.parameters.size == 2 &&
-                luaMethod.parameters[1].type == typeOf<Lua>()
-            ) {
-                lua.push { lua -> luaMethod.call(obj, lua) as Int }
-                return@push 1
-            }
-            lua.push(nativeIndex) // [key, obj, index]
-            lua.pushValue(-3) // [key, obj, index, key]
-            lua.pushValue(-3) // [key, obj, index, key, obj]
-            lua.pCall(2, 1) // [key, obj, result]
-            1
-        } // [metatable, function]
-        lua.setField(-2, "__index") // [metatable]
+            lua.pushNil()
+            return@push 1
+        }
+        lua.setField(-2, "__index")
 
-        lua.getField(-1, "__newindex") // [metatable, index]
-        val nativeNewIndex = lua.get() // [metatable]
         lua.push { lua ->
-            val obj = lua.toJavaObject(-3)!! // [obj, key, value]
+            val obj = lua.toJavaObject(-3)!!
             if (obj is LuaMetatable) {
                 return@push obj.luaSet(lua)
             } else if (obj is LuaMetatableProvider) {
@@ -182,42 +139,13 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
                 return@push metatable.luaSet(lua)
             }
 
-            if (!exposedClasses.contains(obj::class)) {
-                return@push lua.error(
-                    IllegalArgumentException(
-                        "Tried to access restricted class: ${obj::class}#${
-                            lua.checkString(
-                                -2
-                            )
-                        }"
-                    )
-                )
-            }
-
-            val key = lua.checkString(-2)
-            val property = obj::class.memberProperties.find { it.name == key } as? KMutableProperty1<Any, Any?>
-            if (property != null) {
-                val value = when (property.returnType.classifier) {
-                    Boolean::class -> lua.checkBoolean(-1)
-                    Int::class -> lua.checkInt(-1)
-                    String::class -> lua.checkString(-1)
-                    Float::class -> lua.checkFloat(-1)
-                    else -> lua.toJavaObject(-1)
-                }
-                property.set(obj, value)
-                return@push 0
-            }
-            lua.push(nativeNewIndex) // [obj, key, value, index]
-            lua.pushValue(-4) // [obj, key, value, index, key]
-            lua.pushValue(-4) // [obj, key, value, index, key, obj]
-            lua.pushValue(-4) // [obj, key, value, index, key, obj, value]
-            lua.pCall(3, 0) // [obj, key, value]
-            0
-        } // [metatable, function]
-        lua.setField(-2, "__newindex") // [metatable]
+            val key = lua.toString(-1)!!
+            return@push lua.error(NoSuchFieldException("Property '$key' does not exist on ${obj::class.simpleName ?: "(anonymous class)"}"))
+        }
+        lua.setField(-2, "__newindex")
 
         lua.push {
-            val obj = it.toJavaObject(-1)!! // [obj]
+            val obj = it.toJavaObject(-1)!!
             if (obj is LuaMetatable) {
                 it.push(obj.luaToString(it))
                 return@push 1
@@ -231,12 +159,8 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
                 return@push 1
             }
 
-            if (!exposedClasses.contains(obj::class)) {
-                it.push(obj::class.simpleName ?: "Object") // [obj, name]
-                return@push 1
-            }
-            it.push(obj.toString())
-            1
+            it.push(obj::class.simpleName ?: "(anonymous class)")
+            return@push 1
         }
         lua.setField(-2, "__tostring")
 
@@ -252,14 +176,12 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
                 return@push metatable.luaCall(lua)
             }
 
-            lua.pushNil()
-            lua.pCall(0, 0)
-            return@push 0
+            return@push lua.error(NoSuchFieldException("Object of type ${obj::class.simpleName ?: "(anonymous class)"} cannot be called"))
         }
         lua.setField(-2, "__call")
 
         lua.push {
-            val first = it.toJavaObject(1)!! // [obj, other]
+            val first = it.toJavaObject(1)!!
             if (first is LuaMetatable) {
                 it.push(first.luaEquals(it))
                 return@push 1
@@ -273,7 +195,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
                 return@push 1
             }
 
-            val second = it.toJavaObject(2)!! // [obj, other]
+            val second = it.toJavaObject(2)!!
             if (second is LuaMetatable) {
                 it.push(second.luaEquals(it))
                 return@push 1
@@ -292,7 +214,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         }
         lua.setField(-2, "__eq")
 
-        lua.pop(1) // []
+        lua.pop(1)
     }
 
     private fun luaStartsWith(lua: Lua): Int {
@@ -426,26 +348,11 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
     }
 
     private fun runScript(name: String, script: String) {
-        try {
-            lua.run(loadBuffer(script), name)
-        } catch (e: LuaException) {
-            throw sanitizeException(e)
-        }
+        lua.run(loadBuffer(script), name)
     }
 
     fun setGlobal(key: String, value: Any) {
         lua.set(key, value)
-    }
-
-    @Deprecated("Should no longer be necessary after we fully switch to LuaMetatable")
-    var lastAccessedMember: String? = null; private set
-
-    @Deprecated("Should no longer be necessary after we fully switch to LuaMetatable")
-    fun sanitizeException(e: Exception): Exception {
-        if (e.message == "no matching method found") {
-            return LuaException(LuaException.LuaError.JAVA, "${e.message} ($lastAccessedMember)")
-        }
-        return e
     }
 
     companion object {

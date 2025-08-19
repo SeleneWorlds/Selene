@@ -99,7 +99,7 @@ class ServerPacketHandler(
                     try {
                         luaManager.lua.pCall(2, 0)
                     } catch (e: Exception) {
-                        logger.error("Error while handling custom payload", luaManager.sanitizeException(e))
+                        logger.error("Error while handling custom payload", e)
                     }
                 }
             }

@@ -18,6 +18,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.ui.Slider
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.badlogic.gdx.scenes.scene2d.ui.Touchpad
+import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.badlogic.gdx.scenes.scene2d.utils.Layout
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable
@@ -126,6 +127,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
         }
         luaManager.defineMetatable(Group::class, groupMetatable)
+        luaManager.defineMetatable(VerticalGroup::class, groupMetatable)
         luaManager.defineMetatable(Container::class, groupMetatable.extend(Container::class) {
             callable("AddChild") {
                 @Suppress("UNCHECKED_CAST") val actor = it.checkSelf() as Container<Actor>
@@ -524,7 +526,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
             actors.forEach { collectActorsByName(it) }
 
-            lua.push(actors, Lua.Conversion.FULL)
+            lua.push(actors.toList(), Lua.Conversion.FULL)
             lua.push(actorsByName, Lua.Conversion.FULL)
             return 2
         } catch (e: Exception) {
