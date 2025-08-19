@@ -71,7 +71,8 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.set("getfenv", null)
         lua.set("collectgarbage", null)
         lua.set("module", null)
-        lua.set("_G", null)
+        lua.set("java", null)
+        lua.set("_G", lua.newTable {})
     }
 
     fun loadModules() {
