@@ -1,25 +1,99 @@
 package world.selene.client.lua
 
 import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.Colors
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.utils.Disposable
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaManager
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
-import world.selene.common.lua.getFieldFloat
 import world.selene.common.lua.register
 
 class LuaTexturesModule : LuaModule {
     override val name = "selene.textures"
 
-    override fun initialize(luaManager: LuaManager) {
-        luaManager.exposeClass(TextureLuaProxy::class)
+    data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatableProvider {
+        val width: Int get() = texture.width
+        val height: Int get() = texture.height
+
+        override fun luaMetatable(lua: Lua): LuaMetatable {
+            return luaMeta
+        }
+
+        companion object {
+            val luaMeta = LuaMappedMetatable(LuaTexture::class) {
+                readOnly(LuaTexture::width)
+                readOnly(LuaTexture::height)
+                callable("SetPixel") {
+                    val self = it.checkSelf()
+                    val x = it.checkInt(2)
+                    val y = it.checkInt(3)
+                    val (color, _) = it.checkColor(4)
+                    self.pixmap.setColor(color)
+                    self.pixmap.drawPixel(x, y)
+                    0
+                }
+                callable("GetPixel") {
+                    val self = it.checkSelf()
+                    val x = it.checkInt(2)
+                    val y = it.checkInt(3)
+                    val colorInt = self.pixmap.getPixel(x, y)
+                    val color = Color(colorInt)
+                    it.push(color.r)
+                    it.push(color.g)
+                    it.push(color.b)
+                    it.push(color.a)
+                    4
+                }
+                callable("Fill") {
+                    val self = it.checkSelf()
+                    val (color, _) = it.checkColor(2)
+                    self.pixmap.setColor(color)
+                    self.pixmap.fill()
+                    0
+                }
+                callable("CopyFrom") {
+                    val self = it.checkSelf()
+                    val sourceTexture = it.checkJavaObject(2, LuaTexture::class)
+                    val srcX = it.checkInt(3)
+                    val srcY = it.checkInt(4)
+                    val srcWidth = it.checkInt(5)
+                    val srcHeight = it.checkInt(6)
+                    val dstX = it.checkInt(7)
+                    val dstY = it.checkInt(8)
+
+                    self.pixmap.drawPixmap(
+                        sourceTexture.pixmap,
+                        srcX,
+                        srcY,
+                        srcWidth,
+                        srcHeight,
+                        dstX,
+                        dstY,
+                        srcWidth,
+                        srcHeight
+                    )
+                    0
+                }
+                callable("Update") {
+                    val self = it.checkSelf()
+                    self.texture.draw(self.pixmap, 0, 0)
+                    0
+                }
+                callable("Dispose") {
+                    val self = it.checkSelf()
+                    self.texture.dispose()
+                    self.pixmap.dispose()
+                    0
+                }
+            }
+        }
     }
 
     override fun register(table: LuaValue) {
@@ -41,207 +115,9 @@ class LuaTexturesModule : LuaModule {
 
         val pixmap = Pixmap(width, height, format)
         val texture = Texture(pixmap)
-        val proxy = TextureLuaProxy(texture, pixmap)
+        val proxy = LuaTexture(texture, pixmap)
         lua.push(proxy, Lua.Conversion.NONE)
         return 1
     }
 
-    class TextureLuaProxy(val texture: Texture, private val pixmap: Pixmap) : Disposable {
-        private var disposed = false
-
-        val Width: Int
-            get() = texture.width
-
-        val Height: Int
-            get() = texture.height
-
-        fun SetPixel(lua: Lua): Int {
-            if (disposed) {
-                return lua.error(IllegalStateException("Texture has been disposed"))
-            }
-
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val color = parseColor(lua, 4)
-            pixmap.setColor(color)
-            pixmap.drawPixel(x, y)
-            return 0
-        }
-
-        fun GetPixel(lua: Lua): Int {
-            if (disposed) {
-                return lua.error(IllegalStateException("Texture has been disposed"))
-            }
-
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val colorInt = pixmap.getPixel(x, y)
-            val color = Color(colorInt)
-            lua.push(color.r)
-            lua.push(color.g)
-            lua.push(color.b)
-            lua.push(color.a)
-            return 4
-        }
-
-        fun Fill(lua: Lua): Int {
-            if (disposed) {
-                return lua.error(IllegalStateException("Texture has been disposed"))
-            }
-
-            val color = parseColor(lua, 2)
-            pixmap.setColor(color)
-            pixmap.fill()
-            return 0
-        }
-
-        fun DrawRect(lua: Lua): Int {
-            if (disposed) {
-                return lua.error(IllegalStateException("Texture has been disposed"))
-            }
-
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val width = lua.checkInt(4)
-            val height = lua.checkInt(5)
-            val color = parseColor(lua, 6)
-            pixmap.setColor(color)
-            pixmap.drawRectangle(x, y, width, height)
-            return 0
-        }
-
-        fun FillRect(lua: Lua): Int {
-            if (disposed) {
-                return lua.error(IllegalStateException("Texture has been disposed"))
-            }
-
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val width = lua.checkInt(4)
-            val height = lua.checkInt(5)
-            val color = parseColor(lua, 6)
-            pixmap.setColor(color)
-            pixmap.fillRectangle(x, y, width, height)
-            return 0
-        }
-
-        fun DrawCircle(lua: Lua): Int {
-            if (disposed) {
-                return lua.error(IllegalStateException("Texture has been disposed"))
-            }
-
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val radius = lua.checkInt(4)
-            val color = parseColor(lua, 5)
-            pixmap.setColor(color)
-            pixmap.drawCircle(x, y, radius)
-            return 0
-        }
-
-        fun FillCircle(lua: Lua): Int {
-            if (disposed) {
-                return lua.error(IllegalStateException("Texture has been disposed"))
-            }
-
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val radius = lua.checkInt(4)
-            val color = parseColor(lua, 5)
-            pixmap.setColor(color)
-            pixmap.fillCircle(x, y, radius)
-            return 0
-        }
-
-        fun DrawLine(lua: Lua): Int {
-            if (disposed) {
-                return lua.error(IllegalStateException("Texture has been disposed"))
-            }
-
-            val x1 = lua.checkInt(2)
-            val y1 = lua.checkInt(3)
-            val x2 = lua.checkInt(4)
-            val y2 = lua.checkInt(5)
-            val color = parseColor(lua, 6)
-            pixmap.setColor(color)
-            pixmap.drawLine(x1, y1, x2, y2)
-            return 0
-        }
-
-        fun CopyFrom(lua: Lua): Int {
-            if (disposed) {
-                return lua.error(IllegalStateException("Texture has been disposed"))
-            }
-
-            val sourceTexture = lua.checkJavaObject(2, TextureLuaProxy::class)
-            if (sourceTexture.disposed) {
-                return lua.error(IllegalStateException("Source texture has been disposed"))
-            }
-
-            val srcX = lua.checkInt(3)
-            val srcY = lua.checkInt(4)
-            val srcWidth = lua.checkInt(5)
-            val srcHeight = lua.checkInt(6)
-            val dstX = lua.checkInt(7)
-            val dstY = lua.checkInt(8)
-
-            pixmap.drawPixmap(sourceTexture.pixmap, srcX, srcY, srcWidth, srcHeight, dstX, dstY, srcWidth, srcHeight)
-            return 0
-        }
-
-        fun Update() {
-            texture.draw(pixmap, 0, 0)
-        }
-
-        fun Dispose() {
-            dispose()
-        }
-
-        override fun dispose() {
-            if (!disposed) {
-                texture.dispose()
-                pixmap.dispose()
-                disposed = true
-            }
-        }
-
-        private fun parseColor(lua: Lua, index: Int): Color {
-            return when {
-                lua.isString(index) -> {
-                    val colorString = lua.toString(index)!!
-                    when {
-                        colorString.startsWith("#") -> {
-                            try {
-                                val hex = colorString.substring(1)
-                                when (hex.length) {
-                                    6 -> Color.valueOf(hex + "FF")
-                                    8 -> Color.valueOf(hex)
-                                    else -> throw IllegalArgumentException("Invalid hex color: $colorString")
-                                }
-                            } catch (e: Exception) {
-                                throw IllegalArgumentException("Invalid hex color: $colorString", e)
-                            }
-                        }
-
-                        else -> {
-                            return Colors.get(colorString.uppercase())
-                                ?: throw IllegalArgumentException("Unknown color name: $colorString")
-                        }
-                    }
-                }
-
-                lua.isTable(index) -> {
-                    val r = lua.getFieldFloat(index, "r") ?: lua.getFieldFloat(index, "red") ?: 1f
-                    val g = lua.getFieldFloat(index, "g") ?: lua.getFieldFloat(index, "green") ?: 1f
-                    val b = lua.getFieldFloat(index, "b") ?: lua.getFieldFloat(index, "blue") ?: 1f
-                    val a = lua.getFieldFloat(index, "a") ?: lua.getFieldFloat(index, "alpha") ?: 1f
-                    Color(r, g, b, a)
-                }
-
-                else -> {
-                    throw IllegalArgumentException("Invalid color type: ${lua.type(index)}")
-                }
-            }
-        }
-    }
 }

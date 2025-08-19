@@ -380,7 +380,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 val region = TextureRegion(texture)
                 delegate.add(name, region)
             } else if (lua.isUserdata(3)) {
-                val texture = lua.checkJavaObject(3, LuaTexturesModule.TextureLuaProxy::class).texture
+                val texture = lua.checkJavaObject(3, LuaTexturesModule.LuaTexture::class).texture
                 val region = TextureRegion(texture)
                 delegate.add(name, region)
             }

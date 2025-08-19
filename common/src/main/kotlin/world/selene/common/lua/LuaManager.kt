@@ -24,6 +24,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
     val lua = Lua54()
     private val packages = mutableMapOf<String, LuaValue>()
+    private val metatables = mutableMapOf<KClass<*>, LuaMetatable>()
     private val exposedClasses = mutableSetOf<KClass<*>>(
         Grid.Direction::class
     )
@@ -92,6 +93,10 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         }
     }
 
+    fun defineMetatable(clazz: KClass<*>, metatable: LuaMetatable) {
+        metatables[clazz] = metatable
+    }
+
     fun exposeClass(clazz: KClass<*>) {
         exposedClasses.add(clazz)
     }
@@ -127,6 +132,10 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
                 return@push obj.luaGet(lua)
             } else if (obj is LuaMetatableProvider) {
                 return@push obj.luaMetatable(lua).luaGet(lua)
+            }
+            val metatable = metatables[obj::class]
+            if (metatable != null) {
+                return@push metatable.luaGet(lua)
             }
 
             // Legacy handling
@@ -167,6 +176,10 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
                 return@push obj.luaSet(lua)
             } else if (obj is LuaMetatableProvider) {
                 return@push obj.luaMetatable(lua).luaSet(lua)
+            }
+            val metatable = metatables[obj::class]
+            if (metatable != null) {
+                return@push metatable.luaSet(lua)
             }
 
             if (!exposedClasses.contains(obj::class)) {
@@ -212,6 +225,12 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
                 it.push(obj.luaMetatable(it).luaToString(it))
                 return@push 1
             }
+            val metatable = metatables[obj::class]
+            if (metatable != null) {
+                it.push(metatable.luaToString(it))
+                return@push 1
+            }
+
             if (!exposedClasses.contains(obj::class)) {
                 it.push(obj::class.simpleName ?: "Object") // [obj, name]
                 return@push 1
@@ -228,6 +247,11 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
             } else if (obj is LuaMetatableProvider) {
                 return@push obj.luaMetatable(lua).luaCall(lua)
             }
+            val metatable = metatables[obj::class]
+            if (metatable != null) {
+                return@push metatable.luaCall(lua)
+            }
+
             lua.pushNil()
             lua.pCall(0, 0)
             return@push 0
@@ -243,6 +267,12 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
                 it.push(first.luaMetatable(it).luaEquals(it))
                 return@push 1
             }
+            val metatable = metatables[first::class]
+            if (metatable != null) {
+                it.push(metatable.luaEquals(it))
+                return@push 1
+            }
+
             val second = it.toJavaObject(2)!! // [obj, other]
             if (second is LuaMetatable) {
                 it.push(second.luaEquals(it))
@@ -251,6 +281,12 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
                 it.push(second.luaMetatable(it).luaEquals(it))
                 return@push 1
             }
+            val secondMetatable = metatables[second::class]
+            if (secondMetatable != null) {
+                it.push(secondMetatable.luaEquals(it))
+                return@push 1
+            }
+
             it.push(first == second)
             1
         }
