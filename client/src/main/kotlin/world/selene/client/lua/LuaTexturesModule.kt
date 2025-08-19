@@ -5,7 +5,6 @@ import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
@@ -115,8 +114,8 @@ class LuaTexturesModule : LuaModule {
 
         val pixmap = Pixmap(width, height, format)
         val texture = Texture(pixmap)
-        val proxy = LuaTexture(texture, pixmap)
-        lua.push(proxy, Lua.Conversion.NONE)
+        val luaTexture = LuaTexture(texture, pixmap)
+        lua.push(luaTexture, Lua.Conversion.NONE)
         return 1
     }
 
