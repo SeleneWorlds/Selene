@@ -5,7 +5,6 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
-import kotlin.reflect.javaType
 import kotlin.reflect.jvm.isAccessible
 
 class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMappedMetatable<T>.() -> Unit)) : LuaMetatable {
@@ -14,7 +13,9 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
     private val callables = mutableMapOf<String, KFunction<*>>()
     private val inlineCallables = mutableMapOf<String, (Lua) -> Int>()
     private val getters = mutableMapOf<String, KFunction<*>>()
+    private val inlineGetters = mutableMapOf<String, (Lua) -> Int>()
     private val setters = mutableMapOf<String, KFunction<*>>()
+    private val inlineSetters = mutableMapOf<String, (Lua) -> Int>()
 
     init {
         body()
@@ -32,24 +33,32 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
         property.isAccessible = true
     }
 
-    fun getter(function: KFunction<*>) {
+    fun getter(function: KFunction<*>, alias: String? = null) {
         require(!function.isSuspend) { "Suspend functions are not supported" }
         require(function.parameters.size == 2) { "Getter '${function.name}' has invalid number of parameters: ${function.parameters.size}" }
         require(function.parameters[0].type.classifier == clazz) { "Getter '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
         require(function.parameters[1].type.classifier == Lua::class) { "Getter '${function.name}' has invalid parameter type: ${function.parameters[1].type}" }
         require(function.returnType.classifier == Int::class) { "Getter '${function.name}' has invalid return type: ${function.returnType}" }
-        getters[capitalize(function.name)] = function
+        getters[alias ?: capitalize(function.name.removePrefix("get"))] = function
         function.isAccessible = true
     }
 
-    fun setter(function: KFunction<*>) {
+    fun setter(function: KFunction<*>, alias: String? = null) {
         require(!function.isSuspend) { "Suspend functions are not supported" }
         require(function.parameters.size == 2) { "Setter '${function.name}' has invalid number of parameters: ${function.parameters.size}" }
         require(function.parameters[0].type.classifier == clazz) { "Setter '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
         require(function.parameters[1].type.classifier == Lua::class) { "Setter '${function.name}' has invalid parameter type: ${function.parameters[1].type}" }
         require(function.returnType.classifier == Int::class) { "Setter '${function.name}' has invalid return type: ${function.returnType}" }
-        setters[capitalize(function.name)] = function
+        setters[alias ?: capitalize(function.name.removePrefix("set"))] = function
         function.isAccessible = true
+    }
+
+    fun getter(key: String, function: (Lua) -> Int) {
+        inlineGetters[key] = function
+    }
+
+    fun setter(key: String, function: (Lua) -> Int) {
+        inlineSetters[key] = function
     }
 
     fun writable(property: KMutableProperty<*>, alias: String? = null) {
@@ -115,6 +124,10 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
             return getter.call(self, lua) as Int
         }
 
+        inlineGetters[key]?.let { getter ->
+            return getter(lua)
+        }
+
         lua.pushNil()
         return 1
     }
@@ -143,6 +156,10 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
             return setter.call(self, lua) as Int
         }
 
+        inlineSetters[key]?.let { setter ->
+            return setter(lua)
+        }
+
         properties[key]?.let { property ->
             return lua.error(IllegalAccessError("Property '$key' is read-only on ${luaTypeName()}"))
         }
@@ -160,5 +177,29 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
 
     fun Lua.checkSelf(): T {
         return checkJavaObject(1, clazz)
+    }
+
+    fun <SubType : T> extend(clazz: KClass<SubType>, body: (LuaMappedMetatable<SubType>.() -> Unit)): LuaMappedMetatable<SubType> {
+        val source = this
+        return LuaMappedMetatable(clazz) {
+            for (entry in source.properties) {
+                readOnly(entry.value, entry.key)
+            }
+            for (entry in source.mutableProperties) {
+                writable(entry.value, entry.key)
+            }
+            for (entry in source.callables) {
+                callable(entry.value)
+            }
+            for (entry in source.inlineCallables) {
+                callable(entry.key, entry.value)
+            }
+            for (entry in source.getters) {
+                getter(entry.value)
+            }
+            for (entry in source.setters) {
+                setter(entry.value)
+            }
+        }.apply(body)
     }
 }
