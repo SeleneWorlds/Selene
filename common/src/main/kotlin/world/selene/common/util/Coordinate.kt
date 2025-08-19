@@ -5,7 +5,6 @@ import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkCoordinate
-import world.selene.common.lua.checkJavaObject
 import kotlin.math.sqrt
 
 data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider {

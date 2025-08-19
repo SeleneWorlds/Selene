@@ -8,6 +8,7 @@ class Scene {
 
     private var updateInProgress = false
     private val dirtiedRenderables = mutableListOf<Renderable>()
+    private val removedRenderables = mutableSetOf<Renderable>()
 
     fun beginBatch() {
         batchInProgress = true
@@ -20,6 +21,7 @@ class Scene {
     }
 
     fun add(renderable: Renderable) {
+        removedRenderables.remove(renderable)
         val insertionIndex = renderables.binarySearch { existing ->
             val sortLayerComparison = renderable.sortLayer.compareTo(existing.sortLayer)
             if (sortLayerComparison != 0) {
@@ -28,7 +30,7 @@ class Scene {
                 existing.localSortLayer.compareTo(renderable.localSortLayer)
             }
         }
-        
+
         val actualIndex = if (insertionIndex < 0) -(insertionIndex + 1) else insertionIndex
         renderables.add(actualIndex, renderable)
     }
@@ -49,6 +51,10 @@ class Scene {
             updateSorting(renderable)
         }
         dirtiedRenderables.clear()
+        for (renderable in removedRenderables) {
+            remove(renderable)
+        }
+        removedRenderables.clear()
     }
 
     fun updateSorting(renderable: Renderable) {
@@ -60,7 +66,11 @@ class Scene {
     }
 
     fun remove(renderable: Renderable) {
-        renderables.remove(renderable)
+        if (updateInProgress) {
+            removedRenderables.add(renderable)
+        } else {
+            renderables.remove(renderable)
+        }
     }
 
     fun getOrderedRenderables(): List<Renderable> {
