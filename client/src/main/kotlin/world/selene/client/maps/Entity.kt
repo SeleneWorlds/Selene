@@ -69,7 +69,7 @@ class Entity(
     val visualInstances = mutableListOf<ComponentVisualInstance>()
     val mainVisualInstance get() = visualInstances.firstOrNull()?.visualInstance
 
-    var position: Vector3 = Vector3(coordinate.x.toFloat(), coordinate.y.toFloat(), coordinate.z.toFloat())
+    val position: Vector3 = Vector3(coordinate.x.toFloat(), coordinate.y.toFloat(), coordinate.z.toFloat())
 
     val screenX get() = grid.getScreenX(position)
     val screenY get() = grid.getScreenY(position)
@@ -149,7 +149,7 @@ class Entity(
         facing = 0f
         localSortLayer = 0
         visualInstances.clear()
-        position = Vector3.Zero
+        position.set(0f, 0f, 0f)
     }
 
     fun updateVisual() {
