@@ -36,7 +36,7 @@ class TransientTile(
                 val key = it.checkString(2)
                 val value = tile.definition.metadata[key]
                 if (value != null) {
-                    it.push(value)
+                    it.push(value, Lua.Conversion.FULL)
                     return@callable 1
                 }
                 0
