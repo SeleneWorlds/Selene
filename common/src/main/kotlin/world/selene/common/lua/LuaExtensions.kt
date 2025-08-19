@@ -136,6 +136,26 @@ fun <T : Any> Lua.checkJavaObject(index: Int, clazz: KClass<out T>): T {
     return value as T
 }
 
+inline fun <reified T : Any> Lua.optJavaObject(index: Int): T? {
+    return optJavaObject(index, T::class)
+}
+
+fun <T : Any> Lua.optJavaObject(index: Int, clazz: KClass<out T>): T? {
+    if (top < abs(index)) {
+        return null
+    }
+    val type = type(index)
+    val value = when (type) {
+        Lua.LuaType.USERDATA -> toJavaObject(index)!!
+        else -> null
+    }
+    if (!clazz.isInstance(value)) {
+        return null
+    }
+    @Suppress("UNCHECKED_CAST")
+    return value as T
+}
+
 inline fun <reified T : Enum<T>> Lua.checkEnum(index: Int): T {
     return checkEnum(index, T::class)
 }

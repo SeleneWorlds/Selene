@@ -1,6 +1,9 @@
 package world.selene.server.maps
 
 import party.iroiro.luajava.Lua
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkJavaObject
@@ -8,9 +11,8 @@ import world.selene.common.lua.checkString
 import world.selene.common.util.Coordinate
 import world.selene.server.data.Registries
 
-class MapTree(private val registries: Registries) {
+class MapTree(private val registries: Registries) : LuaMetatableProvider {
     private val listeners = mutableSetOf<MapTreeListener>()
-    val luaProxy = MapTreeLuaProxy(this)
     val layers = mutableListOf<MapLayer>()
     var baseLayer: BaseMapLayer = EmptyMapLayer
     var sparseLayer: MapLayer? = null
@@ -150,15 +152,15 @@ class MapTree(private val registries: Registries) {
         val layer = getLayer(layerName)
         layer?.annotateTile(x, y, z, key, data)
     }
-    
+
     fun addListener(listener: MapTreeListener) {
         listeners.add(listener)
     }
-    
+
     fun removeListener(listener: MapTreeListener) {
         listeners.remove(listener)
     }
-    
+
     private fun notifyListeners(coordinate: Coordinate) {
         listeners.forEach { listener ->
             listener.onTileUpdated(coordinate)
@@ -233,198 +235,220 @@ class MapTree(private val registries: Registries) {
         }
     }
 
-    class MapTreeLuaProxy(val delegate: MapTree) {
-        fun Merge(lua: Lua): Int {
-            val mapTree = lua.checkJavaObject<MapTreeLuaProxy>(-1)
-            delegate.merge(mapTree.delegate)
-            return 0
-        }
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
 
-        fun PlaceTile(lua: Lua): Int {
-            val (coordinate, index) = lua.checkCoordinate(2)
-            val tileName = lua.checkString(index + 1)
-            val layerName = lua.toString(index + 2)
-            val tile = delegate.registries.tiles.get(tileName)
-            if (tile != null) {
-                val tileId = delegate.registries.mappings.getId("tiles", tileName)
-                if (tileId != null) {
-                    delegate.placeTile(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
-                    return 0
+    companion object {
+        val luaMeta = LuaMappedMetatable(MapTree::class) {
+            callable("Merge") {
+                val mapTree = it.checkSelf()
+                val other = it.checkJavaObject<MapTree>(2)
+                mapTree.merge(other)
+                return@callable 0
+            }
+
+            callable("PlaceTile") {
+                val mapTree = it.checkSelf()
+                val (coordinate, index) = it.checkCoordinate(2)
+                val tileName = it.checkString(index + 1)
+                val layerName = it.toString(index + 2)
+                val tile = mapTree.registries.tiles.get(tileName)
+                if (tile != null) {
+                    val tileId = mapTree.registries.mappings.getId("tiles", tileName)
+                    if (tileId != null) {
+                        mapTree.placeTile(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
+                        return@callable 0
+                    } else {
+                        throw IllegalStateException("Tile $tileName has no id")
+                    }
                 } else {
-                    throw IllegalStateException("Tile $tileName has no id")
+                    return@callable it.error(IllegalArgumentException("Unknown tile: $tileName"))
                 }
-            } else {
-                return lua.error(IllegalArgumentException("Unknown tile: $tileName"))
             }
-        }
 
-        fun ReplaceTiles(lua: Lua): Int {
-            val (coordinate, index) = lua.checkCoordinate(2)
-            val tileName = lua.checkString(index + 1)
-            val layerName = lua.toString(index + 2)
-            val tile = delegate.registries.tiles.get(tileName)
-            if (tile != null) {
-                val tileId = delegate.registries.mappings.getId("tiles", tileName)
-                if (tileId != null) {
-                    delegate.replaceTiles(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
-                    return 0
+            callable("ReplaceTiles") {
+                val mapTree = it.checkSelf()
+                val (coordinate, index) = it.checkCoordinate(2)
+                val tileName = it.checkString(index + 1)
+                val layerName = it.toString(index + 2)
+                val tile = mapTree.registries.tiles.get(tileName)
+                if (tile != null) {
+                    val tileId = mapTree.registries.mappings.getId("tiles", tileName)
+                    if (tileId != null) {
+                        mapTree.replaceTiles(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
+                        return@callable 0
+                    } else {
+                        throw IllegalStateException("Tile $tileName has no id")
+                    }
                 } else {
-                    throw IllegalStateException("Tile $tileName has no id")
+                    return@callable it.error(IllegalArgumentException("Unknown tile: $tileName"))
                 }
-            } else {
-                return lua.error(IllegalArgumentException("Unknown tile: $tileName"))
             }
-        }
 
-        fun SwapTile(lua: Lua): Int {
-            val (coordinate, index) = lua.checkCoordinate(2)
-            val sourceTileName = lua.checkString(index + 1)
-            val targetTileName = lua.checkString(index + 2)
-            val layerName = lua.toString(index + 3)
-            val sourceTile = delegate.registries.tiles.get(sourceTileName)
-            if (sourceTile == null) {
-                return lua.error(IllegalArgumentException("Unknown tile: $sourceTileName"))
+            callable("SwapTile") {
+                val mapTree = it.checkSelf()
+                val (coordinate, index) = it.checkCoordinate(2)
+                val sourceTileName = it.checkString(index + 1)
+                val targetTileName = it.checkString(index + 2)
+                val layerName = it.toString(index + 3)
+                val sourceTile = mapTree.registries.tiles.get(sourceTileName)
+                if (sourceTile == null) {
+                    return@callable it.error(IllegalArgumentException("Unknown tile: $sourceTileName"))
+                }
+                val sourceTileId = mapTree.registries.mappings.getId("tiles", sourceTileName)
+                if (sourceTileId == null) {
+                    throw IllegalStateException("Tile $sourceTileName has no id")
+                }
+                val targetTile = mapTree.registries.tiles.get(targetTileName)
+                if (targetTile == null) {
+                    return@callable it.error(IllegalArgumentException("Unknown tile: $targetTileName"))
+                }
+                val targetTileId = mapTree.registries.mappings.getId("tiles", targetTileName)
+                if (targetTileId == null) {
+                    throw IllegalStateException("Tile $targetTileName has no id")
+                }
+                mapTree.removeTile(coordinate.x, coordinate.y, coordinate.z, sourceTileId, layerName ?: "default")
+                mapTree.placeTile(coordinate.x, coordinate.y, coordinate.z, targetTileId, layerName ?: "default")
+                return@callable 0
             }
-            val sourceTileId = delegate.registries.mappings.getId("tiles", sourceTileName)
-            if (sourceTileId == null) {
-                throw IllegalStateException("Tile $sourceTileName has no id")
-            }
-            val targetTile = delegate.registries.tiles.get(targetTileName)
-            if (targetTile == null) {
-                return lua.error(IllegalArgumentException("Unknown tile: $targetTileName"))
-            }
-            val targetTileId = delegate.registries.mappings.getId("tiles", targetTileName)
-            if (targetTileId == null) {
-                throw IllegalStateException("Tile $targetTileName has no id")
-            }
-            delegate.removeTile(coordinate.x, coordinate.y, coordinate.z, sourceTileId, layerName ?: "default")
-            delegate.placeTile(coordinate.x, coordinate.y, coordinate.z, targetTileId, layerName ?: "default")
-            return 0
-        }
 
-        fun RemoveTile(lua: Lua): Int {
-            val (coordinate, index) = lua.checkCoordinate(2)
-            val tileName = lua.checkString(index + 1)
-            val layerName = lua.toString(index + 2)
-            val tile = delegate.registries.tiles.get(tileName)
-            if (tile != null) {
-                val tileId = delegate.registries.mappings.getId("tiles", tileName)
-                if (tileId != null) {
-                    delegate.removeTile(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
-                    return 0
+            callable("RemoveTile") {
+                val mapTree = it.checkSelf()
+                val (coordinate, index) = it.checkCoordinate(2)
+                val tileName = it.checkString(index + 1)
+                val layerName = it.toString(index + 2)
+                val tile = mapTree.registries.tiles.get(tileName)
+                if (tile != null) {
+                    val tileId = mapTree.registries.mappings.getId("tiles", tileName)
+                    if (tileId != null) {
+                        mapTree.removeTile(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
+                        return@callable 0
+                    } else {
+                        throw IllegalStateException("Tile $tileName has no id")
+                    }
                 } else {
-                    throw IllegalStateException("Tile $tileName has no id")
+                    return@callable it.error(IllegalArgumentException("Unknown tile: $tileName"))
                 }
-            } else {
-                return lua.error(IllegalArgumentException("Unknown tile: $tileName"))
             }
-        }
 
-        fun ResetTile(lua: Lua): Int {
-            val (coordinate, index) = lua.checkCoordinate(2)
-            val layerName = lua.toString(index + 1)
-            delegate.resetTile(coordinate.x, coordinate.y, coordinate.z, layerName ?: "default")
-            return 0
-        }
+            callable("ResetTile") {
+                val mapTree = it.checkSelf()
+                val (coordinate, index) = it.checkCoordinate(2)
+                val layerName = it.toString(index + 1)
+                mapTree.resetTile(coordinate.x, coordinate.y, coordinate.z, layerName ?: "default")
+                return@callable 0
+            }
 
-        fun AnnotateTile(lua: Lua): Int {
-            val (coordinate, index) = lua.checkCoordinate(2)
-            val key = lua.checkString(index + 1)
-            val table = lua.toMap(index + 2) ?: emptyMap()
-            val layerName = lua.toString(index + 3)
-            delegate.annotateTile(coordinate.x, coordinate.y, coordinate.z, key, table, layerName ?: "default")
-            return 0
-        }
+            callable("AnnotateTile") {
+                val mapTree = it.checkSelf()
+                val (coordinate, index) = it.checkCoordinate(2)
+                val key = it.checkString(index + 1)
+                val table = it.toMap(index + 2) ?: emptyMap()
+                val layerName = it.toString(index + 3)
+                mapTree.annotateTile(coordinate.x, coordinate.y, coordinate.z, key, table, layerName ?: "default")
+                return@callable 0
+            }
 
-        fun SetVisibility(lua: Lua): Int {
-            val layerName = lua.checkString(2)
-            val layer = delegate.getLayer(layerName)
-                ?: return lua.error(IllegalArgumentException("Layer $layerName does not exist"))
-            val enabled = lua.checkBoolean(3)
-            val tagName = if (lua.isString(4)) lua.checkString(4) else "default"
-            if (enabled) {
+            callable("SetVisibility") {
+                val mapTree = it.checkSelf()
+                val layerName = it.checkString(2)
+                val layer = mapTree.getLayer(layerName)
+                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
+                val enabled = it.checkBoolean(3)
+                val tagName = if (it.isString(4)) it.checkString(4) else "default"
+                if (enabled) {
+                    layer.addVisibilityTag(tagName)
+                } else {
+                    layer.removeVisibilityTag(tagName)
+                }
+                return@callable 0
+            }
+
+            callable("IsVisible") {
+                val mapTree = it.checkSelf()
+                val layerName = it.checkString(2)
+                val layer = mapTree.getLayer(layerName)
+                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
+                val tagName = if (it.isString(3)) it.checkString(3) else "default"
+                it.push(layer.visibilityTags.contains(tagName))
+                return@callable 1
+            }
+
+            callable("IsInvisible") {
+                val mapTree = it.checkSelf()
+                val layerName = it.checkString(2)
+                val layer = mapTree.getLayer(layerName)
+                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
+                val tagName = if (it.isString(3)) it.checkString(3) else "default"
+                it.push(!layer.visibilityTags.contains(tagName))
+                return@callable 1
+            }
+
+            callable("MakeVisible") {
+                val mapTree = it.checkSelf()
+                val layerName = it.checkString(2)
+                val layer = mapTree.getLayer(layerName)
+                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
+                val tagName = if (it.isString(3)) it.checkString(3) else "default"
                 layer.addVisibilityTag(tagName)
-            } else {
+                return@callable 0
+            }
+
+            callable("MakeInvisible") {
+                val mapTree = it.checkSelf()
+                val layerName = it.checkString(2)
+                val layer = mapTree.getLayer(layerName)
+                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
+                val tagName = if (it.isString(3)) it.checkString(3) else "default"
                 layer.removeVisibilityTag(tagName)
+                return@callable 0
             }
-            return 0
-        }
 
-        fun IsVisible(lua: Lua): Int {
-            val layerName = lua.checkString(2)
-            val layer = delegate.getLayer(layerName)
-                ?: return lua.error(IllegalArgumentException("Layer $layerName does not exist"))
-            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
-            lua.push(layer.visibilityTags.contains(tagName))
-            return 1
-        }
+            callable("HasCollisions") {
+                val mapTree = it.checkSelf()
+                val layerName = it.checkString(2)
+                val layer = mapTree.getLayer(layerName)
+                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
+                val tagName = if (it.isString(3)) it.checkString(3) else "default"
+                it.push(layer.collisionTags.contains(tagName))
+                return@callable 0
+            }
 
-        fun IsInvisible(lua: Lua): Int {
-            val layerName = lua.checkString(2)
-            val layer = delegate.getLayer(layerName)
-                ?: return lua.error(IllegalArgumentException("Layer $layerName does not exist"))
-            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
-            lua.push(!layer.visibilityTags.contains(tagName))
-            return 1
-        }
+            callable("SetCollisions") {
+                val mapTree = it.checkSelf()
+                val layerName = it.checkString(2)
+                val layer = mapTree.getLayer(layerName)
+                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
+                val enabled = it.checkBoolean(3)
+                val tagName = if (it.isString(4)) it.checkString(4) else "default"
+                if (enabled) {
+                    layer.addCollisionTag(tagName)
+                } else {
+                    layer.removeCollisionTag(tagName)
+                }
+                return@callable 0
+            }
 
-        fun MakeVisible(lua: Lua): Int {
-            val layerName = lua.checkString(2)
-            val layer = delegate.getLayer(layerName)
-                ?: return lua.error(IllegalArgumentException("Layer $layerName does not exist"))
-            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
-            layer.addVisibilityTag(tagName)
-            return 0
-        }
-
-        fun MakeInvisible(lua: Lua): Int {
-            val layerName = lua.checkString(2)
-            val layer = delegate.getLayer(layerName)
-                ?: return lua.error(IllegalArgumentException("Layer $layerName does not exist"))
-            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
-            layer.removeVisibilityTag(tagName)
-            return 0
-        }
-
-        fun HasCollisions(lua: Lua): Int {
-            val layerName = lua.checkString(2)
-            val layer = delegate.getLayer(layerName)
-                ?: return lua.error(IllegalArgumentException("Layer $layerName does not exist"))
-            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
-            lua.push(layer.collisionTags.contains(tagName))
-            return 0
-        }
-
-        fun SetCollisions(lua: Lua): Int {
-            val layerName = lua.checkString(2)
-            val layer = delegate.getLayer(layerName)
-                ?: return lua.error(IllegalArgumentException("Layer $layerName does not exist"))
-            val enabled = lua.checkBoolean(3)
-            val tagName = if (lua.isString(4)) lua.checkString(4) else "default"
-            if (enabled) {
+            callable("EnableCollisions") {
+                val mapTree = it.checkSelf()
+                val layerName = it.checkString(2)
+                val layer = mapTree.getLayer(layerName)
+                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
+                val tagName = if (it.isString(3)) it.checkString(3) else "default"
                 layer.addCollisionTag(tagName)
-            } else {
-                layer.removeCollisionTag(tagName)
+                return@callable 0
             }
-            return 0
-        }
 
-        fun EnableCollisions(lua: Lua): Int {
-            val layerName = lua.checkString(2)
-            val layer = delegate.getLayer(layerName)
-                ?: return lua.error(IllegalArgumentException("Layer $layerName does not exist"))
-            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
-            layer.addCollisionTag(tagName)
-            return 0
-        }
-
-        fun DisableCollisions(lua: Lua): Int {
-            val layerName = lua.checkString(2)
-            val layer = delegate.getLayer(layerName)
-                ?: return lua.error(IllegalArgumentException("Layer $layerName does not exist"))
-            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
-            layer.removeCollisionTag(tagName)
-            return 0
+            callable("DisableCollisions") {
+                val mapTree = it.checkSelf()
+                val layerName = it.checkString(2)
+                val layer = mapTree.getLayer(layerName)
+                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
+                val tagName = if (it.isString(3)) it.checkString(3) else "default"
+                layer.removeCollisionTag(tagName)
+                return@callable 0
+            }
         }
     }
 

@@ -7,8 +7,8 @@ class SaveManager(private val mapTreeFormat: MapTreeFormat) {
 
     fun save(file: File, savable: Any?) {
         file.parentFile.mkdirs()
-        (savable as? MapTree.MapTreeLuaProxy)?.let { mapTreeLuaProxy ->
-            mapTreeFormat.saveFullyInline(file, mapTreeLuaProxy.delegate)
+        (savable as? MapTree)?.let { mapTree ->
+            mapTreeFormat.saveFullyInline(file, mapTree)
         }
     }
 

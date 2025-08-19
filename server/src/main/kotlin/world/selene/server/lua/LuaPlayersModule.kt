@@ -21,7 +21,7 @@ class LuaPlayersModule(private val signals: ServerLuaSignals, private val networ
     private fun luaGetOnlinePlayers(lua: Lua): Int {
         val players = networkServer.clients
             .filterIsInstance<NetworkClientImpl>()
-            .map { it.player.luaProxy }
+            .map { it.player }
 
         lua.push(players, Lua.Conversion.FULL)
         return 1

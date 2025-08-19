@@ -6,10 +6,10 @@ import world.selene.common.lua.checkString
 import world.selene.common.util.Coordinate
 import world.selene.server.dimensions.Dimension
 
-class TileLuaProxy(
+class TransientTile(
     private val name: String,
     private val definition: TileDefinition,
-    private val dimension: Dimension.DimensionLuaProxy,
+    private val dimension: Dimension,
     private val coordinate: Coordinate
 ) {
     val Name get() = name

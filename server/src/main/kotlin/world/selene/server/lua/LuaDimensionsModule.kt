@@ -7,14 +7,13 @@ import world.selene.common.lua.LuaModule
 import world.selene.common.lua.register
 import world.selene.server.dimensions.Dimension
 import world.selene.server.dimensions.DimensionManager
-import world.selene.server.maps.TileLuaProxy
+import world.selene.server.maps.TransientTile
 
 class LuaDimensionsModule(private val dimensionManager: DimensionManager) : LuaModule {
     override val name = "selene.dimensions"
 
     override fun initialize(luaManager: LuaManager) {
-        luaManager.exposeClass(Dimension.DimensionLuaProxy::class)
-        luaManager.exposeClass(TileLuaProxy::class)
+        luaManager.exposeClass(TransientTile::class)
     }
 
     override fun register(table: LuaValue) {
@@ -22,7 +21,7 @@ class LuaDimensionsModule(private val dimensionManager: DimensionManager) : LuaM
     }
 
     private fun luaGetDefault(lua: Lua): Int {
-        lua.push(dimensionManager.dimensions[0]!!.luaProxy, Lua.Conversion.NONE)
+        lua.push(dimensionManager.dimensions[0]!!, Lua.Conversion.NONE)
         return 1
     }
 }

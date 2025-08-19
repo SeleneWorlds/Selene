@@ -3,6 +3,9 @@ package world.selene.server.sync
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBasedTable
 import party.iroiro.luajava.Lua
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
 import world.selene.common.util.ChunkWindow
@@ -17,9 +20,8 @@ import world.selene.server.maps.SparseTilePlacement
 import world.selene.server.maps.SparseTileRemoval
 import world.selene.server.maps.SparseTilesReplacement
 
-class ScopedChunkView(val window: ChunkWindow) {
+class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
 
-    val luaProxy = ScopedChunkViewLuaProxy(this)
     val backingLayers = mutableListOf<MapLayer>()
     val padding = 1
     val paddedWidth = window.width + padding * 2
@@ -113,6 +115,10 @@ class ScopedChunkView(val window: ChunkWindow) {
         return additionalTiles.get(coordinate)
     }
 
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
+
     companion object {
         fun create(dimension: Dimension, viewer: Viewer, window: ChunkWindow): ScopedChunkView {
             val result = ScopedChunkView(window)
@@ -123,15 +129,17 @@ class ScopedChunkView(val window: ChunkWindow) {
             }
             return result
         }
-    }
 
-    class ScopedChunkViewLuaProxy(val delegate: ScopedChunkView) {
-        fun GetAnnotation(lua: Lua): Int {
-            val coordinate = lua.checkJavaObject<Coordinate>(2)
-            val key = lua.checkString(3)
-            val value = delegate.annotations.get(coordinate, key)
-            lua.push(value, Lua.Conversion.FULL)
-            return 1
+        val luaMeta = LuaMappedMetatable(ScopedChunkView::class) {
+            callable("GetAnnotation") {
+                val chunkView = it.checkSelf()
+                val coordinate = it.checkJavaObject<Coordinate>(2)
+                val key = it.checkString(3)
+                val value = chunkView.annotations.get(coordinate, key)
+                it.push(value, Lua.Conversion.FULL)
+                1
+            }
         }
     }
+
 }

@@ -5,6 +5,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
+import kotlin.reflect.javaType
 import kotlin.reflect.jvm.isAccessible
 
 class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMappedMetatable<T>.() -> Unit)) : LuaMetatable {
@@ -130,7 +131,11 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
                 Float::class -> lua.checkFloat(3)
                 else -> lua.toObject(3)
             }
-            property.setter.call(self, value)
+            try {
+                property.setter.call(self, value)
+            } catch (e: IllegalArgumentException) {
+                throw IllegalArgumentException("Invalid value for property '$key' on ${luaTypeName()}: $value (${value?.javaClass})", e)
+            }
             return 0
         }
 

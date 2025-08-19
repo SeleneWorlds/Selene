@@ -2,12 +2,10 @@ package world.selene.server.lua
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.register
 import world.selene.server.data.Registries
 import world.selene.server.maps.MapTree
-import world.selene.server.sync.ScopedChunkView
 
 class LuaServerMapModule(private val registries: Registries) : LuaModule {
     override val name = "selene.map"
@@ -16,14 +14,9 @@ class LuaServerMapModule(private val registries: Registries) : LuaModule {
         table.register("Create", this::luaCreate)
     }
 
-    override fun initialize(luaManager: LuaManager) {
-        luaManager.exposeClass(MapTree.MapTreeLuaProxy::class)
-        luaManager.exposeClass(ScopedChunkView.ScopedChunkViewLuaProxy::class)
-    }
-
     private fun luaCreate(lua: Lua): Int {
         val mapTree = MapTree(registries)
-        lua.push(mapTree.luaProxy, Lua.Conversion.NONE)
+        lua.push(mapTree, Lua.Conversion.NONE)
         return 1
     }
 }

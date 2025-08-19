@@ -1,6 +1,9 @@
 package world.selene.server.player
 
 import party.iroiro.luajava.Lua
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.network.packet.SetControlledEntityPacket
@@ -12,14 +15,19 @@ import world.selene.server.dimensions.Dimension
 import world.selene.server.entities.Entity
 import world.selene.server.network.NetworkClient
 
-class Player(val playerManager: PlayerManager, val client: NetworkClient) {
+class Player(playerManager: PlayerManager, val client: NetworkClient) : LuaMetatableProvider {
 
     val syncManager = playerManager.createSyncManager(this)
     val camera = Camera().apply {
         addListener(syncManager)
     }
-    val luaProxy = PlayerLuaProxy(this)
     var controlledEntity: Entity? = null
+        set(value) {
+            if (field != value) {
+                field = value
+                client.send(SetControlledEntityPacket(value?.networkId ?: -1))
+            }
+        }
     var cameraEntity: Entity? = null
 
     var lastInputTime = System.currentTimeMillis()
@@ -33,50 +41,44 @@ class Player(val playerManager: PlayerManager, val client: NetworkClient) {
         syncManager.update()
     }
 
-    class PlayerLuaProxy(val delegate: Player) {
-        fun SetCameraToFollowControlledEntity() {
-            delegate.controlledEntity?.let { entity ->
-                delegate.camera.followEntity(entity)
-            }
-            delegate.client.send(SetCameraFollowEntityPacket(delegate.controlledEntity?.networkId ?: -1))
+    fun setCameraToFollowControlledEntity() {
+        controlledEntity?.let { entity ->
+            camera.followEntity(entity)
         }
+        client.send(SetCameraFollowEntityPacket(controlledEntity?.networkId ?: -1))
+    }
 
-        fun SetCameraToFollowTarget() {
-            delegate.cameraEntity?.let { entity ->
-                delegate.camera.followEntity(entity)
-            }
-            delegate.client.send(SetCameraFollowEntityPacket(delegate.cameraEntity?.networkId ?: -1))
+    fun setCameraToFollowTarget() {
+        cameraEntity?.let { entity ->
+            camera.followEntity(entity)
         }
+        client.send(SetCameraFollowEntityPacket(cameraEntity?.networkId ?: -1))
+    }
 
-        fun SetCameraToCoordinate(lua: Lua): Int {
-            val dimension = lua.checkJavaObject<Dimension.DimensionLuaProxy>(1).delegate
-            val x = lua.checkInt(2)
-            val y = lua.checkInt(3)
-            val z = lua.checkInt(4)
-            delegate.camera.focusCoordinate(dimension, Coordinate(x, y, z))
-            delegate.client.send(SetCameraPositionPacket(delegate.camera.coordinate))
-            return 0
-        }
+    fun setCameraToCoordinate(lua: Lua): Int {
+        val dimension = lua.checkJavaObject<Dimension>(1)
+        val x = lua.checkInt(2)
+        val y = lua.checkInt(3)
+        val z = lua.checkInt(4)
+        camera.focusCoordinate(dimension, Coordinate(x, y, z))
+        client.send(SetCameraPositionPacket(camera.coordinate))
+        return 0
+    }
 
-        fun GetControlledEntity(): Entity.EntityLuaProxy? {
-            return delegate.controlledEntity?.luaProxy
-        }
+    val idleTime get() = ((System.currentTimeMillis() - lastInputTime) / 1000L).toInt()
 
-        fun SetControlledEntity(entity: Entity.EntityLuaProxy?) {
-            delegate.controlledEntity = entity?.delegate
-            delegate.client.send(SetControlledEntityPacket(delegate.controlledEntity?.networkId ?: -1))
-        }
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
 
-        fun GetCameraEntity(): Entity.EntityLuaProxy? {
-            return delegate.cameraEntity?.luaProxy
-        }
-
-        fun SetCameraEntity(entity: Entity.EntityLuaProxy?) {
-            delegate.cameraEntity = entity?.delegate
-        }
-
-        fun GetIdleTime(): Int {
-            return ((System.currentTimeMillis() - delegate.lastInputTime) / 1000L).toInt()
+    companion object {
+        val luaMeta = LuaMappedMetatable(Player::class) {
+            readOnly(Player::idleTime)
+            writable(Player::controlledEntity)
+            writable(Player::cameraEntity)
+            callable(Player::setCameraToFollowControlledEntity)
+            callable(Player::setCameraToFollowTarget)
+            callable(Player::setCameraToCoordinate)
         }
     }
 }

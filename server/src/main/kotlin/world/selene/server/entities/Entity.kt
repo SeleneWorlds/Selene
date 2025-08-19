@@ -1,14 +1,17 @@
 package world.selene.server.entities
 
 import party.iroiro.luajava.Lua
-import party.iroiro.luajava.value.LuaValue
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.grid.Grid
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkDirection
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
+import world.selene.common.lua.optJavaObject
 import world.selene.common.util.Coordinate
 import world.selene.server.lua.Scripting
 import world.selene.server.world.World
@@ -19,14 +22,14 @@ import world.selene.server.maps.MapLayer
 import world.selene.server.objectMapper
 import world.selene.server.player.Player
 
-class Entity(val registries: Registries, val world: World, val scripting: Scripting) {
+class Entity(val registries: Registries, val world: World, val scripting: Scripting) : LuaMetatableProvider {
     var networkId: Int = -1
     var entityType: String = ""
     val name = "John Selene"
     var coordinate = Coordinate(0, 0, 0)
     var facing: Grid.Direction? = null
     var dimension: Dimension? = null
-    val luaProxy = EntityLuaProxy(this)
+    val map get() = dimension?.mapTree
     val customData = mutableMapOf<String, Any>()
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
 
@@ -80,192 +83,201 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         this.coordinate = coordinate
         dimension.syncManager.entityMoved(this, prevCoordinate, coordinate, 0.2f)
         scripting.signals.entitySteppedOnTile.emit {
-            it.push(luaProxy, Lua.Conversion.NONE)
+            it.push(this, Lua.Conversion.NONE)
             it.push(coordinate, Lua.Conversion.NONE)
             2
         }
         return true
     }
 
-    class EntityLuaProxy(val delegate: Entity) {
-        val Name get() = delegate.name
-        val Coordinate get() = delegate.coordinate
-        val Facing get() = delegate.facing
-        val Dimension get() = delegate.dimension?.luaProxy
-        val Map get() = delegate.dimension?.mapTree?.luaProxy
-        val Collision get() = delegate.collisionViewer
-        val Vision get() = delegate.visionViewer
+    fun despawn() {
+        dimension = null
+    }
 
-        fun SetCoordinate(lua: Lua): Int {
-            val (coordinate, _) = lua.checkCoordinate(2)
-            delegate.coordinate = coordinate
-            delegate.dimension?.syncManager?.entityTeleported(delegate)
-            return 0
-        }
+    fun remove() {
+        world.entityManager.removeEntity(this)
+    }
 
-        fun SetFacing(lua: Lua): Int {
-            val direction = lua.checkDirection(2, delegate.world.grid)
-            delegate.facing = direction
-            delegate.dimension?.syncManager?.entityTurned(
-                delegate,
-                direction
-            )
-            return 0
-        }
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
 
-        fun Move(lua: Lua): Int {
-            val direction = lua.checkDirection(2, delegate.world.grid)
-            val coordinate = delegate.coordinate + direction.vector
-            return if (delegate.moveTo(coordinate)) 0 else 1
-        }
-
-        fun GetCustomData(lua: Lua): Int {
-            val key = lua.checkString(2)
-            val defaultValue = lua.toObject(3)
-            val value = delegate.customData.getOrDefault(key, defaultValue)
-            lua.push(value, Lua.Conversion.FULL)
-            return 1
-        }
-
-        fun SetCustomData(lua: Lua): Int {
-            val key = lua.checkString(2)
-            val value = lua.toObject(3)!!
-            delegate.customData[key] = value
-            return 0
-        }
-
-        fun CollisionMap(lua: Lua): Int {
-            val coordinate = lua.checkJavaObject<Coordinate>(2)
-            val chunkView = delegate.world.chunkViewManager.atCoordinate(
-                delegate.dimension!!,
-                delegate.collisionViewer,
-                coordinate
-            ).luaProxy
-            lua.push(chunkView, Lua.Conversion.NONE)
-            return 1
-        }
-
-        fun SetVision(lua: Lua): Int {
-            val enabled = lua.checkBoolean(2)
-            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
-            if (enabled) {
-                delegate.visionTags.add(tagName)
-            } else {
-                delegate.visionTags.remove(tagName)
+    companion object {
+        val luaMeta = LuaMappedMetatable(Entity::class) {
+            readOnly(Entity::name)
+            readOnly(Entity::coordinate)
+            readOnly(Entity::facing)
+            readOnly(Entity::dimension)
+            readOnly(Entity::map)
+            readOnly(Entity::collisionViewer, "Collision")
+            readOnly(Entity::visionViewer, "Vision")
+            callable(Entity::despawn)
+            callable(Entity::remove)
+            callable("SetCoordinate") {
+                val entity = it.checkSelf()
+                val (coordinate, _) = it.checkCoordinate(2)
+                entity.coordinate = coordinate
+                entity.dimension?.syncManager?.entityTeleported(entity)
+                0
             }
-            return 0
-        }
-
-        fun HasVision(lua: Lua): Int {
-            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
-            lua.push(delegate.visionTags.contains(tagName))
-            return 0
-        }
-
-        fun GrantVision(lua: Lua): Int {
-            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
-            delegate.visionTags.add(tagName)
-            return 0
-        }
-
-        fun RevokeVision(lua: Lua): Int {
-            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
-            delegate.visionTags.remove(tagName)
-            return 0
-        }
-
-        fun SetVisibility(lua: Lua): Int {
-            val enabled = lua.checkBoolean(2)
-            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
-            if (enabled) {
-                delegate.visibilityTags.add(tagName)
-            } else {
-                delegate.visibilityTags.remove(tagName)
-            }
-            return 0
-        }
-
-        fun IsVisible(lua: Lua): Int {
-            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
-            lua.push(delegate.visibilityTags.contains(tagName))
-            return 1
-        }
-
-        fun IsInvisible(lua: Lua): Int {
-            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
-            lua.push(!delegate.visibilityTags.contains(tagName))
-            return 1
-        }
-
-        fun MakeVisible(lua: Lua): Int {
-            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
-            delegate.visibilityTags.add(tagName)
-            return 0
-        }
-
-        fun MakeInvisible(lua: Lua): Int {
-            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
-            delegate.visibilityTags.remove(tagName)
-            return 0
-        }
-
-        fun HasCollisions(lua: Lua): Int {
-            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
-            lua.push(delegate.collisionTags.contains(tagName))
-            return 0
-        }
-
-        fun SetCollisions(lua: Lua): Int {
-            val enabled = lua.checkBoolean(2)
-            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
-            if (enabled) {
-                delegate.collisionTags.add(tagName)
-            } else {
-                delegate.collisionTags.remove(tagName)
-            }
-            return 0
-        }
-
-        fun EnableCollisions(lua: Lua): Int {
-            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
-            delegate.collisionTags.add(tagName)
-            return 0
-        }
-
-        fun DisableCollisions(lua: Lua): Int {
-            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
-            delegate.collisionTags.remove(tagName)
-            return 0
-        }
-
-        fun Spawn(lua: Lua): Int {
-            val dimension =
-                if (lua.isUserdata(2)) lua.checkJavaObject<Dimension.DimensionLuaProxy>(2).delegate else delegate.world.dimensionManager.getOrCreateDimension(
-                    0
+            callable("SetFacing") {
+                val entity = it.checkSelf()
+                val direction = it.checkDirection(2, entity.world.grid)
+                entity.facing = direction
+                entity.dimension?.syncManager?.entityTurned(
+                    entity,
+                    direction
                 )
-            delegate.dimension = dimension
-            dimension.syncManager.entityAdded(delegate)
-            return 0
-        }
-
-        fun Despawn() {
-            delegate.dimension = null
-        }
-
-        fun Remove() {
-            delegate.world.entityManager.removeEntity(delegate)
-        }
-
-        fun AddDynamicComponent(name: String, callback: LuaValue) {
-            delegate.dynamicComponents[name] = object : ComponentResolver {
-                override fun resolveForPlayer(player: Player): ComponentConfiguration? {
-                    val lua = callback.state()
-                    lua.push(callback)
-                    lua.push(this@EntityLuaProxy, Lua.Conversion.NONE)
-                    lua.push(player.luaProxy, Lua.Conversion.NONE)
-                    lua.pCall(2, 1)
-                    return objectMapper.convertValue(lua.toMap(-1), ComponentConfiguration::class.java)
+                0
+            }
+            callable("Move") {
+                val entity = it.checkSelf()
+                val direction = it.checkDirection(2, entity.world.grid)
+                val coordinate = entity.coordinate + direction.vector
+                if (entity.moveTo(coordinate)) 0 else 1
+            }
+            callable("GetCustomData") {
+                val entity = it.checkSelf()
+                val key = it.checkString(2)
+                val defaultValue = it.toObject(3)
+                val value = entity.customData.getOrDefault(key, defaultValue)
+                it.push(value, Lua.Conversion.FULL)
+                1
+            }
+            callable("SetCustomData") {
+                val entity = it.checkSelf()
+                val key = it.checkString(2)
+                val value = it.toObject(3)!!
+                entity.customData[key] = value
+                0
+            }
+            callable("CollisionMap") {
+                val entity = it.checkSelf()
+                val (coordinate, _) = it.checkCoordinate(2)
+                val chunkView = entity.dimension!!.chunkViewManager.atCoordinate(
+                    entity.dimension!!,
+                    entity.collisionViewer,
+                    coordinate
+                )
+                it.push(chunkView, Lua.Conversion.NONE)
+                1
+            }
+            callable("SetVision") {
+                val entity = it.checkSelf()
+                val enabled = it.checkBoolean(2)
+                val tagName = if (it.isString(3)) it.checkString(3) else "default"
+                if (enabled) {
+                    entity.visionTags.add(tagName)
+                } else {
+                    entity.visionTags.remove(tagName)
                 }
+                0
+            }
+            callable("HasVision") {
+                val entity = it.checkSelf()
+                val tagName = if (it.isString(2)) it.checkString(2) else "default"
+                it.push(entity.visionTags.contains(tagName))
+                1
+            }
+            callable("GrantVision") {
+                val entity = it.checkSelf()
+                val tagName = if (it.isString(2)) it.checkString(2) else "default"
+                entity.visionTags.add(tagName)
+                0
+            }
+            callable("RevokeVision") {
+                val entity = it.checkSelf()
+                val tagName = if (it.isString(2)) it.checkString(2) else "default"
+                entity.visionTags.remove(tagName)
+                0
+            }
+            callable("SetVisibility") {
+                val entity = it.checkSelf()
+                val enabled = it.checkBoolean(2)
+                val tagName = if (it.isString(3)) it.checkString(3) else "default"
+                if (enabled) {
+                    entity.visibilityTags.add(tagName)
+                } else {
+                    entity.visibilityTags.remove(tagName)
+                }
+                0
+            }
+            callable("IsVisible") {
+                val entity = it.checkSelf()
+                val tagName = if (it.isString(2)) it.checkString(2) else "default"
+                it.push(entity.visibilityTags.contains(tagName))
+                1
+            }
+            callable("IsInvisible") {
+                val entity = it.checkSelf()
+                val tagName = if (it.isString(2)) it.checkString(2) else "default"
+                it.push(!entity.visibilityTags.contains(tagName))
+                1
+            }
+            callable("MakeVisible") {
+                val entity = it.checkSelf()
+                val tagName = if (it.isString(2)) it.checkString(2) else "default"
+                entity.visibilityTags.add(tagName)
+                0
+            }
+            callable("MakeInvisible") {
+                val entity = it.checkSelf()
+                val tagName = if (it.isString(2)) it.checkString(2) else "default"
+                entity.visibilityTags.remove(tagName)
+                0
+            }
+            callable("HasCollisions") {
+                val entity = it.checkSelf()
+                val tagName = if (it.isString(2)) it.checkString(2) else "default"
+                it.push(entity.collisionTags.contains(tagName))
+                1
+            }
+            callable("SetCollisions") {
+                val entity = it.checkSelf()
+                val enabled = it.checkBoolean(2)
+                val tagName = if (it.isString(3)) it.checkString(3) else "default"
+                if (enabled) {
+                    entity.collisionTags.add(tagName)
+                } else {
+                    entity.collisionTags.remove(tagName)
+                }
+                0
+            }
+            callable("EnableCollisions") {
+                val entity = it.checkSelf()
+                val tagName = if (it.isString(2)) it.checkString(2) else "default"
+                entity.collisionTags.add(tagName)
+                0
+            }
+            callable("DisableCollisions") {
+                val entity = it.checkSelf()
+                val tagName = if (it.isString(2)) it.checkString(2) else "default"
+                entity.collisionTags.remove(tagName)
+                0
+            }
+            callable("Spawn") {
+                val entity = it.checkSelf()
+                val dimension = it.optJavaObject<Dimension>(2) ?: entity.world.dimensionManager.getOrCreateDimension(0)
+                entity.dimension = dimension
+                dimension.syncManager.entityAdded(entity)
+                0
+            }
+            callable("AddDynamicComponent") {
+                val entity = it.checkSelf()
+                val name = it.checkString(2)
+                it.pushValue(3)
+                val callback = it.get()
+                entity.dynamicComponents[name] = object : ComponentResolver {
+                    override fun resolveForPlayer(player: Player): ComponentConfiguration? {
+                        val lua = callback.state()
+                        lua.push(callback)
+                        lua.push(entity, Lua.Conversion.NONE)
+                        lua.push(player, Lua.Conversion.NONE)
+                        lua.pCall(2, 1)
+                        return objectMapper.convertValue(lua.toMap(-1), ComponentConfiguration::class.java)
+                    }
+                }
+                0
             }
         }
     }

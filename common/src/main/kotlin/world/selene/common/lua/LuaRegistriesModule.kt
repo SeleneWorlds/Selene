@@ -11,10 +11,6 @@ class LuaRegistriesModule(
 ) : LuaModule {
     override val name = "selene.registries"
 
-    override fun initialize(luaManager: LuaManager) {
-        luaManager.exposeClass(RegistryObjectLuaProxy::class)
-    }
-
     override fun register(table: LuaValue) {
         table.register("FindAll", this::luaFindAll)
         table.register("FindByMetadata", this::luaFindByMetadata)
@@ -27,7 +23,7 @@ class LuaRegistriesModule(
         if (registry == null) {
             return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
         }
-        val list = registry.getAll().map { RegistryObjectLuaProxy(it.key, it.value) }
+        val list = registry.getAll().map { TransientRegistryObject(it.key, it.value) }
         lua.push(list, Lua.Conversion.FULL)
         return 1
     }
@@ -45,7 +41,7 @@ class LuaRegistriesModule(
         for ((entryName, entryData) in registry.getAll()) {
             val metadata = getMetadata(entryData, key)
             if (metadata == value) {
-                lua.push(RegistryObjectLuaProxy(entryName, entryData), Lua.Conversion.NONE)
+                lua.push(TransientRegistryObject(entryName, entryData), Lua.Conversion.NONE)
                 return 1
             }
         }
@@ -61,21 +57,29 @@ class LuaRegistriesModule(
             return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
         }
         val element = registry.get(name) ?: return 0
-        lua.push(RegistryObjectLuaProxy(name, element), Lua.Conversion.NONE)
+        lua.push(TransientRegistryObject(name, element), Lua.Conversion.NONE)
         return 1
     }
 
-    class RegistryObjectLuaProxy(val elementName: String, val element: Any) {
-        val Name: String get() = elementName
+    class TransientRegistryObject(val name: String, val element: Any) : LuaMetatableProvider {
+        override fun luaMetatable(lua: Lua): LuaMetatable {
+            return luaMeta
+        }
 
-        fun GetMetadata(lua: Lua): Int {
-            val key = lua.checkString(2)
-            val value = getMetadata(element, key)
-            if (value != null) {
-                lua.push(value)
-                return 1
+        companion object {
+            val luaMeta = LuaMappedMetatable(TransientRegistryObject::class) {
+                readOnly(TransientRegistryObject::name)
+                callable("GetMetadata") {
+                    val registryObject = it.checkSelf()
+                    val key = it.checkString(2)
+                    val value = getMetadata(registryObject.element, key)
+                    if (value != null) {
+                        it.push(value)
+                        return@callable 1
+                    }
+                    0
+                }
             }
-            return 0
         }
     }
 

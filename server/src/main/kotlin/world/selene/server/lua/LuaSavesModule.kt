@@ -36,7 +36,7 @@ class LuaSavesModule(private val serverConfig: ServerConfig, private val saveMan
     private fun luaLoad(lua: Lua): Int {
         val path = lua.checkString(-1)
         val saveFile = File(serverConfig.savePath, path)
-        lua.push(saveManager.load(saveFile)?.luaProxy, Lua.Conversion.FULL)
+        lua.push(saveManager.load(saveFile), Lua.Conversion.FULL)
         return 1
     }
 

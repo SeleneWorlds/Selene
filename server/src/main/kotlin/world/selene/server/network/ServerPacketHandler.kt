@@ -32,8 +32,8 @@ class ServerPacketHandler(
                     context.send(NameIdMappingsPacket(scope, chunk))
                 }
             }
-            signals.playerJoined.emit() { lua ->
-                lua.push((context as NetworkClientImpl).player.luaProxy, Lua.Conversion.NONE)
+            signals.playerJoined.emit { lua ->
+                lua.push((context as NetworkClientImpl).player, Lua.Conversion.NONE)
                 1
             }
         } else if (packet is RequestMovePacket) {
@@ -57,7 +57,7 @@ class ServerPacketHandler(
                 if (handler != null) {
                     val player = (context as NetworkClientImpl).player
                     handler.push(luaManager.lua)
-                    luaManager.lua.push(player.luaProxy, Lua.Conversion.NONE)
+                    luaManager.lua.push(player, Lua.Conversion.NONE)
                     luaManager.lua.newTable()
                     // Helper to recursively push Map<String, Any> to Lua table
                     fun pushMapToLuaTable(map: Map<String, Any>) {

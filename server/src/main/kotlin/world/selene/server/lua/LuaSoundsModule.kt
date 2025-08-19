@@ -23,7 +23,7 @@ class LuaSoundsModule(private val networkServer: NetworkServer) : LuaModule {
     }
 
     private fun luaPlaySound(lua: Lua): Int {
-        val player = lua.checkJavaObject<Player.PlayerLuaProxy>(1).delegate
+        val player = lua.checkJavaObject<Player>(1)
         val soundName = lua.checkString(2)
         if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
 

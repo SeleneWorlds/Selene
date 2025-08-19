@@ -1,7 +1,9 @@
 package world.selene.server.dimensions
 
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaManager
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkJavaObject
@@ -11,86 +13,86 @@ import world.selene.server.cameras.Viewer
 import world.selene.server.data.Registries
 import world.selene.server.maps.MapTree
 import world.selene.server.maps.MapTreeListener
-import world.selene.server.maps.TileLuaProxy
+import world.selene.server.maps.TransientTile
 import world.selene.common.util.Coordinate
 import world.selene.server.entities.Entity
 import world.selene.server.sync.ChunkViewManager
 import world.selene.server.sync.DimensionSyncManager
 
-class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManager) : MapTreeListener {
+class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManager) : MapTreeListener, LuaMetatableProvider {
     var mapTree: MapTree = MapTree(registries).also { it.addListener(this) }
-    val luaProxy = DimensionLuaProxy(this)
+        set(value) {
+            field.removeListener(this)
+            field = value
+            value.addListener(this)
+        }
     val syncManager = DimensionSyncManager()
-
-    class DimensionLuaProxy(val delegate: Dimension) {
-        val Map: MapTree.MapTreeLuaProxy get() = delegate.mapTree.luaProxy
-
-        fun SetMap(lua: Lua): Int {
-            val mapTree = lua.checkJavaObject<MapTree.MapTreeLuaProxy>(-1)
-            delegate.mapTree.removeListener(delegate)
-            delegate.mapTree = mapTree.delegate
-            delegate.mapTree.addListener(delegate)
-            return 0
-        }
-
-        fun HasTile(lua: Lua): Int {
-            val (coordinate, index) = lua.checkCoordinate(2)
-            val tileName = lua.checkString(index + 1)
-            val viewer = if (lua.isUserdata(index + 1)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
-            val tileId = delegate.registries.mappings.getId("tiles", tileName)
-            val chunkView = delegate.chunkViewManager.atCoordinate(delegate, viewer, coordinate)
-            val baseTile = chunkView.getBaseTileAt(coordinate)
-            if (baseTile == tileId) {
-                lua.push(true)
-                return 1
-            }
-
-            lua.push(chunkView.getAdditionalTilesAt(coordinate).contains(tileId))
-            return 1
-        }
-
-        fun GetTilesAt(lua: Lua): Int {
-            val (coordinate, index) = lua.checkCoordinate(2)
-            val viewer = if (lua.isUserdata(index + 1)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
-
-            val tiles = mutableListOf<TileLuaProxy>()
-            val chunkView = delegate.chunkViewManager.atCoordinate(delegate, viewer, coordinate)
-            val baseTile = chunkView.getBaseTileAt(coordinate)
-            val baseTileName = delegate.registries.mappings.getName("tiles", baseTile)
-            val baseTileDef = baseTileName?.let { delegate.registries.tiles.get(it) }
-            if (baseTileDef != null) {
-                tiles.add(TileLuaProxy(baseTileName, baseTileDef, this, coordinate))
-            }
-            val additionalTiles = chunkView.getAdditionalTilesAt(coordinate)
-            additionalTiles.forEach { tileId ->
-                val tileName = delegate.registries.mappings.getName("tiles", tileId)
-                val tileDef = tileName?.let { delegate.registries.tiles.get(it) }
-                if (tileDef != null) {
-                    tiles.add(TileLuaProxy(tileName, tileDef, this, coordinate))
-                }
-            }
-            lua.push(tiles, Lua.Conversion.FULL)
-            return 1
-        }
-
-        fun GetEntitiesAt(lua: Lua): Int {
-            val coordinate = lua.checkCoordinate(2)
-            // TODO implement me
-            lua.push(emptyList<Entity.EntityLuaProxy>(), Lua.Conversion.FULL)
-            return 1
-        }
-
-        fun GetEntitiesInRange(lua: Lua): Int {
-            val (coordinate, index) = lua.checkCoordinate(2)
-            val range = lua.checkInt(index + 1)
-            // TODO implement me
-            lua.push(emptyList<Entity.EntityLuaProxy>(), Lua.Conversion.FULL)
-            return 1
-        }
-    }
 
     override fun onTileUpdated(coordinate: Coordinate) {
         syncManager.tileUpdated(coordinate)
+    }
+
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
+
+    companion object {
+        val luaMeta = LuaMappedMetatable(Dimension::class) {
+            writable(Dimension::mapTree, "Map")
+            callable("HasTile") {
+                val dimension = it.checkSelf()
+                val (coordinate, index) = it.checkCoordinate(2)
+                val tileName = it.checkString(index + 1)
+                val viewer = if (it.isUserdata(index + 1)) it.checkJavaObject<Viewer>(index + 1) else DefaultViewer
+                val tileId = dimension.registries.mappings.getId("tiles", tileName)
+                val chunkView = dimension.chunkViewManager.atCoordinate(dimension, viewer, coordinate)
+                val baseTile = chunkView.getBaseTileAt(coordinate)
+                if (baseTile == tileId) {
+                    it.push(true)
+                    return@callable 1
+                }
+
+                it.push(chunkView.getAdditionalTilesAt(coordinate).contains(tileId))
+                1
+            }
+            callable("GetTilesAt") { lua ->
+                val dimension = lua.checkSelf()
+                val (coordinate, index) = lua.checkCoordinate(2)
+                val viewer = if (lua.isUserdata(index + 1)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
+
+                val tiles = mutableListOf<TransientTile>()
+                val chunkView = dimension.chunkViewManager.atCoordinate(dimension, viewer, coordinate)
+                val baseTile = chunkView.getBaseTileAt(coordinate)
+                val baseTileName = dimension.registries.mappings.getName("tiles", baseTile)
+                val baseTileDef = baseTileName?.let { dimension.registries.tiles.get(it) }
+                if (baseTileDef != null) {
+                    tiles.add(TransientTile(baseTileName, baseTileDef, dimension, coordinate))
+                }
+                val additionalTiles = chunkView.getAdditionalTilesAt(coordinate)
+                additionalTiles.forEach { tileId ->
+                    val tileName = dimension.registries.mappings.getName("tiles", tileId)
+                    val tileDef = tileName?.let { dimension.registries.tiles.get(it) }
+                    if (tileDef != null) {
+                        tiles.add(TransientTile(tileName, tileDef, dimension, coordinate))
+                    }
+                }
+                lua.push(tiles, Lua.Conversion.FULL)
+                1
+            }
+            callable("GetEntitiesAt") {
+                val coordinate = it.checkCoordinate(2)
+                // TODO implement me
+                it.push(emptyList<Entity>(), Lua.Conversion.FULL)
+                1
+            }
+            callable("GetEntitiesInRange") {
+                val (coordinate, index) = it.checkCoordinate(2)
+                val range = it.checkInt(index + 1)
+                // TODO implement me
+                it.push(emptyList<Entity>(), Lua.Conversion.FULL)
+                1
+            }
+        }
     }
 }
 
