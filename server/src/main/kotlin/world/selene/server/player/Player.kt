@@ -14,8 +14,14 @@ import world.selene.server.cameras.Camera
 import world.selene.server.dimensions.Dimension
 import world.selene.server.entities.Entity
 import world.selene.server.network.NetworkClient
+import java.util.Locale
 
 class Player(playerManager: PlayerManager, val client: NetworkClient) : LuaMetatableProvider {
+
+    var userId: String? = null
+    var locale: Locale = Locale.ENGLISH
+    val localeString get() = locale.toString()
+    val languageString: String get() = locale.language
 
     val syncManager = playerManager.createSyncManager(this)
     val camera = Camera().apply {
@@ -74,6 +80,9 @@ class Player(playerManager: PlayerManager, val client: NetworkClient) : LuaMetat
     companion object {
         val luaMeta = LuaMappedMetatable(Player::class) {
             readOnly(Player::idleTime)
+            readOnly(Player::userId)
+            readOnly(Player::localeString, "Locale")
+            readOnly(Player::languageString, "Language")
             writable(Player::controlledEntity)
             writable(Player::cameraEntity)
             callable(Player::setCameraToFollowControlledEntity)

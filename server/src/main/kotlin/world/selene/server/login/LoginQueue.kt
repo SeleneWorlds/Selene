@@ -67,7 +67,7 @@ class LoginQueue(
     }
 
     fun completeJoin(userId: String): CompletedLogin {
-        return CompletedLogin(sessionAuth.createToken(userId))
+        return CompletedLogin(sessionAuth.createToken(SessionAuthentication.TokenData(userId)))
     }
 
     fun removeUser(userId: String) {

@@ -19,6 +19,8 @@ import world.selene.common.lua.LuaManager
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.PacketRegistrations
 import world.selene.common.network.packet.AuthenticatePacket
+import world.selene.common.network.packet.PreferencesPacket
+import java.util.Locale
 
 class SeleneClient(
     private val networkClient: NetworkClient,
@@ -32,8 +34,6 @@ class SeleneClient(
     private val visualRegistry: VisualRegistry,
     private val soundRegistry: SoundRegistry,
     private val customRegistries: CustomRegistries,
-    private val signals: ClientLuaSignals,
-    private val config: ClientConfig,
     private val runtimeConfig: ClientRuntimeConfig,
     private val packetHandler: PacketHandler<NetworkClient>,
     private val logger: Logger
@@ -59,6 +59,7 @@ class SeleneClient(
         runBlocking {
             networkClient.connect(runtimeConfig.host, runtimeConfig.port)
             networkClient.send(AuthenticatePacket(runtimeConfig.token))
+            networkClient.send(PreferencesPacket(Locale.getDefault().toString()))
         }
     }
 }

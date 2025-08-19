@@ -10,6 +10,7 @@ import world.selene.common.network.packet.UpdateMapTilesPacket
 import world.selene.common.network.packet.MoveEntityPacket
 import world.selene.common.network.packet.NameIdMappingsPacket
 import world.selene.common.network.packet.PlaySoundPacket
+import world.selene.common.network.packet.PreferencesPacket
 import world.selene.common.network.packet.RemoveEntityPacket
 import world.selene.common.network.packet.RemoveMapChunkPacket
 import world.selene.common.network.packet.RequestMovePacket
@@ -102,6 +103,12 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             UpdateMapTilesPacket::class,
             UpdateMapTilesPacket::encode,
             UpdateMapTilesPacket::decode
+        )
+        packetFactory.registerPacket(
+            15,
+            PreferencesPacket::class,
+            PreferencesPacket::encode,
+            PreferencesPacket::decode
         )
         packetFactory.registerPacket(
             254,
