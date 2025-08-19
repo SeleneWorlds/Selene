@@ -7,6 +7,9 @@ import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.math.Vector
+import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.ScreenUtils
 import ktx.assets.async.AssetStorage
 import world.selene.client.camera.CameraManager
@@ -51,7 +54,7 @@ class SeleneApplicationListener(
     lateinit var systemFont: BitmapFont
     lateinit var spriteBatch: SpriteBatch
     lateinit var markerTexture: Texture
-    
+
     override fun create() {
         debugRenderer.initialize()
         spriteBatch = SpriteBatch()
@@ -98,6 +101,12 @@ class SeleneApplicationListener(
         ui.render()
 
         debugRenderer.render(cameraManager.camera.combined)
+
+        if (Vector2.Zero.x != 0f || Vector2.Zero.y != 0f) {
+            throw IllegalStateException("Vector2.Zero is not zero")
+        } else if (Vector3.Zero.x != 0f || Vector3.Zero.y != 0f || Vector3.Zero.z != 0f) {
+            throw IllegalStateException("Vector3.Zero is not zero")
+        }
     }
 
     override fun pause() {
