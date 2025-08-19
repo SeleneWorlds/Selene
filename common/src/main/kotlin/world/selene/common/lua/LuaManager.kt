@@ -39,6 +39,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         packages["string"] = lua.get("string").also {
             it.register("trim", this::luaTrim)
             it.register("startsWith", this::luaStartsWith)
+            it.register("endsWith", this::luaEndsWith)
         }
 
         lua.openLibrary("bit32")
@@ -219,6 +220,11 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
     private fun luaStartsWith(lua: Lua): Int {
         lua.push(lua.checkString(1).startsWith(lua.checkString(2)))
+        return 1
+    }
+
+    private fun luaEndsWith(lua: Lua): Int {
+        lua.push(lua.checkString(1).endsWith(lua.checkString(2)))
         return 1
     }
 
