@@ -279,10 +279,10 @@ data class CallerInfo(val source: String, val line: Int) {
     }
 }
 
-fun Lua.getCallerInfo(): CallerInfo {
+fun Lua.getCallerInfo(offset: Int = 2): CallerInfo {
     LuaManager.debugLibrary.push(this)
     getField(-1, "getinfo")
-    push(2)
+    push(offset)
     push("Sl")
     pCall(2, 1)
 

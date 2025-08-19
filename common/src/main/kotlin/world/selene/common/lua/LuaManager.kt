@@ -58,15 +58,18 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
         lua.openLibrary("debug")
         debugLibrary = lua.get("debug")
-        lua.set("debug", null)
+        lua.set("debug", lua.newTable {
+            this.register("getinfo", this@LuaManager::luaDebugGetInfo)
+            this.register("traceback", this@LuaManager::luaTraceback)
+        })
 
         lua.openLibrary("table")
         packages["table"] = lua.get("table").also {
             it.register("find", this::luaTableFind)
+            it.register("tostring", this::luaTableToString)
         }
 
         lua.register("require", this::luaRequire)
-        lua.register("print2", this::luaPrint)
 
         lua.set("dofile", null)
         lua.set("loadfile", null)
@@ -261,8 +264,57 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         return 1
     }
 
+    private fun luaTableToString(lua: Lua): Int {
+        lua.checkType(1, Lua.LuaType.TABLE)
+
+        lua.pushNil()
+        val sb = StringBuilder("{")
+        while (lua.next(-2) != 0) {
+            if (sb.length > 1) {
+                sb.append(", ")
+            }
+
+            lua.getGlobal("tostring")
+            lua.pushValue(-3)
+            lua.pCall(1, 1)
+            val key = lua.toString(-1).also { lua.pop(1) }
+
+            lua.getGlobal("tostring")
+            lua.pushValue(-2)
+            lua.pCall(1, 1)
+            val value = lua.toString(-1).also { lua.pop(1) }
+
+            sb.append(key)
+            sb.append(" = ")
+            sb.append(value)
+            lua.pop(1)
+        }
+        sb.append("}")
+        lua.push(sb.toString())
+        return 1
+    }
+
     private fun luaTrim(lua: Lua): Int {
         lua.push(lua.checkString(1).trim())
+        return 1
+    }
+
+    private fun luaDebugGetInfo(lua: Lua): Int {
+        val offset = lua.checkInt(1)
+
+        val callerInfo = lua.getCallerInfo(offset)
+        lua.newTable()
+        lua.push(callerInfo.source)
+        lua.setField(-2, "short_src")
+        lua.push(callerInfo.line)
+        lua.setField(-2, "currentline")
+        return 1
+    }
+
+    private fun luaTraceback(lua: Lua): Int {
+        debugLibrary.push(lua)
+        lua.getField(-1, "traceback")
+        lua.pCall(0, 1)
         return 1
     }
 
@@ -291,11 +343,6 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         // Return nil if not found
         lua.pushNil()
         return 1
-    }
-
-    private fun luaPrint(lua: Lua, args: Array<LuaValue>): Array<LuaValue> {
-        logger.info(args.joinToString(" ") { it.toString() })
-        return emptyArray()
     }
 
     private fun luaRequire(lua: Lua, args: Array<LuaValue>): Array<LuaValue> {
