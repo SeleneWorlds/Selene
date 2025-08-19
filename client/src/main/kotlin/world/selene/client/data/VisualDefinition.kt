@@ -85,4 +85,7 @@ data class LabelVisualDefinition(
     val offsetY: Float = 0f,
     val sortLayerOffset: Int = 0,
     val metadata: Map<String, String> = emptyMap()
-) : VisualDefinition
+) : VisualDefinition {
+    override val isShared: Boolean
+        get() = false
+}
