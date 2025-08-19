@@ -25,7 +25,7 @@ import world.selene.server.player.Player
 class Entity(val registries: Registries, val world: World, val scripting: Scripting) : LuaMetatableProvider {
     var networkId: Int = -1
     var entityType: String = ""
-    val name = "John Selene"
+    var name = "John Selene"
     var coordinate = Coordinate(0, 0, 0)
     var facing: Grid.Direction? = null
     var dimension: Dimension? = null
@@ -104,7 +104,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
     companion object {
         val luaMeta = LuaMappedMetatable(Entity::class) {
-            readOnly(Entity::name)
+            writable(Entity::name)
             readOnly(Entity::coordinate)
             readOnly(Entity::facing)
             readOnly(Entity::dimension)
