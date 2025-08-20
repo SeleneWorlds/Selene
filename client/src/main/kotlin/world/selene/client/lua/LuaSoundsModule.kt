@@ -2,6 +2,7 @@ package world.selene.client.lua
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
+import world.selene.client.data.Registries
 import world.selene.client.sound.SoundManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.checkString
@@ -10,6 +11,7 @@ import world.selene.common.lua.getFieldFloat
 import world.selene.common.lua.register
 
 class LuaSoundsModule(
+    private val registries: Registries,
     private val soundManager: SoundManager
 ) : LuaModule {
     override val name = "selene.sounds"
@@ -26,14 +28,23 @@ class LuaSoundsModule(
         
         val volume = lua.getFieldFloat(2, "volume") ?: 1f
         val pitch = lua.getFieldFloat(2, "pitch") ?: 1f
-        soundManager.playSound(soundName, volume, pitch)
+
+        val soundId = registries.mappings.getId("sounds", soundName)
+        if (soundId == null) {
+            return lua.error(IllegalArgumentException("Could not find sound with name $soundName"))
+        }
+        soundManager.playSound(soundId, volume, pitch)
 
         return 0
     }
 
     private fun luaStopSound(lua: Lua): Int {
         val soundName = lua.checkString(1)
-        soundManager.stopSound(soundName)
+        val soundId = registries.mappings.getId("sounds", soundName)
+        if (soundId == null) {
+            return lua.error(IllegalArgumentException("Could not find sound with name $soundName"))
+        }
+        soundManager.stopSound(soundId)
         return 0
     }
 

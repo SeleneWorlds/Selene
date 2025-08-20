@@ -10,10 +10,11 @@ import world.selene.common.lua.checkType
 import world.selene.common.lua.getFieldFloat
 import world.selene.common.lua.register
 import world.selene.common.network.packet.PlaySoundPacket
+import world.selene.server.data.Registries
 import world.selene.server.player.Player
 import world.selene.server.network.NetworkServer
 
-class LuaSoundsModule(private val networkServer: NetworkServer) : LuaModule {
+class LuaSoundsModule(private val registries: Registries, private val networkServer: NetworkServer) : LuaModule {
     override val name = "selene.sounds"
 
     override fun register(table: LuaValue) {
@@ -30,7 +31,11 @@ class LuaSoundsModule(private val networkServer: NetworkServer) : LuaModule {
         val volume = lua.getFieldFloat(3, "volume") ?: 1f
         val pitch = lua.getFieldFloat(3, "pitch") ?: 1f
 
-        player.client.send(PlaySoundPacket(soundName, volume, pitch, null))
+        val soundId = registries.mappings.getId("sounds", soundName)
+        if (soundId == null) {
+            return lua.error(IllegalArgumentException("Could not find sound with name $soundName"))
+        }
+        player.client.send(PlaySoundPacket(soundId, volume, pitch, null))
         return 0
     }
 
@@ -43,8 +48,12 @@ class LuaSoundsModule(private val networkServer: NetworkServer) : LuaModule {
         val pitch = lua.getFieldFloat(index + 2, "pitch") ?: 1f
 
         // TODO Check if player is nearby to hear
+        val soundId = registries.mappings.getId("sounds", soundName)
+        if (soundId == null) {
+            return lua.error(IllegalArgumentException("Could not find sound with name $soundName"))
+        }
         networkServer.clients.forEach { client ->
-            client.send(PlaySoundPacket(soundName, volume, pitch, coordinate))
+            client.send(PlaySoundPacket(soundId, volume, pitch, coordinate))
         }
         return 0
     }
@@ -57,8 +66,12 @@ class LuaSoundsModule(private val networkServer: NetworkServer) : LuaModule {
         val pitch = lua.getFieldFloat(2, "pitch") ?: 1f
 
         // TODO prettier way to broadcast needed
+        val soundId = registries.mappings.getId("sounds", soundName)
+        if (soundId == null) {
+            return lua.error(IllegalArgumentException("Could not find sound with name $soundName"))
+        }
         networkServer.clients.forEach { client ->
-            client.send(PlaySoundPacket(soundName, volume, pitch, null))
+            client.send(PlaySoundPacket(soundId, volume, pitch, null))
         }
         return 0
     }

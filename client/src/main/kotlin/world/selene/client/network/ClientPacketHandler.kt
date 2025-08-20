@@ -106,14 +106,14 @@ class ClientPacketHandler(
             }
         } else if (packet is PlaySoundPacket) {
             context.enqueueWork {
-                soundManager.playSound(packet.soundName, packet.volume, packet.pitch)
+                soundManager.playSound(packet.soundId, packet.volume, packet.pitch)
             }
         } else if (packet is StopSoundPacket) {
             context.enqueueWork {
-                if (packet.soundName == "*") {
+                if (packet.soundId == -1) {
                     soundManager.stopAllSounds()
                 } else {
-                    soundManager.stopSound(packet.soundName)
+                    soundManager.stopSound(packet.soundId)
                 }
             }
         } else if (packet is CustomPayloadPacket) {

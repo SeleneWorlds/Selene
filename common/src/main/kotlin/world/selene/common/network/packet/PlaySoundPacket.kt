@@ -9,7 +9,7 @@ import world.selene.common.network.writeString
 import world.selene.common.util.Coordinate
 
 data class PlaySoundPacket(
-    val soundName: String,
+    val soundId: Int,
     val volume: Float = 1f,
     val pitch: Float = 1f,
     val coordinate: Coordinate? = null,
@@ -17,7 +17,7 @@ data class PlaySoundPacket(
 
     companion object {
         fun decode(buf: ByteBuf): PlaySoundPacket {
-            val soundName = buf.readString()
+            val soundName = buf.readInt()
             val volume = buf.readFloat()
             val pitch = buf.readFloat()
             val hasPosition = buf.readBoolean()
@@ -30,7 +30,7 @@ data class PlaySoundPacket(
         }
 
         fun encode(buf: ByteBuf, packet: PlaySoundPacket) {
-            buf.writeString(packet.soundName)
+            buf.writeInt(packet.soundId)
             buf.writeFloat(packet.volume)
             buf.writeFloat(packet.pitch)
             val hasPosition = packet.coordinate != null
