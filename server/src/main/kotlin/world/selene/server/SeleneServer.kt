@@ -14,6 +14,7 @@ import world.selene.common.lua.LuaManager
 import world.selene.common.network.PacketRegistrations
 import world.selene.server.config.ServerConfig
 import world.selene.common.data.EntityRegistry
+import world.selene.common.data.SoundRegistry
 import world.selene.common.data.TileRegistry
 import world.selene.common.data.TransitionRegistry
 import world.selene.server.bundles.ClientBundleCache
@@ -37,6 +38,7 @@ class SeleneServer(
     private val tileRegistry: TileRegistry,
     private val transitionRegistry: TransitionRegistry,
     private val componentRegistry: ComponentRegistry,
+    private val soundRegistry: SoundRegistry,
     private val entityRegistry: EntityRegistry,
     private val customRegistries: CustomRegistries,
     private val luaManager: LuaManager,
@@ -58,6 +60,7 @@ class SeleneServer(
         tileRegistry.load(bundleDatabase)
         transitionRegistry.load(bundleDatabase)
         componentRegistry.load(bundleDatabase)
+        soundRegistry.load(bundleDatabase)
         entityRegistry.load(bundleDatabase)
         customRegistries.load(bundleDatabase)
         customRegistries.loadCustomRegistries(bundleDatabase, "common")
@@ -66,6 +69,7 @@ class SeleneServer(
         nameIdRegistry.populate(tileRegistry)
         nameIdRegistry.populate(componentRegistry)
         nameIdRegistry.populate(entityRegistry)
+        nameIdRegistry.populate(soundRegistry)
         nameIdRegistry.save()
         bundleLoader.loadBundleEntrypoints(bundles, listOf("common/", "server/", "init.lua"))
 

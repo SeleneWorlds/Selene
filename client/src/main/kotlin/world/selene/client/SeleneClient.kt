@@ -13,6 +13,7 @@ import world.selene.common.bundles.BundleLoader
 import world.selene.common.data.ComponentRegistry
 import world.selene.common.data.CustomRegistries
 import world.selene.common.data.EntityRegistry
+import world.selene.common.data.SoundRegistry
 import world.selene.common.lua.LuaManager
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.PacketRegistrations
@@ -28,6 +29,7 @@ class SeleneClient(
     private val packetRegistrations: PacketRegistrations,
     private val tileRegistry: TileRegistry,
     private val componentRegistry: ComponentRegistry,
+    private val soundRegistry: SoundRegistry,
     private val entityRegistry: EntityRegistry,
     private val visualRegistry: VisualRegistry,
     private val audioRegistry: AudioRegistry,
@@ -46,6 +48,7 @@ class SeleneClient(
         val bundles = bundleLoader.loadBundles(runtimeConfig.bundles.keys)
         tileRegistry.load(bundleDatabase)
         componentRegistry.load(bundleDatabase)
+        soundRegistry.load(bundleDatabase)
         entityRegistry.load(bundleDatabase)
         visualRegistry.load(bundleDatabase)
         audioRegistry.load(bundleDatabase)

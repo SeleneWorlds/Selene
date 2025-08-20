@@ -6,6 +6,7 @@ import world.selene.common.data.NameIdRegistry
 import world.selene.common.data.Registry
 import world.selene.common.data.RegistryProvider
 import world.selene.common.data.CustomRegistries
+import world.selene.common.data.SoundRegistry
 import world.selene.common.data.TileRegistry
 import world.selene.common.data.TransitionRegistry
 
@@ -15,6 +16,7 @@ class Registries(
     val transitions: TransitionRegistry,
     val entities: EntityRegistry,
     val components: ComponentRegistry,
+    val sounds: SoundRegistry,
     val customRegistries: CustomRegistries
 ) : RegistryProvider {
     
@@ -24,6 +26,7 @@ class Registries(
             "transitions" -> transitions
             "entities" -> entities
             "components" -> components
+            "sounds" -> sounds
             "registries" -> customRegistries
             else -> customRegistries.getCustomRegistry(name)
         }

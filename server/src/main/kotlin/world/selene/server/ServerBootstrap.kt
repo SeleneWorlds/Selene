@@ -44,6 +44,7 @@ import world.selene.server.collision.CollisionResolver
 import world.selene.server.data.PersistentNameIdRegistry
 import world.selene.server.data.Registries
 import world.selene.common.data.RegistryProvider
+import world.selene.common.data.SoundRegistry
 import world.selene.common.util.Disposable
 import world.selene.server.dimensions.Dimension
 import world.selene.server.dimensions.DimensionManager
@@ -124,6 +125,7 @@ fun main(args: Array<String>) {
         singleOf(::TransitionRegistry)
         singleOf(::EntityRegistry)
         singleOf(::ComponentRegistry)
+        singleOf(::SoundRegistry)
         singleOf(::CustomRegistries)
         singleOf(::PersistentNameIdRegistry) { bind<NameIdRegistry>() }
         singleOf(::Registries) { bind<RegistryProvider>() }

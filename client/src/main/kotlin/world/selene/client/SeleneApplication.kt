@@ -71,6 +71,7 @@ import world.selene.client.visual.VisualManager
 import world.selene.common.data.CustomRegistries
 import world.selene.common.data.EntityRegistry
 import world.selene.common.data.NameIdRegistry
+import world.selene.common.data.SoundRegistry
 import world.selene.common.lua.LuaPayloadRegistry
 import world.selene.common.lua.LuaResourcesModule
 import world.selene.common.network.PacketFactory
@@ -128,6 +129,7 @@ class SeleneApplication(
             singleOf(::TileRegistry)
             singleOf(::EntityRegistry)
             singleOf(::ComponentRegistry)
+            singleOf(::SoundRegistry)
             singleOf(::VisualRegistry)
             singleOf(::AudioRegistry)
             singleOf(::CustomRegistries)
