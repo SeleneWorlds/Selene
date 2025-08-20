@@ -8,11 +8,11 @@ import world.selene.common.data.CustomRegistries
 import world.selene.common.data.TileRegistry
 
 class Registries(
-    val mappings: NameIdRegistry, 
-    val tiles: TileRegistry, 
-    val entities: EntityRegistry, 
-    val visuals: VisualRegistry, 
-    val sounds: SoundRegistry,
+    val mappings: NameIdRegistry,
+    val tiles: TileRegistry,
+    val entities: EntityRegistry,
+    val visuals: VisualRegistry,
+    val sounds: AudioRegistry,
     val customRegistries: CustomRegistries
 ) : RegistryProvider {
     

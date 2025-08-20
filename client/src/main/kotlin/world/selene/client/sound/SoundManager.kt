@@ -4,7 +4,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.audio.Sound
 import world.selene.client.assets.BundleFileResolver
 import world.selene.client.data.Registries
-import world.selene.client.data.SimpleSoundDefinition
+import world.selene.client.data.SimpleAudioDefinition
 import java.util.concurrent.ConcurrentHashMap
 
 class SoundManager(
@@ -15,7 +15,7 @@ class SoundManager(
     private val playingSounds = ConcurrentHashMap<String, Long>()
 
     fun playSound(soundName: String, volume: Float = 1f, pitch: Float = 1f) {
-        val soundDef = registries.sounds.get(soundName) as? SimpleSoundDefinition
+        val soundDef = registries.sounds.get(soundName) as? SimpleAudioDefinition
         if (soundDef != null) {
             playSimpleSound(soundName, soundDef, volume * soundDef.volume, pitch * soundDef.pitch)
         }
@@ -35,7 +35,7 @@ class SoundManager(
         loadedSounds.values.forEach { it.stop() }
     }
 
-    private fun playSimpleSound(soundName: String, soundDef: SimpleSoundDefinition, volume: Float, pitch: Float) {
+    private fun playSimpleSound(soundName: String, soundDef: SimpleAudioDefinition, volume: Float, pitch: Float) {
         val sound = getOrLoadSound(soundDef.file)
         val soundId = if (soundDef.loop) {
             sound.loop(volume, pitch, 0f)

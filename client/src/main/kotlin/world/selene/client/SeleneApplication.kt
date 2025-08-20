@@ -27,7 +27,7 @@ import world.selene.client.controls.GridMovement
 import world.selene.client.controls.PlayerController
 import world.selene.client.data.Registries
 import world.selene.common.data.RegistryProvider
-import world.selene.client.data.SoundRegistry
+import world.selene.client.data.AudioRegistry
 import world.selene.common.data.ComponentRegistry
 import world.selene.common.data.TileRegistry
 import world.selene.client.data.VisualRegistry
@@ -129,7 +129,7 @@ class SeleneApplication(
             singleOf(::EntityRegistry)
             singleOf(::ComponentRegistry)
             singleOf(::VisualRegistry)
-            singleOf(::SoundRegistry)
+            singleOf(::AudioRegistry)
             singleOf(::CustomRegistries)
             singleOf(::NameIdRegistry)
             singleOf(::Registries) { bind<RegistryProvider>() }

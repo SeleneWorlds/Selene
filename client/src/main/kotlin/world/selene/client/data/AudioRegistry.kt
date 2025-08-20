@@ -3,9 +3,9 @@ package world.selene.client.data
 import com.fasterxml.jackson.databind.ObjectMapper
 import world.selene.common.data.JsonRegistry
 
-class SoundRegistry(objectMapper: ObjectMapper) : JsonRegistry<SoundDefinition>(
+class AudioRegistry(objectMapper: ObjectMapper) : JsonRegistry<AudioDefinition>(
     objectMapper,
     "client",
-    "sounds",
-    SoundDefinition::class,
+    "audio",
+    AudioDefinition::class,
 )

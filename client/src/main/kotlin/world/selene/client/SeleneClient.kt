@@ -2,12 +2,10 @@ package world.selene.client
 
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
-import world.selene.client.config.ClientConfig
 import world.selene.client.config.ClientRuntimeConfig
-import world.selene.client.data.SoundRegistry
+import world.selene.client.data.AudioRegistry
 import world.selene.client.data.VisualRegistry
 import world.selene.common.data.TileRegistry
-import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.network.NetworkClient
 import world.selene.client.network.NetworkClientImpl
 import world.selene.common.bundles.BundleDatabase
@@ -32,7 +30,7 @@ class SeleneClient(
     private val componentRegistry: ComponentRegistry,
     private val entityRegistry: EntityRegistry,
     private val visualRegistry: VisualRegistry,
-    private val soundRegistry: SoundRegistry,
+    private val audioRegistry: AudioRegistry,
     private val customRegistries: CustomRegistries,
     private val runtimeConfig: ClientRuntimeConfig,
     private val packetHandler: PacketHandler<NetworkClient>,
@@ -50,7 +48,7 @@ class SeleneClient(
         componentRegistry.load(bundleDatabase)
         entityRegistry.load(bundleDatabase)
         visualRegistry.load(bundleDatabase)
-        soundRegistry.load(bundleDatabase)
+        audioRegistry.load(bundleDatabase)
         customRegistries.load(bundleDatabase)
         customRegistries.loadCustomRegistries(bundleDatabase, "common")
         customRegistries.loadCustomRegistries(bundleDatabase, "client")
