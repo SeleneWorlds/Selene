@@ -327,3 +327,9 @@ fun Lua.toLuaValue(index: Int): LuaValue {
     pushValue(index)
     return get()
 }
+
+fun Lua.checkFunction(index: Int): LuaValue {
+    checkType(index, Lua.LuaType.FUNCTION)
+    pushValue(index)
+    return get()
+}
