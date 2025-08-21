@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="ServerBootstrapKt" type="JetRunConfigurationType" nameIsGenerated="true">
+  <configuration default="false" name="Gobaith Server" type="JetRunConfigurationType">
     <option name="MAIN_CLASS_NAME" value="world.selene.server.ServerBootstrapKt" />
     <module name="SeleneV3.server.main" />
     <shortenClasspath name="NONE" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/server/run" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/server/run/gobaith" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

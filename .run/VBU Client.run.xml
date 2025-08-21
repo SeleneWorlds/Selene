@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="VBU Client" type="JetRunConfigurationType">
+    <option name="MAIN_CLASS_NAME" value="world.selene.client.ClientBootstrapKt" />
+    <module name="SeleneV3.client.main" />
+    <option name="PROGRAM_PARAMETERS" value="-h localhost -p 8147 -b moonlight ../../bundles/moonlight -b illarion-script-loader ../../bundles/illarion-script-loader -b illarion-api ../../bundles/illarion-api -b illarion-vbu ../../bundles/illarion-vbu -b illarion-gobaith-map ../../bundles/illarion-gobaith-map -b illarion-gobaith-data ../../bundles/illarion-vbu-data -b illarion-gobaith-ui ../../bundles/illarion-gobaith-ui -b illarion-gobaith-assets ../../bundles/illarion-gobaith-assets -b illarion-vbu-assets ../../bundles/illarion-vbu-assets" />
+    <shortenClasspath name="NONE" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/client/run" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
