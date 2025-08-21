@@ -59,7 +59,6 @@ import world.selene.server.lua.LuaServerModule
 import world.selene.server.lua.LuaServerNetworkModule
 import world.selene.server.lua.LuaSoundsModule
 import world.selene.server.lua.ServerLuaSignals
-import world.selene.server.management.ExportMapImage
 import world.selene.server.login.LoginQueue
 import world.selene.server.login.SessionAuthentication
 import world.selene.server.lua.Scripting
@@ -145,9 +144,6 @@ fun main(args: Array<String>) {
         factoryOf(::Entity)
         factoryOf(::Dimension)
     }
-    val managementModule = module {
-        singleOf(::ExportMapImage)
-    }
     val serverModule = module {
         single {
             ConfigLoaderBuilder.default()
@@ -168,8 +164,7 @@ fun main(args: Array<String>) {
             worldModule,
             dataModule,
             luaModule,
-            httpModule,
-            managementModule
+            httpModule
         )
     }
 
