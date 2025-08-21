@@ -25,6 +25,8 @@ data class SimpleVisualDefinition(
     val offsetY: Int = 0,
     val surfaceOffsetY: Int = 0,
     val sortLayerOffset: Int = 0,
+    val flipX: Boolean = false,
+    val flipY: Boolean = false,
     override val metadata: Map<String, Any> = emptyMap()
 ) : VisualDefinition, MetadataHolder
 
@@ -34,6 +36,8 @@ data class VariantsVisualDefinition(
     val offsetY: Int = 0,
     val surfaceOffsetY: Int = 0,
     val sortLayerOffset: Int = 0,
+    val flipX: Boolean = false,
+    val flipY: Boolean = false,
     override val metadata: Map<String, Any> = emptyMap()
 ) : VisualDefinition, MetadataHolder
 
@@ -44,6 +48,8 @@ data class AnimatedVisualDefinition(
     val offsetY: Int = 0,
     val surfaceOffsetY: Int = 0,
     val sortLayerOffset: Int = 0,
+    val flipX: Boolean = false,
+    val flipY: Boolean = false,
     override val metadata: Map<String, Any> = emptyMap(),
     val instance: Boolean = false
 ) : VisualDefinition, MetadataHolder {
@@ -68,7 +74,9 @@ data class AnimationFrames(
     val textures: List<String>,
     val speed: Float? = null,
     val offsetX: Int? = null,
-    val offsetY: Int? = null
+    val offsetY: Int? = null,
+    val flipX: Boolean = false,
+    val flipY: Boolean = false,
 )
 
 enum class Anchor {

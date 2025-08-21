@@ -45,7 +45,8 @@ interface SizedVisualInstance {
     val height: Float
 }
 
-abstract class TextureBasedVisualInstance(private val metadataHolder: MetadataHolder) : VisualInstance, SizedVisualInstance, LuaMetatableProvider {
+abstract class TextureBasedVisualInstance(private val metadataHolder: MetadataHolder) : VisualInstance,
+    SizedVisualInstance, LuaMetatableProvider {
     abstract val textureRegion: TextureRegion
     abstract val offsetX: Float
     abstract val offsetY: Float
@@ -144,9 +145,10 @@ data class SimpleVisualInstance(
     private val visualDef: SimpleVisualDefinition,
     private val assetProvider: AssetProvider
 ) : TextureBasedVisualInstance(visualDef), SizedVisualInstance, LuaMetatableProvider {
+    val textureOptions = TextureOptions(visualDef.flipX, visualDef.flipY)
     override val textureRegion: TextureRegion by lazy {
         val texturePath = visualDef.texture
-        assetProvider.loadTextureRegion(texturePath) ?: assetProvider.missingTexture
+        assetProvider.loadTextureRegion(texturePath, textureOptions) ?: assetProvider.missingTexture
     }
 
     override val offsetX: Float get() = visualDef.offsetX.toFloat()
@@ -163,9 +165,10 @@ data class VariantsVisualInstance(
     private val visualDef: VariantsVisualDefinition,
     private val assetProvider: AssetProvider
 ) : TextureBasedVisualInstance(visualDef), SizedVisualInstance, LuaMetatableProvider {
+    val textureOptions = TextureOptions(visualDef.flipX, visualDef.flipY)
     override val textureRegion: TextureRegion by lazy {
         val texturePath = visualDef.textures.first()
-        assetProvider.loadTextureRegion(texturePath) ?: assetProvider.missingTexture
+        assetProvider.loadTextureRegion(texturePath, textureOptions) ?: assetProvider.missingTexture
     }
     override val offsetX: Float get() = visualDef.offsetX.toFloat()
     override val offsetY: Float get() = visualDef.offsetY.toFloat()
@@ -185,9 +188,10 @@ data class AnimatedVisualInstance(
 ) : TextureBasedVisualInstance(visualDef), SizedVisualInstance, LuaMetatableProvider {
     val animationCompleted = Signal("AnimationCompleted")
 
+    val textureOptions = TextureOptions(visualDef.flipX, visualDef.flipY)
     private val textureRegions: List<TextureRegion> by lazy {
         visualDef.textures.map { path ->
-            assetProvider.loadTextureRegion(path) ?: assetProvider.missingTexture
+            assetProvider.loadTextureRegion(path, textureOptions) ?: assetProvider.missingTexture
         }
     }
     private var currentFrame = 0
@@ -238,8 +242,9 @@ class AnimatorVisualInstance(
     private var frameIndex = 0
     private var time = 0f
     private val regions: Map<String, List<TextureRegion>> = visualDef.animations.mapValues { (_, frames) ->
+        val textureOptions = TextureOptions(frames.flipX, frames.flipY)
         frames.textures.map { path ->
-            assetProvider.loadTextureRegion(path) ?: assetProvider.missingTexture
+            assetProvider.loadTextureRegion(path, textureOptions) ?: assetProvider.missingTexture
         }
     }
     private val speeds: Map<String, Float> = visualDef.animations.mapValues { it.value.speed ?: 0.13f }
