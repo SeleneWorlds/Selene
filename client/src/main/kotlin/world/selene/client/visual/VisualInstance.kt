@@ -17,11 +17,13 @@ import world.selene.client.data.SimpleVisualDefinition
 import world.selene.client.data.VariantsVisualDefinition
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.rendering.VisualContextProvider
+import world.selene.common.data.MetadataHolder
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.Signal
+import world.selene.common.lua.checkString
 import world.selene.common.util.Coordinate
 
 interface VisualInstance {
@@ -43,7 +45,7 @@ interface SizedVisualInstance {
     val height: Float
 }
 
-abstract class TextureBasedVisualInstance : VisualInstance, SizedVisualInstance {
+abstract class TextureBasedVisualInstance(private val metadataHolder: MetadataHolder) : VisualInstance, SizedVisualInstance, LuaMetatableProvider {
     abstract val textureRegion: TextureRegion
     abstract val offsetX: Float
     abstract val offsetY: Float
@@ -117,12 +119,31 @@ abstract class TextureBasedVisualInstance : VisualInstance, SizedVisualInstance 
         spriteBatch.color = context.color
         spriteBatch.draw(textureRegion, getDisplayX(context, x), getDisplayY(context, y))
     }
+
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
+
+    companion object {
+        val luaMeta = LuaMappedMetatable(TextureBasedVisualInstance::class) {
+            callable("GetMetadata") {
+                val visual = it.checkSelf()
+                val key = it.checkString(2)
+                val value = visual.metadataHolder.metadata[key]
+                if (value != null) {
+                    it.push(value, Lua.Conversion.FULL)
+                    return@callable 1
+                }
+                0
+            }
+        }
+    }
 }
 
 data class SimpleVisualInstance(
     private val visualDef: SimpleVisualDefinition,
     private val assetProvider: AssetProvider
-) : TextureBasedVisualInstance(), SizedVisualInstance {
+) : TextureBasedVisualInstance(visualDef), SizedVisualInstance, LuaMetatableProvider {
     override val textureRegion: TextureRegion by lazy {
         val texturePath = visualDef.texture
         assetProvider.loadTextureRegion(texturePath) ?: assetProvider.missingTexture
@@ -141,7 +162,7 @@ data class SimpleVisualInstance(
 data class VariantsVisualInstance(
     private val visualDef: VariantsVisualDefinition,
     private val assetProvider: AssetProvider
-) : TextureBasedVisualInstance(), SizedVisualInstance {
+) : TextureBasedVisualInstance(visualDef), SizedVisualInstance, LuaMetatableProvider {
     override val textureRegion: TextureRegion by lazy {
         val texturePath = visualDef.textures.first()
         assetProvider.loadTextureRegion(texturePath) ?: assetProvider.missingTexture
@@ -161,7 +182,7 @@ data class AnimatedVisualInstance(
     private val visualDef: AnimatedVisualDefinition,
     private val assetProvider: AssetProvider,
     private val luaManager: LuaManager
-) : TextureBasedVisualInstance(), SizedVisualInstance, LuaMetatableProvider {
+) : TextureBasedVisualInstance(visualDef), SizedVisualInstance, LuaMetatableProvider {
     val animationCompleted = Signal("AnimationCompleted")
 
     private val textureRegions: List<TextureRegion> by lazy {
@@ -200,7 +221,7 @@ data class AnimatedVisualInstance(
     }
 
     companion object {
-        val luaMeta = LuaMappedMetatable(AnimatedVisualInstance::class) {
+        val luaMeta = TextureBasedVisualInstance.luaMeta.extend(AnimatedVisualInstance::class) {
             readOnly(AnimatedVisualInstance::currentFrame)
             readOnly(AnimatedVisualInstance::elapsedTime)
             readOnly(AnimatedVisualInstance::animationCompleted)
@@ -211,7 +232,7 @@ data class AnimatedVisualInstance(
 class AnimatorVisualInstance(
     private val visualDef: AnimatorVisualDefinition,
     private val assetProvider: AssetProvider
-) : TextureBasedVisualInstance(), SizedVisualInstance {
+) : TextureBasedVisualInstance(visualDef), SizedVisualInstance {
     lateinit var animator: Animator
     private var currentAnimation = ""
     private var frameIndex = 0

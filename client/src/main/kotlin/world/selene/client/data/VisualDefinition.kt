@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import world.selene.common.data.MetadataHolder
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
@@ -24,9 +25,8 @@ data class SimpleVisualDefinition(
     val offsetY: Int = 0,
     val surfaceOffsetY: Int = 0,
     val sortLayerOffset: Int = 0,
-    val metadata: Map<String, String> = emptyMap()
-) : VisualDefinition {
-}
+    override val metadata: Map<String, Any> = emptyMap()
+) : VisualDefinition, MetadataHolder
 
 data class VariantsVisualDefinition(
     val textures: List<String>,
@@ -34,9 +34,8 @@ data class VariantsVisualDefinition(
     val offsetY: Int = 0,
     val surfaceOffsetY: Int = 0,
     val sortLayerOffset: Int = 0,
-    val metadata: Map<String, String> = emptyMap()
-) : VisualDefinition {
-}
+    override val metadata: Map<String, Any> = emptyMap()
+) : VisualDefinition, MetadataHolder
 
 data class AnimatedVisualDefinition(
     val textures: List<String>,
@@ -45,9 +44,9 @@ data class AnimatedVisualDefinition(
     val offsetY: Int = 0,
     val surfaceOffsetY: Int = 0,
     val sortLayerOffset: Int = 0,
-    val metadata: Map<String, String> = emptyMap(),
+    override val metadata: Map<String, Any> = emptyMap(),
     val instance: Boolean = false
-) : VisualDefinition {
+) : VisualDefinition, MetadataHolder {
     override val isShared: Boolean
         get() = !instance
 }
@@ -59,8 +58,8 @@ data class AnimatorVisualDefinition(
     val offsetY: Int = 0,
     val surfaceOffsetY: Int = 0,
     val sortLayerOffset: Int = 0,
-    val metadata: Map<String, String> = emptyMap()
-) : VisualDefinition {
+    override val metadata: Map<String, Any> = emptyMap()
+) : VisualDefinition, MetadataHolder {
     override val isShared: Boolean get() = false
 }
 
@@ -84,8 +83,8 @@ data class LabelVisualDefinition(
     val offsetX: Float = 0f,
     val offsetY: Float = 0f,
     val sortLayerOffset: Int = 0,
-    val metadata: Map<String, String> = emptyMap()
-) : VisualDefinition {
+    override val metadata: Map<String, Any> = emptyMap()
+) : VisualDefinition, MetadataHolder {
     override val isShared: Boolean
         get() = false
 }

@@ -18,6 +18,7 @@ import kotlin.math.min
 class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable, LuaMetatableProvider {
     var tileName: String? = null
     var tileDefinition: TileDefinition? = null
+    val visual get() = visualInstance
 
     override val sortLayerOffset: Int get() = visualInstance?.sortLayerOffset ?: 0
     override val sortLayer: Int get() = grid.getSortLayer(coordinate, sortLayerOffset)
@@ -82,6 +83,7 @@ class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable, LuaMetatab
         val luaMeta = LuaMappedMetatable(Tile::class) {
             readOnly(Tile::coordinate)
             readOnly(Tile::tileName, "Name")
+            readOnly(Tile::visual)
             readOnly(Tile::x)
             readOnly(Tile::y)
             readOnly(Tile::z)
