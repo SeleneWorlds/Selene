@@ -15,6 +15,7 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val en
         table.register("Create", this::luaCreate)
         table.register("CreateTransient", this::luaCreateTransient)
         table.set("SteppedOnTile", signals.entitySteppedOnTile)
+        table.set("SteppedOffTile", signals.entitySteppedOffTile)
     }
 
     private fun luaCreate(lua: Lua): Int {

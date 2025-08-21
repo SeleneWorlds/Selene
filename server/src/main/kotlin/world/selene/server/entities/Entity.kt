@@ -82,6 +82,11 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         val prevCoordinate = this.coordinate
         this.coordinate = coordinate
         dimension.syncManager.entityMoved(this, prevCoordinate, coordinate, 0.2f)
+        scripting.signals.entitySteppedOffTile.emit {
+            it.push(this, Lua.Conversion.NONE)
+            it.push(prevCoordinate, Lua.Conversion.NONE)
+            2
+        }
         scripting.signals.entitySteppedOnTile.emit {
             it.push(this, Lua.Conversion.NONE)
             it.push(coordinate, Lua.Conversion.NONE)

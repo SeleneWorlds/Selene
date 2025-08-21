@@ -10,4 +10,5 @@ class ServerLuaSignals {
     val playerJoined = Signal("playerJoined")
     val playerLeft = Signal("playerLeft")
     val entitySteppedOnTile = Signal("entitySteppedOnTile")
+    val entitySteppedOffTile = Signal("entitySteppedOffTile")
 }
