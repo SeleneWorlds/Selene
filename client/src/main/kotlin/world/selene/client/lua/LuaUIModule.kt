@@ -70,16 +70,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 val skin = it.checkJavaObject(2, Skin::class)
                 val style = it.checkString(3)
                 when (actor) {
-                    is VisImageButton -> {
-                        actor.style = skin.get(style, VisImageButtonStyle::class.java)
-                    }
-
                     is VisTextField -> {
                         actor.style = skin.get(style, VisTextField.VisTextFieldStyle::class.java)
-                    }
-
-                    is ImageButton -> {
-                        actor.style = skin.get(style, ImageButton.ImageButtonStyle::class.java)
                     }
 
                     is LinkLabel -> {
@@ -166,6 +158,24 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 val label = it.checkSelf()
                 val text = it.checkString(2)
                 label.setText(text)
+                0
+            }
+        })
+        luaManager.defineMetatable(ImageButton::class, actorMetatable.extend(ImageButton::class) {
+            callable("SetStyle") {
+                val actor = it.checkSelf()
+                val skin = it.checkJavaObject(2, Skin::class)
+                val style = it.checkString(3)
+                actor.style = skin.get(style, ImageButton.ImageButtonStyle::class.java)
+                0
+            }
+        })
+        luaManager.defineMetatable(VisImageButton::class, actorMetatable.extend(VisImageButton::class) {
+            callable("SetStyle") {
+                val actor = it.checkSelf()
+                val skin = it.checkJavaObject(2, Skin::class)
+                val style = it.checkString(3)
+                actor.style = skin.get(style, VisImageButtonStyle::class.java)
                 0
             }
         })
