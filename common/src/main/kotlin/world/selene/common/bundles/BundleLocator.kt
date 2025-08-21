@@ -5,6 +5,10 @@ import java.io.File
 
 class LocatedBundle(val manifest: BundleManifest, val dir: File) {
     val transformers = mutableMapOf<String, LuaValue>()
+
+    override fun toString(): String {
+        return manifest.name + " (" + dir.absolutePath + ")"
+    }
 }
 
 interface BundleLocator {
