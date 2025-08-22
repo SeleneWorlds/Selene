@@ -6,6 +6,7 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.checkString
 import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.network.packet.SetCameraFollowEntityPacket
 import world.selene.common.network.packet.SetCameraPositionPacket
@@ -22,6 +23,7 @@ class Player(playerManager: PlayerManager, val client: NetworkClient) : LuaMetat
     var locale: Locale = Locale.ENGLISH
     val localeString get() = locale.toString()
     val languageString: String get() = locale.language
+    val customData = mutableMapOf<String, Any>()
 
     val syncManager = playerManager.createSyncManager(this)
     val camera = Camera().apply {
@@ -88,6 +90,21 @@ class Player(playerManager: PlayerManager, val client: NetworkClient) : LuaMetat
             callable(Player::setCameraToFollowControlledEntity)
             callable(Player::setCameraToFollowTarget)
             callable(Player::setCameraToCoordinate)
+            callable("GetCustomData") {
+                val player = it.checkSelf()
+                val key = it.checkString(2)
+                val defaultValue = it.toObject(3)
+                val value = player.customData.getOrDefault(key, defaultValue)
+                it.push(value, Lua.Conversion.FULL)
+                1
+            }
+            callable("SetCustomData") {
+                val player = it.checkSelf()
+                val key = it.checkString(2)
+                val value = it.toObject(3)!!
+                player.customData[key] = value
+                0
+            }
         }
     }
 }
