@@ -2,6 +2,7 @@ package world.selene.server.network
 
 import org.slf4j.Logger
 import party.iroiro.luajava.Lua
+import party.iroiro.luajava.LuaException
 import world.selene.common.data.NameIdRegistry
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaPayloadRegistry
@@ -72,34 +73,13 @@ class ServerPacketHandler(
                 val handler = payloadRegistry.retrieveHandler(packet.payloadId)
                 if (handler != null) {
                     val player = (context as NetworkClientImpl).player
-                    handler.push(luaManager.lua)
+                    handler.callback.push(luaManager.lua)
                     luaManager.lua.push(player, Lua.Conversion.NONE)
-                    luaManager.lua.newTable()
-                    // Helper to recursively push Map<String, Any> to Lua table
-                    fun pushMapToLuaTable(map: Map<String, Any>) {
-                        for ((key, value) in map) {
-                            when (value) {
-                                is Int -> luaManager.lua.push(value)
-                                is Float -> luaManager.lua.push(value)
-                                is Double -> luaManager.lua.push(value)
-                                is String -> luaManager.lua.push(value)
-                                is Boolean -> luaManager.lua.push(value)
-                                is Map<*, *> -> {
-                                    luaManager.lua.newTable()
-                                    @Suppress("UNCHECKED_CAST")
-                                    pushMapToLuaTable(value as Map<String, Any>)
-                                }
-
-                                else -> luaManager.lua.push(value.toString()) // fallback
-                            }
-                            luaManager.lua.setField(-2, key)
-                        }
-                    }
-                    pushMapToLuaTable(packet.payload)
+                    luaManager.lua.push(packet.payload)
                     try {
                         luaManager.lua.pCall(2, 0)
-                    } catch (e: Exception) {
-                        logger.error("Error while handling custom payload", e)
+                    } catch (e: LuaException) {
+                        logger.error("Error while handling custom payload ${packet.payloadId} (registered at ${handler.registrationSite})", e)
                     }
                 }
             }

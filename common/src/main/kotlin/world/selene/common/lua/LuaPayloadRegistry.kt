@@ -4,13 +4,18 @@ import party.iroiro.luajava.value.LuaValue
 
 class LuaPayloadRegistry {
 
-    private val payloadHandlers = mutableMapOf<String, LuaValue>()
+    data class PayloadHandler(
+        val callback: LuaValue,
+        val registrationSite: CallerInfo
+    )
 
-    fun registerHandler(payloadId: String, callback: LuaValue) {
-        payloadHandlers[payloadId] = callback
+    private val payloadHandlers = mutableMapOf<String, PayloadHandler>()
+
+    fun registerHandler(payloadId: String, callback: LuaValue, registrationSite: CallerInfo) {
+        payloadHandlers[payloadId] = PayloadHandler(callback, registrationSite)
     }
 
-    fun retrieveHandler(payloadId: String): LuaValue? {
+    fun retrieveHandler(payloadId: String): PayloadHandler? {
         return payloadHandlers[payloadId]
     }
 

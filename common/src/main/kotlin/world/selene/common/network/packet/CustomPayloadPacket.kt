@@ -5,13 +5,13 @@ import world.selene.common.network.Packet
 import world.selene.common.network.readString
 import world.selene.common.network.writeString
 
-data class CustomPayloadPacket(val payloadId: String, val payload: Map<String, Any>) : Packet {
+data class CustomPayloadPacket(val payloadId: String, val payload: Map<Any, Any>) : Packet {
 
     companion object {
         fun decode(buf: ByteBuf): CustomPayloadPacket {
             val payloadId = buf.readString()
             val size = buf.readShort().toInt()
-            val payload = HashMap<String, Any>(size)
+            val payload = HashMap<Any, Any>(size)
             for (i in 0 until size) {
                 val key = buf.readString()
                 val type = buf.readByte().toInt()
@@ -31,7 +31,7 @@ data class CustomPayloadPacket(val payloadId: String, val payload: Map<String, A
             buf.writeString(packet.payloadId)
             buf.writeShort(packet.payload.size)
             for ((key, value) in packet.payload) {
-                buf.writeString(key)
+                buf.writeString(key.toString())
                 when (value) {
                     is Byte -> {
                         buf.writeByte(1)

@@ -5,11 +5,16 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.client.network.NetworkClient
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.LuaPayloadRegistry
-import world.selene.common.lua.luaTableToMap
+import world.selene.common.lua.checkFunction
+import world.selene.common.lua.checkString
+import world.selene.common.lua.getCallerInfo
 import world.selene.common.lua.register
 import world.selene.common.network.packet.CustomPayloadPacket
 
-class LuaClientNetworkModule(private val networkClient: NetworkClient, private val payloadRegistry: LuaPayloadRegistry) : LuaModule {
+class LuaClientNetworkModule(
+    private val networkClient: NetworkClient,
+    private val payloadRegistry: LuaPayloadRegistry
+) : LuaModule {
     override val name = "selene.network"
 
     override fun register(table: LuaValue) {
@@ -17,18 +22,17 @@ class LuaClientNetworkModule(private val networkClient: NetworkClient, private v
         table.register("SendToServer", this::luaSendToServer)
     }
 
-    private fun luaHandlePayload(lua: Lua, args: Array<LuaValue>): Array<LuaValue> {
-        val payloadId = args[0].toString()
-        val callback = args[1]
-        payloadRegistry.registerHandler(payloadId, callback)
-        return emptyArray()
+    private fun luaHandlePayload(lua: Lua): Int {
+        val payloadId = lua.checkString(1)
+        val callback = lua.checkFunction(2)
+        val registrationSite = lua.getCallerInfo()
+        payloadRegistry.registerHandler(payloadId, callback, registrationSite)
+        return 0
     }
 
     private fun luaSendToServer(lua: Lua): Int {
-        val payloadId = lua.toString(-2)!!
-        lua.pushValue(-1)
-        val payload = lua.luaTableToMap(-1)
-        lua.pop(1)
+        val payloadId = lua.checkString(1)
+        val payload = lua.toMap(2) as Map<Any, Any>
         networkClient.send(CustomPayloadPacket(payloadId, payload))
         return 0
     }
