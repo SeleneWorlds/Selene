@@ -40,6 +40,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
             it.register("trim", this::luaTrim)
             it.register("startsWith", this::luaStartsWith)
             it.register("endsWith", this::luaEndsWith)
+            it.register("split", this::luaSplit)
         }
 
         lua.openLibrary("bit32")
@@ -261,6 +262,14 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
     private fun luaTrim(lua: Lua): Int {
         lua.push(lua.checkString(1).trim())
+        return 1
+    }
+
+    private fun luaSplit(lua: Lua): Int {
+        val str = lua.checkString(1)
+        val separator = lua.checkString(2)
+        val result = str.split(separator)
+        lua.push(result, Lua.Conversion.FULL)
         return 1
     }
 
