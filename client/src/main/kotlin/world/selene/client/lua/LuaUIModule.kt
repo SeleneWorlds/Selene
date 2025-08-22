@@ -129,34 +129,38 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
             setter("MinWidth") {
                 val container = it.checkSelf()
-                val minWidth = it.checkFloat(2)
+                val minWidth = it.checkFloat(3)
                 container.minWidth(minWidth)
                 0
             }
             setter("MinHeight") {
                 val container = it.checkSelf()
-                val minHeight = it.checkFloat(2)
+                val minHeight = it.checkFloat(3)
                 container.minHeight(minHeight)
                 0
             }
             setter("MaxWidth") {
                 val container = it.checkSelf()
-                val maxWidth = it.checkFloat(2)
+                val maxWidth = it.checkFloat(3)
                 container.maxWidth(maxWidth)
                 0
             }
             setter("MaxHeight") {
                 val container = it.checkSelf()
-                val maxHeight = it.checkFloat(2)
+                val maxHeight = it.checkFloat(3)
                 container.maxHeight(maxHeight)
                 0
             }
         })
         luaManager.defineMetatable(Label::class, actorMetatable.extend(Label::class) {
-            getter(Label::getText)
+            getter("Text") {
+                val label = it.checkSelf()
+                it.push(label.text.toString())
+                1
+            }
             setter("Text") {
                 val label = it.checkSelf()
-                val text = it.checkString(2)
+                val text = it.checkString(3)
                 label.setText(text)
                 0
             }
