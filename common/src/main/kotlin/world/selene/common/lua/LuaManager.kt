@@ -231,6 +231,11 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
     }
 
     private fun luaTableToString(lua: Lua): Int {
+        if (lua.isNil(1)) {
+            lua.push("nil")
+            return 1
+        }
+
         lua.checkType(1, Lua.LuaType.TABLE)
 
         lua.pushNil()
