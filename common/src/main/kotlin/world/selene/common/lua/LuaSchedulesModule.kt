@@ -1,6 +1,8 @@
 package world.selene.common.lua
 
+import org.slf4j.Logger
 import party.iroiro.luajava.Lua
+import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.util.Disposable
@@ -11,6 +13,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 class LuaSchedulesModule(
+    private val logger: Logger,
     private val mainThreadDispatcher: MainThreadDispatcher
 ) : LuaModule, Disposable {
     override val name = "selene.schedules"
@@ -67,17 +70,24 @@ class LuaSchedulesModule(
     private fun luaSetTimeout(lua: Lua): Int {
         val intervalMs = lua.checkInt(1)
         val callback = lua.checkFunction(2)
-        
+
         if (intervalMs < 0) {
             return lua.error(IllegalArgumentException("Timeout interval must be non-negative"))
         }
-        
+
+        val registrationSite = lua.getCallerInfo()
         val task = executor.schedule({
             mainThreadDispatcher.runOnMainThread {
-                callback.call()
+                val lua = callback.state()
+                try {
+                    lua.push(callback)
+                    lua.pCall(0, 0)
+                } catch (e: LuaException) {
+                    logger.error("Error firing $name (scheduled at $registrationSite)", e)
+                }
             }
         }, intervalMs.toLong(), TimeUnit.MILLISECONDS)
-        
+
         timeouts.add(task)
         timeouts.removeAll { it.isDone }
         return 0
