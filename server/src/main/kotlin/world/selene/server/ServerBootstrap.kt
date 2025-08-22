@@ -39,6 +39,7 @@ import world.selene.common.network.PacketHandler
 import world.selene.common.network.PacketRegistrations
 import world.selene.server.bundles.ServerBundleLocator
 import world.selene.server.config.ServerConfig
+import world.selene.server.config.ScriptProperties
 import world.selene.common.data.EntityRegistry
 import world.selene.common.data.TileRegistry
 import world.selene.common.data.TransitionRegistry
@@ -63,6 +64,7 @@ import world.selene.server.lua.LuaPlayersModule
 import world.selene.server.lua.LuaServerModule
 import world.selene.server.lua.LuaServerNetworkModule
 import world.selene.server.lua.LuaSoundsModule
+import world.selene.server.lua.LuaConfigModule
 import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.login.LoginQueue
 import world.selene.server.login.SessionAuthentication
@@ -120,6 +122,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaRegistriesModule) { bind<LuaModule>() }
         singleOf(::LuaSchedulesModule) { bind<LuaModule>(); bind<Disposable>() }
         singleOf(::LuaHttpModule) { bind<LuaModule>() }
+        singleOf(::LuaConfigModule) { bind<LuaModule>() }
         singleOf(::Scripting)
     }
     val bundleModule = module {
@@ -168,6 +171,7 @@ fun main(args: Array<String>) {
                 .build()
                 .loadConfigOrThrow<ServerConfig>("server.properties")
         }
+        singleOf(::ScriptProperties)
         singleOf(::MainThreadDispatcher)
         singleOf(::SeleneServer)
     }
