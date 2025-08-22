@@ -32,10 +32,8 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val en
 
     private fun luaCreateTransient(lua: Lua): Int {
         val entityType = lua.checkString(-1)
-        val entityDefinition = entityRegistry.get(entityType)
-        if (entityDefinition == null) {
-            return lua.error(IllegalArgumentException("Unknown entity type: $entityType"))
-        }
+        entityRegistry.get(entityType)
+            ?: return lua.error(IllegalArgumentException("Unknown entity type: $entityType"))
 
         val entity = entityManager.createTransientEntity(entityType)
         lua.push(entity, Lua.Conversion.NONE)

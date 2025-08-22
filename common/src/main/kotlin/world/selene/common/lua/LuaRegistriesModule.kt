@@ -27,9 +27,7 @@ class LuaRegistriesModule(
     private fun luaFindAll(lua: Lua): Int {
         val registryName = lua.checkString(1)
         val registry = registryProvider.getRegistry(registryName)
-        if (registry == null) {
-            return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
-        }
+            ?: return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
         val list = registry.getAll().map { TransientRegistryObject(it.key, it.value) }
         lua.push(list, Lua.Conversion.FULL)
         return 1
@@ -39,11 +37,10 @@ class LuaRegistriesModule(
         val registryName = lua.checkString(1)
         val key = lua.checkString(2)
         val value = lua.toObject(3)
+            ?: return lua.error(IllegalArgumentException("Value must not be nil"))
 
         val registry = registryProvider.getRegistry(registryName)
-        if (registry == null) {
-            return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
-        }
+            ?: return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
 
         for ((entryName, entryData) in registry.getAll()) {
             var metadata = getMetadata(entryData, key)
@@ -64,9 +61,7 @@ class LuaRegistriesModule(
         val registryName = lua.checkString(1)
         val name = lua.checkString(2)
         val registry = registryProvider.getRegistry(registryName)
-        if (registry == null) {
-            return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
-        }
+            ?: return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
         val element = registry.get(name) ?: return 0
         lua.push(TransientRegistryObject(name, element), Lua.Conversion.NONE)
         return 1
