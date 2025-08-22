@@ -10,6 +10,10 @@ import org.slf4j.LoggerFactory
 import world.selene.client.config.ClientConfig
 
 import com.sksamuel.hoplite.ExperimentalHoplite
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.jackson.jackson
 import ktx.assets.async.AssetStorage
 import ktx.async.MainDispatcher
 import org.koin.core.context.startKoin
@@ -74,6 +78,7 @@ import world.selene.common.data.NameIdRegistry
 import world.selene.common.data.SoundRegistry
 import world.selene.common.lua.LuaPayloadRegistry
 import world.selene.common.lua.LuaResourcesModule
+import world.selene.common.lua.LuaHttpModule
 import world.selene.common.network.PacketFactory
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.PacketRegistrations
@@ -112,6 +117,7 @@ class SeleneApplication(
             singleOf(::LuaEntitiesModule) { bind<LuaModule>() }
             singleOf(::LuaRegistriesModule) { bind<LuaModule>() }
             singleOf(::LuaSchedulesModule) { bind<LuaModule>() }
+            singleOf(::LuaHttpModule) { bind<LuaModule>() }
         }
         val bundleModule = module {
             singleOf(::BundleLoader)
@@ -123,6 +129,19 @@ class SeleneApplication(
             singleOf(::PacketFactory)
             singleOf(::ClientPacketHandler) { bind<PacketHandler<*>>() }
             singleOf(::PacketRegistrations)
+        }
+        val httpModule = module {
+            single {
+                val objectMapper = get<ObjectMapper>()
+                HttpClient(CIO) {
+                    install(ContentNegotiation) {
+                        jackson {
+                            setConfig(objectMapper.serializationConfig)
+                            setConfig(objectMapper.deserializationConfig)
+                        }
+                    }
+                }
+            }
         }
         val dataModule = module {
             single { ObjectMapper().registerKotlinModule() }
@@ -185,7 +204,8 @@ class SeleneApplication(
                 worldModule,
                 renderingModule,
                 audioModule,
-                inputModule
+                inputModule,
+                httpModule
             )
         }
         koinApp.createEagerInstances()

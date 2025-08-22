@@ -37,6 +37,12 @@ dependencies {
     api("com.mojang:brigadier:1.0.17")
 
     api("com.google.guava:guava:33.4.8-jre")
+
+    val ktorVersion by properties
+    api("io.ktor:ktor-client-core:$ktorVersion")
+    api("io.ktor:ktor-client-cio:$ktorVersion")
+    api("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    api("io.ktor:ktor-serialization-jackson:$ktorVersion")
 }
 
 publishing {

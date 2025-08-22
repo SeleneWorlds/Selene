@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.serialization.jackson.jackson
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.createdAtStart
@@ -28,6 +32,7 @@ import world.selene.common.lua.LuaSchedulesModule
 import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.lua.LuaPayloadRegistry
 import world.selene.common.lua.LuaResourcesModule
+import world.selene.common.lua.LuaHttpModule
 import world.selene.server.lua.LuaSavesModule
 import world.selene.common.network.PacketFactory
 import world.selene.common.network.PacketHandler
@@ -84,6 +89,17 @@ fun main(args: Array<String>) {
     val httpModule = module {
         singleOf(::HttpServer)
         singleOf(::SessionAuthentication)
+        single {
+            val objectMapper = get<ObjectMapper>()
+            HttpClient(CIO) {
+                install(ContentNegotiation) {
+                    jackson {
+                        setConfig(objectMapper.serializationConfig)
+                        setConfig(objectMapper.deserializationConfig)
+                    }
+                }
+            }
+        }
     }
     val luaModule = module {
         singleOf(::LuaManager)
@@ -103,6 +119,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaDimensionsModule) { bind<LuaModule>() }
         singleOf(::LuaRegistriesModule) { bind<LuaModule>() }
         singleOf(::LuaSchedulesModule) { bind<LuaModule>(); bind<Disposable>() }
+        singleOf(::LuaHttpModule) { bind<LuaModule>() }
         singleOf(::Scripting)
     }
     val bundleModule = module {
