@@ -16,10 +16,10 @@ import world.selene.server.maps.MapTreeListener
 import world.selene.server.maps.TransientTile
 import world.selene.common.util.Coordinate
 import world.selene.server.entities.Entity
-import world.selene.server.sync.ChunkViewManager
 import world.selene.server.sync.DimensionSyncManager
+import world.selene.server.world.World
 
-class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManager) : MapTreeListener, LuaMetatableProvider {
+class Dimension(val registries: Registries, val world: World) : MapTreeListener, LuaMetatableProvider {
     var mapTree: MapTree = MapTree(registries).also { it.addListener(this) }
         set(value) {
             field.removeListener(this)
@@ -77,6 +77,13 @@ class Dimension(val registries: Registries, val chunkViewManager: ChunkViewManag
                     }
                 }
                 lua.push(tiles, Lua.Conversion.FULL)
+                1
+            }
+            callable("HasCollisionAt") { lua ->
+                val dimension = lua.checkSelf()
+                val (coordinate, index) = lua.checkCoordinate(2)
+                val viewer = if (lua.isUserdata(index + 1)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
+                lua.push(dimension.world.collisionResolver.collidesAt(dimension, viewer, coordinate))
                 1
             }
             callable("GetEntitiesAt") {
