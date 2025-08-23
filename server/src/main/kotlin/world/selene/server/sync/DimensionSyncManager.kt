@@ -25,6 +25,10 @@ class DimensionSyncManager {
         }
     }
 
+    fun sendToAll(packet: Packet) {
+        playerSyncManagers.forEach { it.player.client.send(packet) }
+    }
+
     fun entityAdded(entity: Entity) {
         updateEntityWatches(entity)
     }

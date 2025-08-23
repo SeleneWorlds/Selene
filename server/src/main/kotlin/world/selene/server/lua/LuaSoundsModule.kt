@@ -11,10 +11,14 @@ import world.selene.common.lua.getFieldFloat
 import world.selene.common.lua.register
 import world.selene.common.network.packet.PlaySoundPacket
 import world.selene.server.data.Registries
+import world.selene.server.dimensions.Dimension
 import world.selene.server.player.Player
-import world.selene.server.network.NetworkServer
+import world.selene.server.world.World
 
-class LuaSoundsModule(private val registries: Registries, private val networkServer: NetworkServer) : LuaModule {
+class LuaSoundsModule(
+    private val registries: Registries,
+    private val world: World
+) : LuaModule {
     override val name = "selene.sounds"
 
     override fun register(table: LuaValue) {
@@ -32,9 +36,7 @@ class LuaSoundsModule(private val registries: Registries, private val networkSer
         val pitch = lua.getFieldFloat(3, "pitch") ?: 1f
 
         val soundId = registries.mappings.getId("sounds", soundName)
-        if (soundId == null) {
-            return lua.error(IllegalArgumentException("Could not find sound with name $soundName"))
-        }
+            ?: return lua.error(IllegalArgumentException("Could not find sound with name $soundName"))
         player.client.send(PlaySoundPacket(soundId, volume, pitch, null))
         return 0
     }
@@ -42,37 +44,37 @@ class LuaSoundsModule(private val registries: Registries, private val networkSer
     private fun luaPlaySoundAt(lua: Lua): Int {
         val (coordinate, index) = lua.checkCoordinate(1)
         val soundName = lua.checkString(index + 1)
-        if (lua.top >= index + 2) lua.checkType(index + 2, Lua.LuaType.TABLE)
+        val dimension = if (lua.top >= index + 2) lua.checkJavaObject(
+            index + 2,
+            Dimension::class
+        ) else world.dimensionManager.getOrCreateDimension(0)
+        if (lua.top >= index + 3) lua.checkType(index + 3, Lua.LuaType.TABLE)
 
         val volume = lua.getFieldFloat(index + 2, "volume") ?: 1f
         val pitch = lua.getFieldFloat(index + 2, "pitch") ?: 1f
 
-        // TODO Check if player is nearby to hear
         val soundId = registries.mappings.getId("sounds", soundName)
-        if (soundId == null) {
-            return lua.error(IllegalArgumentException("Could not find sound with name $soundName"))
-        }
-        networkServer.clients.forEach { client ->
-            client.send(PlaySoundPacket(soundId, volume, pitch, coordinate))
-        }
+            ?: return lua.error(IllegalArgumentException("Could not find sound with name $soundName"))
+
+        val packet = PlaySoundPacket(soundId, volume, pitch, coordinate)
+        dimension.syncManager.sendToAllWatching(coordinate, packet)
         return 0
     }
 
     private fun luaPlayGlobalSound(lua: Lua): Int {
         val soundName = lua.checkString(1)
-        if (lua.top >= 2) lua.checkType(2, Lua.LuaType.TABLE)
+        val dimension = if (lua.top >= 2) lua.checkJavaObject(
+            2,
+            Dimension::class
+        ) else world.dimensionManager.getOrCreateDimension(0)
+        if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
 
         val volume = lua.getFieldFloat(2, "volume") ?: 1f
         val pitch = lua.getFieldFloat(2, "pitch") ?: 1f
 
-        // TODO prettier way to broadcast needed
         val soundId = registries.mappings.getId("sounds", soundName)
-        if (soundId == null) {
-            return lua.error(IllegalArgumentException("Could not find sound with name $soundName"))
-        }
-        networkServer.clients.forEach { client ->
-            client.send(PlaySoundPacket(soundId, volume, pitch, null))
-        }
+            ?: return lua.error(IllegalArgumentException("Could not find sound with name $soundName"))
+        dimension.syncManager.sendToAll(PlaySoundPacket(soundId, volume, pitch, null))
         return 0
     }
 
