@@ -40,6 +40,7 @@ import world.selene.common.network.PacketRegistrations
 import world.selene.server.bundles.ServerBundleLocator
 import world.selene.server.config.ServerConfig
 import world.selene.server.config.ScriptProperties
+import world.selene.server.data.ServerCustomData
 import world.selene.common.data.EntityRegistry
 import world.selene.common.data.TileRegistry
 import world.selene.common.data.TransitionRegistry
@@ -108,6 +109,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaMixinRegistry)
         singleOf(::LuaPayloadRegistry)
         singleOf(::ServerLuaSignals)
+        singleOf(::ServerCustomData)
         singleOf(::LuaServerModule) { bind<LuaModule>() }
         singleOf(::LuaPlayersModule) { bind<LuaModule>() }
         singleOf(::LuaMixinModule) { bind<LuaModule>() }
