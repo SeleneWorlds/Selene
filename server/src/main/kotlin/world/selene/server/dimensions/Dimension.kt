@@ -45,7 +45,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
                 val tileName = it.checkString(index + 1)
                 val viewer = if (it.isUserdata(index + 1)) it.checkJavaObject<Viewer>(index + 1) else DefaultViewer
                 val tileId = dimension.registries.mappings.getId("tiles", tileName)
-                val chunkView = dimension.chunkViewManager.atCoordinate(dimension, viewer, coordinate)
+                val chunkView = dimension.world.chunkViewManager.atCoordinate(dimension, viewer, coordinate)
                 val baseTile = chunkView.getBaseTileAt(coordinate)
                 if (baseTile == tileId) {
                     it.push(true)
@@ -55,13 +55,32 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
                 it.push(chunkView.getAdditionalTilesAt(coordinate).contains(tileId))
                 1
             }
+            callable("PlaceTile") { lua ->
+                val dimension = lua.checkSelf()
+                val (coordinate, index) = lua.checkCoordinate(2)
+                val tileName = lua.checkString(index + 1)
+                val layerName = lua.toString(index + 2)
+                val tile = dimension.registries.tiles.get(tileName)
+                if (tile != null) {
+                    val tileId = dimension.registries.mappings.getId("tiles", tileName)
+                    if (tileId != null) {
+                        dimension.mapTree.placeTile(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
+                        lua.push(TransientTile(tileName, tile, dimension, coordinate), Lua.Conversion.NONE)
+                        return@callable 1
+                    } else {
+                        return@callable lua.error(IllegalStateException("Tile $tileName has no id"))
+                    }
+                } else {
+                    return@callable lua.error(IllegalArgumentException("Unknown tile: $tileName"))
+                }
+            }
             callable("GetTilesAt") { lua ->
                 val dimension = lua.checkSelf()
                 val (coordinate, index) = lua.checkCoordinate(2)
                 val viewer = if (lua.isUserdata(index + 1)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
 
                 val tiles = mutableListOf<TransientTile>()
-                val chunkView = dimension.chunkViewManager.atCoordinate(dimension, viewer, coordinate)
+                val chunkView = dimension.world.chunkViewManager.atCoordinate(dimension, viewer, coordinate)
                 val baseTile = chunkView.getBaseTileAt(coordinate)
                 val baseTileName = dimension.registries.mappings.getName("tiles", baseTile)
                 val baseTileDef = baseTileName?.let { dimension.registries.tiles.get(it) }
