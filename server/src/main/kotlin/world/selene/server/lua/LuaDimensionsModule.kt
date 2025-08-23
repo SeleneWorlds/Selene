@@ -14,7 +14,7 @@ class LuaDimensionsModule(private val dimensionManager: DimensionManager) : LuaM
     }
 
     private fun luaGetDefault(lua: Lua): Int {
-        lua.push(dimensionManager.dimensions[0]!!, Lua.Conversion.NONE)
+        lua.push(dimensionManager.getOrCreateDimension(0), Lua.Conversion.NONE)
         return 1
     }
 }
