@@ -159,7 +159,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             callable("CollisionMap") {
                 val entity = it.checkSelf()
                 val (coordinate, _) = it.checkCoordinate(2)
-                val chunkView = entity.dimension!!.chunkViewManager.atCoordinate(
+                val chunkView = entity.world.chunkViewManager.atCoordinate(
                     entity.dimension!!,
                     entity.collisionViewer,
                     coordinate

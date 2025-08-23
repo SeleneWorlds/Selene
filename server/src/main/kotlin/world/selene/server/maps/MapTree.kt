@@ -248,11 +248,11 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 return@callable 0
             }
 
-            callable("PlaceTile") {
-                val mapTree = it.checkSelf()
-                val (coordinate, index) = it.checkCoordinate(2)
-                val tileName = it.checkString(index + 1)
-                val layerName = it.toString(index + 2)
+            callable("PlaceTile") { lua ->
+                val mapTree = lua.checkSelf()
+                val (coordinate, index) = lua.checkCoordinate(2)
+                val tileName = lua.checkString(index + 1)
+                val layerName = lua.toString(index + 2)
                 val tile = mapTree.registries.tiles.get(tileName)
                 if (tile != null) {
                     val tileId = mapTree.registries.mappings.getId("tiles", tileName)
@@ -260,10 +260,10 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                         mapTree.placeTile(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
                         return@callable 0
                     } else {
-                        throw IllegalStateException("Tile $tileName has no id")
+                        return@callable lua.error(IllegalStateException("Tile $tileName has no id"))
                     }
                 } else {
-                    return@callable it.error(IllegalArgumentException("Unknown tile: $tileName"))
+                    return@callable lua.error(IllegalArgumentException("Unknown tile: $tileName"))
                 }
             }
 
