@@ -39,9 +39,17 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
         return luaMeta
     }
 
-    fun swapTile(coordinate: Coordinate, oldTileDef: TileDefinition, newTileDef: TileDefinition, layerName: String?): TransientTile {
-        mapTree.swapTile(coordinate, oldTileDef, newTileDef, layerName)
-        return TransientTile(newTileDef, this, coordinate)
+    fun swapTile(
+        coordinate: Coordinate,
+        oldTileDef: TileDefinition,
+        newTileDef: TileDefinition,
+        layerName: String?
+    ): TransientTile {
+        return if (mapTree.swapTile(coordinate, oldTileDef, newTileDef, layerName)) {
+            TransientTile(newTileDef, this, coordinate)
+        } else {
+            TransientTile(oldTileDef, this, coordinate)
+        }
     }
 
     companion object {

@@ -53,10 +53,8 @@ class TransientTile(
                 val tile = it.checkSelf()
                 val newTileDef = it.checkRegistry(2, tile.definition.registry)
                 val layer = it.optString(3)
-                it.push(
-                    tile.dimension.swapTile(tile.coordinate, tile.definition, newTileDef, layer),
-                    Lua.Conversion.NONE
-                )
+                val newTile = tile.dimension.swapTile(tile.coordinate, tile.definition, newTileDef, layer)
+                it.push(newTile, Lua.Conversion.NONE)
                 1
             }
         }

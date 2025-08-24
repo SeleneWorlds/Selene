@@ -18,6 +18,7 @@ import world.selene.server.maps.MapTreeLayer
 import world.selene.server.maps.SparseMapLayer
 import world.selene.server.maps.SparseTilePlacement
 import world.selene.server.maps.SparseTileRemoval
+import world.selene.server.maps.SparseTileSwap
 import world.selene.server.maps.SparseTilesReplacement
 
 class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
@@ -49,7 +50,8 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
                 for (y in 0 until paddedHeight) {
                     for (x in 0 until paddedWidth) {
                         val index = x + y * paddedWidth
-                        baseTiles[index] = layer.getTileId(Coordinate(window.x + x - padding, window.y + y - padding, window.z))
+                        baseTiles[index] =
+                            layer.getTileId(Coordinate(window.x + x - padding, window.y + y - padding, window.z))
                     }
                 }
                 annotations.putAll(layer.getAnnotations())
@@ -80,6 +82,16 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
                             } else if (operation is SparseTilesReplacement) {
                                 baseTiles[index] = operation.tileDef.id
                                 additionalTiles.get(coordinate).clear()
+                            } else if (operation is SparseTileSwap) {
+                                if (baseTiles[index] == operation.oldTileDef.id) {
+                                    baseTiles[index] = operation.newTileDef.id
+                                } else {
+                                    val additionalTilesInCell = additionalTiles.get(coordinate)
+                                    val index = additionalTilesInCell.indexOfFirst { it == operation.oldTileDef.id }
+                                    if (index != -1) {
+                                        additionalTilesInCell[index] = operation.newTileDef.id
+                                    }
+                                }
                             } else if (operation is SparseTileRemoval) {
                                 if (baseTiles[index] == operation.tileDef.id) {
                                     baseTiles[index] = if (additionalTiles.size() > 0) additionalTiles.get(coordinate)
