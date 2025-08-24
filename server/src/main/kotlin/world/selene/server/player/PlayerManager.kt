@@ -6,10 +6,20 @@ import world.selene.server.data.Registries
 import world.selene.server.entities.EntityManager
 import world.selene.server.network.NetworkClient
 import world.selene.server.sync.PlayerSyncManager
+import java.util.concurrent.ConcurrentHashMap
 
 class PlayerManager(private val chunkViewManager: ChunkViewManager, private val objectMapper: ObjectMapper, private val registries: Registries, private val entityManager: EntityManager) {
+    private val _players = ConcurrentHashMap<NetworkClient, Player>()
+    val players: Collection<Player> get() = _players.values
+
     fun createPlayer(client: NetworkClient): Player {
-        return Player(this, client)
+        val player = Player(this, client)
+        _players[client] = player
+        return player
+    }
+
+    fun removePlayer(client: NetworkClient) {
+        _players.remove(client)
     }
 
     fun createSyncManager(player: Player): PlayerSyncManager {

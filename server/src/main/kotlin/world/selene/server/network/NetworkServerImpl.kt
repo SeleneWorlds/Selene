@@ -93,6 +93,7 @@ class NetworkServerImpl(
         super.channelInactive(ctx)
         val client = ctx.channel().attr(NetworkClientImpl.ATTRIBUTE).get()
         clients.remove(client)
+        playerManager.removePlayer(client)
         luaSignals.playerLeft.emit { lua ->
             lua.push(client.player, Lua.Conversion.NONE)
             1

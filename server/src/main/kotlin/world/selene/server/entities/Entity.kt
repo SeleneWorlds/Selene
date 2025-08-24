@@ -284,6 +284,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
                 }
                 0
             }
+            callable("GetControllingPlayers") {
+                val entity = it.checkSelf()
+                val controllingPlayers = entity.world.playerManager.players.filter { player ->
+                    player.controlledEntity == entity
+                }
+                it.push(controllingPlayers, Lua.Conversion.FULL)
+                1
+            }
         }
     }
 }
