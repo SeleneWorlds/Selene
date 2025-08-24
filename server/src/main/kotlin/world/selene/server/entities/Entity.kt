@@ -33,6 +33,8 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     val customData = mutableMapOf<String, Any>()
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
 
+    val entityDefinition get() = registries.entities.get(entityType)
+
     val transient get() = networkId == -1
 
     val visionViewer = object : Viewer {
@@ -61,7 +63,6 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     val visibilityTags = mutableSetOf("default")
     val visionTags = mutableSetOf("default")
     val collisionTags = mutableSetOf("default")
-
 
     fun resolveComponentsFor(player: Player): Map<String, ComponentConfiguration> {
         val components = mutableMapOf<String, ComponentConfiguration>()
@@ -109,6 +110,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
     companion object {
         val luaMeta = LuaMappedMetatable(Entity::class) {
+            readOnly(Entity::entityDefinition)
             writable(Entity::name)
             readOnly(Entity::coordinate)
             readOnly(Entity::facing)
