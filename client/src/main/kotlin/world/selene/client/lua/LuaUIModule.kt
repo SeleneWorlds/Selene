@@ -166,11 +166,14 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
         })
         luaManager.defineMetatable(ImageButton::class, actorMetatable.extend(ImageButton::class) {
-            callable("SetStyle") {
-                val actor = it.checkSelf()
-                val skin = it.checkJavaObject(2, Skin::class)
-                val style = it.checkString(3)
-                actor.style = skin.get(style, ImageButton.ImageButtonStyle::class.java)
+            callable("SetStyle") { lua ->
+                val actor = lua.checkSelf()
+                val skinOrStyle = lua.toJavaObject(2)
+                actor.style = if (skinOrStyle is Skin) {
+                    val style = lua.checkString(3)
+                    skinOrStyle.get(style, ImageButton.ImageButtonStyle::class.java)
+                } else skinOrStyle as? ImageButton.ImageButtonStyle
+                    ?: return@callable lua.error(IllegalArgumentException("Expected Skin or ImageButtonStyle"))
                 0
             }
         })
