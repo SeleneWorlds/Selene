@@ -124,7 +124,8 @@ class ClientPacketHandler(
                 val handler = payloadRegistry.retrieveHandler(packet.payloadId)
                 if (handler != null) {
                     handler.callback.push(luaManager.lua)
-                    luaManager.lua.push(packet.payload)
+                    val payload = objectMapper.readValue(packet.payload, Map::class.java)
+                    luaManager.lua.push(payload)
                     try {
                         luaManager.lua.pCall(1, 0)
                     } catch (e: LuaException) {

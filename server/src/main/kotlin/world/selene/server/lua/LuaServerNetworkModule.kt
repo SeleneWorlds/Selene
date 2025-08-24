@@ -1,5 +1,6 @@
 package world.selene.server.lua
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaModule
@@ -13,7 +14,8 @@ import world.selene.common.network.packet.CustomPayloadPacket
 import world.selene.server.entities.Entity
 import world.selene.server.player.Player
 
-class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry) : LuaModule {
+class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry, private val objectMapper: ObjectMapper) :
+    LuaModule {
     override val name = "selene.network"
 
     override fun register(table: LuaValue) {
@@ -36,7 +38,7 @@ class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry) : 
         val player = lua.checkJavaObject<Player>(1)
         val payloadId = lua.checkString(2)
         @Suppress("UNCHECKED_CAST") val payload = lua.toMap(3) as Map<Any, Any>
-        player.client.send(CustomPayloadPacket(payloadId, payload))
+        player.client.send(CustomPayloadPacket(payloadId, objectMapper.writeValueAsString(payload)))
         return 0
     }
 
@@ -44,7 +46,7 @@ class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry) : 
         val players = lua.toList(1) ?: return lua.error(IllegalArgumentException("Expected list of players"))
         val payloadId = lua.checkString(2)
         @Suppress("UNCHECKED_CAST") val payload = lua.toMap(3) as Map<Any, Any>
-        val packet = CustomPayloadPacket(payloadId, payload)
+        val packet = CustomPayloadPacket(payloadId, objectMapper.writeValueAsString(payload))
         players.forEach { player ->
             (player as? Player)?.client?.send(packet)
         }
@@ -55,7 +57,7 @@ class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry) : 
         val entity = lua.checkJavaObject<Entity>(1)
         val payloadId = lua.checkString(2)
         @Suppress("UNCHECKED_CAST") val payload = lua.toMap(3) as Map<Any, Any>
-        val packet = CustomPayloadPacket(payloadId, payload)
+        val packet = CustomPayloadPacket(payloadId, objectMapper.writeValueAsString(payload))
         entity.getControllingPlayers().forEach { player ->
             player.client.send(packet)
         }
@@ -66,7 +68,7 @@ class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry) : 
         val entities = lua.toList(1) ?: return lua.error(IllegalArgumentException("Expected list of players"))
         val payloadId = lua.checkString(2)
         @Suppress("UNCHECKED_CAST") val payload = lua.toMap(3) as Map<Any, Any>
-        val packet = CustomPayloadPacket(payloadId, payload)
+        val packet = CustomPayloadPacket(payloadId, objectMapper.writeValueAsString(payload))
         entities.forEach { entity ->
             (entity as? Entity)?.getControllingPlayers()?.forEach { player ->
                 player.client.send(packet)

@@ -1,5 +1,6 @@
 package world.selene.client.lua
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.network.NetworkClient
@@ -13,6 +14,7 @@ import world.selene.common.network.packet.CustomPayloadPacket
 
 class LuaClientNetworkModule(
     private val networkClient: NetworkClient,
+    private val objectMapper: ObjectMapper,
     private val payloadRegistry: LuaPayloadRegistry
 ) : LuaModule {
     override val name = "selene.network"
@@ -32,8 +34,8 @@ class LuaClientNetworkModule(
 
     private fun luaSendToServer(lua: Lua): Int {
         val payloadId = lua.checkString(1)
-        val payload = lua.toMap(2) as Map<Any, Any>
-        networkClient.send(CustomPayloadPacket(payloadId, payload))
+        @Suppress("UNCHECKED_CAST") val payload = lua.toMap(2) as Map<Any, Any>
+        networkClient.send(CustomPayloadPacket(payloadId, objectMapper.writeValueAsString(payload)))
         return 0
     }
 }

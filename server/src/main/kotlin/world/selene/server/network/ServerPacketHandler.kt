@@ -1,5 +1,6 @@
 package world.selene.server.network
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
@@ -20,6 +21,7 @@ import java.util.Locale
 
 class ServerPacketHandler(
     private val logger: Logger,
+    private val objectMapper: ObjectMapper,
     private val signals: ServerLuaSignals,
     private val nameIdRegistry: NameIdRegistry,
     private val luaManager: LuaManager,
@@ -75,7 +77,8 @@ class ServerPacketHandler(
                     val player = (context as NetworkClientImpl).player
                     handler.callback.push(luaManager.lua)
                     luaManager.lua.push(player, Lua.Conversion.NONE)
-                    luaManager.lua.push(packet.payload)
+                    val payload = objectMapper.readValue(packet.payload, Map::class.java)
+                    luaManager.lua.push(payload)
                     try {
                         luaManager.lua.pCall(2, 0)
                     } catch (e: LuaException) {
