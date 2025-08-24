@@ -73,5 +73,6 @@ class PersistentNameIdRegistry(
         registry.getAll().keys.forEach { name ->
             getOrAssign(registry.name, name)
         }
+        registry.registryPopulated(this)
     }
 }

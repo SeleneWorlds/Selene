@@ -49,7 +49,7 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
                 for (y in 0 until paddedHeight) {
                     for (x in 0 until paddedWidth) {
                         val index = x + y * paddedWidth
-                        baseTiles[index] = layer.getTileId(window.x + x - padding, window.y + y - padding, window.z)
+                        baseTiles[index] = layer.getTileId(Coordinate(window.x + x - padding, window.y + y - padding, window.z))
                     }
                 }
                 annotations.putAll(layer.getAnnotations())
@@ -74,19 +74,19 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
                     for (x in 0 until paddedWidth) {
                         val index = x + y * paddedWidth
                         val coordinate = Coordinate(window.x + x - padding, window.y + y - padding, window.z)
-                        layer.getOperations(coordinate.x, coordinate.y, coordinate.z).forEach { operation ->
+                        layer.getOperations(coordinate).forEach { operation ->
                             if (operation is SparseTilePlacement) {
-                                addAdditionalTile(coordinate, operation.tileId)
+                                addAdditionalTile(coordinate, operation.tileDef.id)
                             } else if (operation is SparseTilesReplacement) {
-                                baseTiles[index] = operation.tileId
+                                baseTiles[index] = operation.tileDef.id
                                 additionalTiles.get(coordinate).clear()
                             } else if (operation is SparseTileRemoval) {
-                                if (baseTiles[index] == operation.tileId) {
+                                if (baseTiles[index] == operation.tileDef.id) {
                                     baseTiles[index] = if (additionalTiles.size() > 0) additionalTiles.get(coordinate)
                                         .removeAt(0) else 0
                                 } else {
                                     val additionalTilesInCell = additionalTiles.get(coordinate)
-                                    val index = additionalTilesInCell.indexOfFirst { it -> it == operation.tileId }
+                                    val index = additionalTilesInCell.indexOfFirst { it == operation.tileDef.id }
                                     if (index != -1) {
                                         additionalTilesInCell.removeAt(index)
                                     }

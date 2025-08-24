@@ -7,6 +7,7 @@ import world.selene.server.maps.MapTree
 import world.selene.server.maps.SparseMapLayer
 import world.selene.server.maps.SparseTilePlacement
 import world.selene.server.maps.SparseTileRemoval
+import world.selene.server.maps.SparseTileSwap
 import world.selene.server.maps.SparseTilesReplacement
 import java.io.File
 import java.io.RandomAccessFile
@@ -87,19 +88,25 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                             is SparseTilePlacement -> 1
                                             is SparseTileRemoval -> 2
                                             is SparseTilesReplacement -> 3
+                                            is SparseTileSwap -> 4
                                         }
                                     )
                                     when (operation) {
                                         is SparseTilePlacement -> {
-                                            raf.writeInt(operation.tileId)
+                                            raf.writeInt(operation.tileDef.id)
                                         }
 
                                         is SparseTileRemoval -> {
-                                            raf.writeInt(operation.tileId)
+                                            raf.writeInt(operation.tileDef.id)
                                         }
 
                                         is SparseTilesReplacement -> {
-                                            raf.writeInt(operation.tileId)
+                                            raf.writeInt(operation.tileDef.id)
+                                        }
+
+                                        is SparseTileSwap -> {
+                                            raf.writeInt(operation.oldTileDef.id)
+                                            raf.writeInt(operation.newTileDef.id)
                                         }
                                     }
                                 }

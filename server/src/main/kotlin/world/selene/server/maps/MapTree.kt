@@ -1,13 +1,16 @@
 package world.selene.server.maps
 
 import party.iroiro.luajava.Lua
+import world.selene.common.data.TileDefinition
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.checkRegistry
 import world.selene.common.lua.checkString
+import world.selene.common.lua.optString
 import world.selene.common.util.Coordinate
 import world.selene.server.data.Registries
 
@@ -21,45 +24,52 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         override val visibilityTags = mutableSetOf<String>()
         override val collisionTags = mutableSetOf<String>()
 
-        override fun placeTile(x: Int, y: Int, z: Int, tileId: Int): Boolean {
-            if (baseLayer.placeTile(x, y, z, tileId)) {
+        override fun placeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean {
+            if (baseLayer.placeTile(coordinate, tileDef)) {
                 return true
             }
-            return sparseLayer?.placeTile(x, y, z, tileId) ?: false
+            return sparseLayer?.placeTile(coordinate, tileDef) ?: false
+        }
+
+        override fun swapTile(
+            coordinate: Coordinate,
+            tileDef: TileDefinition,
+            newTileDef: TileDefinition
+        ): Boolean {
+            if (baseLayer.swapTile(coordinate, tileDef, newTileDef)) {
+                return true
+            }
+            return sparseLayer?.swapTile(coordinate, tileDef, newTileDef) ?: false
         }
 
         override fun replaceTiles(
-            x: Int,
-            y: Int,
-            z: Int,
-            tileId: Int
+            coordinate: Coordinate,
+            tileDef: TileDefinition
         ): Boolean {
-            if (baseLayer.replaceTiles(x, y, z, tileId)) {
+            if (baseLayer.replaceTiles(coordinate, tileDef)) {
                 return true
             }
-            return sparseLayer?.replaceTiles(x, y, z, tileId) ?: false
+            return sparseLayer?.replaceTiles(coordinate, tileDef) ?: false
         }
 
-        override fun removeTile(x: Int, y: Int, z: Int, tileId: Int): Boolean {
-            if (baseLayer.removeTile(x, y, z, tileId)) {
+        override fun removeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean {
+            if (baseLayer.removeTile(coordinate, tileDef)) {
                 return true
             }
-            return sparseLayer?.removeTile(x, y, z, tileId) ?: false
+            return sparseLayer?.removeTile(coordinate, tileDef) ?: false
         }
 
-        override fun resetTile(x: Int, y: Int, z: Int) {
-            baseLayer.resetTile(x, y, z)
-            sparseLayer?.resetTile(x, y, z)
+        override fun resetTile(coordinate: Coordinate) {
+            baseLayer.resetTile(coordinate)
+            sparseLayer?.resetTile(coordinate)
         }
 
         override fun annotateTile(
-            x: Int,
-            y: Int,
-            z: Int,
+            coordinate: Coordinate,
             key: String,
             data: Map<*, *>
         ) {
-            baseLayer.annotateTile(x, y, z, key, data)
+            baseLayer.annotateTile(coordinate, key, data)
         }
 
         override fun addVisibilityTag(tagName: String) {
@@ -88,7 +98,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
     fun ensureBaseAndSparseLayers() {
         if (baseLayer is EmptyMapLayer) {
-            baseLayer = DenseMapLayer("default").also {
+            baseLayer = DenseMapLayer("default", registries).also {
                 addLayer(it)
             }
         }
@@ -99,7 +109,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         }
     }
 
-    fun getLayer(layerName: String): MapLayer? {
+    fun getLayer(layerName: String): MapLayer {
         if (layerName == "default") {
             ensureBaseAndSparseLayers()
             return defaultLayer
@@ -115,42 +125,51 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         return newLayer
     }
 
-    fun placeTile(x: Int, y: Int, z: Int, tileId: Int, layerName: String = "default"): Boolean {
-        val layer = getLayer(layerName)
-        val result = layer?.placeTile(x, y, z, tileId) == true
+    fun placeTile(coordinate: Coordinate, tileDef: TileDefinition, layerName: String? = null): Boolean {
+        val layer = getLayer(layerName ?: "default")
+        val result = layer.placeTile(coordinate, tileDef)
         if (result) {
-            notifyListeners(Coordinate(x, y, z))
+            notifyListeners(coordinate)
         }
         return result
     }
 
-    fun replaceTiles(x: Int, y: Int, z: Int, tileId: Int, layerName: String = "default"): Boolean {
-        val layer = getLayer(layerName)
-        val result = layer?.replaceTiles(x, y, z, tileId) == true
+    fun swapTile(coordinate: Coordinate, oldTileDef: TileDefinition, newTileDef: TileDefinition, layerName: String? = null): Boolean {
+        val layer = getLayer(layerName ?: "default")
+        val result = layer.swapTile(coordinate, oldTileDef, newTileDef)
         if (result) {
-            notifyListeners(Coordinate(x, y, z))
+            notifyListeners(coordinate)
         }
         return result
     }
 
-    fun removeTile(x: Int, y: Int, z: Int, tileId: Int, layerName: String = "default"): Boolean {
-        val layer = getLayer(layerName)
-        val result = layer?.removeTile(x, y, z, tileId) == true
+    fun replaceTiles(coordinate: Coordinate, tileDef: TileDefinition, layerName: String? = null): Boolean {
+        val layer = getLayer(layerName ?: "default")
+        val result = layer.replaceTiles(coordinate, tileDef)
         if (result) {
-            notifyListeners(Coordinate(x, y, z))
+            notifyListeners(coordinate)
         }
         return result
     }
 
-    fun resetTile(x: Int, y: Int, z: Int, layerName: String) {
-        val layer = getLayer(layerName)
-        layer?.resetTile(x, y, z)
-        notifyListeners(Coordinate(x, y, z))
+    fun removeTile(coordinate: Coordinate, tileDef: TileDefinition, layerName: String? = null): Boolean {
+        val layer = getLayer(layerName ?: "default")
+        val result = layer.removeTile(coordinate, tileDef)
+        if (result) {
+            notifyListeners(coordinate)
+        }
+        return result
     }
 
-    fun annotateTile(x: Int, y: Int, z: Int, key: String, data: Map<*, *>, layerName: String = "default") {
-        val layer = getLayer(layerName)
-        layer?.annotateTile(x, y, z, key, data)
+    fun resetTile(coordinate: Coordinate, layerName: String? = null) {
+        val layer = getLayer(layerName ?: "default")
+        layer.resetTile(coordinate)
+        notifyListeners(coordinate)
+    }
+
+    fun annotateTile(coordinate: Coordinate, key: String, data: Map<*, *>, layerName: String? = null) {
+        val layer = getLayer(layerName ?: "default")
+        layer.annotateTile(coordinate, key, data)
     }
 
     fun addListener(listener: MapTreeListener) {
@@ -167,34 +186,32 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         }
     }
 
-    fun applyOperation(operation: SparseOperation, layerName: String = "default") {
+    fun applyOperation(operation: SparseOperation, layerName: String? = null) {
         when (operation) {
             is SparseTilePlacement -> {
                 placeTile(
-                    operation.x,
-                    operation.y,
-                    operation.z,
-                    operation.tileId,
+                    operation.coordinate,
+                    operation.tileDef,
                     layerName
                 )
             }
 
             is SparseTilesReplacement -> {
                 replaceTiles(
-                    operation.x,
-                    operation.y,
-                    operation.z,
-                    operation.tileId,
+                    operation.coordinate,
+                    operation.tileDef,
                     layerName
                 )
             }
 
+            is SparseTileSwap -> {
+                swapTile(operation.coordinate, operation.oldTileDef, operation.newTileDef, layerName)
+            }
+
             is SparseTileRemoval -> {
                 removeTile(
-                    operation.x,
-                    operation.y,
-                    operation.z,
-                    operation.tileId,
+                    operation.coordinate,
+                    operation.tileDef,
                     layerName
                 )
             }
@@ -205,29 +222,31 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         other.layers.forEach { otherLayer ->
             when (otherLayer) {
                 is DenseMapLayer -> {
-                    otherLayer.chunks.forEach { chunkCoordinate, chunk ->
+                    otherLayer.chunks.forEach { (chunkCoordinate, chunk) ->
                         chunk.tiles.withIndex().forEach { (index, tileId) ->
                             val relativeX = index % chunk.size
                             val relativeY = index / chunk.size
                             val absoluteX = chunkCoordinate.x + relativeX
                             val absoluteY = chunkCoordinate.y + relativeY
-                            placeTile(absoluteX, absoluteY, chunkCoordinate.z, tileId)
+                            val tileName = registries.mappings.getName("tiles", tileId) ?: return@forEach
+                            val tileDef = registries.tiles.get(tileName) ?: return@forEach
+                            placeTile(Coordinate(absoluteX, absoluteY, chunkCoordinate.z), tileDef)
                         }
                         chunk.annotations.cellSet().forEach {
-                            annotateTile(it.rowKey.x, it.rowKey.y, chunkCoordinate.z, it.columnKey, it.value)
+                            annotateTile(Coordinate(it.rowKey.x, it.rowKey.y, chunkCoordinate.z), it.columnKey, it.value)
                         }
                     }
                 }
 
                 is SparseMapLayer -> {
-                    otherLayer.chunks.forEach { chunkCoordinate, chunk ->
+                    otherLayer.chunks.forEach { (chunkCoordinate, chunk) ->
                         chunk.operations.forEach { (_, operations) ->
                             operations.forEach { operation ->
                                 applyOperation(operation)
                             }
                         }
                         chunk.annotations.cellSet().forEach {
-                            annotateTile(it.rowKey.x, it.rowKey.y, chunkCoordinate.z, it.columnKey, it.value)
+                            annotateTile(Coordinate(it.rowKey.x, it.rowKey.y, chunkCoordinate.z), it.columnKey, it.value)
                         }
                     }
                 }
@@ -251,92 +270,45 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
             callable("PlaceTile") { lua ->
                 val mapTree = lua.checkSelf()
                 val (coordinate, index) = lua.checkCoordinate(2)
-                val tileName = lua.checkString(index + 1)
-                val layerName = lua.toString(index + 2)
-                val tile = mapTree.registries.tiles.get(tileName)
-                if (tile != null) {
-                    val tileId = mapTree.registries.mappings.getId("tiles", tileName)
-                    if (tileId != null) {
-                        mapTree.placeTile(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
-                        return@callable 0
-                    } else {
-                        return@callable lua.error(IllegalStateException("Tile $tileName has no id"))
-                    }
-                } else {
-                    return@callable lua.error(IllegalArgumentException("Unknown tile: $tileName"))
-                }
+                val tileDef = lua.checkRegistry(index + 1, mapTree.registries.tiles)
+                val layerName = lua.optString(index + 2)
+                mapTree.placeTile(coordinate, tileDef, layerName)
+                return@callable 0
             }
 
-            callable("ReplaceTiles") {
-                val mapTree = it.checkSelf()
-                val (coordinate, index) = it.checkCoordinate(2)
-                val tileName = it.checkString(index + 1)
-                val layerName = it.toString(index + 2)
-                val tile = mapTree.registries.tiles.get(tileName)
-                if (tile != null) {
-                    val tileId = mapTree.registries.mappings.getId("tiles", tileName)
-                    if (tileId != null) {
-                        mapTree.replaceTiles(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
-                        return@callable 0
-                    } else {
-                        throw IllegalStateException("Tile $tileName has no id")
-                    }
-                } else {
-                    return@callable it.error(IllegalArgumentException("Unknown tile: $tileName"))
-                }
+            callable("ReplaceTiles") { lua ->
+                val mapTree = lua.checkSelf()
+                val (coordinate, index) = lua.checkCoordinate(2)
+                val tileDef = lua.checkRegistry(index + 1, mapTree.registries.tiles)
+                val layerName = lua.optString(index + 2)
+                mapTree.replaceTiles(coordinate, tileDef, layerName)
+                return@callable 0
             }
 
             callable("SwapTile") {
                 val mapTree = it.checkSelf()
                 val (coordinate, index) = it.checkCoordinate(2)
-                val sourceTileName = it.checkString(index + 1)
-                val targetTileName = it.checkString(index + 2)
+                val oldTileDef = it.checkRegistry(index + 1, mapTree.registries.tiles)
+                val newTileDef = it.checkRegistry(index + 2, mapTree.registries.tiles)
                 val layerName = it.toString(index + 3)
-                val sourceTile = mapTree.registries.tiles.get(sourceTileName)
-                if (sourceTile == null) {
-                    return@callable it.error(IllegalArgumentException("Unknown tile: $sourceTileName"))
-                }
-                val sourceTileId = mapTree.registries.mappings.getId("tiles", sourceTileName)
-                if (sourceTileId == null) {
-                    throw IllegalStateException("Tile $sourceTileName has no id")
-                }
-                val targetTile = mapTree.registries.tiles.get(targetTileName)
-                if (targetTile == null) {
-                    return@callable it.error(IllegalArgumentException("Unknown tile: $targetTileName"))
-                }
-                val targetTileId = mapTree.registries.mappings.getId("tiles", targetTileName)
-                if (targetTileId == null) {
-                    throw IllegalStateException("Tile $targetTileName has no id")
-                }
-                mapTree.removeTile(coordinate.x, coordinate.y, coordinate.z, sourceTileId, layerName ?: "default")
-                mapTree.placeTile(coordinate.x, coordinate.y, coordinate.z, targetTileId, layerName ?: "default")
+                mapTree.swapTile(coordinate, oldTileDef, newTileDef, layerName)
                 return@callable 0
             }
 
             callable("RemoveTile") {
                 val mapTree = it.checkSelf()
                 val (coordinate, index) = it.checkCoordinate(2)
-                val tileName = it.checkString(index + 1)
+                val tileDef = it.checkRegistry(index + 1, mapTree.registries.tiles)
                 val layerName = it.toString(index + 2)
-                val tile = mapTree.registries.tiles.get(tileName)
-                if (tile != null) {
-                    val tileId = mapTree.registries.mappings.getId("tiles", tileName)
-                    if (tileId != null) {
-                        mapTree.removeTile(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
-                        return@callable 0
-                    } else {
-                        throw IllegalStateException("Tile $tileName has no id")
-                    }
-                } else {
-                    return@callable it.error(IllegalArgumentException("Unknown tile: $tileName"))
-                }
+                mapTree.removeTile(coordinate, tileDef, layerName)
+                return@callable 0
             }
 
             callable("ResetTile") {
                 val mapTree = it.checkSelf()
                 val (coordinate, index) = it.checkCoordinate(2)
                 val layerName = it.toString(index + 1)
-                mapTree.resetTile(coordinate.x, coordinate.y, coordinate.z, layerName ?: "default")
+                mapTree.resetTile(coordinate, layerName)
                 return@callable 0
             }
 
@@ -346,7 +318,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val key = it.checkString(index + 1)
                 val table = it.toMap(index + 2) ?: emptyMap()
                 val layerName = it.toString(index + 3)
-                mapTree.annotateTile(coordinate.x, coordinate.y, coordinate.z, key, table, layerName ?: "default")
+                mapTree.annotateTile(coordinate, key, table, layerName)
                 return@callable 0
             }
 
@@ -354,7 +326,6 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = it.checkSelf()
                 val layerName = it.checkString(2)
                 val layer = mapTree.getLayer(layerName)
-                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
                 val enabled = it.checkBoolean(3)
                 val tagName = if (it.isString(4)) it.checkString(4) else "default"
                 if (enabled) {
@@ -369,7 +340,6 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = it.checkSelf()
                 val layerName = it.checkString(2)
                 val layer = mapTree.getLayer(layerName)
-                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
                 val tagName = if (it.isString(3)) it.checkString(3) else "default"
                 it.push(layer.visibilityTags.contains(tagName))
                 return@callable 1
@@ -379,7 +349,6 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = it.checkSelf()
                 val layerName = it.checkString(2)
                 val layer = mapTree.getLayer(layerName)
-                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
                 val tagName = if (it.isString(3)) it.checkString(3) else "default"
                 it.push(!layer.visibilityTags.contains(tagName))
                 return@callable 1
@@ -389,7 +358,6 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = it.checkSelf()
                 val layerName = it.checkString(2)
                 val layer = mapTree.getLayer(layerName)
-                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
                 val tagName = if (it.isString(3)) it.checkString(3) else "default"
                 layer.addVisibilityTag(tagName)
                 return@callable 0
@@ -399,7 +367,6 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = it.checkSelf()
                 val layerName = it.checkString(2)
                 val layer = mapTree.getLayer(layerName)
-                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
                 val tagName = if (it.isString(3)) it.checkString(3) else "default"
                 layer.removeVisibilityTag(tagName)
                 return@callable 0
@@ -409,7 +376,6 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = it.checkSelf()
                 val layerName = it.checkString(2)
                 val layer = mapTree.getLayer(layerName)
-                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
                 val tagName = if (it.isString(3)) it.checkString(3) else "default"
                 it.push(layer.collisionTags.contains(tagName))
                 return@callable 0
@@ -419,7 +385,6 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = it.checkSelf()
                 val layerName = it.checkString(2)
                 val layer = mapTree.getLayer(layerName)
-                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
                 val enabled = it.checkBoolean(3)
                 val tagName = if (it.isString(4)) it.checkString(4) else "default"
                 if (enabled) {
@@ -434,7 +399,6 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = it.checkSelf()
                 val layerName = it.checkString(2)
                 val layer = mapTree.getLayer(layerName)
-                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
                 val tagName = if (it.isString(3)) it.checkString(3) else "default"
                 layer.addCollisionTag(tagName)
                 return@callable 0
@@ -444,7 +408,6 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = it.checkSelf()
                 val layerName = it.checkString(2)
                 val layer = mapTree.getLayer(layerName)
-                    ?: return@callable it.error(IllegalArgumentException("Layer $layerName does not exist"))
                 val tagName = if (it.isString(3)) it.checkString(3) else "default"
                 layer.removeCollisionTag(tagName)
                 return@callable 0

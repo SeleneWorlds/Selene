@@ -1,14 +1,18 @@
 package world.selene.server.maps
 
+import world.selene.common.data.TileDefinition
+import world.selene.common.util.Coordinate
+
 interface MapLayer {
     val name: String
     val visibilityTags: Set<String>
     val collisionTags: Set<String>
-    fun placeTile(x: Int, y: Int, z: Int, tileId: Int): Boolean
-    fun replaceTiles(x: Int, y: Int, z: Int, tileId: Int): Boolean
-    fun removeTile(x: Int, y: Int, z: Int, tileId: Int): Boolean
-    fun resetTile(x: Int, y: Int, z: Int)
-    fun annotateTile(x: Int, y: Int, z: Int, key: String, data: Map<*, *>)
+    fun placeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean
+    fun replaceTiles(coordinate: Coordinate, tileDef: TileDefinition): Boolean
+    fun swapTile(coordinate: Coordinate, tileDef: TileDefinition, newTileDef: TileDefinition): Boolean
+    fun removeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean
+    fun resetTile(coordinate: Coordinate)
+    fun annotateTile(coordinate: Coordinate, key: String, data: Map<*, *>)
     fun addVisibilityTag(tagName: String)
     fun removeVisibilityTag(tagName: String)
     fun addCollisionTag(tagName: String)

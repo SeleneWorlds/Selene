@@ -1,13 +1,16 @@
 package world.selene.server.dimensions
 
 import party.iroiro.luajava.Lua
+import world.selene.common.data.TileDefinition
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.checkRegistry
 import world.selene.common.lua.checkString
+import world.selene.common.lua.optString
 import world.selene.server.cameras.DefaultViewer
 import world.selene.server.cameras.Viewer
 import world.selene.server.data.Registries
@@ -36,6 +39,11 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
         return luaMeta
     }
 
+    fun swapTile(coordinate: Coordinate, oldTileDef: TileDefinition, newTileDef: TileDefinition, layerName: String?): TransientTile {
+        mapTree.swapTile(coordinate, oldTileDef, newTileDef, layerName)
+        return TransientTile(newTileDef, this, coordinate)
+    }
+
     companion object {
         val luaMeta = LuaMappedMetatable(Dimension::class) {
             writable(Dimension::mapTree, "Map")
@@ -58,21 +66,11 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             callable("PlaceTile") { lua ->
                 val dimension = lua.checkSelf()
                 val (coordinate, index) = lua.checkCoordinate(2)
-                val tileName = lua.checkString(index + 1)
-                val layerName = lua.toString(index + 2)
-                val tile = dimension.registries.tiles.get(tileName)
-                if (tile != null) {
-                    val tileId = dimension.registries.mappings.getId("tiles", tileName)
-                    if (tileId != null) {
-                        dimension.mapTree.placeTile(coordinate.x, coordinate.y, coordinate.z, tileId, layerName ?: "default")
-                        lua.push(TransientTile(tileName, tile, dimension, coordinate), Lua.Conversion.NONE)
-                        return@callable 1
-                    } else {
-                        return@callable lua.error(IllegalStateException("Tile $tileName has no id"))
-                    }
-                } else {
-                    return@callable lua.error(IllegalArgumentException("Unknown tile: $tileName"))
-                }
+                val tileDef = lua.checkRegistry(index + 1, dimension.registries.tiles)
+                val layerName = lua.optString(index + 2)
+                dimension.mapTree.placeTile(coordinate, tileDef, layerName)
+                lua.push(TransientTile(tileDef, dimension, coordinate), Lua.Conversion.NONE)
+                return@callable 1
             }
             callable("GetTilesAt") { lua ->
                 val dimension = lua.checkSelf()
@@ -85,14 +83,14 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
                 val baseTileName = dimension.registries.mappings.getName("tiles", baseTile)
                 val baseTileDef = baseTileName?.let { dimension.registries.tiles.get(it) }
                 if (baseTileDef != null) {
-                    tiles.add(TransientTile(baseTileName, baseTileDef, dimension, coordinate))
+                    tiles.add(TransientTile(baseTileDef, dimension, coordinate))
                 }
                 val additionalTiles = chunkView.getAdditionalTilesAt(coordinate)
                 additionalTiles.forEach { tileId ->
                     val tileName = dimension.registries.mappings.getName("tiles", tileId)
                     val tileDef = tileName?.let { dimension.registries.tiles.get(it) }
                     if (tileDef != null) {
-                        tiles.add(TransientTile(tileName, tileDef, dimension, coordinate))
+                        tiles.add(TransientTile(tileDef, dimension, coordinate))
                     }
                 }
                 lua.push(tiles, Lua.Conversion.FULL)

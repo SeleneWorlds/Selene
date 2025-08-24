@@ -5,16 +5,18 @@ import world.selene.common.data.TileDefinition
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.checkRegistry
 import world.selene.common.lua.checkString
+import world.selene.common.lua.optString
 import world.selene.common.util.Coordinate
 import world.selene.server.dimensions.Dimension
 
 class TransientTile(
-    private val name: String,
     private val definition: TileDefinition,
     private val dimension: Dimension,
     private val coordinate: Coordinate
 ) : LuaMetatableProvider {
+    val name get() = definition.name
     val x get() = coordinate.x
     val y get() = coordinate.y
     val z get() = coordinate.z
@@ -45,6 +47,16 @@ class TransientTile(
                 val tile = it.checkSelf()
                 val key = it.checkString(2)
                 it.push(tile.definition.tags.contains(key))
+                1
+            }
+            callable("Swap") {
+                val tile = it.checkSelf()
+                val newTileDef = it.checkRegistry(2, tile.definition.registry)
+                val layer = it.optString(3)
+                it.push(
+                    tile.dimension.swapTile(tile.coordinate, tile.definition, newTileDef, layer),
+                    Lua.Conversion.NONE
+                )
                 1
             }
         }

@@ -1,5 +1,7 @@
 package world.selene.server.maps
 
+import world.selene.common.util.Coordinate
+
 interface BaseMapLayer : MapLayer {
-    fun getTileId(x: Int, y: Int, z: Int): Int
+    fun getTileId(coordinate: Coordinate): Int
 }

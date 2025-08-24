@@ -6,6 +6,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaFunction
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.data.Registry
 import world.selene.common.grid.Grid
 import world.selene.common.util.Coordinate
 import kotlin.math.abs
@@ -332,4 +333,19 @@ fun Lua.checkFunction(index: Int): LuaValue {
     checkType(index, Lua.LuaType.FUNCTION)
     pushValue(index)
     return get()
+}
+
+fun Lua.optString(index: Int): String? {
+    if (type(index) == Lua.LuaType.STRING) {
+        return toString(index)
+    }
+    return null
+}
+
+fun <T : Any> Lua.optRegistry(index: Int, registry: Registry<T>): T? {
+    return optString(index)?.let { registry.get(it) }
+}
+
+fun <T : Any> Lua.checkRegistry(index: Int, registry: Registry<T>): T {
+    return optRegistry(index, registry) ?: throwError("Unknown object ${toString(index)} in ${registry.name}")
 }

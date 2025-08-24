@@ -3,6 +3,7 @@ package world.selene.server.saves
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.ObjectMapper
+import world.selene.common.util.Coordinate
 import world.selene.server.data.Registries
 import world.selene.server.maps.ChunkedMapLayer
 import world.selene.server.maps.DenseMapLayer
@@ -10,6 +11,7 @@ import world.selene.server.maps.MapTree
 import world.selene.server.maps.SparseMapLayer
 import world.selene.server.maps.SparseTilePlacement
 import world.selene.server.maps.SparseTileRemoval
+import world.selene.server.maps.SparseTileSwap
 import world.selene.server.maps.SparseTilesReplacement
 import java.io.File
 
@@ -48,7 +50,8 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
     @JsonSubTypes(
         JsonSubTypes.Type(value = MapTreeFileSparseAddOperation::class, name = "add"),
         JsonSubTypes.Type(value = MapTreeFileSparseRemoveOperation::class, name = "remove"),
-        JsonSubTypes.Type(value = MapTreeFileSparseReplaceOperation::class, name = "replace")
+        JsonSubTypes.Type(value = MapTreeFileSparseReplaceOperation::class, name = "replace"),
+        JsonSubTypes.Type(value = MapTreeFileSparseSwapOperation::class, name = "swap")
     )
     interface MapTreeFileSparseOperation
     data class MapTreeFileSparseAddOperation(val x: Int, val y: Int, val z: Int, val tileId: Int) :
@@ -62,6 +65,14 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
         val y: Int,
         val z: Int,
         val tileId: Int
+    ) : MapTreeFileSparseOperation
+
+    data class MapTreeFileSparseSwapOperation(
+        val x: Int,
+        val y: Int,
+        val z: Int,
+        val oldTileId: Int,
+        val newTileId: Int
     ) : MapTreeFileSparseOperation
 
     data class MapTreeFile(val header: MapTreeFileHeader, val layers: List<MapTreeFileLayer>)
@@ -86,16 +97,16 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
                                 if (index < tiles.size) {
                                     val tileId = tiles[index]
                                     if (tileId != 0) {
-                                        result.placeTile(baseX + dx, baseY + dy, z, tileId)
+                                        val tileDef = registries.tiles.get(tileId)
+                                            ?: throw RuntimeException("Missing tile definition for id $tileId")
+                                        result.placeTile(Coordinate(baseX + dx, baseY + dy, z), tileDef)
                                     }
                                 }
                             }
                         }
                         chunk.annotations.forEach { annotation ->
                             result.annotateTile(
-                                annotation.x,
-                                annotation.y,
-                                annotation.z,
+                                Coordinate(annotation.x, annotation.y, annotation.z),
                                 annotation.key,
                                 annotation.data
                             )
@@ -106,23 +117,35 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
                         for (op in chunk.operations) {
                             when (op) {
                                 is MapTreeFileSparseAddOperation -> {
-                                    result.placeTile(op.x, op.y, op.z, op.tileId)
+                                    val tileDef = registries.tiles.get(op.tileId)
+                                        ?: throw RuntimeException("Missing tile definition for id ${op.tileId}")
+                                    result.placeTile(Coordinate(op.x, op.y, op.z), tileDef)
+                                }
+
+                                is MapTreeFileSparseSwapOperation -> {
+                                    val oldTileDef = registries.tiles.get(op.oldTileId)
+                                        ?: throw RuntimeException("Missing tile definition for id ${op.oldTileId}")
+                                    val newTileDef = registries.tiles.get(op.newTileId)
+                                        ?: throw RuntimeException("Missing tile definition for id ${op.newTileId}")
+                                    result.swapTile(Coordinate(op.x, op.y, op.z), oldTileDef, newTileDef)
                                 }
 
                                 is MapTreeFileSparseReplaceOperation -> {
-                                    result.replaceTiles(op.x, op.y, op.z, op.tileId)
+                                    val tileDef = registries.tiles.get(op.tileId)
+                                        ?: throw RuntimeException("Missing tile definition for id ${op.tileId}")
+                                    result.replaceTiles(Coordinate(op.x, op.y, op.z), tileDef)
                                 }
 
                                 is MapTreeFileSparseRemoveOperation -> {
-                                    result.removeTile(op.x, op.y, op.z, op.tileId)
+                                    val tileDef = registries.tiles.get(op.tileId)
+                                        ?: throw RuntimeException("Missing tile definition for id ${op.tileId}")
+                                    result.removeTile(Coordinate(op.x, op.y, op.z), tileDef)
                                 }
                             }
                         }
                         chunk.annotations.forEach { annotation ->
                             result.annotateTile(
-                                annotation.x,
-                                annotation.y,
-                                annotation.z,
+                                Coordinate(annotation.x, annotation.y, annotation.z),
                                 annotation.key,
                                 annotation.data
                             )
@@ -174,21 +197,29 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
                                                         coordinate.x,
                                                         coordinate.y,
                                                         coordinate.z,
-                                                        operation.tileId
+                                                        operation.tileDef.id
+                                                    )
+
+                                                    is SparseTileSwap -> MapTreeFileSparseSwapOperation(
+                                                        coordinate.x,
+                                                        coordinate.y,
+                                                        coordinate.z,
+                                                        operation.oldTileDef.id,
+                                                        operation.newTileDef.id
                                                     )
 
                                                     is SparseTileRemoval -> MapTreeFileSparseRemoveOperation(
                                                         coordinate.x,
                                                         coordinate.y,
                                                         coordinate.z,
-                                                        operation.tileId
+                                                        operation.tileDef.id
                                                     )
 
                                                     is SparseTilesReplacement -> MapTreeFileSparseReplaceOperation(
                                                         coordinate.x,
                                                         coordinate.y,
                                                         coordinate.z,
-                                                        operation.tileId
+                                                        operation.tileDef.id
                                                     )
                                                 }
                                             }

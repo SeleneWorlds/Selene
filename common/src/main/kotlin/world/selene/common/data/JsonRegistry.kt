@@ -11,10 +11,12 @@ abstract class JsonRegistry<TData : Any>(
     val platform: String,
     override val name: String,
     private val dataClass: KClass<TData>
-): Registry<TData> {
+) : Registry<TData> {
     private val logger = LoggerFactory.getLogger("selene")
     protected val entries: MutableMap<String, TData> = mutableMapOf()
+    protected val entriesById: MutableMap<Int, TData> = mutableMapOf()
 
+    override fun get(id: Int): TData? = entriesById[id]
     override fun get(name: String): TData? = entries[name]
     override fun getAll(): Map<String, TData> = entries
 
@@ -26,9 +28,11 @@ abstract class JsonRegistry<TData : Any>(
             if (files != null) {
                 for (file in files) {
                     try {
-                        val type = objectMapper.typeFactory.constructParametricType(RegistryFile::class.java, dataClass.java)
+                        val type =
+                            objectMapper.typeFactory.constructParametricType(RegistryFile::class.java, dataClass.java)
                         val parsed = objectMapper.readValue<RegistryFile<TData>>(file, type)
                         for ((name, data) in parsed.entries) {
+                            @Suppress("UNCHECKED_CAST")
                             entries[name] = data
                         }
                     } catch (e: Exception) {
@@ -36,6 +40,16 @@ abstract class JsonRegistry<TData : Any>(
                     }
                 }
             }
+        }
+    }
+
+    override fun registryPopulated(mappings: NameIdRegistry) {
+        for ((name, data) in entries) {
+            val id = mappings.getId(this.name, name)
+                ?: throw RuntimeException("Missing id mapping for $name in ${this.name}")
+            @Suppress("UNCHECKED_CAST")
+            ((data as? RegistryObject<TData>)?.initializeFromRegistry(this, name, id))
+            entriesById[id] = data
         }
     }
 

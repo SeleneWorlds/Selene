@@ -15,9 +15,10 @@ class CustomRegistry(
     private val entries: MutableMap<String, JsonNode> = mutableMapOf()
     
     override val name: String = definition.suffix
+    override fun get(id: Int): JsonNode? = null
     override fun get(name: String): JsonNode? = entries[name]
     override fun getAll(): Map<String, JsonNode> = entries
-    
+
     fun load(bundleDatabase: BundleDatabase) {
         entries.clear()
         for (bundle in bundleDatabase.loadedBundles) {
@@ -39,5 +40,8 @@ class CustomRegistry(
                 }
             }
         }
+    }
+
+    override fun registryPopulated(mappings: NameIdRegistry) {
     }
 }

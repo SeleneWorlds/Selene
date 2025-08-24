@@ -2,6 +2,7 @@ package world.selene.server.maps
 
 import com.google.common.collect.HashBasedTable
 import com.google.common.collect.Table
+import world.selene.common.data.TileDefinition
 import world.selene.common.util.Coordinate
 
 class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
@@ -10,64 +11,70 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
     override val visibilityTags = mutableSetOf("default")
     override val collisionTags = mutableSetOf("default")
 
-    override fun placeTile(x: Int, y: Int, z: Int, tileId: Int): Boolean {
-        val chunk = getOrCreateChunk(x, y, z)
-        chunk.addOperation(Coordinate(x, y, z), SparseTilePlacement(x, y, z, tileId))
+    override fun placeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean {
+        val chunk = getOrCreateChunk(coordinate)
+        chunk.addOperation(coordinate, SparseTilePlacement(coordinate, tileDef))
         return true
     }
 
     override fun replaceTiles(
-        x: Int,
-        y: Int,
-        z: Int,
-        tileId: Int
+        coordinate: Coordinate,
+        tileDef: TileDefinition
     ): Boolean {
-        val chunk = getOrCreateChunk(x, y, z)
-        chunk.addOperation(Coordinate(x, y, z), SparseTilesReplacement(x, y, z, tileId))
+        val chunk = getOrCreateChunk(coordinate)
+        chunk.addOperation(coordinate, SparseTilesReplacement(coordinate, tileDef))
         return true
     }
 
-    override fun removeTile(x: Int, y: Int, z: Int, tileId: Int): Boolean {
-        val chunk = getOrCreateChunk(x, y, z)
-        chunk.addOperation(Coordinate(x, y, z), SparseTileRemoval(x, y, z, tileId))
+    override fun swapTile(
+        coordinate: Coordinate,
+        tileDef: TileDefinition,
+        newTileDef: TileDefinition
+    ): Boolean {
+        val chunk = getOrCreateChunk(coordinate)
+        chunk.addOperation(coordinate, SparseTileSwap(coordinate, tileDef, newTileDef))
         return true
     }
 
-    override fun resetTile(x: Int, y: Int, z: Int) {
-        getChunkOrNull(x, y, z)?.clearOperations(Coordinate(x, y, z))
+    override fun removeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean {
+        val chunk = getOrCreateChunk(coordinate)
+        chunk.addOperation(coordinate, SparseTileRemoval(coordinate, tileDef))
+        return true
+    }
+
+    override fun resetTile(coordinate: Coordinate) {
+        getChunkOrNull(coordinate)?.clearOperations(coordinate)
     }
 
     override fun annotateTile(
-        x: Int,
-        y: Int,
-        z: Int,
+        coordinate: Coordinate,
         key: String,
         data: Map<*, *>
     ) {
-        getOrCreateChunk(x, y, z).setAnnotation(Coordinate(x, y, z), key, data)
+        getOrCreateChunk(coordinate).setAnnotation(coordinate, key, data)
     }
 
-    fun getOperations(x: Int, y: Int, z: Int): List<SparseOperation> {
-        val chunk = getChunkOrNull(x, y, z) ?: return emptyList()
-        return chunk.operations[Coordinate(x, y, z)] ?: emptyList()
+    fun getOperations(coordinate: Coordinate): List<SparseOperation> {
+        val chunk = getChunkOrNull(coordinate) ?: return emptyList()
+        return chunk.operations[coordinate] ?: emptyList()
     }
 
-    private fun getChunkOrNull(x: Int, y: Int, z: Int): SparseChunk? {
-        val startX = Math.floorDiv(x, chunkSize) * chunkSize
-        val startY = Math.floorDiv(y, chunkSize) * chunkSize
-        return chunks[Coordinate(startX, startY, z)]
+    private fun getChunkOrNull(coordinate: Coordinate): SparseChunk? {
+        val startX = Math.floorDiv(coordinate.x, chunkSize) * chunkSize
+        val startY = Math.floorDiv(coordinate.y, chunkSize) * chunkSize
+        return chunks[Coordinate(startX, startY, coordinate.z)]
     }
 
-    private fun getOrCreateChunk(x: Int, y: Int, z: Int): SparseChunk {
-        val startX = Math.floorDiv(x, chunkSize) * chunkSize
-        val startY = Math.floorDiv(y, chunkSize) * chunkSize
-        val coordinate = Coordinate(startX, startY, z)
+    private fun getOrCreateChunk(coordinate: Coordinate): SparseChunk {
+        val startX = Math.floorDiv(coordinate.x, chunkSize) * chunkSize
+        val startY = Math.floorDiv(coordinate.y, chunkSize) * chunkSize
+        val coordinate = Coordinate(startX, startY, coordinate.z)
         return chunks.getOrPut(coordinate) {
             SparseChunk()
         }
     }
 
-    inner class SparseChunk() : MapChunk {
+    class SparseChunk() : MapChunk {
         val operations = mutableMapOf<Coordinate, MutableList<SparseOperation>>()
         val annotations = HashBasedTable.create<Coordinate, String, Map<*, *>>()
 
@@ -111,9 +118,11 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
 
 sealed interface SparseOperation
 
-class SparseTilePlacement(val x: Int, val y: Int, val z: Int, val tileId: Int) : SparseOperation
+class SparseTilePlacement(val coordinate: Coordinate, val tileDef: TileDefinition) : SparseOperation
 
-class SparseTileRemoval(val x: Int, val y: Int, val z: Int, val tileId: Int) : SparseOperation
+class SparseTileRemoval(val coordinate: Coordinate, val tileDef: TileDefinition) : SparseOperation
 
-class SparseTilesReplacement(val x: Int, val y: Int, val z: Int, val tileId: Int) :
+class SparseTilesReplacement(val coordinate: Coordinate, val tileDef: TileDefinition) :
     SparseOperation
+
+class SparseTileSwap(val coordinate: Coordinate, val oldTileDef: TileDefinition, val newTileDef: TileDefinition) : SparseOperation

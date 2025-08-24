@@ -2,80 +2,91 @@ package world.selene.server.maps
 
 import com.google.common.collect.HashBasedTable
 import com.google.common.collect.Table
+import world.selene.common.data.TileDefinition
 import world.selene.common.util.Coordinate
+import world.selene.server.data.Registries
 
-class DenseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer, BaseMapLayer {
+class DenseMapLayer(override val name: String, private val registries: Registries) : MapLayer, ChunkedMapLayer,
+    BaseMapLayer {
 
     val chunkSize = 64
     override val chunks = mutableMapOf<Coordinate, DenseChunk>()
     override val visibilityTags = mutableSetOf("default")
     override val collisionTags = mutableSetOf("default")
 
-    override fun getTileId(x: Int, y: Int, z: Int): Int {
-        val chunk = getChunkOrNull(x, y, z) ?: return 0
-        return chunk.getTileAbsolute(x, y)
+    override fun getTileId(coordinate: Coordinate): Int {
+        val chunk = getChunkOrNull(coordinate) ?: return 0
+        return chunk.getTileIdAbsolute(coordinate.x, coordinate.y)
     }
 
     override fun placeTile(
-        x: Int,
-        y: Int,
-        z: Int,
-        tileId: Int
+        coordinate: Coordinate,
+        tileDef: TileDefinition
     ): Boolean {
-        val chunk = getOrCreateChunk(x, y, z)
-        if (!chunk.hasTileAbsolute(x, y)) {
-            chunk.setTileAbsolute(x, y, tileId)
+        val chunk = getOrCreateChunk(coordinate)
+        if (!chunk.hasTileAbsolute(coordinate.x, coordinate.y)) {
+            chunk.setTileAbsolute(coordinate.x, coordinate.y, tileDef)
             return true
         } else {
             return false
         }
     }
 
-    override fun replaceTiles(
-        x: Int,
-        y: Int,
-        z: Int,
-        tileId: Int
+    override fun swapTile(
+        coordinate: Coordinate,
+        tileDef: TileDefinition,
+        newTileDef: TileDefinition
     ): Boolean {
-        val chunk = getOrCreateChunk(x, y, z)
-        chunk.setTileAbsolute(x, y, tileId)
+        val chunk = getOrCreateChunk(coordinate)
+        val currentTileDef = chunk.getTileAbsolute(coordinate.x, coordinate.y)
+        if (currentTileDef == tileDef) {
+            chunk.setTileAbsolute(coordinate.x, coordinate.y, newTileDef)
+            return true
+        }
+        return false
+    }
+
+    override fun replaceTiles(
+        coordinate: Coordinate,
+        tileDef: TileDefinition
+    ): Boolean {
+        val chunk = getOrCreateChunk(coordinate)
+        chunk.setTileAbsolute(coordinate.x, coordinate.y, tileDef)
         return true
     }
 
-    override fun removeTile(x: Int, y: Int, z: Int, tileId: Int): Boolean {
-        val chunk = getOrCreateChunk(x, y, z)
-        val currentTileId = chunk.getTileAbsolute(x, y)
-        if (currentTileId == tileId) {
-            chunk.setTileAbsolute(x, y, 0)
+    override fun removeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean {
+        val chunk = getOrCreateChunk(coordinate)
+        val currentTileDef = chunk.getTileAbsolute(coordinate.x, coordinate.y)
+        if (currentTileDef == tileDef) {
+            chunk.setTileAbsolute(coordinate.x, coordinate.y, null)
             return true
         }
         return false
     }
 
     override fun annotateTile(
-        x: Int,
-        y: Int,
-        z: Int,
+        coordinate: Coordinate,
         key: String,
         data: Map<*, *>
     ) {
-        getOrCreateChunk(x, y, z).setAnnotation(Coordinate(x, y, z), key, data)
+        getOrCreateChunk(coordinate).setAnnotation(coordinate, key, data)
     }
 
-    override fun resetTile(x: Int, y: Int, z: Int) {
-        getChunkOrNull(x, y, z)?.setTileAbsolute(x, y, 0)
+    override fun resetTile(coordinate: Coordinate) {
+        getChunkOrNull(coordinate)?.setTileAbsolute(coordinate.x, coordinate.y, null)
     }
 
-    private fun getChunkOrNull(x: Int, y: Int, z: Int): DenseChunk? {
-        val startX = Math.floorDiv(x, chunkSize) * chunkSize
-        val startY = Math.floorDiv(y, chunkSize) * chunkSize
-        return chunks[Coordinate(startX, startY, z)]
+    private fun getChunkOrNull(coordinate: Coordinate): DenseChunk? {
+        val startX = Math.floorDiv(coordinate.x, chunkSize) * chunkSize
+        val startY = Math.floorDiv(coordinate.y, chunkSize) * chunkSize
+        return chunks[Coordinate(startX, startY, coordinate.z)]
     }
 
-    private fun getOrCreateChunk(x: Int, y: Int, z: Int): DenseChunk {
-        val startX = Math.floorDiv(x, chunkSize) * chunkSize
-        val startY = Math.floorDiv(y, chunkSize) * chunkSize
-        val coordinate = Coordinate(startX, startY, z)
+    private fun getOrCreateChunk(coordinate: Coordinate): DenseChunk {
+        val startX = Math.floorDiv(coordinate.x, chunkSize) * chunkSize
+        val startY = Math.floorDiv(coordinate.y, chunkSize) * chunkSize
+        val coordinate = Coordinate(startX, startY, coordinate.z)
         return chunks.getOrPut(coordinate) {
             val chunk = DenseChunk(coordinate, chunkSize)
             chunks[coordinate] = chunk
@@ -91,7 +102,7 @@ class DenseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer, Base
             annotations.put(coordinate, key, value)
         }
 
-        fun setTileAbsolute(x: Int, y: Int, tileId: Int) {
+        fun setTileAbsolute(x: Int, y: Int, tileDef: TileDefinition?) {
             val relativeX = x - start.x
             val relativeY = y - start.y
             val index = relativeX + (relativeY * size)
@@ -99,10 +110,19 @@ class DenseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer, Base
                 throw IllegalArgumentException("Coordinates ($relativeX, $relativeY) is out of bounds")
             }
 
+            val tileId = tileDef?.let {
+                registries.mappings.getId("tiles", tileDef.name) ?: throw IllegalArgumentException("Tile ${tileDef.name} has no id mapping")
+            } ?: 0
             tiles[index] = tileId
         }
 
-        fun getTileAbsolute(x: Int, y: Int): Int {
+        fun getTileAbsolute(x: Int, y: Int): TileDefinition {
+            val tileId = getTileIdAbsolute(x, y)
+            val tileName = registries.mappings.getName("tiles", tileId) ?: throw IllegalArgumentException("Tile $tileId has no name mapping")
+            return registries.tiles.get(tileName) ?: throw IllegalArgumentException("Tile $tileName has no definition")
+        }
+
+        fun getTileIdAbsolute(x: Int, y: Int): Int {
             val relativeX = x - start.x
             val relativeY = y - start.y
             val index = relativeX + (relativeY * size)
