@@ -1,13 +1,17 @@
 package world.selene.common.lua
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.FloatNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.ShortNode
 import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.data.MetadataHolder
@@ -85,18 +89,19 @@ class LuaRegistriesModule(
                     }
                     0
                 }
-                callable("GetField") {
-                    val registryObject = it.checkSelf()
-                    val key = it.checkString(2)
+                callable("GetField") { lua ->
+                    val registryObject = lua.checkSelf()
+                    val key = lua.checkString(2)
                     if (registryObject.element is JsonNode) {
-                        val value = registryObject.element[key]
-                        when (value) {
-                            is LongNode -> it.push(value.asLong())
-                            is IntNode, is ShortNode -> it.push(value.asInt())
-                            is FloatNode, is DoubleNode -> it.push(value.asDouble())
-                            is BooleanNode -> it.push(value.asBoolean())
-                            is TextNode -> it.push(value.asText())
-                            else -> it.pushNil()
+                        when (val value = registryObject.element[key]) {
+                            is LongNode -> lua.push(value.asLong())
+                            is IntNode, is ShortNode -> lua.push(value.asInt())
+                            is FloatNode, is DoubleNode -> lua.push(value.asDouble())
+                            is BooleanNode -> lua.push(value.asBoolean())
+                            is TextNode -> lua.push(value.asText())
+                            is ArrayNode -> lua.push(ObjectMapper().treeToValue(value), Lua.Conversion.FULL)
+                            is ObjectNode -> lua.push(ObjectMapper().treeToValue(value), Lua.Conversion.FULL)
+                            else -> lua.pushNil()
                         }
                         return@callable 1
                     }
