@@ -125,10 +125,12 @@ fun <T : Any> Lua.checkJavaObject(index: Int, clazz: KClass<out T>): T {
     if (top < abs(index)) {
         throwTypeError(index, clazz, Lua.LuaType.NIL)
     }
-    val type = type(index)
-    val value = when (type) {
+    var value = when (val type = type(index)) {
         Lua.LuaType.USERDATA -> toJavaObject(index)!!
         else -> throwTypeError(index, clazz, type)
+    }
+    if (clazz != LuaReference::class && value is LuaReference<*, *>) {
+        value = value.resolve() ?: throwError("Reference $value is invalid")
     }
     if (!clazz.isInstance(value)) {
         throwTypeError(index, clazz, value::class)
@@ -146,9 +148,12 @@ fun <T : Any> Lua.optJavaObject(index: Int, clazz: KClass<out T>): T? {
         return null
     }
     val type = type(index)
-    val value = when (type) {
+    var value = when (type) {
         Lua.LuaType.USERDATA -> toJavaObject(index)!!
         else -> null
+    }
+    if (clazz != LuaReference::class && value is LuaReference<*, *>) {
+        value = value.resolve() ?: throwError("Reference $value is invalid")
     }
     if (!clazz.isInstance(value)) {
         return null

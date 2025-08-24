@@ -4,6 +4,8 @@ import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.LuaReferencable
+import world.selene.common.lua.LuaReference
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
@@ -17,13 +19,18 @@ import world.selene.server.entities.Entity
 import world.selene.server.network.NetworkClient
 import java.util.Locale
 
-class Player(playerManager: PlayerManager, val client: NetworkClient) : LuaMetatableProvider {
+class Player(private val playerManager: PlayerManager, val client: NetworkClient) : LuaMetatableProvider,
+    LuaReferencable<String, Player> {
 
     var userId: String? = null
     var locale: Locale = Locale.ENGLISH
     val localeString get() = locale.toString()
     val languageString: String get() = locale.language
     val customData = mutableMapOf<String, Any>()
+
+    override fun luaReference(): LuaReference<String, Player> {
+        return LuaReference(Player::class, userId!!, playerManager)
+    }
 
     val syncManager = playerManager.createSyncManager(this)
     val camera = Camera().apply {
@@ -90,6 +97,10 @@ class Player(playerManager: PlayerManager, val client: NetworkClient) : LuaMetat
             callable(Player::setCameraToFollowControlledEntity)
             callable(Player::setCameraToFollowTarget)
             callable(Player::setCameraToCoordinate)
+            callable("Ref") {
+                it.push(it.checkSelf().luaReference(), Lua.Conversion.NONE)
+                1
+            }
             callable("GetCustomData") {
                 val player = it.checkSelf()
                 val key = it.checkString(2)
