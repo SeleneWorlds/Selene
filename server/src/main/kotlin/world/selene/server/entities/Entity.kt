@@ -104,6 +104,12 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         world.entityManager.removeEntity(this)
     }
 
+    fun getControllingPlayers(): List<Player> {
+        return world.playerManager.players.filter { player ->
+            player.controlledEntity == this
+        }
+    }
+
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
     }
@@ -288,10 +294,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             }
             callable("GetControllingPlayers") {
                 val entity = it.checkSelf()
-                val controllingPlayers = entity.world.playerManager.players.filter { player ->
-                    player.controlledEntity == entity
-                }
-                it.push(controllingPlayers, Lua.Conversion.FULL)
+                it.push(entity.getControllingPlayers(), Lua.Conversion.FULL)
                 1
             }
         }
