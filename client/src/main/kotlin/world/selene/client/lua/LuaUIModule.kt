@@ -609,7 +609,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
     }
 
     private fun luaCreateImageButtonStyle(lua: Lua): Int {
-        val styles = createImageButtonStyle(lua, 1)
+        val skin = lua.optJavaObject<Skin>(2)
+        val styles = createImageButtonStyle(lua, 1, skin)
         for (style in styles) {
             lua.push(style, Lua.Conversion.NONE)
         }
