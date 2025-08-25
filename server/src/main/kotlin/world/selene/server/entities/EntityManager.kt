@@ -1,11 +1,12 @@
 package world.selene.server.entities
 
 import org.koin.mp.KoinPlatform.getKoin
+import world.selene.common.lua.LuaReferenceResolver
 import world.selene.server.dimensions.Dimension
 import world.selene.common.util.Coordinate
 import java.util.concurrent.atomic.AtomicInteger
 
-class EntityManager {
+class EntityManager : LuaReferenceResolver<Int, Entity> {
     private val entities = mutableMapOf<Int, Entity>()
     private val nextId = AtomicInteger(1)
 
@@ -40,5 +41,9 @@ class EntityManager {
         entity.networkId = -1
         entity.entityType = entityType
         return entity
+    }
+
+    override fun luaDereference(id: Int): Entity? {
+        return entities[id]
     }
 }

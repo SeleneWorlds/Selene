@@ -6,6 +6,8 @@ import world.selene.common.grid.Grid
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.LuaReferencable
+import world.selene.common.lua.LuaReference
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkDirection
@@ -22,7 +24,8 @@ import world.selene.server.maps.MapLayer
 import world.selene.server.objectMapper
 import world.selene.server.player.Player
 
-class Entity(val registries: Registries, val world: World, val scripting: Scripting) : LuaMetatableProvider {
+class Entity(val registries: Registries, val world: World, val scripting: Scripting) : LuaMetatableProvider,
+    LuaReferencable<Int, Entity> {
     var networkId: Int = -1
     var entityType: String = ""
     var name = "John Selene"
@@ -63,6 +66,10 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     val visibilityTags = mutableSetOf("default")
     val visionTags = mutableSetOf("default")
     val collisionTags = mutableSetOf("default")
+
+    override fun luaReference(): LuaReference<Int, Entity> {
+        return LuaReference(Entity::class, networkId, world.entityManager)
+    }
 
     fun resolveComponentsFor(player: Player): Map<String, ComponentConfiguration> {
         val components = mutableMapOf<String, ComponentConfiguration>()
@@ -126,6 +133,10 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             readOnly(Entity::visionViewer, "Vision")
             callable(Entity::despawn)
             callable(Entity::remove)
+            callable("Ref") {
+                it.push(it.checkSelf().luaReference(), Lua.Conversion.NONE)
+                1
+            }
             callable("SetCoordinate") {
                 val entity = it.checkSelf()
                 val (coordinate, _) = it.checkCoordinate(2)
