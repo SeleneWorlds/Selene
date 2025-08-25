@@ -39,6 +39,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
     override fun initialize(luaManager: LuaManager) {
         val actorMetatable = LuaMappedMetatable(Actor::class) {
+            getter(Actor::getName)
             getter(Actor::getParent)
             getter(Actor::getWidth)
             getter(Actor::getHeight)
