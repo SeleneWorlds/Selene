@@ -79,6 +79,8 @@ import world.selene.common.data.SoundRegistry
 import world.selene.common.lua.LuaPayloadRegistry
 import world.selene.common.lua.LuaResourcesModule
 import world.selene.common.lua.LuaHttpModule
+import world.selene.common.lua.LuaI18nModule
+import world.selene.common.i18n.Messages
 import world.selene.common.network.PacketFactory
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.PacketRegistrations
@@ -102,6 +104,7 @@ class SeleneApplication(
             singleOf(::LuaMixinRegistry)
             singleOf(::LuaPayloadRegistry)
             singleOf(::ClientLuaSignals)
+            singleOf(::Messages)
             singleOf(::LuaUIModule) { bind<LuaModule>() }
             singleOf(::LuaMixinModule) { bind<LuaModule>() }
             singleOf(::LuaClientNetworkModule) { bind<LuaModule>() }
@@ -118,6 +121,7 @@ class SeleneApplication(
             singleOf(::LuaRegistriesModule) { bind<LuaModule>() }
             singleOf(::LuaSchedulesModule) { bind<LuaModule>() }
             singleOf(::LuaHttpModule) { bind<LuaModule>() }
+            singleOf(::LuaI18nModule) { bind<LuaModule>() }
         }
         val bundleModule = module {
             singleOf(::BundleLoader)

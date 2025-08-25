@@ -33,6 +33,8 @@ import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.lua.LuaPayloadRegistry
 import world.selene.common.lua.LuaResourcesModule
 import world.selene.common.lua.LuaHttpModule
+import world.selene.common.lua.LuaI18nModule
+import world.selene.common.i18n.Messages
 import world.selene.server.lua.LuaSavesModule
 import world.selene.common.network.PacketFactory
 import world.selene.common.network.PacketHandler
@@ -110,6 +112,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaPayloadRegistry)
         singleOf(::ServerLuaSignals)
         singleOf(::ServerCustomData)
+        singleOf(::Messages)
         singleOf(::LuaServerModule) { bind<LuaModule>() }
         singleOf(::LuaPlayersModule) { bind<LuaModule>() }
         singleOf(::LuaMixinModule) { bind<LuaModule>() }
@@ -125,6 +128,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaSchedulesModule) { bind<LuaModule>(); bind<Disposable>() }
         singleOf(::LuaHttpModule) { bind<LuaModule>() }
         singleOf(::LuaConfigModule) { bind<LuaModule>() }
+        singleOf(::LuaI18nModule) { bind<LuaModule>() }
         singleOf(::Scripting)
     }
     val bundleModule = module {
