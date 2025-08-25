@@ -517,6 +517,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         val skin = Skin().apply {
             add("default", font)
             add("default", Label.LabelStyle(font, Color.WHITE))
+            add("hidden", ImageButton.ImageButtonStyle())
         }
         lua.push(skin, Lua.Conversion.NONE)
         return 1
