@@ -6,8 +6,8 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
 
     override fun luaGet(lua: Lua): Int {
         val key = when {
-            lua.isString(2) -> lua.toString(2)!!
             lua.isInteger(2) -> lua.toInteger(2).toInt()
+            lua.isString(2) -> lua.toString(2)!!
             else -> return 0
         }
         if (key is String && luaMeta.has(key)) {
@@ -26,8 +26,8 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
 
     override fun luaSet(lua: Lua): Int {
         val key = when {
-            lua.isString(2) -> lua.toString(2)!!
             lua.isInteger(2) -> lua.toInteger(2).toInt()
+            lua.isString(2) -> lua.toString(2)!!
             else -> return lua.pushNil().let { 1 }
         }
         val value = lua.toAny(3) ?: return lua.pushNil().let { 1 }

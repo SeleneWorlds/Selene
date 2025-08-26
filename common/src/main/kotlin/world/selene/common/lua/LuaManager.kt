@@ -118,10 +118,12 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.getRegisteredMetatable("__jobject__")
         lua.push { lua ->
             val obj = lua.toJavaObject(1)!!
-            val mixinFunction = obj::class.simpleName?.let { mixinRegistry.getMixin(it, lua.toString(2)!!) }
-            if (mixinFunction != null) {
-                lua.push(mixinFunction)
-                return@push 1
+            if (lua.type(2) == Lua.LuaType.STRING) {
+                val mixinFunction = obj::class.simpleName?.let { mixinRegistry.getMixin(it, lua.toString(2)!!) }
+                if (mixinFunction != null) {
+                    lua.push(mixinFunction)
+                    return@push 1
+                }
             }
 
             if (obj is LuaMetatable) {
@@ -272,9 +274,11 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
                 sb.append("}")
                 lua.push(sb.toString())
             }
+
             Lua.LuaType.USERDATA -> {
                 lua.push(lua.checkUserdata(1, ManagedLuaTable::class).toString())
             }
+
             else -> lua.throwTypeError(1, Lua.LuaType.TABLE)
         }
 
