@@ -36,13 +36,14 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         })
 
         lua.openLibrary("string")
-        packages["string"] = lua.get("string").also {
-            it.register("trim", this::luaTrim)
-            it.register("startsWith", this::luaStartsWith)
-            it.register("endsWith", this::luaEndsWith)
-            it.register("split", this::luaSplit)
-            it.register("substringAfter", this::luaSubstringAfter)
-        }
+        packages["string"] = lua.get("string")
+        lua.set("stringx", lua.newTable {
+            register("trim", this@LuaManager::luaTrim)
+            register("startsWith", this@LuaManager::luaStartsWith)
+            register("endsWith", this@LuaManager::luaEndsWith)
+            register("split", this@LuaManager::luaSplit)
+            register("substringAfter", this@LuaManager::luaSubstringAfter)
+        })
 
         lua.openLibrary("bit32")
         packages["bit32"] = lua.get("bit32")
@@ -58,10 +59,17 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         })
 
         lua.openLibrary("table")
-        packages["table"] = lua.get("table").also {
-            it.register("find", this::luaTableFind)
-            it.register("tostring", this::luaTableToString)
-        }
+        packages["table"] = lua.get("table")
+
+        lua.set("tablex", lua.newTable {
+            register("managed") { lua ->
+                val data = lua.toAnyMap(1) as MutableMap
+                lua.push(ManagedLuaTable(data), Lua.Conversion.NONE)
+                1
+            }
+            register("find", this@LuaManager::luaTableFind)
+            register("tostring", this@LuaManager::luaTableToString)
+        })
 
         lua.register("require", this::luaRequire)
 
