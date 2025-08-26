@@ -26,7 +26,7 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
         get() {
             var value = this.value
             filters.forEach {
-                value = it.apply(this)
+                value = it.apply(this, value)
             }
             return value
         }
@@ -60,7 +60,8 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
                     else -> lua.throwTypeError(2, Observer::class)
                 }
                 attribute.observers.add(observer)
-                0
+                lua.push(observer, Lua.Conversion.NONE)
+                1
             }
             callable("RemoveObserver") { lua ->
                 val attribute = lua.checkSelf()
@@ -70,10 +71,19 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
             }
             callable("AddFilter") { lua ->
                 val attribute = lua.checkSelf()
-                val filter = lua.checkUserdata(2, Filter::class)
+                val filter = when (lua.type(2)) {
+                    Lua.LuaType.FUNCTION -> LuaFilter(
+                        lua.checkFunction(2),
+                        lua.toAny(3)
+                    )
+
+                    Lua.LuaType.USERDATA -> lua.checkUserdata(2, Filter::class)
+                    else -> lua.throwTypeError(2, Filter::class)
+                }
                 @Suppress("UNCHECKED_CAST")
                 (attribute.filters as MutableList<Filter<*>>).add(filter)
-                0
+                lua.push(filter, Lua.Conversion.NONE)
+                1
             }
             callable("RemoveFilter") { lua ->
                 val attribute = lua.checkSelf()

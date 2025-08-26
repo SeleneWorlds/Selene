@@ -13,8 +13,8 @@ class LuaObserver(val callback: LuaValue, val observerData: Any?) : Observer {
         val lua = callback.state()
         lua.push(callback)
         lua.push(attribute, Lua.Conversion.NONE)
-        lua.push(observerData, Lua.Conversion.NONE)
-        lua.push(observableData, Lua.Conversion.NONE)
+        lua.push(observerData, Lua.Conversion.FULL)
+        lua.push(observableData, Lua.Conversion.FULL)
         try {
             lua.pCall(3, 0)
         } catch (e: LuaException) {
