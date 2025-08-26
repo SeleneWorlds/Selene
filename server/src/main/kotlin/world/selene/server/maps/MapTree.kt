@@ -5,12 +5,12 @@ import world.selene.common.data.TileDefinition
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.checkAnyMap
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
-import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkRegistry
 import world.selene.common.lua.checkString
-import world.selene.common.lua.optString
 import world.selene.common.util.Coordinate
 import world.selene.server.data.Registries
 
@@ -67,7 +67,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         override fun annotateTile(
             coordinate: Coordinate,
             key: String,
-            data: Map<*, *>
+            data: Map<Any, Any>
         ) {
             baseLayer.annotateTile(coordinate, key, data)
         }
@@ -167,7 +167,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         notifyListeners(coordinate)
     }
 
-    fun annotateTile(coordinate: Coordinate, key: String, data: Map<*, *>, layerName: String? = null) {
+    fun annotateTile(coordinate: Coordinate, key: String, data: Map<Any, Any>, layerName: String? = null) {
         val layer = getLayer(layerName ?: "default")
         layer.annotateTile(coordinate, key, data)
     }
@@ -262,7 +262,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         val luaMeta = LuaMappedMetatable(MapTree::class) {
             callable("Merge") {
                 val mapTree = it.checkSelf()
-                val other = it.checkJavaObject<MapTree>(2)
+                val other = it.checkUserdata<MapTree>(2)
                 mapTree.merge(other)
                 return@callable 0
             }
@@ -271,7 +271,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = lua.checkSelf()
                 val (coordinate, index) = lua.checkCoordinate(2)
                 val tileDef = lua.checkRegistry(index + 1, mapTree.registries.tiles)
-                val layerName = lua.optString(index + 2)
+                val layerName = lua.toString(index + 2)
                 mapTree.placeTile(coordinate, tileDef, layerName)
                 return@callable 0
             }
@@ -280,7 +280,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = lua.checkSelf()
                 val (coordinate, index) = lua.checkCoordinate(2)
                 val tileDef = lua.checkRegistry(index + 1, mapTree.registries.tiles)
-                val layerName = lua.optString(index + 2)
+                val layerName = lua.toString(index + 2)
                 mapTree.replaceTiles(coordinate, tileDef, layerName)
                 return@callable 0
             }
@@ -316,9 +316,9 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 val mapTree = it.checkSelf()
                 val (coordinate, index) = it.checkCoordinate(2)
                 val key = it.checkString(index + 1)
-                val table = it.toMap(index + 2) ?: emptyMap()
+                val data = it.checkAnyMap(index + 2)
                 val layerName = it.toString(index + 3)
-                mapTree.annotateTile(coordinate, key, table, layerName)
+                mapTree.annotateTile(coordinate, key, data, layerName)
                 return@callable 0
             }
 

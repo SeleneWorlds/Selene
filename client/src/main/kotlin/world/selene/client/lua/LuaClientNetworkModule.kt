@@ -10,6 +10,7 @@ import world.selene.common.lua.checkFunction
 import world.selene.common.lua.checkString
 import world.selene.common.lua.getCallerInfo
 import world.selene.common.lua.register
+import world.selene.common.lua.toAnyMap
 import world.selene.common.network.packet.CustomPayloadPacket
 
 class LuaClientNetworkModule(
@@ -34,7 +35,7 @@ class LuaClientNetworkModule(
 
     private fun luaSendToServer(lua: Lua): Int {
         val payloadId = lua.checkString(1)
-        @Suppress("UNCHECKED_CAST") val payload = lua.toMap(2) as Map<Any, Any>
+        val payload = lua.toAnyMap(2)
         networkClient.send(CustomPayloadPacket(payloadId, objectMapper.writeValueAsString(payload)))
         return 0
     }

@@ -11,9 +11,9 @@ import world.selene.common.lua.LuaReference
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkDirection
-import world.selene.common.lua.checkJavaObject
 import world.selene.common.lua.checkString
-import world.selene.common.lua.optJavaObject
+import world.selene.common.lua.toAnyMap
+import world.selene.common.lua.toUserdata
 import world.selene.common.util.Coordinate
 import world.selene.server.lua.Scripting
 import world.selene.server.world.World
@@ -281,7 +281,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             }
             callable("Spawn") {
                 val entity = it.checkSelf()
-                val dimension = it.optJavaObject<Dimension>(2) ?: entity.world.dimensionManager.getOrCreateDimension(0)
+                val dimension = it.toUserdata<Dimension>(2) ?: entity.world.dimensionManager.getOrCreateDimension(0)
                 entity.dimension = dimension
                 dimension.syncManager.entityAdded(entity)
                 0
@@ -298,7 +298,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
                         lua.push(entity, Lua.Conversion.NONE)
                         lua.push(player, Lua.Conversion.NONE)
                         lua.pCall(2, 1)
-                        return objectMapper.convertValue(lua.toMap(-1), ComponentConfiguration::class.java)
+                        return objectMapper.convertValue(lua.toAnyMap(-1), ComponentConfiguration::class.java)
                     }
                 }
                 0

@@ -7,10 +7,9 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkInt
-import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkRegistry
 import world.selene.common.lua.checkString
-import world.selene.common.lua.optString
 import world.selene.server.cameras.DefaultViewer
 import world.selene.server.cameras.Viewer
 import world.selene.server.data.Registries
@@ -59,7 +58,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
                 val dimension = it.checkSelf()
                 val (coordinate, index) = it.checkCoordinate(2)
                 val tileName = it.checkString(index + 1)
-                val viewer = if (it.isUserdata(index + 1)) it.checkJavaObject<Viewer>(index + 1) else DefaultViewer
+                val viewer = if (it.isUserdata(index + 1)) it.checkUserdata<Viewer>(index + 1) else DefaultViewer
                 val tileId = dimension.registries.mappings.getId("tiles", tileName)
                 val chunkView = dimension.world.chunkViewManager.atCoordinate(dimension, viewer, coordinate)
                 val baseTile = chunkView.getBaseTileAt(coordinate)
@@ -75,7 +74,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
                 val dimension = lua.checkSelf()
                 val (coordinate, index) = lua.checkCoordinate(2)
                 val tileDef = lua.checkRegistry(index + 1, dimension.registries.tiles)
-                val layerName = lua.optString(index + 2)
+                val layerName = lua.toString(index + 2)
                 dimension.mapTree.placeTile(coordinate, tileDef, layerName)
                 lua.push(TransientTile(tileDef, dimension, coordinate), Lua.Conversion.NONE)
                 return@callable 1
@@ -83,7 +82,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             callable("GetTilesAt") { lua ->
                 val dimension = lua.checkSelf()
                 val (coordinate, index) = lua.checkCoordinate(2)
-                val viewer = if (lua.isUserdata(index + 1)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
+                val viewer = if (lua.isUserdata(index + 1)) lua.checkUserdata<Viewer>(index + 1) else DefaultViewer
 
                 val tiles = mutableListOf<TransientTile>()
                 val chunkView = dimension.world.chunkViewManager.atCoordinate(dimension, viewer, coordinate)
@@ -107,7 +106,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             callable("HasCollisionAt") { lua ->
                 val dimension = lua.checkSelf()
                 val (coordinate, index) = lua.checkCoordinate(2)
-                val viewer = if (lua.isUserdata(index + 1)) lua.checkJavaObject<Viewer>(index + 1) else DefaultViewer
+                val viewer = if (lua.isUserdata(index + 1)) lua.checkUserdata<Viewer>(index + 1) else DefaultViewer
                 lua.push(dimension.world.collisionResolver.collidesAt(dimension, viewer, coordinate))
                 1
             }

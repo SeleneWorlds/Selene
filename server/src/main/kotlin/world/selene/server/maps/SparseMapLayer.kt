@@ -49,7 +49,7 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
     override fun annotateTile(
         coordinate: Coordinate,
         key: String,
-        data: Map<*, *>
+        data: Map<Any, Any>
     ) {
         getOrCreateChunk(coordinate).setAnnotation(coordinate, key, data)
     }
@@ -76,7 +76,7 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
 
     class SparseChunk() : MapChunk {
         val operations = mutableMapOf<Coordinate, MutableList<SparseOperation>>()
-        val annotations = HashBasedTable.create<Coordinate, String, Map<*, *>>()
+        val annotations = HashBasedTable.create<Coordinate, String, Map<Any, Any>>()
 
         fun addOperation(coordinate: Coordinate, op: SparseOperation) {
             operations.getOrPut(coordinate) { mutableListOf() }.add(op)
@@ -86,7 +86,7 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
             operations.remove(coordinate)
         }
 
-        fun setAnnotation(coordinate: Coordinate, key: String, data: Map<*, *>) {
+        fun setAnnotation(coordinate: Coordinate, key: String, data: Map<Any, Any>) {
             annotations.put(coordinate, key, data)
         }
     }

@@ -10,7 +10,7 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.checkInt
-import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkString
 import world.selene.common.lua.register
 
@@ -59,7 +59,7 @@ class LuaTexturesModule : LuaModule {
                 }
                 callable("CopyFrom") {
                     val self = it.checkSelf()
-                    val sourceTexture = it.checkJavaObject(2, LuaTexture::class)
+                    val sourceTexture = it.checkUserdata(2, LuaTexture::class)
                     val srcX = it.checkInt(3)
                     val srcY = it.checkInt(4)
                     val srcWidth = it.checkInt(5)

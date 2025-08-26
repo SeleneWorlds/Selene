@@ -68,7 +68,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
             callable("SetStyle") { it ->
                 val actor = it.checkSelf()
-                val skin = it.checkJavaObject(2, Skin::class)
+                val skin = it.checkUserdata(2, Skin::class)
                 val style = it.checkString(3)
                 when (actor) {
                     is VisTextField -> {
@@ -114,7 +114,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         val groupMetatable = actorMetatable.extend(Group::class) {
             callable("AddChild") {
                 val actor = it.checkSelf()
-                val child = it.checkJavaObject(2, Actor::class)
+                val child = it.checkUserdata(2, Actor::class)
                 actor.addActor(child)
                 0
             }
@@ -124,7 +124,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         luaManager.defineMetatable(Container::class, groupMetatable.extend(Container::class) {
             callable("AddChild") {
                 @Suppress("UNCHECKED_CAST") val actor = it.checkSelf() as Container<Actor>
-                val child = it.checkJavaObject(2, Actor::class)
+                val child = it.checkUserdata(2, Actor::class)
                 actor.actor = child
                 0
             }
@@ -181,7 +181,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         luaManager.defineMetatable(VisImageButton::class, actorMetatable.extend(VisImageButton::class) {
             callable("SetStyle") {
                 val actor = it.checkSelf()
-                val skin = it.checkJavaObject(2, Skin::class)
+                val skin = it.checkUserdata(2, Skin::class)
                 val style = it.checkString(3)
                 actor.style = skin.get(style, VisImageButtonStyle::class.java)
                 0
@@ -206,7 +206,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                     val region = TextureRegion(texture)
                     skin.add(name, region)
                 } else if (it.isUserdata(3)) {
-                    val texture = it.checkJavaObject(3, LuaTexturesModule.LuaTexture::class).texture
+                    val texture = it.checkUserdata(3, LuaTexturesModule.LuaTexture::class).texture
                     val region = TextureRegion(texture)
                     skin.add(name, region)
                 }
@@ -412,14 +412,14 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
     private fun luaAddToRoot(lua: Lua): Int {
         if (lua.isTable(1)) {
-            val actors = lua.toMap(1)?.values ?: emptyList()
+            val actors = lua.toAnyMap(1)?.values ?: emptyList()
             for (actor in actors) {
                 if (actor is Actor) {
                     ui.bundlesRoot.add(actor)
                 }
             }
         } else if (lua.isUserdata(1)) {
-            val actor = lua.checkJavaObject(1, Actor::class)
+            val actor = lua.checkUserdata(1, Actor::class)
             ui.bundlesRoot.add(actor)
         }
         return 0
@@ -433,15 +433,13 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
         val actions = mutableMapOf<String, LuaValue>()
         val i18nBundle = lua.getFieldString(2, "i18nBundle") ?: "system"
-        val skin = lua.getFieldJavaObject(2, "skin", Skin::class)
+        val skin = lua.getFieldUserdata(2, "skin", Skin::class)
 
         if (lua.isTable(2)) {
             lua.getField(2, "actions")
             if (lua.isTable(-1)) {
-                lua.toMap(-1)?.entries?.forEach { (actionName, actionFunction) ->
-                    if (actionName is String && actionFunction is LuaValue) {
-                        actions[actionName] = actionFunction
-                    }
+                lua.toTypedMap<String, LuaValue>(-1)?.entries?.forEach { (actionName, actionFunction) ->
+                    actions[actionName] = actionFunction
                 }
             }
             lua.pop(1)
@@ -462,7 +460,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 }
             }
 
-            // Set up i18n bundle
+            // Setup i18n bundle
             val i18nFileHandle = bundleFileResolver.resolve(i18nBundle)
             val i18nBundle = I18NBundle.createBundle(i18nFileHandle)
             parser.i18nBundle(i18nBundle)
@@ -525,12 +523,12 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
     }
 
     private fun luaCreateContainer(lua: Lua): Int {
-        val skin = lua.checkJavaObject(1, Skin::class)
+        val skin = lua.checkUserdata(1, Skin::class)
         if (lua.top > 1) {
             lua.checkType(2, Lua.LuaType.TABLE)
         }
 
-        val child = lua.getFieldJavaObject(2, "child", Actor::class)
+        val child = lua.getFieldUserdata(2, "child", Actor::class)
         val container = Container<Actor>(child)
         lua.getFieldString(2, "background")?.let {
             container.background = resolveDrawable(skin, lua.toString(-1)!!)
@@ -546,7 +544,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
     }
 
     private fun luaCreateLabel(lua: Lua): Int {
-        val skin = lua.checkJavaObject(1, Skin::class)
+        val skin = lua.checkUserdata(1, Skin::class)
         if (lua.top > 1) {
             lua.checkType(2, Lua.LuaType.TABLE)
         }
@@ -611,7 +609,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
     }
 
     private fun luaCreateImageButtonStyle(lua: Lua): Int {
-        val skin = lua.optJavaObject<Skin>(2)
+        val skin = lua.toUserdata<Skin>(2)
         val styles = createImageButtonStyle(lua, 1, skin)
         for (style in styles) {
             lua.push(style, Lua.Conversion.NONE)

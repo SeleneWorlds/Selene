@@ -25,47 +25,18 @@ fun AbstractLua.register(name: String?, function: JFunction) {
     setGlobal(name)
 }
 
-fun Lua.newTable(body: LuaValue.() -> Unit): LuaValue {
-    newTable()
-    return get().apply(body)
-}
-
-fun Lua.luaTableToMap(index: Int): Map<String, Any> {
-    val result = mutableMapOf<String, Any>()
-    pushNil()
-    while (next(index - 1) != 0) {
-        val key = when (type(-2)) {
-            Lua.LuaType.STRING -> toString(-2)
-            Lua.LuaType.NUMBER -> toString(-2)
-            else -> null
-        }
-        if (key != null) {
-            val value = when (type(-1)) {
-                Lua.LuaType.TABLE -> luaTableToMap(-1)
-                Lua.LuaType.STRING -> toString(-1)
-                Lua.LuaType.NUMBER -> toNumber(-1)
-                Lua.LuaType.BOOLEAN -> toBoolean(-1)
-                else -> null
-            }
-            if (value != null) {
-                result[key] = value
-            }
-        }
-        pop(1)
-    }
-    return result
-}
-
 fun Lua.throwError(message: String): Nothing {
     val callerInfo = getCallerInfo()
     throw LuaException(LuaException.LuaError.RUNTIME, "$callerInfo: $message")
 }
 
-fun Lua.throwTypeError(index: Int, expectedType: Lua.LuaType, actualType: Lua.LuaType?): Nothing {
+fun Lua.throwTypeError(index: Int, expectedType: Lua.LuaType, actualType: Lua.LuaType? = null): Nothing {
+    val actualType = actualType ?: type(index)
     throwError("Expected $expectedType, got $actualType at index $index")
 }
 
-fun Lua.throwTypeError(index: Int, expectedType: KClass<*>, actualType: Lua.LuaType?): Nothing {
+fun Lua.throwTypeError(index: Int, expectedType: KClass<*>, actualType: Lua.LuaType? = null): Nothing {
+    val actualType = actualType ?: type(index)
     throwError("Expected ${expectedType.simpleName}, got $actualType at index $index")
 }
 
@@ -77,8 +48,7 @@ fun Lua.checkBoolean(index: Int): Boolean {
     if (top < abs(index)) {
         throwTypeError(index, Lua.LuaType.BOOLEAN, Lua.LuaType.NIL)
     }
-    val type = type(index)
-    return when (type) {
+    return when (val type = type(index)) {
         Lua.LuaType.BOOLEAN -> toBoolean(index)
         else -> throwTypeError(index, Lua.LuaType.BOOLEAN, type)
     }
@@ -88,8 +58,7 @@ fun Lua.checkString(index: Int): String {
     if (top < abs(index)) {
         throwTypeError(index, Lua.LuaType.STRING, Lua.LuaType.NIL)
     }
-    val type = type(index)
-    return when (type) {
+    return when (val type = type(index)) {
         Lua.LuaType.STRING -> toString(index)!!
         else -> throwTypeError(index, Lua.LuaType.STRING, type)
     }
@@ -99,8 +68,7 @@ fun Lua.checkInt(index: Int): Int {
     if (top < abs(index)) {
         throwTypeError(index, Lua.LuaType.NUMBER, Lua.LuaType.NIL)
     }
-    val type = type(index)
-    return when (type) {
+    return when (val type = type(index)) {
         Lua.LuaType.NUMBER -> toInteger(index).toInt()
         else -> throwTypeError(index, Lua.LuaType.NUMBER, type)
     }
@@ -110,18 +78,17 @@ fun Lua.checkFloat(index: Int): Float {
     if (top < abs(index)) {
         throwTypeError(index, Lua.LuaType.NUMBER, Lua.LuaType.NIL)
     }
-    val type = type(index)
-    return when (type) {
+    return when (val type = type(index)) {
         Lua.LuaType.NUMBER -> toNumber(index).toFloat()
         else -> throwTypeError(index, Lua.LuaType.NUMBER, type)
     }
 }
 
-inline fun <reified T : Any> Lua.checkJavaObject(index: Int): T {
-    return checkJavaObject(index, T::class)
+inline fun <reified T : Any> Lua.checkUserdata(index: Int): T {
+    return checkUserdata(index, T::class)
 }
 
-fun <T : Any> Lua.checkJavaObject(index: Int, clazz: KClass<out T>): T {
+fun <T : Any> Lua.checkUserdata(index: Int, clazz: KClass<out T>): T {
     if (top < abs(index)) {
         throwTypeError(index, clazz, Lua.LuaType.NIL)
     }
@@ -139,11 +106,11 @@ fun <T : Any> Lua.checkJavaObject(index: Int, clazz: KClass<out T>): T {
     return value as T
 }
 
-inline fun <reified T : Any> Lua.optJavaObject(index: Int): T? {
-    return optJavaObject(index, T::class)
+inline fun <reified T : Any> Lua.toUserdata(index: Int): T? {
+    return toUserdata(index, T::class)
 }
 
-fun <T : Any> Lua.optJavaObject(index: Int, clazz: KClass<out T>): T? {
+fun <T : Any> Lua.toUserdata(index: Int, clazz: KClass<out T>): T? {
     if (top < abs(index)) {
         return null
     }
@@ -170,10 +137,9 @@ fun <T : Enum<T>> Lua.checkEnum(index: Int, clazz: KClass<T>): T {
     if (top < abs(index)) {
         throwTypeError(index, Lua.LuaType.STRING, Lua.LuaType.NIL)
     }
-    val type = type(index)
-    return when (type) {
+    return when (val type = type(index)) {
         Lua.LuaType.USERDATA -> {
-            return checkJavaObject(index, clazz)
+            return checkUserdata(index, clazz)
         }
 
         Lua.LuaType.STRING -> {
@@ -202,76 +168,6 @@ fun Lua.checkType(index: Int, expectedType: Lua.LuaType) {
     }
 }
 
-fun Lua.getFieldString(tableIndex: Int, fieldName: String): String? {
-    if (!isTable(tableIndex)) {
-        return null
-    }
-
-    var result: String? = null
-    getField(tableIndex, fieldName)
-    if (!isNil(-1)) {
-        result = checkString(-1)
-    }
-    pop(1)
-    return result
-}
-
-fun Lua.getFieldFloat(tableIndex: Int, fieldName: String): Float? {
-    if (!isTable(tableIndex)) {
-        return null
-    }
-
-    var result: Float? = null
-    getField(tableIndex, fieldName)
-    if (!isNil(-1)) {
-        result = checkFloat(-1)
-    }
-    pop(1)
-    return result
-}
-
-fun Lua.getFieldInt(tableIndex: Int, fieldName: String): Int? {
-    if (!isTable(tableIndex)) {
-        return null
-    }
-
-    var result: Int? = null
-    getField(tableIndex, fieldName)
-    if (!isNil(-1)) {
-        result = checkInt(-1)
-    }
-    pop(1)
-    return result
-}
-
-fun Lua.getFieldBoolean(tableIndex: Int, fieldName: String): Boolean? {
-    if (!isTable(tableIndex)) {
-        return null
-    }
-
-    var result: Boolean? = null
-    getField(tableIndex, fieldName)
-    if (!isNil(-1)) {
-        result = checkBoolean(-1)
-    }
-    pop(1)
-    return result
-}
-
-fun <T : Any> Lua.getFieldJavaObject(tableIndex: Int, fieldName: String, clazz: KClass<out T>): T? {
-    if (!isTable(tableIndex)) {
-        return null
-    }
-
-    var result: T? = null
-    getField(tableIndex, fieldName)
-    if (!isNil(-1)) {
-        result = checkJavaObject(-1, clazz)
-    }
-    pop(1)
-    return result
-}
-
 fun Lua.checkDirection(index: Int, grid: Grid): Grid.Direction {
     return if (type(index) == Lua.LuaType.STRING) {
         grid.getDirectionByName(toString(index)!!) ?: throwTypeError(
@@ -280,7 +176,7 @@ fun Lua.checkDirection(index: Int, grid: Grid): Grid.Direction {
             Lua.LuaType.STRING
         )
     } else if (type(index) == Lua.LuaType.USERDATA) {
-        checkJavaObject(index, Grid.Direction::class)
+        checkUserdata(index, Grid.Direction::class)
     } else {
         throwTypeError(index, Grid.Direction::class, type(index))
     }
@@ -293,64 +189,105 @@ fun Lua.checkCoordinate(index: Int): Pair<Coordinate, Int> {
         val z = getFieldInt(index, "z") ?: 0
         return Pair(Coordinate(x, y, z), index)
     } else if (type(index) == Lua.LuaType.USERDATA) {
-        return Pair(checkJavaObject(index, Coordinate::class), index)
+        return Pair(checkUserdata(index, Coordinate::class), index)
     } else {
         return Pair(Coordinate(checkInt(index), checkInt(index + 1), checkInt(index + 2)), index + 2)
     }
 }
 
-data class CallerInfo(val source: String, val line: Int) {
-    override fun toString(): String {
-        return "$source:$line"
-    }
-}
-
-fun Lua.getCallerInfo(offset: Int = 2): CallerInfo {
-    LuaManager.debugLibrary.push(this)
-    getField(-1, "getinfo")
-    push(offset)
-    push("Sl")
-    pCall(2, 1)
-
-    if (isNil(-1)) {
-        pop(2)
-        return CallerInfo("?", 0)
-    }
-
-    getField(-1, "short_src")
-    val source = toString(-1)!!
-    pop(1) // short_src
-
-    getField(-1, "currentline")
-    val line = toNumber(-1).toInt()
-    pop(1) // currentline
-
-    pop(1) // debug
-    return CallerInfo(source, line)
-}
-
-fun Lua.toLuaValue(index: Int): LuaValue {
-    pushValue(index)
-    return get()
-}
-
-fun Lua.checkFunction(index: Int): LuaValue {
-    checkType(index, Lua.LuaType.FUNCTION)
-    pushValue(index)
-    return get()
-}
-
-fun Lua.optString(index: Int): String? {
-    if (type(index) == Lua.LuaType.STRING) {
-        return toString(index)
+fun Lua.toFunction(index: Int): LuaValue? {
+    if (type(index) == Lua.LuaType.FUNCTION) {
+        pushValue(index)
+        return get()
     }
     return null
 }
 
-fun <T : Any> Lua.optRegistry(index: Int, registry: Registry<T>): T? {
-    return optString(index)?.let { registry.get(it) }
+fun Lua.checkFunction(index: Int): LuaValue {
+    return toFunction(index) ?: throwTypeError(index, Lua.LuaType.FUNCTION)
+}
+
+fun <T : Any> Lua.toRegistry(index: Int, registry: Registry<T>): T? {
+    return toString(index)?.let { registry.get(it) }
 }
 
 fun <T : Any> Lua.checkRegistry(index: Int, registry: Registry<T>): T {
-    return optRegistry(index, registry) ?: throwError("Unknown object ${toString(index)} in ${registry.name}")
+    return toRegistry(index, registry) ?: throwTypeError(index, Registry::class)
+}
+
+fun Lua.toAny(index: Int): Any? {
+    return when (type(index)) {
+        Lua.LuaType.STRING -> return toString(index)!!
+        Lua.LuaType.NUMBER -> return toNumber(index).let { if (it % 1.0 == 0.0) it.toInt() else it }
+        Lua.LuaType.BOOLEAN -> return toBoolean(index)
+        Lua.LuaType.TABLE -> return toManagedTable(index)
+        Lua.LuaType.FUNCTION -> return toFunction(index)
+        Lua.LuaType.USERDATA -> return toJavaObject(index)
+        else -> null
+    }
+}
+
+fun Lua.toManagedTable(index: Int): ManagedLuaTable? {
+    return when (type(index)) {
+        Lua.LuaType.TABLE -> {
+            return ManagedLuaTable(toAnyMap(index) as MutableMap)
+        }
+
+        Lua.LuaType.USERDATA -> return toUserdata(index, ManagedLuaTable::class)
+
+        else -> null
+    }
+}
+
+fun Lua.toAnyMap(index: Int): Map<Any, Any>? {
+    if (isTable(index)) {
+        val map = mutableMapOf<Any, Any>()
+        val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
+        pushNil()
+        while (next(absIndex) != 0) {
+            val key = toAny(-2)!!
+            val value = toAny(-1)!!
+            map[key] = value
+            pop(1)
+        }
+        return map
+    }
+
+    return null
+}
+
+fun Lua.checkAnyMap(index: Int): Map<Any, Any> {
+    return toAnyMap(index) ?: throwTypeError(index, Lua.LuaType.TABLE)
+}
+
+inline fun <reified TKey : Any, reified TValue : Any> Lua.toTypedMap(index: Int): Map<TKey, TValue>? {
+    return toTypedMap(index, TKey::class, TValue::class)
+}
+
+fun <TKey : Any, TValue : Any> Lua.toTypedMap(
+    index: Int,
+    keyClass: KClass<TKey>,
+    valueClass: KClass<TValue>
+): Map<TKey, TValue>? {
+    if (isTable(index)) {
+        val map = mutableMapOf<TKey, TValue>()
+        val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
+        pushNil()
+        while (next(absIndex) != 0) {
+            val key = toAny(-2)!!
+            if (!keyClass.isInstance(key)) {
+                throwError("Expected only keys of type ${keyClass.simpleName} in table")
+            }
+            val value = toAny(-1)!!
+            if (!valueClass.isInstance(value)) {
+                throwError("Expected only values of type ${valueClass.simpleName} in table")
+            }
+            @Suppress("UNCHECKED_CAST")
+            map[key as TKey] = value as TValue
+            pop(1)
+        }
+        return map
+    }
+
+    return null
 }

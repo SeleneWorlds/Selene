@@ -4,7 +4,7 @@ import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Colors
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.checkFloat
-import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.getFieldFloat
 
 fun Lua.checkColor(index: Int): Pair<Color, Int> {
@@ -17,7 +17,7 @@ fun Lua.checkColor(index: Int): Pair<Color, Int> {
             return Color(r, g, b, a) to index
         }
 
-        Lua.LuaType.USERDATA -> checkJavaObject(index, Color::class) to index
+        Lua.LuaType.USERDATA -> checkUserdata(index, Color::class) to index
 
         Lua.LuaType.STRING -> {
             val colorString = toString(index)!!

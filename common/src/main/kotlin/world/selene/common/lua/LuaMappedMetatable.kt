@@ -90,7 +90,7 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
     }
 
     override fun luaGet(lua: Lua): Int {
-        val self = lua.checkJavaObject(1, clazz)
+        val self = lua.checkUserdata(1, clazz)
         val key = lua.checkString(2)
 
         callables[key]?.let { method ->
@@ -151,7 +151,7 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
     }
 
     override fun luaSet(lua: Lua): Int {
-        val self = lua.checkJavaObject(1, clazz)
+        val self = lua.checkUserdata(1, clazz)
         val key = lua.checkString(2)
 
         mutableProperties[key]?.let { property ->
@@ -209,7 +209,7 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
     }
 
     fun Lua.checkSelf(): T {
-        return checkJavaObject(1, clazz)
+        return checkUserdata(1, clazz)
     }
 
     fun <SubType : T> extend(

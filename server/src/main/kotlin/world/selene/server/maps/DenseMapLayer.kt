@@ -68,7 +68,7 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
     override fun annotateTile(
         coordinate: Coordinate,
         key: String,
-        data: Map<*, *>
+        data: Map<Any, Any>
     ) {
         getOrCreateChunk(coordinate).setAnnotation(coordinate, key, data)
     }
@@ -96,9 +96,9 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
 
     inner class DenseChunk(val start: Coordinate, val size: Int) : MapChunk {
         val tiles = IntArray(size * size)
-        val annotations = HashBasedTable.create<Coordinate, String, Map<*, *>>()
+        val annotations = HashBasedTable.create<Coordinate, String, Map<Any, Any>>()
 
-        fun setAnnotation(coordinate: Coordinate, key: String, value: Map<*, *>) {
+        fun setAnnotation(coordinate: Coordinate, key: String, value: Map<Any, Any>) {
             annotations.put(coordinate, key, value)
         }
 

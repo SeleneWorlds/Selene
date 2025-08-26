@@ -27,7 +27,7 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
         JsonSubTypes.Type(value = MapTreeFileUnknownChunk::class, name = "unknown")
     )
     interface MapTreeFileChunk
-    data class MapTreeFileAnnotation(val x: Int, val y: Int, val z: Int, val key: String, val data: Map<*, *>)
+    data class MapTreeFileAnnotation(val x: Int, val y: Int, val z: Int, val key: String, val data: Map<Any, Any>)
     data class MapTreeFileDenseChunk(
         val x: Int,
         val y: Int,

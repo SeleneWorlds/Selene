@@ -24,7 +24,7 @@ class Signal(private val name: String) : LuaMetatableProvider {
     }
 
     fun connect(lua: Lua): Int {
-        val callback = lua.toLuaValue(2)
+        val callback = lua.checkFunction(2)
         callbacks.add(NamedCallback(callback, callback.state().getCallerInfo()))
         return 0
     }

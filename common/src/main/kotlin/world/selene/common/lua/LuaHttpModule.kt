@@ -23,17 +23,17 @@ class LuaHttpModule(
         val body = if (lua.isString(2)) {
             lua.checkString(2)
         } else {
-            lua.toMap(2)
+            lua.toAnyMap(2)
         }
-        val headers = if (lua.isTable(3)) lua.toMap(3) else emptyMap<String, Any>()
+        val headers = lua.toTypedMap<String, Any>(3) ?: emptyMap()
 
         try {
             val response = runBlocking {
                 httpClient.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(body)
-                    headers?.forEach { (key, value) ->
-                        header(key.toString(), value.toString())
+                    headers.forEach { (key, value) ->
+                        header(key, value.toString())
                     }
                 }
             }

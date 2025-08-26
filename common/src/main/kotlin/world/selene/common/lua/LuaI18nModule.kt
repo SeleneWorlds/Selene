@@ -30,7 +30,7 @@ class LuaI18nModule(
 
     private fun luaFormat(lua: Lua): Int {
         val key = lua.checkString(1)
-        @Suppress("UNCHECKED_CAST") val args = if (!lua.isNil(2)) lua.toMap(2) as Map<String, Any> else emptyMap()
+        val args = lua.toTypedMap<String, Any>(2) ?: emptyMap()
         val locale = if (lua.top >= 3) lua.checkString(3).let { Locale.forLanguageTag(it) } else null
         val value = messages.format(key, args, locale)
         if (value != null) {

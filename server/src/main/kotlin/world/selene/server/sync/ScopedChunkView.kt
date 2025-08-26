@@ -6,7 +6,7 @@ import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkString
 import world.selene.common.util.ChunkWindow
 import world.selene.common.util.Coordinate
@@ -145,7 +145,7 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
         val luaMeta = LuaMappedMetatable(ScopedChunkView::class) {
             callable("GetAnnotation") {
                 val chunkView = it.checkSelf()
-                val coordinate = it.checkJavaObject<Coordinate>(2)
+                val coordinate = it.checkUserdata<Coordinate>(2)
                 val key = it.checkString(3)
                 val value = chunkView.annotations.get(coordinate, key)
                 it.push(value, Lua.Conversion.FULL)

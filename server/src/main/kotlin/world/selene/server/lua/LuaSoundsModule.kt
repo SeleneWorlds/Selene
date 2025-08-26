@@ -4,7 +4,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.checkCoordinate
-import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkString
 import world.selene.common.lua.checkType
 import world.selene.common.lua.getFieldFloat
@@ -28,7 +28,7 @@ class LuaSoundsModule(
     }
 
     private fun luaPlaySound(lua: Lua): Int {
-        val player = lua.checkJavaObject<Player>(1)
+        val player = lua.checkUserdata<Player>(1)
         val soundName = lua.checkString(2)
         if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
 
@@ -44,7 +44,7 @@ class LuaSoundsModule(
     private fun luaPlaySoundAt(lua: Lua): Int {
         val (coordinate, index) = lua.checkCoordinate(1)
         val soundName = lua.checkString(index + 1)
-        val dimension = if (lua.top >= index + 2) lua.checkJavaObject(
+        val dimension = if (lua.top >= index + 2) lua.checkUserdata(
             index + 2,
             Dimension::class
         ) else world.dimensionManager.getOrCreateDimension(0)
@@ -63,7 +63,7 @@ class LuaSoundsModule(
 
     private fun luaPlayGlobalSound(lua: Lua): Int {
         val soundName = lua.checkString(1)
-        val dimension = if (lua.top >= 2) lua.checkJavaObject(
+        val dimension = if (lua.top >= 2) lua.checkUserdata(
             2,
             Dimension::class
         ) else world.dimensionManager.getOrCreateDimension(0)

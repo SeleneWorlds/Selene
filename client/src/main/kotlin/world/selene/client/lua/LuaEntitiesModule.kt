@@ -6,10 +6,8 @@ import world.selene.client.maps.ClientMap
 import world.selene.client.maps.Entity
 import world.selene.client.maps.EntityPool
 import world.selene.common.data.EntityRegistry
-import world.selene.common.data.VisualComponentConfiguration
-import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
-import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkString
 import world.selene.common.lua.checkType
 import world.selene.common.lua.getFieldString
@@ -43,14 +41,14 @@ class LuaEntitiesModule(
     }
 
     private fun luaGetEntitiesAt(lua: Lua): Int {
-        val coordinate = lua.checkJavaObject(1, Coordinate::class)
+        val coordinate = lua.checkUserdata(1, Coordinate::class)
         val entities = clientMap.getEntitiesAt(coordinate)
         lua.push(entities, Lua.Conversion.FULL)
         return 1
     }
 
     private fun luaFindEntitiesAt(lua: Lua): Int {
-        val coordinate = lua.checkJavaObject(1, Coordinate::class)
+        val coordinate = lua.checkUserdata(1, Coordinate::class)
         lua.checkType(2, Lua.LuaType.TABLE)
         val tag = lua.getFieldString(2, "tag")
 

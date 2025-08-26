@@ -26,6 +26,8 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkString
+import world.selene.common.lua.toAny
+import world.selene.common.lua.toAnyMap
 import world.selene.common.util.Coordinate
 import kotlin.collections.forEach
 import kotlin.math.max
@@ -219,7 +221,7 @@ class Entity(
             callable("AddComponent") {
                 val self = it.checkSelf()
                 val componentName = it.checkString(2)
-                val componentData = it.toMap(3)
+                val componentData = it.toAnyMap(3)
                 val componentConfiguration = self.objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
                 self.components[componentName] = componentConfiguration.create()
                 0

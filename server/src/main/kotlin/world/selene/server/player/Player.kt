@@ -7,7 +7,7 @@ import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.LuaReferencable
 import world.selene.common.lua.LuaReference
 import world.selene.common.lua.checkInt
-import world.selene.common.lua.checkJavaObject
+import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkString
 import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.network.packet.SetCameraFollowEntityPacket
@@ -71,7 +71,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
     }
 
     fun setCameraToCoordinate(lua: Lua): Int {
-        val dimension = lua.checkJavaObject<Dimension>(1)
+        val dimension = lua.checkUserdata<Dimension>(1)
         val x = lua.checkInt(2)
         val y = lua.checkInt(3)
         val z = lua.checkInt(4)

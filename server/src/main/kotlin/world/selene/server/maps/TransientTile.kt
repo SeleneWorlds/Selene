@@ -7,7 +7,6 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkRegistry
 import world.selene.common.lua.checkString
-import world.selene.common.lua.optString
 import world.selene.common.util.Coordinate
 import world.selene.server.dimensions.Dimension
 
@@ -52,7 +51,7 @@ class TransientTile(
             callable("Swap") {
                 val tile = it.checkSelf()
                 val newTileDef = it.checkRegistry(2, tile.definition.registry)
-                val layer = it.optString(3)
+                val layer = it.toString(3)
                 val newTile = tile.dimension.swapTile(tile.coordinate, tile.definition, newTileDef, layer)
                 it.push(newTile, Lua.Conversion.NONE)
                 1
