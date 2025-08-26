@@ -63,8 +63,8 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
         lua.set("tablex", lua.newTable {
             register("managed") { lua ->
-                val data = lua.toAnyMap(1) as MutableMap
-                lua.push(ManagedLuaTable(data), Lua.Conversion.NONE)
+                val data = lua.toAnyMap(1) as MutableMap?
+                lua.push(ManagedLuaTable(data ?: mutableMapOf()), Lua.Conversion.NONE)
                 1
             }
             register("find", this@LuaManager::luaTableFind)
