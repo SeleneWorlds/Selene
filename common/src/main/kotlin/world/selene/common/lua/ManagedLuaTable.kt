@@ -30,8 +30,12 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
             lua.isString(2) -> lua.toString(2)!!
             else -> return lua.pushNil().let { 1 }
         }
-        val value = lua.toAny(3) ?: return lua.pushNil().let { 1 }
-        map[key] = value
+        val value = lua.toAny(3)
+        if (value != null) {
+            map[key] = value
+        } else {
+            map.remove(key)
+        }
         return 1
     }
 
