@@ -63,6 +63,21 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                 }
                 1
             }
+            callable("Lookup") { lua ->
+                val managedTable = lua.checkSelf()
+                var result: Any? = managedTable.map
+                for (index in 2..lua.top) {
+                    val key = lua.toAny(index)
+                    result = when (result) {
+                        null -> return@callable 0
+                        is Map<*, *> -> result[key]
+                        is ManagedLuaTable -> result.map[key]
+                        else -> return@callable 0
+                    }
+                }
+                lua.push(result, Lua.Conversion.FULL)
+                1
+            }
         }
     }
 }
