@@ -4,17 +4,16 @@ import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.ManagedLuaTable
 import world.selene.common.lua.checkFunction
 import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.throwTypeError
-import world.selene.common.lua.toManagedTable
+import world.selene.common.lua.toAnyMap
 
-class Attribute<T : Any>(val owner: Any, val name: String) : LuaMetatableProvider {
+class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : LuaMetatableProvider {
     val observers = mutableListOf<Observer>()
     val filters = mutableListOf<Filter<T>>()
 
-    var value: T? = null
+    var value: T? = initialValue
         set(value) {
             val prev = field
             if (prev != value) {
@@ -46,7 +45,7 @@ class Attribute<T : Any>(val owner: Any, val name: String) : LuaMetatableProvide
                 val observer = when (lua.type(2)) {
                     Lua.LuaType.FUNCTION -> LuaObserver(
                         lua.checkFunction(2),
-                        lua.toManagedTable(3) ?: ManagedLuaTable()
+                        lua.toAnyMap(3) ?: mutableMapOf()
                     )
 
                     Lua.LuaType.USERDATA -> lua.checkUserdata(2, Observer::class)

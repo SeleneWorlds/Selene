@@ -5,9 +5,8 @@ import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.lua.ManagedLuaTable
 
-class LuaObserver(val callback: LuaValue, val data: ManagedLuaTable) : Observer {
+class LuaObserver(val callback: LuaValue, val data: Map<Any, Any>) : Observer {
     private val logger: Logger = LoggerFactory.getLogger(LuaObserver::class.java)
 
     override fun attributeChanged(attribute: Attribute<*>) {
