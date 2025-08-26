@@ -12,6 +12,7 @@ import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkDirection
 import world.selene.common.lua.checkString
+import world.selene.common.lua.toAny
 import world.selene.common.lua.toAnyMap
 import world.selene.common.lua.toUserdata
 import world.selene.common.util.Coordinate
@@ -165,7 +166,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             callable("GetCustomData") {
                 val entity = it.checkSelf()
                 val key = it.checkString(2)
-                val defaultValue = it.toObject(3)
+                val defaultValue = it.toAny(3)
                 val value = entity.customData.getOrDefault(key, defaultValue)
                 it.push(value, Lua.Conversion.FULL)
                 1
@@ -173,7 +174,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             callable("SetCustomData") {
                 val entity = it.checkSelf()
                 val key = it.checkString(2)
-                val value = it.toObject(3)!!
+                val value = it.toAny(3)!!
                 entity.customData[key] = value
                 0
             }
@@ -310,11 +311,22 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
                 it.push(entity.getControllingPlayers(), Lua.Conversion.FULL)
                 1
             }
+            callable("GetAttribute") {
+                val entity = it.checkSelf()
+                val name = it.checkString(2)
+                val attribute = entity.attributes[name]
+                if (attribute != null) {
+                    it.push(attribute, Lua.Conversion.NONE)
+                    return@callable 1
+                }
+                0
+            }
             callable("GetOrCreateAttribute") {
                 val entity = it.checkSelf()
                 val name = it.checkString(2)
+                val initialValue = it.toAny(3)
                 val attribute = entity.attributes.getOrPut(name) {
-                    Attribute<Any>(entity, name)
+                    Attribute(entity, name, initialValue)
                 }
                 it.push(attribute, Lua.Conversion.NONE)
                 1
