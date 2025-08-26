@@ -1,6 +1,5 @@
 package world.selene.server
 
-import arrow.core.prependTo
 import org.jline.reader.EndOfFileException
 import org.jline.reader.LineReaderBuilder
 import org.jline.terminal.TerminalBuilder
