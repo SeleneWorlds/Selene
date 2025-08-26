@@ -220,7 +220,7 @@ fun Lua.toAny(index: Int): Any? {
         Lua.LuaType.STRING -> return toString(index)!!
         Lua.LuaType.NUMBER -> return toNumber(index).let { if (it % 1.0 == 0.0) it.toInt() else it }
         Lua.LuaType.BOOLEAN -> return toBoolean(index)
-        Lua.LuaType.TABLE -> return toManagedTable(index)
+        Lua.LuaType.TABLE -> return toAnyMap(index)
         Lua.LuaType.FUNCTION -> return toFunction(index)
         Lua.LuaType.USERDATA -> return toJavaObject(index)
         else -> null
@@ -251,6 +251,8 @@ fun Lua.toAnyMap(index: Int): Map<Any, Any>? {
             pop(1)
         }
         return map
+    } else if (isUserdata(index)) {
+        return toUserdata(index, ManagedLuaTable::class)?.map
     }
 
     return null
