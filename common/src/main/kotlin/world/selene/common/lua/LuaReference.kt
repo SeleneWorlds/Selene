@@ -29,7 +29,7 @@ class LuaReference<TID : Any, TObject : Any>(
 
     override fun luaGet(lua: Lua): Int {
         val key = lua.checkString(2)
-        if (key == "Get") {
+        if (luaMeta.has(key)) {
             return luaMeta.luaGet(lua)
         }
         return luaMetatable(lua).luaGet(lua)

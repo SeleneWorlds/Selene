@@ -193,7 +193,7 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
             return setter(lua)
         }
 
-        properties[key]?.let { property ->
+        properties[key]?.let { _ ->
             return lua.error(IllegalAccessError("Property '$key' is read-only on ${luaTypeName()}"))
         }
 
@@ -237,5 +237,13 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
                 setter(entry.value)
             }
         }.apply(body)
+    }
+
+    fun has(key: String): Boolean {
+        return properties.containsKey(key)
+                || callables.containsKey(key)
+                || inlineCallables.containsKey(key)
+                || getters.containsKey(key)
+                || inlineGetters.containsKey(key)
     }
 }

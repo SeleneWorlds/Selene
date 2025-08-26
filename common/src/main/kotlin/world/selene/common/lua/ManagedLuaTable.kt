@@ -2,7 +2,7 @@ package world.selene.common.lua
 
 import party.iroiro.luajava.Lua
 
-class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatable, Map<Any, Any> by map {
+class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatable {
 
     override fun luaGet(lua: Lua): Int {
         val key = when {
@@ -10,12 +10,15 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
             lua.isInteger(2) -> lua.toInteger(2).toInt()
             else -> return 0
         }
+        if (key is String && luaMeta.has(key)) {
+            return luaMeta.luaGet(lua)
+        }
         val value = map[key]
         if (value != null) {
             lua.push(value, Lua.Conversion.NONE)
             return 1
         }
-        return 0
+        return lua.pushNil().let { 1 }
     }
 
     override fun luaSet(lua: Lua): Int {
@@ -31,7 +34,11 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
 
     companion object {
         val luaMeta = LuaMappedMetatable(ManagedLuaTable::class) {
-
+            callable("ToTable") { lua ->
+                val managedTable = lua.checkSelf()
+                lua.push(managedTable.map)
+                1
+            }
         }
     }
 }
