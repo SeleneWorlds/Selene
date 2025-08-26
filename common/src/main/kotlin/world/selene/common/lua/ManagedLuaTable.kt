@@ -16,7 +16,7 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         val value = map[key]
         if (value != null) {
             if (value is Map<*, *> || value is Collection<*>) {
-                lua.throwError("Cannot directly access a table field of a managed table. Use :ToTable(\"${key}\") instead to create a copy.")
+                lua.throwError("Cannot directly access a table field of a managed table. Use Lookup(\"${key}\") instead to create a local copy.")
             }
             lua.push(value, Lua.Conversion.NONE)
             return 1
@@ -41,28 +41,6 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
 
     companion object {
         val luaMeta = LuaMappedMetatable(ManagedLuaTable::class) {
-            callable("ToTable") { lua ->
-                val managedTable = lua.checkSelf()
-                val key = lua.toString(2)
-                if (key == null) {
-                    lua.push(managedTable.map)
-                } else {
-                    when (val value = managedTable.map[key]) {
-                        is Map<*, *>, is Collection<*> -> {
-                            lua.push(value, Lua.Conversion.FULL)
-                        }
-
-                        null -> {
-                            lua.pushNil()
-                        }
-
-                        else -> {
-                            lua.throwError("Expected $key to be a table value, but was ${value::class.simpleName}")
-                        }
-                    }
-                }
-                1
-            }
             callable("Lookup") { lua ->
                 val managedTable = lua.checkSelf()
                 var result: Any? = managedTable.map
