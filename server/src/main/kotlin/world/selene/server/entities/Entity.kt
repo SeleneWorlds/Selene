@@ -124,6 +124,10 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         return luaMeta
     }
 
+    override fun toString(): String {
+        return "Entity($networkId, $name, $entityType)"
+    }
+
     companion object {
         val luaMeta = LuaMappedMetatable(Entity::class) {
             readOnly(Entity::entityDefinition)
