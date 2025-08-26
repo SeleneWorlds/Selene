@@ -245,32 +245,39 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
             return 1
         }
 
-        lua.checkType(1, Lua.LuaType.TABLE)
+        when (lua.type(1)) {
+            Lua.LuaType.TABLE -> {
+                lua.pushNil()
+                val sb = StringBuilder("{")
+                while (lua.next(-2) != 0) {
+                    if (sb.length > 1) {
+                        sb.append(", ")
+                    }
 
-        lua.pushNil()
-        val sb = StringBuilder("{")
-        while (lua.next(-2) != 0) {
-            if (sb.length > 1) {
-                sb.append(", ")
+                    lua.getGlobal("tostring")
+                    lua.pushValue(-3)
+                    lua.pCall(1, 1)
+                    val key = lua.toString(-1).also { lua.pop(1) }
+
+                    lua.getGlobal("tostring")
+                    lua.pushValue(-2)
+                    lua.pCall(1, 1)
+                    val value = lua.toString(-1).also { lua.pop(1) }
+
+                    sb.append(key)
+                    sb.append(" = ")
+                    sb.append(value)
+                    lua.pop(1)
+                }
+                sb.append("}")
+                lua.push(sb.toString())
             }
-
-            lua.getGlobal("tostring")
-            lua.pushValue(-3)
-            lua.pCall(1, 1)
-            val key = lua.toString(-1).also { lua.pop(1) }
-
-            lua.getGlobal("tostring")
-            lua.pushValue(-2)
-            lua.pCall(1, 1)
-            val value = lua.toString(-1).also { lua.pop(1) }
-
-            sb.append(key)
-            sb.append(" = ")
-            sb.append(value)
-            lua.pop(1)
+            Lua.LuaType.USERDATA -> {
+                lua.push(lua.checkUserdata(1, ManagedLuaTable::class).toString())
+            }
+            else -> lua.throwTypeError(1, Lua.LuaType.TABLE)
         }
-        sb.append("}")
-        lua.push(sb.toString())
+
         return 1
     }
 
