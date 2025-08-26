@@ -6,6 +6,7 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.LuaReferencable
 import world.selene.common.lua.LuaReference
+import world.selene.common.lua.ManagedLuaTable
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkString
@@ -27,7 +28,8 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
     var locale: Locale = Locale.ENGLISH
     val localeString get() = locale.toString()
     val languageString: String get() = locale.language
-    val customData = mutableMapOf<String, Any>()
+    val legacyCustomData = mutableMapOf<String, Any>()
+    val customData = ManagedLuaTable()
 
     override fun luaReference(): LuaReference<String, Player> {
         return LuaReference(Player::class, userId!!, playerManager)
@@ -89,6 +91,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
 
     companion object {
         val luaMeta = LuaMappedMetatable(Player::class) {
+            readOnly(Player::customData)
             readOnly(Player::idleTime)
             readOnly(Player::userId)
             readOnly(Player::localeString, "Locale")
@@ -106,7 +109,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
                 val player = it.checkSelf()
                 val key = it.checkString(2)
                 val defaultValue = it.toAny(3)
-                val value = player.customData.getOrDefault(key, defaultValue)
+                val value = player.legacyCustomData.getOrDefault(key, defaultValue)
                 it.push(value, Lua.Conversion.FULL)
                 1
             }
@@ -114,7 +117,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
                 val player = it.checkSelf()
                 val key = it.checkString(2)
                 val value = it.toAny(3)!!
-                player.customData[key] = value
+                player.legacyCustomData[key] = value
                 0
             }
         }
