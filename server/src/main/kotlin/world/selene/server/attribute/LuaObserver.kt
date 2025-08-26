@@ -6,16 +6,17 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 
-class LuaObserver(val callback: LuaValue, val data: Map<Any, Any>) : Observer {
+class LuaObserver(val callback: LuaValue, val observerData: Any?) : Observer {
     private val logger: Logger = LoggerFactory.getLogger(LuaObserver::class.java)
 
-    override fun attributeChanged(attribute: Attribute<*>) {
+    override fun attributeChanged(attribute: Attribute<*>, observableData: Any?) {
         val lua = callback.state()
         lua.push(callback)
         lua.push(attribute, Lua.Conversion.NONE)
-        lua.push(data, Lua.Conversion.NONE)
+        lua.push(observerData, Lua.Conversion.NONE)
+        lua.push(observableData, Lua.Conversion.NONE)
         try {
-            lua.pCall(2, 0)
+            lua.pCall(3, 0)
         } catch (e: LuaException) {
             logger.error("Error calling Lua observer", e)
         }
