@@ -15,6 +15,7 @@ import world.selene.common.lua.checkString
 import world.selene.common.lua.toAnyMap
 import world.selene.common.lua.toUserdata
 import world.selene.common.util.Coordinate
+import world.selene.server.attribute.Attribute
 import world.selene.server.lua.Scripting
 import world.selene.server.world.World
 import world.selene.server.cameras.Viewer
@@ -34,6 +35,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     var dimension: Dimension? = null
     val map get() = dimension?.mapTree
     val customData = mutableMapOf<String, Any>()
+    val attributes = mutableMapOf<String, Attribute<*>>()
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
 
     val entityDefinition get() = registries.entities.get(entityType)
@@ -306,6 +308,15 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             callable("GetControllingPlayers") {
                 val entity = it.checkSelf()
                 it.push(entity.getControllingPlayers(), Lua.Conversion.FULL)
+                1
+            }
+            callable("GetOrCreateAttribute") {
+                val entity = it.checkSelf()
+                val name = it.checkString(2)
+                val attribute = entity.attributes.getOrPut(name) {
+                    Attribute<Any>(entity, name)
+                }
+                it.push(attribute, Lua.Conversion.NONE)
                 1
             }
         }
