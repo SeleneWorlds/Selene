@@ -5,6 +5,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.checkString
 import world.selene.common.lua.register
+import world.selene.common.lua.toAny
 import world.selene.server.data.ServerCustomData
 
 class LuaServerModule(
@@ -22,7 +23,7 @@ class LuaServerModule(
 
     private fun luaGetCustomData(lua: Lua): Int {
         val key = lua.checkString(1)
-        val defaultValue = lua.toObject(2)
+        val defaultValue = lua.toAny(2)
         val value = serverCustomData.getCustomData(key, defaultValue)
         lua.push(value, Lua.Conversion.FULL)
         return 1
@@ -30,7 +31,7 @@ class LuaServerModule(
 
     private fun luaSetCustomData(lua: Lua): Int {
         val key = lua.checkString(1)
-        val value = lua.toObject(2)!!
+        val value = lua.toAny(2)!!
         serverCustomData.setCustomData(key, value)
         return 0
     }

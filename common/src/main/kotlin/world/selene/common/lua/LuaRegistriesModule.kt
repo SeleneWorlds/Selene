@@ -40,18 +40,14 @@ class LuaRegistriesModule(
     private fun luaFindByMetadata(lua: Lua): Int {
         val registryName = lua.checkString(1)
         val key = lua.checkString(2)
-        val value = lua.toObject(3)
+        val value = lua.toAny(3)
             ?: return lua.error(IllegalArgumentException("Value must not be nil"))
 
         val registry = registryProvider.getRegistry(registryName)
             ?: return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
 
         for ((entryName, entryData) in registry.getAll()) {
-            var metadata = getMetadata(entryData, key)
-            // Everything is floating point in lua, so we treat metadata as floating point too.
-            if (metadata is Number) {
-                metadata = metadata.toDouble()
-            }
+            val metadata = getMetadata(entryData, key)
             if (metadata == value) {
                 lua.push(TransientRegistryObject(entryName, entryData), Lua.Conversion.NONE)
                 return 1

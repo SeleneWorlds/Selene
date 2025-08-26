@@ -160,7 +160,7 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
                 Int::class -> lua.checkInt(3)
                 String::class -> lua.checkString(3)
                 Float::class -> lua.checkFloat(3)
-                else -> lua.toObject(3)
+                else -> lua.toAny(3)
             }
             try {
                 property.setter.call(self, value)
@@ -182,7 +182,7 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
                     Int::class -> lua.checkInt(3)
                     String::class -> lua.checkString(3)
                     Float::class -> lua.checkFloat(3)
-                    else -> lua.toObject(3)
+                    else -> lua.toAny(3)
                 }
                 setter.call(self, value)
                 return 0

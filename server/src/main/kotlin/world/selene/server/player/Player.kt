@@ -9,6 +9,7 @@ import world.selene.common.lua.LuaReference
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkString
+import world.selene.common.lua.toAny
 import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.network.packet.SetCameraFollowEntityPacket
 import world.selene.common.network.packet.SetCameraPositionPacket
@@ -104,7 +105,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
             callable("GetCustomData") {
                 val player = it.checkSelf()
                 val key = it.checkString(2)
-                val defaultValue = it.toObject(3)
+                val defaultValue = it.toAny(3)
                 val value = player.customData.getOrDefault(key, defaultValue)
                 it.push(value, Lua.Conversion.FULL)
                 1
@@ -112,7 +113,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
             callable("SetCustomData") {
                 val player = it.checkSelf()
                 val key = it.checkString(2)
-                val value = it.toObject(3)!!
+                val value = it.toAny(3)!!
                 player.customData[key] = value
                 0
             }
