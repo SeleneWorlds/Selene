@@ -50,6 +50,9 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
         lua.openLibrary("math")
         packages["math"] = lua.get("math")
+        lua.set("mathx", lua.newTable {
+            register("clamp", this@LuaManager::luaClamp)
+        })
 
         lua.openLibrary("debug")
         debugLibrary = lua.get("debug")
@@ -282,6 +285,15 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
             else -> lua.throwTypeError(1, Lua.LuaType.TABLE)
         }
 
+        return 1
+    }
+
+    private fun luaClamp(lua: Lua): Int {
+        if (lua.isInteger(1) && lua.isInteger(2) && lua.isInteger(3)) {
+            lua.push(lua.checkInt(1).coerceIn(lua.checkInt(2), lua.checkInt(3)))
+        } else {
+            lua.push(lua.checkFloat(1).coerceIn(lua.checkFloat(2), lua.checkFloat(3)))
+        }
         return 1
     }
 
