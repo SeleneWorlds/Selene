@@ -26,6 +26,12 @@ class EntityManager : LuaReferenceResolver<Int, Entity> {
         }
     }
 
+    fun getEntitiesAt(coordinate: Coordinate, dimension: Dimension?): List<Entity> {
+        return entities.values.filter {
+            it.dimension == dimension && it.coordinate == coordinate
+        }
+    }
+
     fun getAll(): Collection<Entity> = entities.values
 
     fun createEntity(entityType: String): Entity {

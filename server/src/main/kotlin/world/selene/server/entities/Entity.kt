@@ -29,6 +29,7 @@ import world.selene.server.player.Player
 
 class Entity(val registries: Registries, val world: World, val scripting: Scripting) : LuaMetatableProvider,
     LuaReferencable<Int, Entity> {
+    val impassable: Boolean = true
     var networkId: Int = -1
     var entityType: String = ""
     var name = "John Selene"

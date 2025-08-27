@@ -51,6 +51,14 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
         }
     }
 
+    fun getEntitiesAt(coordinate: Coordinate): List<Entity> {
+        return world.entityManager.getEntitiesAt(coordinate, this)
+    }
+
+    fun getEntitiesInRange(coordinate: Coordinate, range: Int): List<Entity> {
+        return world.entityManager.getNearbyEntities(coordinate, this, range)
+    }
+
     companion object {
         val luaMeta = LuaMappedMetatable(Dimension::class) {
             writable(Dimension::mapTree, "Map")
@@ -111,16 +119,16 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
                 1
             }
             callable("GetEntitiesAt") {
-                val coordinate = it.checkCoordinate(2)
-                // TODO implement me
-                it.push(emptyList<Entity>(), Lua.Conversion.FULL)
+                val dimension = it.checkUserdata<Dimension>(1)
+                val (coordinate, _) = it.checkCoordinate(2)
+                it.push(dimension.getEntitiesAt(coordinate), Lua.Conversion.FULL)
                 1
             }
             callable("GetEntitiesInRange") {
+                val dimension = it.checkUserdata<Dimension>(1)
                 val (coordinate, index) = it.checkCoordinate(2)
                 val range = it.checkInt(index + 1)
-                // TODO implement me
-                it.push(emptyList<Entity>(), Lua.Conversion.FULL)
+                it.push(dimension.getEntitiesInRange(coordinate, range), Lua.Conversion.FULL)
                 1
             }
         }
