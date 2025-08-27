@@ -27,7 +27,7 @@ class AttributeView(val owner: Any, val name: String, val observer: AttributeVie
         attributesToKeys.forEach { it.key.observers.remove(this) }
     }
 
-    override fun attributeChanged(attribute: Attribute<*>, observableData: Any?) {
+    override fun attributeChanged(attribute: Attribute<*>) {
         val key = attributesToKeys[attribute]
             ?: throw IllegalStateException("Attribute $attribute is not registered in view $this")
         observer.attributeChanged(this, key, attribute)

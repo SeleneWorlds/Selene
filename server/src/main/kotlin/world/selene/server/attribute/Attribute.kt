@@ -40,8 +40,8 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
             return value
         }
 
-    private fun notifyObservers(observableData: Any? = null) {
-        observers.forEach { it.attributeChanged(this, observableData) }
+    private fun notifyObservers() {
+        observers.forEach { it.attributeChanged(this) }
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
@@ -60,11 +60,7 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
             callable("AddObserver") { lua ->
                 val attribute = lua.checkSelf()
                 val observer = when (lua.type(2)) {
-                    Lua.LuaType.FUNCTION -> LuaAttributeObserver(
-                        lua.checkFunction(2),
-                        lua.toAny(3)
-                    )
-
+                    Lua.LuaType.FUNCTION -> LuaAttributeObserver(lua.checkFunction(2))
                     Lua.LuaType.USERDATA -> lua.checkUserdata(2, AttributeObserver::class)
                     else -> lua.throwTypeError(2, AttributeObserver::class)
                 }
@@ -126,7 +122,7 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
             }
             callable("Refresh") { lua ->
                 val attribute = lua.checkSelf()
-                attribute.notifyObservers(lua.toAny(2))
+                attribute.notifyObservers()
                 0
             }
         }
