@@ -1,6 +1,7 @@
 package world.selene.common.lua
 
 import party.iroiro.luajava.Lua
+import party.iroiro.luajava.value.LuaValue
 
 class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatable {
 
@@ -15,7 +16,7 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         }
         val value = map[key]
         if (value != null) {
-            if (value is Map<*, *> || value is Collection<*>) {
+            if (value !is LuaValue && (value is Map<*, *> || value is Collection<*>)) {
                 lua.throwError("Cannot directly access a table field of a managed table. Use Lookup(\"${key}\") instead to create a local copy.")
             }
             lua.push(value, Lua.Conversion.FULL)
@@ -53,6 +54,23 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         }
 
         val luaMeta = LuaMappedMetatable(ManagedLuaTable::class) {
+            callable("Pairs") { lua ->
+                val managedLuaTable = lua.checkSelf()
+                lua.push { innerLua ->
+                    val iterator = innerLua.checkUserdata<Iterator<Map.Entry<*, *>>>(1)
+                    if (iterator.hasNext()) {
+                        val entry = iterator.next()
+                        innerLua.push(entry.key, Lua.Conversion.FULL)
+                        innerLua.push(entry.value, Lua.Conversion.FULL)
+                        2
+                    } else {
+                        0
+                    }
+                }
+                lua.push(managedLuaTable.map.iterator(), Lua.Conversion.NONE)
+                lua.pushNil()
+                3
+            }
             callable("Lookup") { lua ->
                 val managedTable = lua.checkSelf()
                 var result: Any? = managedTable.map
