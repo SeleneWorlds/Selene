@@ -61,8 +61,8 @@ class SeleneApplicationListener(
         markerTexture = Texture("icon_16.png")
         systemFont = BitmapFont(true)
 
-        inputMultiplexer.addProcessor(inputManager)
         inputMultiplexer.addProcessor(ui.stage)
+        inputMultiplexer.addProcessor(inputManager)
         Gdx.input.inputProcessor = inputMultiplexer
 
         inputManager.bindKeyboardAction(Input.Keys.I) {
