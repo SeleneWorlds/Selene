@@ -61,7 +61,11 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                     if (iterator.hasNext()) {
                         val entry = iterator.next()
                         innerLua.push(entry.key, Lua.Conversion.FULL)
-                        innerLua.push(entry.value, Lua.Conversion.FULL)
+                        if (entry.value != null && entry.value is MutableMap<*, *>) {
+                            innerLua.push(ManagedLuaTable(entry.value as MutableMap<Any, Any>), Lua.Conversion.NONE)
+                        } else {
+                            innerLua.push(entry.value, Lua.Conversion.FULL)
+                        }
                         2
                     } else {
                         0
