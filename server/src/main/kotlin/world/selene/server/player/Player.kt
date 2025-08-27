@@ -28,7 +28,6 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
     var locale: Locale = Locale.ENGLISH
     val localeString get() = locale.toString()
     val languageString: String get() = locale.language
-    val legacyCustomData = mutableMapOf<String, Any>()
     val customData = ManagedLuaTable()
 
     override fun luaReference(): LuaReference<String, Player> {
@@ -104,21 +103,6 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
             callable("Ref") {
                 it.push(it.checkSelf().luaReference(), Lua.Conversion.NONE)
                 1
-            }
-            callable("GetCustomData") {
-                val player = it.checkSelf()
-                val key = it.checkString(2)
-                val defaultValue = it.toAny(3)
-                val value = player.legacyCustomData.getOrDefault(key, defaultValue)
-                it.push(value, Lua.Conversion.FULL)
-                1
-            }
-            callable("SetCustomData") {
-                val player = it.checkSelf()
-                val key = it.checkString(2)
-                val value = it.toAny(3)!!
-                player.legacyCustomData[key] = value
-                0
             }
         }
     }

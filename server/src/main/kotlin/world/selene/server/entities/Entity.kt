@@ -8,6 +8,7 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.LuaReferencable
 import world.selene.common.lua.LuaReference
+import world.selene.common.lua.ManagedLuaTable
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkDirection
@@ -40,7 +41,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     var facing: Grid.Direction? = null
     var dimension: Dimension? = null
     val map get() = dimension?.mapTree
-    val customData = mutableMapOf<String, Any>()
+    val customData = ManagedLuaTable()
     val attributes = mutableMapOf<String, Attribute<*>>()
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
     val attributeViews = mutableMapOf<String, AttributeView>()
@@ -136,6 +137,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
     companion object {
         val luaMeta = LuaMappedMetatable(Entity::class) {
+            readOnly(Entity::customData)
             readOnly(Entity::entityDefinition)
             writable(Entity::name)
             readOnly(Entity::coordinate)
@@ -172,25 +174,6 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
                 val direction = it.checkDirection(2, entity.world.grid)
                 val coordinate = entity.coordinate + direction.vector
                 if (entity.moveTo(coordinate)) 0 else 1
-            }
-            callable("GetCustomData") {
-                val entity = it.checkSelf()
-                val key = it.checkString(2)
-                val defaultValue = it.toAny(3)
-                val value = entity.customData.getOrDefault(key, defaultValue)
-                it.push(value, Lua.Conversion.FULL)
-                1
-            }
-            callable("SetCustomData") {
-                val entity = it.checkSelf()
-                val key = it.checkString(2)
-                val value = it.toAny(3)
-                if (value != null) {
-                    entity.customData[key] = value
-                } else {
-                    entity.customData.remove(key)
-                }
-                0
             }
             callable("CollisionMap") {
                 val entity = it.checkSelf()
