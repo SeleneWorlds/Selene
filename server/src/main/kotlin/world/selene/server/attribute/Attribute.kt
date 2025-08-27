@@ -54,6 +54,7 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
 
     companion object {
         val luaMeta = LuaMappedMetatable(Attribute::class) {
+            readOnly(Attribute<*>::name)
             writable(Attribute<*>::value)
             readOnly(Attribute<*>::effectiveValue)
             readOnly(Attribute<*>::owner)
