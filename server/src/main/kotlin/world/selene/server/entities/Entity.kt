@@ -14,6 +14,7 @@ import world.selene.common.lua.checkDirection
 import world.selene.common.lua.checkString
 import world.selene.common.lua.toAny
 import world.selene.common.lua.toAnyMap
+import world.selene.common.lua.toFunction
 import world.selene.common.lua.toUserdata
 import world.selene.common.util.Coordinate
 import world.selene.server.attribute.Attribute
@@ -329,8 +330,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
                 val entity = it.checkSelf()
                 val name = it.checkString(2)
                 val initialValue = it.toAny(3)
+                val initializer = it.toFunction(4)
                 val attribute = entity.attributes.getOrPut(name) {
                     Attribute(entity, name, initialValue)
+                }
+                if (initializer != null) {
+                    it.push(initializer)
+                    it.push(attribute, Lua.Conversion.NONE)
+                    it.pCall(1, 0)
                 }
                 it.push(attribute, Lua.Conversion.NONE)
                 1
