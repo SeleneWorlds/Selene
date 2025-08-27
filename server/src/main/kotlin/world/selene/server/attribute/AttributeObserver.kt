@@ -1,5 +1,5 @@
 package world.selene.server.attribute
 
-interface Observer {
+interface AttributeObserver {
     fun attributeChanged(attribute: Attribute<*>, observableData: Any?)
 }

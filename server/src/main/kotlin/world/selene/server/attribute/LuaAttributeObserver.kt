@@ -6,8 +6,8 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 
-class LuaObserver(val callback: LuaValue, val observerData: Any?) : Observer {
-    private val logger: Logger = LoggerFactory.getLogger(LuaObserver::class.java)
+class LuaAttributeObserver(val callback: LuaValue, val observerData: Any?) : AttributeObserver {
+    private val logger: Logger = LoggerFactory.getLogger(LuaAttributeObserver::class.java)
 
     override fun attributeChanged(attribute: Attribute<*>, observableData: Any?) {
         val lua = callback.state()

@@ -7,8 +7,8 @@ import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.toAny
 
-class LuaFilter(override val name: String, val callback: LuaValue, val filterData: Any?) : Filter<Any> {
-    private val logger: Logger = LoggerFactory.getLogger(LuaFilter::class.java)
+class LuaAttributeFilter(override val name: String, val callback: LuaValue, val filterData: Any?) : AttributeFilter<Any> {
+    private val logger: Logger = LoggerFactory.getLogger(LuaAttributeFilter::class.java)
 
     override var enabled: Boolean = true
 

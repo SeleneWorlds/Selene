@@ -11,6 +11,7 @@ import world.selene.common.lua.LuaReference
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkDirection
+import world.selene.common.lua.checkFunction
 import world.selene.common.lua.checkString
 import world.selene.common.lua.toAny
 import world.selene.common.lua.toAnyMap
@@ -18,6 +19,8 @@ import world.selene.common.lua.toFunction
 import world.selene.common.lua.toUserdata
 import world.selene.common.util.Coordinate
 import world.selene.server.attribute.Attribute
+import world.selene.server.attribute.AttributeView
+import world.selene.server.attribute.LuaAttributeViewObserver
 import world.selene.server.lua.Scripting
 import world.selene.server.world.World
 import world.selene.server.cameras.Viewer
@@ -40,6 +43,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     val customData = mutableMapOf<String, Any>()
     val attributes = mutableMapOf<String, Attribute<*>>()
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
+    val attributeViews = mutableMapOf<String, AttributeView>()
 
     val entityDefinition get() = registries.entities.get(entityType)
 
@@ -346,6 +350,35 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
                 }
                 it.push(attribute, Lua.Conversion.NONE)
                 1
+            }
+            callable("GetAttributeView") { lua ->
+                val entity = lua.checkSelf()
+                val name = lua.checkString(2)
+                val view = entity.attributeViews[name]
+                if (view != null) {
+                    lua.push(view, Lua.Conversion.NONE)
+                    return@callable 1
+                }
+                0
+            }
+            callable("CreateAttributeView") { lua ->
+                val entity = lua.checkSelf()
+                val name = lua.checkString(2)
+                if (entity.attributeViews.containsKey(name)) {
+                    return@callable lua.error(IllegalArgumentException("Attribute view $name already exists"))
+                }
+                val callback = lua.checkFunction(3)
+                val view = AttributeView(entity, name, LuaAttributeViewObserver(callback))
+                entity.attributeViews[name] = view
+                lua.push(view, Lua.Conversion.NONE)
+                1
+            }
+            callable("DestroyAttributeView") { lua ->
+                val entity = lua.checkSelf()
+                val name = lua.checkString(2)
+                val view = entity.attributeViews.remove(name)
+                view?.dispose()
+                0
             }
         }
     }

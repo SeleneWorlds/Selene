@@ -11,9 +11,9 @@ import world.selene.common.lua.throwTypeError
 import world.selene.common.lua.toAny
 
 class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : LuaMetatableProvider {
-    val observers = mutableListOf<Observer>()
-    val constraints = mutableListOf<Filter<T>>()
-    val modifiers = mutableListOf<Filter<T>>()
+    val observers = mutableListOf<AttributeObserver>()
+    val constraints = mutableListOf<AttributeFilter<T>>()
+    val modifiers = mutableListOf<AttributeFilter<T>>()
 
     var value: T? = initialValue
         set(value) {
@@ -60,13 +60,13 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
             callable("AddObserver") { lua ->
                 val attribute = lua.checkSelf()
                 val observer = when (lua.type(2)) {
-                    Lua.LuaType.FUNCTION -> LuaObserver(
+                    Lua.LuaType.FUNCTION -> LuaAttributeObserver(
                         lua.checkFunction(2),
                         lua.toAny(3)
                     )
 
-                    Lua.LuaType.USERDATA -> lua.checkUserdata(2, Observer::class)
-                    else -> lua.throwTypeError(2, Observer::class)
+                    Lua.LuaType.USERDATA -> lua.checkUserdata(2, AttributeObserver::class)
+                    else -> lua.throwTypeError(2, AttributeObserver::class)
                 }
                 attribute.observers.add(observer)
                 lua.push(observer, Lua.Conversion.NONE)
@@ -74,53 +74,53 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
             }
             callable("RemoveObserver") { lua ->
                 val attribute = lua.checkSelf()
-                val observer = lua.checkUserdata(2, Observer::class)
+                val observer = lua.checkUserdata(2, AttributeObserver::class)
                 attribute.observers.remove(observer)
                 0
             }
             callable("AddConstraint") { lua ->
                 val attribute = lua.checkSelf()
                 val filter = when (lua.type(3)) {
-                    Lua.LuaType.FUNCTION -> LuaFilter(
+                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(
                         lua.checkString(2),
                         lua.checkFunction(3),
                         lua.toAny(4)
                     )
 
-                    Lua.LuaType.USERDATA -> lua.checkUserdata(2, Filter::class)
-                    else -> lua.throwTypeError(2, Filter::class)
+                    Lua.LuaType.USERDATA -> lua.checkUserdata(2, AttributeFilter::class)
+                    else -> lua.throwTypeError(2, AttributeFilter::class)
                 }
                 @Suppress("UNCHECKED_CAST")
-                (attribute.constraints as MutableList<Filter<*>>).add(filter)
+                (attribute.constraints as MutableList<AttributeFilter<*>>).add(filter)
                 lua.push(filter, Lua.Conversion.NONE)
                 1
             }
             callable("RemoveConstraint") { lua ->
                 val attribute = lua.checkSelf()
-                val filter = lua.checkUserdata(2, Filter::class)
+                val filter = lua.checkUserdata(2, AttributeFilter::class)
                 attribute.constraints.remove(filter)
                 0
             }
             callable("AddModifier") { lua ->
                 val attribute = lua.checkSelf()
                 val filter = when (lua.type(3)) {
-                    Lua.LuaType.FUNCTION -> LuaFilter(
+                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(
                         lua.checkString(2),
                         lua.checkFunction(3),
                         lua.toAny(4)
                     )
 
-                    Lua.LuaType.USERDATA -> lua.checkUserdata(2, Filter::class)
-                    else -> lua.throwTypeError(2, Filter::class)
+                    Lua.LuaType.USERDATA -> lua.checkUserdata(2, AttributeFilter::class)
+                    else -> lua.throwTypeError(2, AttributeFilter::class)
                 }
                 @Suppress("UNCHECKED_CAST")
-                (attribute.modifiers as MutableList<Filter<*>>).add(filter)
+                (attribute.modifiers as MutableList<AttributeFilter<*>>).add(filter)
                 lua.push(filter, Lua.Conversion.NONE)
                 1
             }
             callable("RemoveModifier") { lua ->
                 val attribute = lua.checkSelf()
-                val filter = lua.checkUserdata(2, Filter::class)
+                val filter = lua.checkUserdata(2, AttributeFilter::class)
                 attribute.modifiers.remove(filter)
                 0
             }
