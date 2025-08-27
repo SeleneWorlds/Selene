@@ -18,7 +18,7 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
             if (value is Map<*, *> || value is Collection<*>) {
                 lua.throwError("Cannot directly access a table field of a managed table. Use Lookup(\"${key}\") instead to create a local copy.")
             }
-            lua.push(value, Lua.Conversion.NONE)
+            lua.push(value, Lua.Conversion.FULL)
             return 1
         }
         return lua.pushNil().let { 1 }
