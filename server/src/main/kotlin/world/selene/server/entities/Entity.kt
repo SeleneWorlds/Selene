@@ -380,6 +380,12 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
                 view?.dispose()
                 0
             }
+            callable("HasTag") { lua ->
+                val entity = lua.checkSelf()
+                val tag = lua.checkString(2)
+                lua.push(entity.entityDefinition?.tags?.contains(tag) ?: false)
+                1
+            }
         }
     }
 }
