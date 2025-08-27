@@ -180,8 +180,12 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             callable("SetCustomData") {
                 val entity = it.checkSelf()
                 val key = it.checkString(2)
-                val value = it.toAny(3)!!
-                entity.customData[key] = value
+                val value = it.toAny(3)
+                if (value != null) {
+                    entity.customData[key] = value
+                } else {
+                    entity.customData.remove(key)
+                }
                 0
             }
             callable("CollisionMap") {
