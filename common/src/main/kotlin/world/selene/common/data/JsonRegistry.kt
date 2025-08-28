@@ -20,6 +20,18 @@ abstract class JsonRegistry<TData : Any>(
     override fun get(name: String): TData? = entries[name]
     override fun getAll(): Map<String, TData> = entries
 
+    override fun findByMetadata(key: String, value: Any): Pair<String, TData>? {
+        for ((key, data) in entries.entries) {
+            if (data is MetadataHolder) {
+                if (data.metadata[key] == value) {
+                    return key to data
+                }
+            }
+        }
+
+        return null
+    }
+
     fun load(bundleDatabase: BundleDatabase) {
         entries.clear()
         for (bundle in bundleDatabase.loadedBundles) {

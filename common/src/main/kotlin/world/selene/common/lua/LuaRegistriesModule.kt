@@ -46,14 +46,11 @@ class LuaRegistriesModule(
         val registry = registryProvider.getRegistry(registryName)
             ?: return lua.error(IllegalArgumentException("Unknown registry: $registryName"))
 
-        for ((entryName, entryData) in registry.getAll()) {
-            val metadata = getMetadata(entryData, key)
-            if (metadata == value) {
-                lua.push(TransientRegistryObject(entryName, entryData), Lua.Conversion.NONE)
-                return 1
-            }
+        val found = registry.findByMetadata(key, value)
+        if (found != null) {
+            lua.push(TransientRegistryObject(found.first, found.second), Lua.Conversion.NONE)
+            return 1
         }
-
         return 0
     }
 
@@ -115,8 +112,7 @@ class LuaRegistriesModule(
                 }
 
                 is JsonNode -> {
-                    val value = element["metadata"]?.get(key)
-                    when (value) {
+                    when (val value = element["metadata"]?.get(key)) {
                         is LongNode -> value.asLong()
                         is IntNode, is ShortNode -> value.asInt()
                         is FloatNode, is DoubleNode -> value.asDouble()
