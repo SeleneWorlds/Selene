@@ -9,7 +9,6 @@ import world.selene.server.data.Registries
 class DenseMapLayer(override val name: String, private val registries: Registries) : MapLayer, ChunkedMapLayer,
     BaseMapLayer {
 
-    val chunkSize = 64
     override val chunks = mutableMapOf<Coordinate, DenseChunk>()
     override val visibilityTags = mutableSetOf("default")
     override val collisionTags = mutableSetOf("default")
@@ -78,17 +77,17 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
     }
 
     private fun getChunkOrNull(coordinate: Coordinate): DenseChunk? {
-        val startX = Math.floorDiv(coordinate.x, chunkSize) * chunkSize
-        val startY = Math.floorDiv(coordinate.y, chunkSize) * chunkSize
+        val startX = Math.floorDiv(coordinate.x, CHUNK_SIZE) * CHUNK_SIZE
+        val startY = Math.floorDiv(coordinate.y, CHUNK_SIZE) * CHUNK_SIZE
         return chunks[Coordinate(startX, startY, coordinate.z)]
     }
 
     private fun getOrCreateChunk(coordinate: Coordinate): DenseChunk {
-        val startX = Math.floorDiv(coordinate.x, chunkSize) * chunkSize
-        val startY = Math.floorDiv(coordinate.y, chunkSize) * chunkSize
+        val startX = Math.floorDiv(coordinate.x, CHUNK_SIZE) * CHUNK_SIZE
+        val startY = Math.floorDiv(coordinate.y, CHUNK_SIZE) * CHUNK_SIZE
         val coordinate = Coordinate(startX, startY, coordinate.z)
         return chunks.getOrPut(coordinate) {
-            val chunk = DenseChunk(coordinate, chunkSize)
+            val chunk = DenseChunk(coordinate, CHUNK_SIZE)
             chunks[coordinate] = chunk
             return chunk
         }
@@ -159,5 +158,9 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
             result.putAll(chunk.annotations)
         }
         return result
+    }
+
+    companion object {
+        const val CHUNK_SIZE = 64
     }
 }

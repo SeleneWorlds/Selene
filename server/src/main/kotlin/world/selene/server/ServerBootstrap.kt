@@ -78,6 +78,7 @@ import world.selene.server.network.NetworkServerImpl
 import world.selene.server.network.ServerPacketHandler
 import world.selene.server.player.PlayerManager
 import world.selene.server.saves.MapTreeFormat
+import world.selene.server.saves.MapTreeFormatBinaryV1
 import world.selene.server.saves.MapTreeFormatJsonV1
 import world.selene.server.saves.SaveManager
 import world.selene.server.sync.ChunkViewManager
@@ -156,8 +157,8 @@ fun main(args: Array<String>) {
         singleOf(::Registries) { bind<RegistryProvider>() }
     }
     val worldModule = module {
-        singleOf(::MapTreeFormatJsonV1) { bind<MapTreeFormat>() }
-        // singleOf(::MapTreeFormatBinaryV1) { bind<MapTreeFormat>() }
+        singleOf(::MapTreeFormatJsonV1)
+        singleOf(::MapTreeFormatBinaryV1) { bind<MapTreeFormat>() }
         singleOf(::SaveManager)
         singleOf(::DimensionManager)
         singleOf(::EntityManager)
