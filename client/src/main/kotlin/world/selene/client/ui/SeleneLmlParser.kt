@@ -62,6 +62,28 @@ object SeleneLmlParser {
             tag(Canvas.CanvasLmlTagProvider, "canvas")
             tag(InputMask.InputMaskLmlTagProvider, "inputMask")
 
+            attribute(object : LmlAttribute<TextField> {
+                override fun getHandledType(): Class<TextField> {
+                    return TextField::class.java
+                }
+
+                override fun process(
+                    parser: LmlParser,
+                    tag: LmlTag,
+                    actor: TextField,
+                    rawAttributeData: String
+                ) {
+                    val action = parser.parseParameterizedAction<TextField>(rawAttributeData)
+                    if (action == null) {
+                        parser.throwError("Could not find parameterized action for: $rawAttributeData with actor: $actor")
+                    } else {
+                        actor.setTextFieldListener { actor, char ->
+                            action.consumeWithParameters(actor, char)
+                        }
+                    }
+                }
+            }, "onKeyTyped", "keyTyped")
+
             // For some reason these attributes are not supported by default, so we expose them to LML
             attribute(object : LmlAttribute<TextField> {
                 override fun getHandledType(): Class<TextField> {
