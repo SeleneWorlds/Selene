@@ -205,6 +205,19 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 0
             }
         })
+        luaManager.defineMetatable(TextField::class, actorMetatable.extend(TextField::class) {
+            getter("Text") {
+                val textField = it.checkSelf()
+                it.push(textField.text.toString())
+                1
+            }
+            setter("Text") {
+                val textField = it.checkSelf()
+                val text = it.checkString(3)
+                textField.setText(text)
+                0
+            }
+        })
         luaManager.defineMetatable(ImageButton::class, actorMetatable.extend(ImageButton::class) {
             callable("SetStyle") { lua ->
                 val actor = lua.checkSelf()
