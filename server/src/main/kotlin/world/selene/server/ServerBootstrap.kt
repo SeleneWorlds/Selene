@@ -126,7 +126,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaDimensionsModule) { bind<LuaModule>() }
         singleOf(::LuaRegistriesModule) { bind<LuaModule>() }
         singleOf(::LuaSchedulesModule) { bind<LuaModule>(); bind<Disposable>() }
-        singleOf(::LuaHttpModule) { bind<LuaModule>() }
+        singleOf(::LuaHttpModule) { bind<LuaModule>(); bind<Disposable>() }
         singleOf(::LuaConfigModule) { bind<LuaModule>() }
         singleOf(::LuaI18nModule) { bind<LuaModule>() }
         singleOf(::Scripting)
