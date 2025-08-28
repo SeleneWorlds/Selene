@@ -58,9 +58,12 @@ class SeleneClient(
         bundleLoader.loadBundleEntrypoints(bundles, listOf("common/", "client/", "init.lua"))
         (networkClient as NetworkClientImpl).packetHandler = packetHandler
         runBlocking {
-            networkClient.connect(runtimeConfig.host, runtimeConfig.port)
-            networkClient.send(AuthenticatePacket(runtimeConfig.token))
-            networkClient.send(PreferencesPacket(Locale.getDefault().toString()))
+            networkClient.connect(runtimeConfig.host, runtimeConfig.port).addListener {
+                if (it.isSuccess) {
+                    networkClient.send(AuthenticatePacket(runtimeConfig.token))
+                    networkClient.send(PreferencesPacket(Locale.getDefault().toString()))
+                }
+            }
         }
     }
 }

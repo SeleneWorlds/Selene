@@ -130,7 +130,7 @@ class SeleneApplication(
             singleOf(::ClientBundleLocator) { bind<BundleLocator>() }
         }
         val networkModule = module {
-            singleOf(::NetworkClientImpl) { bind<NetworkClient>() }
+            singleOf(::NetworkClientImpl) { bind<NetworkClient>(); bind<Disposable>() }
             singleOf(::PacketFactory)
             singleOf(::ClientPacketHandler) { bind<PacketHandler<*>>() }
             singleOf(::PacketRegistrations)

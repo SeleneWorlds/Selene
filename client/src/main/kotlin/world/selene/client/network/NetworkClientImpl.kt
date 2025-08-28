@@ -18,6 +18,7 @@ import world.selene.common.network.PacketDecoder
 import world.selene.common.network.PacketEncoder
 import world.selene.common.network.PacketFactory
 import world.selene.common.network.PacketHandler
+import world.selene.common.util.Disposable
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -25,7 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 class NetworkClientImpl(
     private val packetFactory: PacketFactory,
     private val logger: Logger
-) : ChannelInboundHandlerAdapter(), ChannelFutureListener, NetworkClient {
+) : ChannelInboundHandlerAdapter(), ChannelFutureListener, NetworkClient, Disposable {
 
     var packetHandler: PacketHandler<NetworkClient>? = null
 
@@ -69,9 +70,10 @@ class NetworkClientImpl(
     override val address: InetSocketAddress get() = channel.remoteAddress() as InetSocketAddress
     override val connected: Boolean get() = channel.isRegistered && channel.isActive
 
-    override suspend fun connect(host: String, port: Int) {
-        withContext(Dispatchers.IO) {
-            bootstrap.connect(host, port).addListener {
+    override fun connect(host: String, port: Int): ChannelFuture {
+        logger.info("Connecting to $host:$port ...")
+        return bootstrap.connect(host, port).addListener {
+            if (it.isSuccess) {
                 channel = (it as ChannelFuture).channel()
 
                 logger.info("Connected to $host:$port")
@@ -87,7 +89,9 @@ class NetworkClientImpl(
                         Thread.sleep(10)
                     }
                 }, "NetworkClient").start()
-            }.get()
+            } else {
+                logger.error("Failed to connect to $host:$port")
+            }
         }
     }
 
@@ -98,7 +102,12 @@ class NetworkClientImpl(
     }
 
     override fun disconnect() {
-        channel.close()
+        if (channel.isRegistered) {
+            channel.close()
+        }
+    }
+
+    override fun dispose() {
         workerGroup.shutdownGracefully()
     }
 
