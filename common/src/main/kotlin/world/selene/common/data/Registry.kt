@@ -6,5 +6,5 @@ interface Registry<TData : Any> {
     fun get(name: String): TData?
     fun getAll(): Map<String, TData>
     fun findByMetadata(key: String, value: Any): Pair<String, TData>?
-    fun registryPopulated(mappings: NameIdRegistry)
+    fun registryPopulated(mappings: NameIdRegistry) = Unit
 }

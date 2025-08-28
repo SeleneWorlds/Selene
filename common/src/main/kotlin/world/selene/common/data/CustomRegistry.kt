@@ -54,6 +54,25 @@ class CustomRegistry(
                         val parsed = objectMapper.readValue<RegistryFile<JsonNode>>(file, type)
                         for ((name, data) in parsed.entries) {
                             entries[name] = data
+
+                            (data.get("metadata") as? ObjectNode)?.forEachEntry { key, node ->
+                                val value = when (node) {
+                                    is LongNode -> node.asLong()
+                                    is IntNode, is ShortNode -> node.asInt()
+                                    is FloatNode, is DoubleNode -> node.asDouble()
+                                    is BooleanNode -> node.asBoolean()
+                                    is TextNode -> node.asText()
+                                    else -> null
+                                }
+                                if (value != null) {
+                                    val list = metadataLookupTable.get(key, value)
+                                    if (list != null) {
+                                        list.add(name)
+                                    } else {
+                                        metadataLookupTable.put(key, value, mutableListOf(name))
+                                    }
+                                }
+                            }
                         }
                     } catch (e: Exception) {
                         logger.error("Failed to load $file from bundle ${bundle.manifest.name}", e)
@@ -63,26 +82,4 @@ class CustomRegistry(
         }
     }
 
-    override fun registryPopulated(mappings: NameIdRegistry) {
-        for ((name, data) in entries) {
-            (data.get("metadata") as? ObjectNode)?.forEachEntry { key, node ->
-                val value = when (node) {
-                    is LongNode -> node.asLong()
-                    is IntNode, is ShortNode -> node.asInt()
-                    is FloatNode, is DoubleNode -> node.asDouble()
-                    is BooleanNode -> node.asBoolean()
-                    is TextNode -> node.asText()
-                    else -> null
-                }
-                if (value != null) {
-                    val list = metadataLookupTable.get(key, value)
-                    if (list != null) {
-                        list.add(name)
-                    } else {
-                        metadataLookupTable.put(key, value, mutableListOf(name))
-                    }
-                }
-            }
-        }
-    }
 }
