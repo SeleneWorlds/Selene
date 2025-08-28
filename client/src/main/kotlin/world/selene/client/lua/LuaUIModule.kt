@@ -458,8 +458,19 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         table.register("CreateContainer", this::luaCreateContainer)
         table.register("CreateLabel", this::luaCreateLabel)
         table.register("AddToRoot", this::luaAddToRoot)
+        table.register("GetFocus", this::luaGetFocus)
         table.register("CreateImageButtonStyle", this::luaCreateImageButtonStyle)
         table.set("Root", ui.bundlesRoot)
+    }
+
+    private fun luaGetFocus(lua: Lua): Int {
+        val actor = ui.stage.keyboardFocus
+        if (actor != null) {
+            lua.push(actor, Lua.Conversion.NONE)
+        } else {
+            lua.pushNil()
+        }
+        return 1
     }
 
     private fun luaAddToRoot(lua: Lua): Int {
