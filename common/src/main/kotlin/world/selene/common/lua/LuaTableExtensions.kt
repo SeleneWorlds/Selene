@@ -83,3 +83,16 @@ fun <T : Any> Lua.getFieldUserdata(tableIndex: Int, fieldName: String, clazz: KC
     pop(1)
     return result
 }
+
+fun Lua.getFieldFunction(tableIndex: Int, fieldName: String): LuaValue? {
+    if (!isTable(tableIndex)) {
+        return null
+    }
+
+    getField(tableIndex, fieldName)
+    return when(type(-1)) {
+        Lua.LuaType.FUNCTION -> get()
+        Lua.LuaType.NIL -> null.also { pop(1) }
+        else -> throwError("Expected a function value for field $fieldName")
+    }
+}
