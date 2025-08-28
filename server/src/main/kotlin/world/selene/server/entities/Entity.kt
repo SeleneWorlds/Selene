@@ -137,6 +137,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
     companion object {
         val luaMeta = LuaMappedMetatable(Entity::class) {
+            readOnly(Entity::networkId)
             readOnly(Entity::customData)
             readOnly(Entity::entityDefinition)
             writable(Entity::name)
