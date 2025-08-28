@@ -9,6 +9,10 @@ class LocatedBundle(val manifest: BundleManifest, val dir: File) {
     override fun toString(): String {
         return manifest.name + " (" + dir.absolutePath + ")"
     }
+
+    fun getFileDebugName(file: File): String {
+        return manifest.name + ":" + file.name
+    }
 }
 
 interface BundleLocator {

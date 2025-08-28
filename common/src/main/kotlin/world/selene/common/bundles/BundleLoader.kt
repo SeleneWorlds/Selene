@@ -51,14 +51,12 @@ class BundleLoader(
             for (dependency in locatedBundle.manifest.dependencies) {
                 collectDependencies(dependency)
             }
-            luaManager.addPackageResolver { lua, path ->
+            luaManager.addPackageResolver { path ->
                 if (path == bundle) {
                     val luaInitFile =
                         File(locatedBundle.dir, "init.lua")
                     if (luaInitFile.exists()) {
-                        val top = lua.top
-                        luaManager.runScript(locatedBundle, luaInitFile, readBundleFileText(locatedBundle, luaInitFile))
-                        return@addPackageResolver if (lua.top > top) lua.get() else null
+                        return@addPackageResolver (locatedBundle.getFileDebugName(luaInitFile)) to readBundleFileText(locatedBundle, luaInitFile)
                     }
                 }
                 if (!path.startsWith("$bundle.")) {
@@ -67,9 +65,7 @@ class BundleLoader(
                 val luaFile =
                     File(locatedBundle.dir, path.substringAfter('.').replace('.', File.separatorChar) + ".lua")
                 if (luaFile.exists()) {
-                    val top = lua.top
-                    luaManager.runScript(locatedBundle, luaFile, readBundleFileText(locatedBundle, luaFile))
-                    return@addPackageResolver if (lua.top > top) lua.get() else null
+                    return@addPackageResolver (locatedBundle.getFileDebugName(luaFile)) to readBundleFileText(locatedBundle, luaFile)
                 }
                 null
             }

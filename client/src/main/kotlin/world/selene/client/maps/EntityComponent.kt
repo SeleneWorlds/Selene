@@ -48,27 +48,23 @@ class ClientScriptComponent(val configuration: ClientScriptComponentConfiguratio
         val data = data ?: lua.newTable {}.also {
             data = it
         }
-        val module = module ?: luaManager.requireModule(configuration.script).also {
-            module = it
-        }
+        lua.push(configuration.script)
+        luaManager.luaRequire(lua)
         if (initPending) {
-            lua.push(module)
             lua.getField(-1, "Initialize")
             if (lua.isFunction(-1)) {
                 lua.push(entity, Lua.Conversion.NONE)
                 lua.push(data)
                 lua.pCall(2, 0)
-            }
-            lua.pop(1)
+            } else lua.pop(1)
         }
-        lua.push(module)
         lua.getField(-1, "TickEntity")
         if (lua.isFunction(-1)) {
             lua.push(entity, Lua.Conversion.NONE)
             lua.push(data)
             lua.push(Gdx.graphics.deltaTime)
             lua.pCall(3, 0)
-        }
+        } else lua.pop(1)
         lua.pop(1)
     }
 }

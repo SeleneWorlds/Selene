@@ -4,6 +4,7 @@ import org.koin.mp.KoinPlatform.getKoin
 import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.lua54.Lua54
+import party.iroiro.luajava.lua54.Lua54Consts
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.bundles.LocatedBundle
 import java.io.File
@@ -13,12 +14,9 @@ import kotlin.reflect.KClass
 
 class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
-    private val logger = LoggerFactory.getLogger("selene.lua")
-
     val lua = Lua54()
-    private val packages = mutableMapOf<String, LuaValue>()
     private val metatables = mutableMapOf<KClass<*>, LuaMetatable>()
-    private val packageResolvers = mutableListOf<(Lua, String) -> LuaValue?>()
+    private val packageResolvers = mutableListOf<(String) -> Pair<String, String>?>()
 
     init {
         secureClassMetatable()
@@ -36,7 +34,6 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         })
 
         lua.openLibrary("string")
-        packages["string"] = lua.get("string")
         lua.set("stringx", lua.newTable {
             register("trim", this@LuaManager::luaTrim)
             register("startsWith", this@LuaManager::luaStartsWith)
@@ -46,10 +43,8 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         })
 
         lua.openLibrary("bit32")
-        packages["bit32"] = lua.get("bit32")
 
         lua.openLibrary("math")
-        packages["math"] = lua.get("math")
         lua.set("mathx", lua.newTable {
             register("clamp", this@LuaManager::luaClamp)
         })
@@ -62,7 +57,6 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         })
 
         lua.openLibrary("table")
-        packages["table"] = lua.get("table")
 
         lua.set("tablex", lua.newTable {
             register("managed") { lua ->
@@ -75,6 +69,15 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         })
 
         lua.register("require", this::luaRequire)
+
+        lua.newTable()
+        lua.newTable()
+        lua.getGlobal("math")
+        lua.setField(-2, "math")
+        lua.setField(-2, "loaded")
+        lua.newTable()
+        lua.setField(-2, "preload")
+        lua.setGlobal("package")
 
         lua.set("dofile", null)
         lua.set("loadfile", null)
@@ -92,9 +95,13 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         val modules = getKoin().getAll<LuaModule>()
         for (module in modules) {
             module.initialize(this)
-            packages[module.name] = lua.newTable {
+            lua.getGlobal("package")
+            lua.getField(-1, "loaded")
+            lua.push(lua.newTable {
                 module.register(this)
-            }
+            })
+            lua.setField(-2, module.name)
+            lua.pop(2)
         }
     }
 
@@ -102,7 +109,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         metatables[clazz] = metatable
     }
 
-    fun addPackageResolver(resolver: (Lua, String) -> LuaValue?) {
+    fun addPackageResolver(resolver: (String) -> Pair<String, String>?) {
         packageResolvers.add(resolver)
     }
 
@@ -364,24 +371,49 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         return 1
     }
 
-    private fun luaRequire(lua: Lua): Int {
-        val path = lua.checkString(1)
-        lua.push(requireModule(path))
-        return 1
-    }
+    fun luaRequire(lua: Lua): Int {
+        val moduleName = lua.checkString(-1)
+        lua.getGlobal("package")
+        lua.getField(-1, "loaded")
+        lua.getField(-1, moduleName)
+        lua.remove(-2)
+        lua.remove(-2)
+        if (!lua.isNil(-1)) {
+            return 1
+        }
+        lua.pop(1)
 
-    fun requireModule(moduleName: String): LuaValue {
-        val module = packages.getOrPut(moduleName) {
-            val module = packageResolvers.asSequence().mapNotNull { it(lua, moduleName) }.firstOrNull()
-            if (module == null) {
-                throw IllegalArgumentException("Failed to load module: $moduleName")
+        lua.getGlobal("package")
+        lua.getField(-1, "preload")
+        lua.getField(-1, moduleName)
+        if (!lua.isNil(-1)) {
+            lua.remove(-2)
+            lua.remove(-2)
+            lua.pCall(0, 1)
+            lua.getGlobal("package")
+            lua.getField(-1, "loaded")
+            lua.pushValue(-3)
+            lua.setField(-2, moduleName)
+            lua.pop(2)
+            return 1
+        }
+
+        val found = packageResolvers.asSequence().mapNotNull { it(moduleName) }.firstOrNull()
+        if (found != null) {
+            val preTop = lua.top
+            runScript(found.first, found.second)
+            if (lua.top > preTop) {
+                lua.getGlobal("package")
+                lua.getField(-1, "loaded")
+                lua.pushValue(-3)
+                lua.setField(-2, moduleName)
+                lua.pop(2)
+                return 1
             }
-            module
         }
-        if (module.type() == Lua.LuaType.FUNCTION) {
-            return module.call()[0]
-        }
-        return module
+
+        lua.pushNil()
+        return 1
     }
 
     private fun loadBuffer(script: String): Buffer {
@@ -393,17 +425,15 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
     }
 
     fun preloadModule(moduleName: String, script: String) {
-        if (packages.containsKey(moduleName)) {
-            logger.warn("Module $moduleName already loaded, skipping preload")
-            return
-        }
-
+        lua.getGlobal("package")
+        lua.getField(-1, "preload")
         lua.load(loadBuffer(script), moduleName)
-        packages[moduleName] = lua.get()
+        lua.setField(-2, moduleName)
+        lua.pop(2)
     }
 
     fun runScript(bundle: LocatedBundle, file: File, script: String) {
-        return runScript(bundle.manifest.name + ":" + file.name, script)
+        return runScript(bundle.getFileDebugName(file), script)
     }
 
     private fun runScript(name: String, script: String) {
