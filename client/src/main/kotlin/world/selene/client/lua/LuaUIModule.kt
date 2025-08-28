@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Group
+import com.badlogic.gdx.scenes.scene2d.InputEvent
 import com.badlogic.gdx.scenes.scene2d.ui.Button
 import com.badlogic.gdx.scenes.scene2d.ui.Container
 import com.badlogic.gdx.scenes.scene2d.ui.ImageButton
@@ -459,9 +460,64 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         table.register("CreateContainer", this::luaCreateContainer)
         table.register("CreateLabel", this::luaCreateLabel)
         table.register("AddToRoot", this::luaAddToRoot)
+        table.register("SetFocus", this::luaSetFocus)
         table.register("GetFocus", this::luaGetFocus)
         table.register("CreateImageButtonStyle", this::luaCreateImageButtonStyle)
+        table.register("AddInputProcessor", this::luaAddInputProcessor)
         table.set("Root", ui.bundlesRoot)
+    }
+
+    private fun luaAddInputProcessor(lua: Lua): Int {
+        lua.checkType(1, Lua.LuaType.TABLE)
+
+        val keyUp = lua.getFieldFunction(1, "KeyUp")
+        val keyDown = lua.getFieldFunction(1, "KeyDown")
+        val keyTyped = lua.getFieldFunction(1, "KeyTyped")
+        ui.stage.addListener { event ->
+            if (event is InputEvent) {
+                return@addListener when (event.type) {
+                    InputEvent.Type.keyUp -> {
+                        if (keyUp != null) {
+                            lua.push(keyUp)
+                            lua.push(event, Lua.Conversion.NONE)
+                            lua.push(event.keyCode, Lua.Conversion.FULL)
+                            lua.pCall(2, 1)
+                            lua.toBoolean(-1)
+                        } else false
+                    }
+
+                    InputEvent.Type.keyDown -> {
+                        if (keyDown != null) {
+                            lua.push(keyDown)
+                            lua.push(event, Lua.Conversion.NONE)
+                            lua.push(event.keyCode, Lua.Conversion.FULL)
+                            lua.pCall(2, 1)
+                            lua.toBoolean(-1)
+                        } else false
+                    }
+
+                    InputEvent.Type.keyTyped -> {
+                        if (keyTyped != null) {
+                            lua.push(keyTyped)
+                            lua.push(event, Lua.Conversion.NONE)
+                            lua.push(event.character, Lua.Conversion.FULL)
+                            lua.pCall(2, 1)
+                            lua.toBoolean(-1)
+                        } else false
+                    }
+
+                    else -> false
+                }
+            }
+            false
+        }
+        return 0
+    }
+
+    private fun luaSetFocus(lua: Lua): Int {
+        val actor = if (lua.isUserdata(1)) lua.checkUserdata<Actor>(1) else null
+        ui.stage.keyboardFocus = actor
+        return 0
     }
 
     private fun luaGetFocus(lua: Lua): Int {
