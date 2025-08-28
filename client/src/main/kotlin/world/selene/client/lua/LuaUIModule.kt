@@ -155,6 +155,18 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 actor.actor = child
                 0
             }
+            setter("Width") {
+                val container = it.checkSelf()
+                val minWidth = it.checkFloat(3)
+                container.width(minWidth)
+                0
+            }
+            setter("Height") {
+                val container = it.checkSelf()
+                val minHeight = it.checkFloat(3)
+                container.height(minHeight)
+                0
+            }
             setter("MinWidth") {
                 val container = it.checkSelf()
                 val minWidth = it.checkFloat(3)
