@@ -124,6 +124,11 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 }
                 0
             }
+            callable("Focus") { lua ->
+                val actor = lua.checkSelf()
+                actor.stage.keyboardFocus = actor
+                0
+            }
         }
         luaManager.defineMetatable(Actor::class, actorMetatable)
         val groupMetatable = actorMetatable.extend(Group::class) {
