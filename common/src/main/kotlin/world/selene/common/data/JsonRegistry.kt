@@ -1,6 +1,8 @@
 package world.selene.common.data
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.common.collect.HashBasedTable
+import com.google.common.collect.Table
 import org.slf4j.LoggerFactory
 import world.selene.common.bundles.BundleDatabase
 import java.io.File
@@ -15,25 +17,22 @@ abstract class JsonRegistry<TData : Any>(
     private val logger = LoggerFactory.getLogger("selene")
     protected val entries: MutableMap<String, TData> = mutableMapOf()
     protected val entriesById: MutableMap<Int, TData> = mutableMapOf()
+    private val metadataLookupTable: Table<String, Any, MutableList<String>> = HashBasedTable.create()
 
     override fun get(id: Int): TData? = entriesById[id]
     override fun get(name: String): TData? = entries[name]
     override fun getAll(): Map<String, TData> = entries
 
     override fun findByMetadata(key: String, value: Any): Pair<String, TData>? {
-        for ((key, data) in entries.entries) {
-            if (data is MetadataHolder) {
-                if (data.metadata[key] == value) {
-                    return key to data
-                }
-            }
-        }
-
-        return null
+        val entryNames = metadataLookupTable[key, value] ?: emptyList()
+        val firstEntryName = entryNames.firstOrNull() ?: return null
+        val data = entries[firstEntryName] ?: return null
+        return firstEntryName to data
     }
 
     fun load(bundleDatabase: BundleDatabase) {
         entries.clear()
+        metadataLookupTable.clear() // Clear cache when reloading entries
         for (bundle in bundleDatabase.loadedBundles) {
             val dataDir = File(bundle.dir, "$platform/data")
             val files = dataDir.listFiles { _, file -> file == "$name.json" || file.endsWith(".$name.json") }
@@ -62,6 +61,17 @@ abstract class JsonRegistry<TData : Any>(
             @Suppress("UNCHECKED_CAST")
             ((data as? RegistryObject<TData>)?.initializeFromRegistry(this, name, id))
             entriesById[id] = data
+
+            if (data is MetadataHolder) {
+                data.metadata.forEach { (key, value) ->
+                    val list = metadataLookupTable.get(key, value)
+                    if (list != null) {
+                        list.add(name)
+                    } else {
+                        metadataLookupTable.put(key, value, mutableListOf(name))
+                    }
+                }
+            }
         }
     }
 
