@@ -138,6 +138,13 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 actor.addActor(child)
                 0
             }
+            callable("AddChildBefore") {
+                val actor = it.checkSelf()
+                val before = it.checkUserdata<Actor>(2)
+                val child = it.checkUserdata<Actor>(3)
+                actor.addActorBefore(before, child)
+                0
+            }
         }
         luaManager.defineMetatable(Group::class, groupMetatable)
         luaManager.defineMetatable(VerticalGroup::class, groupMetatable)
