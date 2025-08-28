@@ -1,9 +1,10 @@
 package world.selene.common.bundles
 
 import org.slf4j.Logger
-import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaManager
 import java.io.File
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import kotlin.collections.iterator
 
 class BundleLoader(
@@ -13,24 +14,9 @@ class BundleLoader(
     private val bundleLocator: BundleLocator
 ) {
 
-    fun readBundleFileText(bundle: LocatedBundle, file: File): String {
-        var byteContent = file.readBytes()
+    fun readBundleFileText(bundle: LocatedBundle, file: File, encoding: Charset = StandardCharsets.UTF_8): String {
         val lua = luaManager.lua
-        
-        for ((_, transformer) in bundle.transformers) {
-            transformer.push(lua)
-            lua.getField(-1, "transformBytes")
-            if (lua.isFunction(-1)) {
-                lua.push(byteContent, Lua.Conversion.FULL)
-                lua.pCall(1, 1)
-                if (lua.isTable(-1)) {
-                    byteContent = lua.toList(-1)!!.map { (it as Double).toInt().toByte() }.toByteArray()
-                }
-            }
-            lua.pop(2) // transformer and result
-        }
-        
-        var textContent = String(byteContent, Charsets.UTF_8)
+        var textContent = file.readText(encoding)
         for ((_, transformer) in bundle.transformers) {
             transformer.push(lua)
             lua.getField(-1, "transformText")
@@ -43,7 +29,7 @@ class BundleLoader(
             }
             lua.pop(2) // transformer and result
         }
-        
+
         return textContent
     }
 
@@ -143,17 +129,31 @@ class BundleLoader(
                 val transformer = luaManager.lua.get()
                 locatedBundle.transformers[transformerPath] = transformer
             }
-            for ((moduleName, preloadFile) in manifest.preloads) {
-                val scriptFile = File(bundleDir, preloadFile)
-                if (scriptFile.exists()) {
-                    try {
-                        logger.debug("Pre-loading Lua module $moduleName from $preloadFile")
-                        luaManager.preloadModule(moduleName, readBundleFileText(locatedBundle, scriptFile))
-                    } catch (e: Exception) {
-                        logger.error("Error pre-loading Lua module $preloadFile: ${e.message}")
+            for ((moduleName, preload) in manifest.preloads) {
+                try {
+                    val (preloadFile, encoding) = when (preload) {
+                        is String -> preload to StandardCharsets.UTF_8
+                        is Map<*, *> -> {
+                            val preloadMap = preload as Map<String, Any>
+                            val file = preloadMap["file"] as? String
+                                ?: throw IllegalArgumentException("Preload object must have 'file' field")
+                            val enc = (preloadMap["encoding"] as? String)?.let { Charset.forName(it) }
+                                ?: StandardCharsets.UTF_8
+                            file to enc
+                        }
+
+                        else -> throw IllegalArgumentException("Preload must be either a string or an object with 'file' and optional 'encoding' fields")
                     }
-                } else {
-                    logger.error("Preload file $preloadFile not found in bundle $bundle")
+
+                    val scriptFile = File(bundleDir, preloadFile)
+                    if (scriptFile.exists()) {
+                        logger.debug("Pre-loading Lua module $moduleName from $preloadFile with encoding $encoding")
+                        luaManager.preloadModule(moduleName, readBundleFileText(locatedBundle, scriptFile, encoding))
+                    } else {
+                        logger.error("Preload file $preloadFile not found in bundle $bundle")
+                    }
+                } catch (e: Exception) {
+                    logger.error("Error pre-loading Lua module $moduleName: ${e.message}")
                 }
             }
         }
