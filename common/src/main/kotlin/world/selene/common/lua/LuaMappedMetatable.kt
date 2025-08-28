@@ -233,8 +233,14 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
             for (entry in source.getters) {
                 getter(entry.value)
             }
+            for (entry in source.inlineGetters) {
+                getter(entry.key, entry.value)
+            }
             for (entry in source.setters) {
                 setter(entry.value)
+            }
+            for (entry in source.inlineSetters) {
+                setter(entry.key, entry.value)
             }
         }.apply(body)
     }
