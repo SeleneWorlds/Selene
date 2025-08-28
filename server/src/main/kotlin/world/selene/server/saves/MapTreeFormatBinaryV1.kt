@@ -17,34 +17,34 @@ import java.nio.ByteOrder
 import java.nio.charset.StandardCharsets
 
 class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat {
-    
+
     override fun load(file: File): MapTree {
         val result = MapTree(registries)
-        
+
         val fileBytes = file.readBytes()
         val buffer = ByteBuffer.wrap(fileBytes).order(ByteOrder.BIG_ENDIAN)
-        
+
         val magic = ByteArray(4)
         buffer.get(magic)
         if (String(magic) != MAGIC) {
             throw RuntimeException("Invalid file format: expected magic '$MAGIC', got '${String(magic)}'")
         }
-        
+
         val version = buffer.short.toInt()
         if (version != VERSION) {
             throw RuntimeException("Unsupported version: expected $VERSION, got $version")
         }
-        
+
         buffer.int // reserved
         val layerCount = buffer.short.toInt()
-        
+
         // Read layer headers
         val layerHeaders = mutableListOf<LayerHeader>()
         repeat(layerCount) {
             val layerType = buffer.get().toInt()
             val chunkCount = buffer.int
             val chunks = mutableListOf<ChunkHeader>()
-            
+
             repeat(chunkCount) {
                 val x = buffer.short.toInt()
                 val y = buffer.short.toInt()
@@ -52,20 +52,20 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                 val storageType = buffer.get().toInt()
                 val offset = buffer.int
                 val length = buffer.int
-                
+
                 chunks.add(ChunkHeader(Coordinate(x, y, z), storageType, offset, length))
             }
-            
+
             layerHeaders.add(LayerHeader(layerType, chunks))
         }
-        
+
         // Process chunks
         layerHeaders.forEach { layerHeader ->
             layerHeader.chunks.forEach { chunkHeader ->
                 buffer.position(chunkHeader.offset)
-                
+
                 val chunkType = buffer.get().toInt()
-                
+
                 when (chunkType) {
                     CHUNK_DENSE -> {
                         // Read dense chunk data - bulk read all tiles at once
@@ -73,13 +73,13 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                         val baseX = chunkHeader.coordinate.x
                         val baseY = chunkHeader.coordinate.y
                         val z = chunkHeader.coordinate.z
-                        
+
                         val tileCount = chunkSize * chunkSize
                         val tileData = IntArray(tileCount)
                         for (i in 0 until tileCount) {
                             tileData[i] = buffer.int
                         }
-                        
+
                         // Process tiles
                         for (dy in 0 until chunkSize) {
                             for (dx in 0 until chunkSize) {
@@ -92,19 +92,19 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                 }
                             }
                         }
-                        
+
                         // Read annotations
                         val annotationCount = buffer.int
                         repeat(annotationCount) {
                             val x = buffer.int
                             val y = buffer.int
                             val z = buffer.int
-                            val key = readString(buffer)
-                            val data = readMap(buffer)
+                            val key = buffer.readString()
+                            val data = buffer.readMap()
                             result.annotateTile(Coordinate(x, y, z), key, data)
                         }
                     }
-                    
+
                     CHUNK_SPARSE -> {
                         val operationCoordinateCount = buffer.int
                         repeat(operationCoordinateCount) {
@@ -114,7 +114,7 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                 val y = buffer.short.toInt()
                                 val z = buffer.short.toInt()
                                 val operationType = buffer.get().toInt()
-                                
+
                                 when (operationType) {
                                     OP_PLACEMENT -> {
                                         val tileId = buffer.int
@@ -122,21 +122,21 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                             ?: throw RuntimeException("Missing tile definition for id $tileId")
                                         result.placeTile(Coordinate(x, y, z), tileDef)
                                     }
-                                    
+
                                     OP_REMOVAL -> {
                                         val tileId = buffer.int
                                         val tileDef = registries.tiles.get(tileId)
                                             ?: throw RuntimeException("Missing tile definition for id $tileId")
                                         result.removeTile(Coordinate(x, y, z), tileDef)
                                     }
-                                    
+
                                     OP_REPLACEMENT -> {
                                         val tileId = buffer.int
                                         val tileDef = registries.tiles.get(tileId)
                                             ?: throw RuntimeException("Missing tile definition for id $tileId")
                                         result.replaceTiles(Coordinate(x, y, z), tileDef)
                                     }
-                                    
+
                                     OP_SWAP -> {
                                         val oldTileId = buffer.int
                                         val newTileId = buffer.int
@@ -149,22 +149,22 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                 }
                             }
                         }
-                        
+
                         // Read annotations
                         val annotationCount = buffer.int
                         repeat(annotationCount) {
                             val x = buffer.int
                             val y = buffer.int
                             val z = buffer.int
-                            val key = readString(buffer)
-                            val data = readMap(buffer)
+                            val key = buffer.readString()
+                            val data = buffer.readMap()
                             result.annotateTile(Coordinate(x, y, z), key, data)
                         }
                     }
                 }
             }
         }
-        
+
         return result
     }
 
@@ -187,7 +187,7 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                 )
                 if (layer is ChunkedMapLayer) {
                     raf.writeInt(layer.chunks.size)
-                    layer.chunks.forEach { (chunkStart, chunk) ->
+                    layer.chunks.forEach { (chunkStart, _) ->
                         raf.writeShort(chunkStart.x)
                         raf.writeShort(chunkStart.y)
                         raf.writeShort(chunkStart.z)
@@ -211,7 +211,7 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
             var chunkIndex = 0
             mapTree.layers.forEach { layer ->
                 if (layer is ChunkedMapLayer) {
-                    layer.chunks.forEach { (chunkStart, chunk) ->
+                    layer.chunks.forEach { (_, chunk) ->
                         val chunkPointer = raf.filePointer
                         raf.writeByte(
                             when (chunk) {
@@ -220,7 +220,7 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                 else -> 0
                             }
                         )
-                        
+
                         when (chunk) {
                             is DenseMapLayer.DenseChunk -> {
                                 // Write dense tile data - bulk write for performance
@@ -230,7 +230,7 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                     tileBuffer.putInt(tileId)
                                 }
                                 raf.write(tileBuffer.array())
-                                
+
                                 // Write annotations
                                 val annotations = chunk.annotations.cellSet()
                                 raf.writeInt(annotations.size)
@@ -238,11 +238,11 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                     raf.writeInt(cell.rowKey.x)
                                     raf.writeInt(cell.rowKey.y)
                                     raf.writeInt(cell.rowKey.z)
-                                    writeString(raf, cell.columnKey)
-                                    writeMap(raf, cell.value)
+                                    raf.writeString(cell.columnKey)
+                                    raf.writeMap(cell.value)
                                 }
                             }
-                            
+
                             is SparseMapLayer.SparseChunk -> {
                                 raf.writeInt(chunk.operations.size)
                                 chunk.operations.forEach { (coordinate, operations) ->
@@ -279,7 +279,7 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                         }
                                     }
                                 }
-                                
+
                                 // Write annotations
                                 val annotations = chunk.annotations.cellSet()
                                 raf.writeInt(annotations.size)
@@ -287,12 +287,12 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                     raf.writeInt(cell.rowKey.x)
                                     raf.writeInt(cell.rowKey.y)
                                     raf.writeInt(cell.rowKey.z)
-                                    writeString(raf, cell.columnKey)
-                                    writeMap(raf, cell.value)
+                                    raf.writeString(cell.columnKey)
+                                    raf.writeMap(cell.value)
                                 }
                             }
                         }
-                        
+
                         val currentPointer = raf.filePointer
                         raf.seek(chunkHeaderPointers[chunkIndex])
                         raf.writeInt(chunkPointer.toInt())
@@ -313,39 +313,89 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
             }
         }
     }
-    
-    private fun writeString(raf: RandomAccessFile, str: String) {
+
+    private fun RandomAccessFile.writeString(str: String) {
         val bytes = str.toByteArray(StandardCharsets.UTF_8)
-        raf.writeInt(bytes.size)
-        raf.write(bytes)
+        writeInt(bytes.size)
+        write(bytes)
     }
-    
-    private fun readString(buffer: ByteBuffer): String {
-        val length = buffer.int
+
+    private fun ByteBuffer.readString(): String {
+        val length = this.int
         val bytes = ByteArray(length)
-        buffer.get(bytes)
+        this.get(bytes)
         return String(bytes, StandardCharsets.UTF_8)
     }
-    
-    private fun writeMap(raf: RandomAccessFile, map: Map<Any, Any>) {
-        raf.writeInt(map.size)
-        map.forEach { (key, value) ->
-            writeString(raf, key.toString())
-            writeString(raf, value.toString())
+
+    private fun RandomAccessFile.writeAny(value: Any) {
+        when (value) {
+            is Int -> {
+                writeByte(1); writeInt(value)
+            }
+
+            is Float -> {
+                writeByte(2); writeFloat(value)
+            }
+
+            is Boolean -> {
+                writeByte(3); writeBoolean(value)
+            }
+
+            is Double -> {
+                writeByte(4); writeDouble(value)
+            }
+
+            is Long -> {
+                writeByte(5); writeLong(value)
+            }
+
+            is Short -> {
+                writeByte(6); writeShort(value.toInt())
+            }
+
+            is Byte -> {
+                writeByte(7); writeByte(value.toInt())
+            }
+
+            else -> {
+                writeByte(0); writeString(value.toString())
+            }
         }
     }
-    
-    private fun readMap(buffer: ByteBuffer): Map<Any, Any> {
-        val size = buffer.int
+
+    private fun ByteBuffer.readAny() {
+        val type = this.get().toInt()
+        when (type) {
+            1 -> this.int
+            2 -> this.float
+            3 -> this.get().toInt() == 1
+            4 -> this.double
+            5 -> this.long
+            6 -> this.short
+            7 -> this.get()
+            else -> readString()
+        }
+    }
+
+    private fun RandomAccessFile.writeMap(map: Map<Any, Any>) {
+        writeInt(map.size)
+        map.forEach { (key, value) ->
+            writeAny(key)
+            writeAny(value)
+        }
+    }
+
+    private fun ByteBuffer.readMap(): Map<Any, Any> {
+        val size = this.int
         val map = mutableMapOf<Any, Any>()
         repeat(size) {
-            val key = readString(buffer)
-            val value = readString(buffer)
+            val key = readAny()
+            val value = readAny()
             map[key] = value
         }
         return map
     }
-    
+
     private data class LayerHeader(val type: Int, val chunks: List<ChunkHeader>)
     private data class ChunkHeader(val coordinate: Coordinate, val storageType: Int, val offset: Int, val length: Int)
 
@@ -353,7 +403,6 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
         const val MAGIC = "SELM"
         const val VERSION = 2
         const val STORAGE_INLINE = 1
-        const val STORAGE_EXTERNAL = 2
         const val LAYER_DENSE = 1
         const val LAYER_SPARSE = 2
         const val CHUNK_DENSE = 1
