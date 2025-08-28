@@ -30,6 +30,7 @@ import com.kotcrab.vis.ui.widget.VisTextField
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.assets.BundleFileResolver
+import world.selene.client.ui.ParameterizedActorConsumer
 import world.selene.client.ui.SeleneLmlParser
 import world.selene.client.ui.UI
 import world.selene.common.lua.*
@@ -513,14 +514,17 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
             // Register actions from Lua
             for ((actionName, actionFunction) in actions) {
-                parser.action(actionName) { actor ->
-                    try {
-                        actionFunction.call(actor as Actor)
-                    } catch (e: Exception) {
-                        // Log error but don't crash the UI
-                        println("Error executing Lua action '$actionName': ${e.message}")
+                parser.action(actionName, object: ParameterizedActorConsumer<Any?, Actor> {
+                    override fun consumeWithParameters(actor: Actor, vararg parameters: Any): Any? {
+                        lua.push(actionFunction, Lua.Conversion.NONE)
+                        lua.push(actor, Lua.Conversion.NONE)
+                        for (parameter in parameters) {
+                            lua.push(parameter, Lua.Conversion.FULL)
+                        }
+                        lua.pCall(parameters.size + 1, 1)
+                        return lua.toAny(-1)
                     }
-                }
+                })
             }
 
             // Setup i18n bundle

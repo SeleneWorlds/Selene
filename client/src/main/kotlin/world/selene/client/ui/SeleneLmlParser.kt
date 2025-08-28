@@ -198,4 +198,16 @@ object SeleneLmlParser {
             }, "mask")
         }
     }
+
+    fun <TActor> LmlParser.parseParameterizedAction(
+        rawLmlData: String
+    ): ParameterizedActorConsumer<*, TActor>? {
+        val actionId = LmlUtilities.stripMarker(rawLmlData, syntax.methodInvocationMarker)
+        val namedActorConsumer = data.getActorConsumer(actionId)
+        if (namedActorConsumer is ParameterizedActorConsumer) {
+            @Suppress("UNCHECKED_CAST")
+            return namedActorConsumer as ParameterizedActorConsumer<*, TActor>
+        }
+        return null
+    }
 }
