@@ -69,6 +69,10 @@ class LuaRegistriesModule(
             return luaMeta
         }
 
+        override fun toString(): String {
+            return "TransientRegistryObject($name, $element)"
+        }
+
         companion object {
             val luaMeta = LuaMappedMetatable(TransientRegistryObject::class) {
                 readOnly(TransientRegistryObject::name)
