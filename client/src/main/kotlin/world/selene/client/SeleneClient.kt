@@ -1,7 +1,10 @@
 package world.selene.client
 
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.delay
 import org.slf4j.Logger
+import kotlin.math.min
+import kotlin.math.pow
 import world.selene.client.config.ClientRuntimeConfig
 import world.selene.client.data.AudioRegistry
 import world.selene.client.data.VisualRegistry
@@ -57,13 +60,55 @@ class SeleneClient(
         customRegistries.loadCustomRegistries(bundleDatabase, "client")
         bundleLoader.loadBundleEntrypoints(bundles, listOf("common/", "client/", "init.lua"))
         (networkClient as NetworkClientImpl).packetHandler = packetHandler
+
         runBlocking {
-            networkClient.connect(runtimeConfig.host, runtimeConfig.port).addListener {
-                if (it.isSuccess) {
-                    networkClient.send(AuthenticatePacket(runtimeConfig.token))
-                    networkClient.send(PreferencesPacket(Locale.getDefault().toString()))
+            connectWithRetry()
+        }
+    }
+
+    private suspend fun connectWithRetry() {
+        var attempt = 0
+        val maxAttempts = 10
+        val baseDelayMs = 1000L
+        val maxDelayMs = 30000L
+
+        while (attempt < maxAttempts) {
+            attempt++
+            if (attempt == 1) {
+                logger.info("Connecting to ${runtimeConfig.host}:${runtimeConfig.port}")
+            } else {
+                logger.info("Connecting to ${runtimeConfig.host}:${runtimeConfig.port} (attempt $attempt/$maxAttempts)")
+            }
+
+            try {
+                val future = networkClient.connect(runtimeConfig.host, runtimeConfig.port).addListener {
+                    if (it.isSuccess) {
+                        if (attempt == 1) {
+                            logger.info("Successfully connected")
+                        } else {
+                            logger.info("Successfully connected after $attempt attempts")
+                        }
+                        networkClient.send(AuthenticatePacket(runtimeConfig.token))
+                        networkClient.send(PreferencesPacket(Locale.getDefault().toString()))
+                    }
+                }.await()
+                if (future.isSuccess) {
+                    return
                 }
+            } catch (e: Exception) {
+                logger.warn("Connection failed: ${e.message}")
+            }
+
+            if (attempt < maxAttempts) {
+                val exponentialDelay = (baseDelayMs * 2.0.pow(attempt - 1)).toLong()
+                val finalDelay = min(exponentialDelay, maxDelayMs)
+
+                logger.info("Retrying connection in ${finalDelay}ms...")
+                delay(finalDelay)
             }
         }
+
+        logger.error("Failed to connect after $maxAttempts attempts. Giving up.")
+        throw RuntimeException("Unable to connect to server after $maxAttempts attempts")
     }
 }
