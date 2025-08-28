@@ -208,6 +208,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             }
         })
         luaManager.defineMetatable(TextField::class, actorMetatable.extend(TextField::class) {
+            getter(TextField::getDefaultInputListener, "InputListener")
             getter("Text") {
                 val textField = it.checkSelf()
                 it.push(textField.text.toString())
@@ -451,6 +452,31 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 return@callable 0
             }
         })
+        luaManager.defineMetatable(
+            TextField.TextFieldClickListener::class,
+            LuaMappedMetatable(TextField.TextFieldClickListener::class) {
+                callable("KeyDown") { lua ->
+                    val listener = lua.checkSelf()
+                    val event = lua.checkUserdata<InputEvent>(2)
+                    val keyCode = lua.checkInt(3)
+                    lua.push(listener.keyDown(event, keyCode))
+                    1
+                }
+                callable("KeyUp") { lua ->
+                    val listener = lua.checkSelf()
+                    val event = lua.checkUserdata<InputEvent>(2)
+                    val keyCode = lua.checkInt(3)
+                    lua.push(listener.keyUp(event, keyCode))
+                    1
+                }
+                callable("KeyTyped") { lua ->
+                    val listener = lua.checkSelf()
+                    val event = lua.checkUserdata<InputEvent>(2)
+                    val char = lua.checkInt(3).toChar()
+                    lua.push(listener.keyTyped(event, char))
+                    1
+                }
+            })
     }
 
     override fun register(table: LuaValue) {
@@ -570,7 +596,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
 
             // Register actions from Lua
             for ((actionName, actionFunction) in actions) {
-                parser.action(actionName, object: ParameterizedActorConsumer<Any?, Actor> {
+                parser.action(actionName, object : ParameterizedActorConsumer<Any?, Actor> {
                     override fun consumeWithParameters(actor: Actor, vararg parameters: Any): Any? {
                         lua.push(actionFunction, Lua.Conversion.NONE)
                         lua.push(actor, Lua.Conversion.NONE)
