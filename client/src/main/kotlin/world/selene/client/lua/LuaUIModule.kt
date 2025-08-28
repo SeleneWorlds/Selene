@@ -45,6 +45,11 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             getter(Actor::getHeight)
             setter(Actor::setWidth)
             setter(Actor::setHeight)
+            callable("Invalidate") {
+                val actor = it.checkSelf()
+                if (actor is Layout) actor.invalidate()
+                0
+            }
             getter("MinWidth") {
                 val actor = it.checkSelf()
                 it.push((actor as? Layout)?.minWidth ?: 0f)
