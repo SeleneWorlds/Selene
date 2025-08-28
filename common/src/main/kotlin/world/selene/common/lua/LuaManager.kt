@@ -364,12 +364,10 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         return 1
     }
 
-    private fun luaRequire(lua: Lua, args: Array<LuaValue>): Array<LuaValue> {
-        val path = args.getOrNull(0)?.toString()
-        if (path == null) {
-            throw IllegalArgumentException("require path must be a string")
-        }
-        return arrayOf(requireModule(path))
+    private fun luaRequire(lua: Lua): Int {
+        val path = lua.checkString(1)
+        lua.push(requireModule(path))
+        return 1
     }
 
     fun requireModule(moduleName: String): LuaValue {
