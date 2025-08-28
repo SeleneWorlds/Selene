@@ -9,12 +9,10 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import io.netty.handler.codec.LengthFieldPrepender
 import io.netty.handler.timeout.ReadTimeoutHandler
 import org.slf4j.Logger
-import party.iroiro.luajava.Lua
 import world.selene.common.network.PacketDecoder
 import world.selene.common.network.PacketEncoder
 import world.selene.common.network.PacketFactory
 import world.selene.common.network.PacketHandler
-import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.player.PlayerManager
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -23,7 +21,6 @@ class NetworkServerImpl(
     private val packetFactory: PacketFactory,
     private val packetHandler: PacketHandler<NetworkClient>,
     private val playerManager: PlayerManager,
-    private val luaSignals: ServerLuaSignals,
     private val logger: Logger
 ) : ChannelInboundHandlerAdapter(), NetworkServer {
 
@@ -94,10 +91,6 @@ class NetworkServerImpl(
         val client = ctx.channel().attr(NetworkClientImpl.ATTRIBUTE).get()
         clients.remove(client)
         playerManager.removePlayer(client)
-        luaSignals.playerLeft.emit { lua ->
-            lua.push(client.player, Lua.Conversion.NONE)
-            1
-        }
         logger.info("Client disconnected: ${client.address}")
     }
 
