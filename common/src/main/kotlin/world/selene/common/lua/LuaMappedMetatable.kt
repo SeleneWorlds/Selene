@@ -32,6 +32,8 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
 
     fun readOnly(property: KProperty<*>, alias: String? = null) {
         val key = alias ?: capitalize(property.name)
+        getters.remove(key)
+        inlineGetters.remove(key)
         properties[key] = property
         property.isAccessible = true
     }
@@ -44,7 +46,10 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
             require(function.parameters[1].type.classifier == Lua::class) { "Getter '${function.name}' has invalid parameter type: ${function.parameters[1].type}" }
             require(function.returnType.classifier == Int::class) { "Getter '${function.name}' has invalid return type: ${function.returnType}" }
         }
-        getters[alias ?: capitalize(function.name.removePrefix("get"))] = function
+        val key = alias ?: capitalize(function.name.removePrefix("get"))
+        properties.remove(key)
+        inlineGetters.remove(key)
+        getters[key] = function
         function.isAccessible = true
     }
 
@@ -55,20 +60,31 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
         if (function.parameters[1].type.classifier == Lua::class) {
             require(function.returnType.classifier == Int::class) { "Setter '${function.name}' has invalid return type: ${function.returnType}" }
         }
-        setters[alias ?: capitalize(function.name.removePrefix("set"))] = function
+        val key = alias ?: capitalize(function.name.removePrefix("set"))
+        mutableProperties.remove(key)
+        inlineSetters.remove(key)
+        setters[key] = function
         function.isAccessible = true
     }
 
     fun getter(key: String, function: (Lua) -> Int) {
+        properties.remove(key)
+        getters.remove(key)
         inlineGetters[key] = function
     }
 
     fun setter(key: String, function: (Lua) -> Int) {
+        mutableProperties.remove(key)
+        setters.remove(key)
         inlineSetters[key] = function
     }
 
     fun writable(property: KMutableProperty<*>, alias: String? = null) {
         val key = alias ?: capitalize(property.name)
+        getters.remove(key)
+        inlineGetters.remove(key)
+        setters.remove(key)
+        inlineSetters.remove(key)
         mutableProperties[key] = property
         properties[key] = property
         property.isAccessible = true
@@ -81,11 +97,14 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
         if (function.parameters.size == 2) {
             require(function.parameters[1].type.classifier == Lua::class) { "Method '${function.name}' has invalid parameter type: ${function.parameters[1].type}" }
         }
-        callables[capitalize(function.name)] = function
+        val key = capitalize(function.name)
+        inlineCallables.remove(key)
+        callables[key] = function
         function.isAccessible = true
     }
 
     fun callable(key: String, function: (Lua) -> Int) {
+        callables.remove(key)
         inlineCallables[key] = function
     }
 
