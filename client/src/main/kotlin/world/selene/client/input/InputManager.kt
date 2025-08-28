@@ -24,10 +24,6 @@ class InputManager : InputProcessor {
         }
     }
 
-    // Track pressed keys and mouse buttons
-    private val pressedKeys = mutableSetOf<Int>()
-    private val pressedMouseButtons = mutableSetOf<Int>()
-
     private val keyboardActions = mutableMapOf<Int, () -> Unit>()
     private val keyboardPressActions = mutableMapOf<Int, () -> Unit>()
     private val keyboardReleaseActions = mutableMapOf<Int, () -> Unit>()
@@ -65,12 +61,12 @@ class InputManager : InputProcessor {
 
     fun isKeyPressed(key: String): Boolean {
         val keyCode = lookupKeyboardKey(key)
-        return pressedKeys.contains(keyCode)
+        return Gdx.input.isKeyPressed(keyCode)
     }
 
     fun isMousePressed(button: String): Boolean {
         val buttonCode = lookupMouseButton(button)
-        return pressedMouseButtons.contains(buttonCode)
+        return Gdx.input.isButtonPressed(buttonCode)
     }
 
     fun bindContinuousAction(type: InputType, input: String, function: () -> Unit) {
@@ -104,13 +100,13 @@ class InputManager : InputProcessor {
             val (type, input) = key
             when (type) {
                 InputType.KEYBOARD -> {
-                    if (pressedKeys.contains(input)) {
+                    if (Gdx.input.isKeyPressed(input)) {
                         action()
                     }
                 }
 
                 InputType.MOUSE -> {
-                    if (pressedMouseButtons.contains(input)) {
+                    if (Gdx.input.isButtonPressed(input)) {
                         action()
                     }
                 }
@@ -119,13 +115,11 @@ class InputManager : InputProcessor {
     }
 
     override fun keyDown(keycode: Int): Boolean {
-        pressedKeys.add(keycode)
         keyboardPressActions[keycode]?.invoke()
         return false
     }
 
     override fun keyUp(keycode: Int): Boolean {
-        pressedKeys.remove(keycode)
         keyboardReleaseActions[keycode]?.invoke()
         return false
     }
@@ -140,7 +134,6 @@ class InputManager : InputProcessor {
         pointer: Int,
         button: Int
     ): Boolean {
-        pressedMouseButtons.add(button)
         mousePressActions[button]?.invoke(screenX, screenY)
         return false
     }
@@ -151,7 +144,6 @@ class InputManager : InputProcessor {
         pointer: Int,
         button: Int
     ): Boolean {
-        pressedMouseButtons.remove(button)
         mouseActions[button]?.invoke(screenX, screenY)
         mouseReleaseActions[button]?.invoke(screenX, screenY)
         return false
@@ -163,7 +155,6 @@ class InputManager : InputProcessor {
         pointer: Int,
         button: Int
     ): Boolean {
-        pressedMouseButtons.remove(button)
         return false
     }
 
