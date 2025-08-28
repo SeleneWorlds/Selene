@@ -60,6 +60,16 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                 it.push((actor as? Layout)?.minHeight ?: 0f)
                 1
             }
+            getter("PreferredWidth") {
+                val actor = it.checkSelf()
+                it.push((actor as? Layout)?.prefWidth ?: 0f)
+                1
+            }
+            getter("PreferredHeight") {
+                val actor = it.checkSelf()
+                it.push((actor as? Layout)?.prefHeight ?: 0f)
+                1
+            }
             getter("MaxWidth") {
                 val actor = it.checkSelf()
                 it.push((actor as? Layout)?.maxWidth ?: 0f)
