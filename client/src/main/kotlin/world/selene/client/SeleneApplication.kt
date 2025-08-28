@@ -84,6 +84,7 @@ import world.selene.common.i18n.Messages
 import world.selene.common.network.PacketFactory
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.PacketRegistrations
+import world.selene.common.util.Disposable
 
 class SeleneApplication(
     private val config: ClientConfig,
@@ -119,8 +120,8 @@ class SeleneApplication(
             singleOf(::LuaGameModule) { bind<LuaModule>() }
             singleOf(::LuaEntitiesModule) { bind<LuaModule>() }
             singleOf(::LuaRegistriesModule) { bind<LuaModule>() }
-            singleOf(::LuaSchedulesModule) { bind<LuaModule>() }
-            singleOf(::LuaHttpModule) { bind<LuaModule>() }
+            singleOf(::LuaSchedulesModule) { bind<LuaModule>(); bind<Disposable>() }
+            singleOf(::LuaHttpModule) { bind<LuaModule>(); bind<Disposable>() }
             singleOf(::LuaI18nModule) { bind<LuaModule>() }
         }
         val bundleModule = module {
@@ -170,7 +171,7 @@ class SeleneApplication(
             singleOf(::SeleneApplicationListener) { bind<ApplicationListener>() }
             singleOf(::BundleFileResolver)
             single { AssetStorage(fileResolver = get<BundleFileResolver>()) }
-            singleOf(::AssetProvider)
+            singleOf(::AssetProvider) { bind<Disposable>() }
         }
         val worldModule = module {
             singleOf(::ClientMap)
@@ -187,7 +188,7 @@ class SeleneApplication(
             singleOf(::DebugRenderer)
         }
         val audioModule = module {
-            singleOf(::SoundManager)
+            singleOf(::SoundManager) { bind<Disposable>() }
         }
         val inputModule = module {
             single { InputMultiplexer() }

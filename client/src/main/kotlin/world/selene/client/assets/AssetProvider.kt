@@ -7,8 +7,9 @@ import ktx.assets.async.AssetLoadingException
 import ktx.assets.async.AssetStorage
 import org.slf4j.Logger
 import world.selene.client.visual.TextureOptions
+import world.selene.common.util.Disposable
 
-class AssetProvider(private val logger: Logger, private val assetStorage: AssetStorage) {
+class AssetProvider(private val logger: Logger, private val assetStorage: AssetStorage) : Disposable {
 
     val missingTexture = TextureRegion(Texture(1, 1, Pixmap.Format.RGBA8888))
 
@@ -22,4 +23,7 @@ class AssetProvider(private val logger: Logger, private val assetStorage: AssetS
         }
     }
 
+    override fun dispose() {
+        assetStorage.dispose()
+    }
 }
