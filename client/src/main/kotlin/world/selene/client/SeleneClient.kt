@@ -21,6 +21,7 @@ import world.selene.common.lua.LuaManager
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.PacketRegistrations
 import world.selene.common.network.packet.AuthenticatePacket
+import world.selene.common.network.packet.FinalizeJoinPacket
 import world.selene.common.network.packet.PreferencesPacket
 import java.util.Locale
 
@@ -90,6 +91,7 @@ class SeleneClient(
                         }
                         networkClient.send(AuthenticatePacket(runtimeConfig.token))
                         networkClient.send(PreferencesPacket(Locale.getDefault().toString()))
+                        networkClient.send(FinalizeJoinPacket())
                     }
                 }.await()
                 if (future.isSuccess) {

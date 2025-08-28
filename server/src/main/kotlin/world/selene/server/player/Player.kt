@@ -24,6 +24,13 @@ import java.util.Locale
 class Player(private val playerManager: PlayerManager, val client: NetworkClient) : LuaMetatableProvider,
     LuaReferencable<String, Player> {
 
+    enum class ConnectionState {
+        PENDING_AUTHENTICATION,
+        PENDING_JOIN,
+        READY
+    }
+
+    var connectionState: ConnectionState = ConnectionState.PENDING_AUTHENTICATION
     var userId: String? = null
     var locale: Locale = Locale.ENGLISH
     val localeString get() = locale.toString()

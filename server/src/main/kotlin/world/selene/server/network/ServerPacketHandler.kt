@@ -11,12 +11,14 @@ import world.selene.common.network.Packet
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.packet.AuthenticatePacket
 import world.selene.common.network.packet.CustomPayloadPacket
+import world.selene.common.network.packet.FinalizeJoinPacket
 import world.selene.common.network.packet.MoveEntityPacket
 import world.selene.common.network.packet.NameIdMappingsPacket
 import world.selene.common.network.packet.PreferencesPacket
 import world.selene.common.network.packet.RequestMovePacket
 import world.selene.server.login.SessionAuthentication
 import world.selene.server.lua.ServerLuaSignals
+import world.selene.server.player.Player
 import java.util.Locale
 
 class ServerPacketHandler(
@@ -28,12 +30,10 @@ class ServerPacketHandler(
     private val payloadRegistry: LuaPayloadRegistry,
     private val sessionAuthentication: SessionAuthentication
 ) : PacketHandler<NetworkClient> {
-    override fun handle(
-        context: NetworkClient,
-        packet: Packet
-    ) {
+
+    private fun handleAuthentication(context: NetworkClient, packet: Packet) {
+        val player = (context as NetworkClientImpl).player
         if (packet is AuthenticatePacket) {
-            val player = (context as NetworkClientImpl).player
             val tokenData = sessionAuthentication.parseToken(packet.token)
             player.userId = tokenData.userId
             for (scope in nameIdRegistry.mappings.rowKeySet()) {
@@ -42,21 +42,37 @@ class ServerPacketHandler(
                     context.send(NameIdMappingsPacket(scope, chunk))
                 }
             }
+            player.connectionState = Player.ConnectionState.PENDING_JOIN
+        }
+    }
+
+    private fun handlePreferences(context: NetworkClient, packet: PreferencesPacket) {
+        val player = (context as NetworkClientImpl).player
+        val localeParts = packet.locale.split("_")
+        player.locale = when (localeParts.size) {
+            1 -> Locale.of(localeParts[0])
+            2 -> Locale.of(localeParts[0], localeParts[1])
+            3 -> Locale.of(localeParts[0], localeParts[1], localeParts[2])
+            else -> Locale.ENGLISH
+        }
+    }
+
+    private fun handleJoin(context: NetworkClient, packet: Packet) {
+        if (packet is PreferencesPacket) {
+            handlePreferences(context, packet)
+        } else if (packet is FinalizeJoinPacket) {
+            val player = (context as NetworkClientImpl).player
+            player.connectionState = Player.ConnectionState.READY
             signals.playerJoined.emit { lua ->
                 lua.push(player, Lua.Conversion.NONE)
                 1
             }
-        } else if (packet is PreferencesPacket) {
-            val player = (context as NetworkClientImpl).player
-            val localeParts = packet.locale.split("_")
-            player.locale = when (localeParts.size) {
-                1 -> Locale.of(localeParts[0])
-                2 -> Locale.of(localeParts[0], localeParts[1])
-                3 -> Locale.of(localeParts[0], localeParts[1], localeParts[2])
-                else -> Locale.ENGLISH
-            }
-        } else if (packet is RequestMovePacket) {
-            val player = (context as NetworkClientImpl).player
+        }
+    }
+
+    private fun handleGame(context: NetworkClient, packet: Packet) {
+        val player = (context as NetworkClientImpl).player
+        if (packet is RequestMovePacket) {
             player.resetLastInputTime()
             val controlledEntity = player.controlledEntity ?: return
             if (!controlledEntity.moveTo(packet.coordinate)) {
@@ -74,7 +90,6 @@ class ServerPacketHandler(
             context.enqueueWork {
                 val handler = payloadRegistry.retrieveHandler(packet.payloadId)
                 if (handler != null) {
-                    val player = (context as NetworkClientImpl).player
                     handler.callback.push(luaManager.lua)
                     luaManager.lua.push(player, Lua.Conversion.NONE)
                     val payload = objectMapper.readValue(packet.payload, Map::class.java)
@@ -82,10 +97,25 @@ class ServerPacketHandler(
                     try {
                         luaManager.lua.pCall(2, 0)
                     } catch (e: LuaException) {
-                        logger.error("Error while handling custom payload ${packet.payloadId} (registered at ${handler.registrationSite})", e)
+                        logger.error(
+                            "Error while handling custom payload ${packet.payloadId} (registered at ${handler.registrationSite})",
+                            e
+                        )
                     }
                 }
             }
+        }
+    }
+
+    override fun handle(
+        context: NetworkClient,
+        packet: Packet
+    ) {
+        val player = (context as NetworkClientImpl).player
+        when (player.connectionState) {
+            Player.ConnectionState.PENDING_AUTHENTICATION -> handleAuthentication(context, packet)
+            Player.ConnectionState.PENDING_JOIN -> handleJoin(context, packet)
+            Player.ConnectionState.READY -> handleGame(context, packet)
         }
     }
 }

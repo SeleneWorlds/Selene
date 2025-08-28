@@ -32,7 +32,9 @@ class NetworkClientImpl(
     }
 
     override fun disconnect() {
-        channel.close()
+        channel.disconnect().addListener {
+            channel.close()
+        }
     }
 
     override val address: InetSocketAddress get() = channel.remoteAddress() as InetSocketAddress

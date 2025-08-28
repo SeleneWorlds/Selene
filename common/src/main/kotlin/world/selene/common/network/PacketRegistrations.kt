@@ -5,6 +5,7 @@ import world.selene.common.network.packet.SetCameraPositionPacket
 import world.selene.common.network.packet.CustomPayloadPacket
 import world.selene.common.network.packet.DisconnectPacket
 import world.selene.common.network.packet.EntityPacket
+import world.selene.common.network.packet.FinalizeJoinPacket
 import world.selene.common.network.packet.MapChunkPacket
 import world.selene.common.network.packet.UpdateMapTilesPacket
 import world.selene.common.network.packet.MoveEntityPacket
@@ -109,6 +110,12 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             PreferencesPacket::class,
             PreferencesPacket::encode,
             PreferencesPacket::decode
+        )
+        packetFactory.registerPacket(
+            16,
+            FinalizeJoinPacket::class,
+            FinalizeJoinPacket::encode,
+            FinalizeJoinPacket::decode
         )
         packetFactory.registerPacket(
             254,
