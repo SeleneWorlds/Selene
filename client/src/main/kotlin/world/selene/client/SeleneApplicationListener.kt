@@ -7,16 +7,13 @@ import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
-import com.badlogic.gdx.math.Vector
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.ScreenUtils
-import ktx.assets.async.AssetStorage
+import org.koin.mp.KoinPlatform.getKoin
 import world.selene.client.camera.CameraManager
-import world.selene.client.config.ClientRuntimeConfig
 import world.selene.client.controls.GridMovement
 import world.selene.client.controls.PlayerController
-import world.selene.client.grid.ClientGrid
 import world.selene.client.input.InputManager
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.maps.ClientMap
@@ -25,22 +22,16 @@ import world.selene.client.rendering.DebugRenderer
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.ui.UI
 import world.selene.client.visual.VisualManager
-import world.selene.common.bundles.BundleLoader
-import world.selene.common.lua.LuaManager
 import world.selene.common.threading.MainThreadDispatcher
+import world.selene.common.util.Disposable
 
 class SeleneApplicationListener(
     private val client: SeleneClient,
-    private val assetStorage: AssetStorage,
-    private val bundleLoader: BundleLoader,
-    private val luaManager: LuaManager,
     private val networkClient: NetworkClient,
-    private val runtimeConfig: ClientRuntimeConfig,
     private val visualManager: VisualManager,
     private val cameraManager: CameraManager,
     private val inputMultiplexer: InputMultiplexer,
     private val inputManager: InputManager,
-    private val grid: ClientGrid,
     private val ui: UI,
     private val clientMap: ClientMap,
     private val playerController: PlayerController,
@@ -56,6 +47,8 @@ class SeleneApplicationListener(
     lateinit var markerTexture: Texture
 
     override fun create() {
+        client.start()
+
         debugRenderer.initialize()
         spriteBatch = SpriteBatch()
         markerTexture = Texture("icon_16.png")
@@ -119,5 +112,7 @@ class SeleneApplicationListener(
         spriteBatch.dispose()
         ui.dispose()
         networkClient.disconnect()
+
+        getKoin().getAll<Disposable>().forEach { it.dispose() }
     }
 }

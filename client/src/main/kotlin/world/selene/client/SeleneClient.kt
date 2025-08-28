@@ -38,7 +38,7 @@ class SeleneClient(
     private val packetHandler: PacketHandler<NetworkClient>,
     private val logger: Logger
 ) {
-    init {
+    fun start() {
         logger.info("Starting Selene Client")
 
         packetRegistrations.register()
