@@ -1,16 +1,36 @@
 package world.selene.common.lua
 
 import party.iroiro.luajava.Lua
+import java.lang.ref.WeakReference
 import kotlin.reflect.KClass
 
 class LuaReference<TID : Any, TObject : Any>(
     private val clazz: KClass<TObject>,
     private val id: TID,
-    private val resolver: LuaReferenceResolver<TID, TObject>
+    private val resolver: LuaReferenceResolver<TID, TObject>,
+    var initialObject: TObject? = null
 ) : LuaMetatable {
 
+    private var cachedObject: WeakReference<TObject>? = null
+
+    init {
+        if (initialObject != null) {
+            cachedObject = WeakReference(initialObject)
+        }
+    }
+
     fun resolve(): TObject? {
-        return resolver.luaDereference(id)
+        if (cachedObject != null) {
+            val resolved = cachedObject?.get()
+            if (resolved != null) {
+                return resolved
+            } else {
+                cachedObject = null
+            }
+        }
+        val resolved = resolver.luaDereference(id)
+        cachedObject = WeakReference(resolved)
+        return resolved
     }
 
     private fun luaMetatable(lua: Lua): LuaMetatable {
