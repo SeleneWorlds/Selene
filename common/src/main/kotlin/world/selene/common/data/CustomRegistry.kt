@@ -20,17 +20,26 @@ import world.selene.common.bundles.BundleDatabase
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.LuaReferencable
+import world.selene.common.lua.LuaReference
+import world.selene.common.lua.LuaReferenceResolver
 import world.selene.common.lua.checkString
 import java.io.File
 
 class CustomRegistry(
     private val objectMapper: ObjectMapper,
     private val definition: RegistryDefinition
-) : Registry<CustomRegistry.CustomRegistryObject> {
+) : Registry<CustomRegistry.CustomRegistryObject>, LuaReferenceResolver<String, CustomRegistry.CustomRegistryObject> {
 
-    class CustomRegistryObject(val registry: CustomRegistry, val name: String, val element: JsonNode) : LuaMetatableProvider {
+    class CustomRegistryObject(val registry: CustomRegistry, val name: String, val element: JsonNode) : LuaMetatableProvider, LuaReferencable<String, CustomRegistryObject> {
+        val luaReference = LuaReference(CustomRegistryObject::class, name, registry, this)
+
         fun getMetadata(key: String): Any? {
             return element["metadata"]?.get(key)?.asAny()
+        }
+
+        override fun luaReference(): LuaReference<String, CustomRegistryObject> {
+            return luaReference
         }
 
         override fun luaMetatable(lua: Lua): LuaMetatable {
@@ -126,6 +135,10 @@ class CustomRegistry(
                 }
             }
         }
+    }
+
+    override fun luaDereference(id: String): CustomRegistryObject? {
+        return entries[id]
     }
 
 }
