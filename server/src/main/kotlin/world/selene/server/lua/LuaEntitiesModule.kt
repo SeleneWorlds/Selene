@@ -31,7 +31,7 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val en
     }
 
     private fun luaCreateTransient(lua: Lua): Int {
-        val entityType = lua.checkString(-1)
+        val entityType = lua.checkString(1)
         entityRegistry.get(entityType)
             ?: return lua.error(IllegalArgumentException("Unknown entity type: $entityType"))
 
