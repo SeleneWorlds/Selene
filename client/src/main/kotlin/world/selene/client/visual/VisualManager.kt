@@ -1,7 +1,6 @@
 package world.selene.client.visual
 
 import world.selene.client.data.VisualRegistry
-import world.selene.common.data.TileRegistry
 import world.selene.client.maps.Tile
 import world.selene.client.assets.AssetProvider
 import world.selene.client.data.AnimatedVisualDefinition
@@ -9,14 +8,11 @@ import world.selene.client.data.AnimatorVisualDefinition
 import world.selene.client.data.LabelVisualDefinition
 import world.selene.client.data.SimpleVisualDefinition
 import world.selene.client.data.VariantsVisualDefinition
-import world.selene.common.data.EntityRegistry
 import world.selene.common.lua.LuaManager
 
 class VisualManager(
     private val assetProvider: AssetProvider,
     private val luaManager: LuaManager,
-    private val tileRegistry: TileRegistry,
-    private val entityRegistry: EntityRegistry,
     private val visualRegistry: VisualRegistry
 ) {
     private val visualCache = mutableMapOf<String, VisualInstance>()
@@ -28,9 +24,7 @@ class VisualManager(
     }
 
     fun getVisualInstance(tile: Tile): VisualInstance? {
-        val tileName = tile.tileName ?: return null
-        val tileDef = tileRegistry.get(tileName) ?: return null
-        return buildInstance(tileDef.visual)
+        return buildInstance(tile.tileDefinition.visual)
     }
 
     fun buildInstance(visualName: String, properties: Map<String, String> = emptyMap()): VisualInstance? {
