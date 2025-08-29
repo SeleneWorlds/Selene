@@ -57,14 +57,6 @@ class SeleneApplicationListener(
         inputMultiplexer.addProcessor(ui.stage)
         inputMultiplexer.addProcessor(inputManager)
         Gdx.input.inputProcessor = inputMultiplexer
-
-        inputManager.bindKeyboardAction(Input.Keys.I) {
-            playerController.controlledEntity?.let { entity ->
-                clientMap.getTilesAt(entity.coordinate).forEach {
-                    println("${it.tileName} ${it.visualInstance?.sortLayerOffset} at ${it.sortLayer}")
-                }
-            }
-        }
     }
 
     override fun resize(width: Int, height: Int) {
