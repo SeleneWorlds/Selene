@@ -20,20 +20,17 @@ import world.selene.client.visual.VisualInstance
 import world.selene.client.visual.VisualManager
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.data.EntityDefinition
-import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkString
-import world.selene.common.lua.toAny
 import world.selene.common.lua.toAnyMap
 import world.selene.common.util.Coordinate
 import kotlin.collections.forEach
 import kotlin.math.max
 
 class Entity(
-    val luaManager: LuaManager,
     val objectMapper: ObjectMapper,
     val visualManager: VisualManager,
     val scene: Scene,
@@ -42,8 +39,7 @@ class Entity(
 ) :
     Pool.Poolable, Renderable, LuaMetatableProvider {
     var networkId: Int = 0
-    var entityName: String? = null
-    var entityDefinition: EntityDefinition? = null
+    lateinit var entityDefinition: EntityDefinition
     var components: MutableMap<String, EntityComponent> = mutableMapOf()
     val motionQueue: ArrayDeque<EntityMotion> = ArrayDeque()
 
@@ -143,8 +139,6 @@ class Entity(
 
     override fun reset() {
         networkId = 0
-        entityName = null
-        entityDefinition = null
         components.clear()
         motionQueue.clear()
         coordinate = Coordinate.Zero
@@ -179,7 +173,7 @@ class Entity(
     }
 
     fun setupComponents(overrides: Map<String, ComponentConfiguration>) {
-        entityDefinition?.components?.forEach {
+        entityDefinition.components.forEach {
             this.components[it.key] = it.value.create()
         }
         overrides.forEach {
@@ -199,7 +193,7 @@ class Entity(
     }
 
     fun hasTag(tag: String): Boolean {
-        return entityDefinition?.tags?.contains(tag) ?: false
+        return entityDefinition.tags.contains(tag)
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {

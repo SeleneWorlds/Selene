@@ -2,15 +2,19 @@ package world.selene.client.maps
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
+import org.slf4j.Logger
 import party.iroiro.luajava.Lua
+import world.selene.client.data.Registries
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.scene.Scene
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.util.Coordinate
 
 class ClientMap(
+    private val logger: Logger,
     private val tilePool: TilePool,
     private val entityPool: EntityPool,
+    private val registries: Registries,
     private val scene: Scene,
     private val signals: ClientLuaSignals
 ) {
@@ -71,7 +75,12 @@ class ClientMap(
         facing: Float,
         componentOverrides: Map<String, ComponentConfiguration>
     ) {
-        val entity = entitiesByNetworkId[networkId] ?: entityPool.obtain(entityId).also {
+        val entityDefinition = registries.entities.get(entityId)
+        if (entityDefinition == null) {
+            logger.error("Unknown entity id: $entityId")
+            return
+        }
+        val entity = entitiesByNetworkId[networkId] ?: entityPool.obtain(entityDefinition).also {
             it.networkId = networkId
             it.setCoordinateAndUpdate(coordinate)
             addEntity(it)

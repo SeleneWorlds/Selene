@@ -2,13 +2,13 @@ package world.selene.client.lua
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
+import world.selene.client.data.Registries
 import world.selene.client.maps.ClientMap
 import world.selene.client.maps.Entity
 import world.selene.client.maps.EntityPool
-import world.selene.common.data.EntityRegistry
 import world.selene.common.lua.LuaModule
+import world.selene.common.lua.checkRegistry
 import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.checkString
 import world.selene.common.lua.checkType
 import world.selene.common.lua.getFieldString
 import world.selene.common.lua.register
@@ -16,7 +16,7 @@ import world.selene.common.util.Coordinate
 
 class LuaEntitiesModule(
     private val entityPool: EntityPool,
-    private val entityRegistry: EntityRegistry,
+    private val registries: Registries,
     private val clientMap: ClientMap
 ) : LuaModule {
     override val name = "selene.entities"
@@ -28,13 +28,8 @@ class LuaEntitiesModule(
     }
 
     private fun luaCreate(lua: Lua): Int {
-        val entityType = lua.checkString(-1)
-        val entityDefinition = entityRegistry.get(entityType)
-        if (entityDefinition == null) {
-            return lua.error(IllegalArgumentException("Unknown entity type: $entityType"))
-        }
-
-        val entity = entityPool.obtain(entityType)
+        val entityDefinition = lua.checkRegistry(1, registries.entities)
+        val entity = entityPool.obtain(entityDefinition)
         entity.setupComponents(emptyMap())
         lua.push(entity, Lua.Conversion.NONE)
         return 1
