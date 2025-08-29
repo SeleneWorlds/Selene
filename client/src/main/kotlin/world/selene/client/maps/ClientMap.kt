@@ -61,7 +61,13 @@ class ClientMap(
     }
 
     fun placeTile(coordinate: Coordinate, tileId: Int) {
-        val tile = tilePool.obtain(tileId)
+        val tileDefinition = registries.tiles.get(tileId)
+        if (tileDefinition == null) {
+            logger.error("Unknown tile id: $tileId")
+            return
+        }
+
+        val tile = tilePool.obtain(tileDefinition)
         tile.coordinate = coordinate
         tile.localSortLayer = tiles.get(coordinate).size
         tiles.put(coordinate, tile)

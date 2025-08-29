@@ -16,8 +16,7 @@ import world.selene.common.util.Coordinate
 import kotlin.math.min
 
 class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable, LuaMetatableProvider {
-    var tileName: String? = null
-    var tileDefinition: TileDefinition? = null
+    lateinit var tileDefinition: TileDefinition
     val visual get() = visualInstance
 
     override val sortLayerOffset: Int get() = visualInstance?.sortLayerOffset ?: 0
@@ -66,8 +65,6 @@ class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable, LuaMetatab
     }
 
     override fun reset() {
-        tileName = null
-        tileDefinition = null
         localSortLayer = 0
         coordinate = Coordinate.Zero
         visualInstance = null
@@ -82,11 +79,15 @@ class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable, LuaMetatab
     companion object {
         val luaMeta = LuaMappedMetatable(Tile::class) {
             readOnly(Tile::coordinate)
-            readOnly(Tile::tileName, "Name")
             readOnly(Tile::visual)
             readOnly(Tile::x)
             readOnly(Tile::y)
             readOnly(Tile::z)
+            getter("Name") { lua ->
+                val tile = lua.checkSelf()
+                lua.push(tile.tileDefinition.name)
+                1
+            }
         }
     }
 }
