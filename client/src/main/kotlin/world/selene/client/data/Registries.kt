@@ -5,6 +5,7 @@ import world.selene.common.data.NameIdRegistry
 import world.selene.common.data.Registry
 import world.selene.common.data.RegistryProvider
 import world.selene.common.data.CustomRegistries
+import world.selene.common.data.SoundRegistry
 import world.selene.common.data.TileRegistry
 
 class Registries(
@@ -12,7 +13,8 @@ class Registries(
     val tiles: TileRegistry,
     val entities: EntityRegistry,
     val visuals: VisualRegistry,
-    val sounds: AudioRegistry,
+    val sounds: SoundRegistry,
+    val audios: AudioRegistry,
     val customRegistries: CustomRegistries
 ) : RegistryProvider {
     
@@ -22,6 +24,7 @@ class Registries(
             "entities" -> entities
             "visuals" -> visuals
             "sounds" -> sounds
+            "audios" -> audios
             "registries" -> customRegistries
             else -> customRegistries.getCustomRegistry(name)
         }

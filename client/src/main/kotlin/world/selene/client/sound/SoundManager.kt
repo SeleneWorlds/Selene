@@ -6,6 +6,7 @@ import org.slf4j.Logger
 import world.selene.client.assets.BundleFileResolver
 import world.selene.client.data.Registries
 import world.selene.client.data.SimpleAudioDefinition
+import world.selene.common.data.SoundDefinition
 import world.selene.common.util.Disposable
 import java.util.concurrent.ConcurrentHashMap
 
@@ -15,32 +16,23 @@ class SoundManager(
     private val bundleFileResolver: BundleFileResolver
 ) : Disposable {
     private val loadedSounds = ConcurrentHashMap<String, Sound>()
-    private val playingSounds = ConcurrentHashMap<String, Long>()
+    private val playingSounds = ConcurrentHashMap<Int, Long>()
 
-    fun playSound(soundId: Int, volume: Float = 1f, pitch: Float = 1f) {
-        val soundName = registries.mappings.getName("sounds", soundId)
-        if (soundName == null) {
-            logger.warn("Could not find sound with id $soundId")
-            return
-        }
-
-        val soundDef = registries.sounds.get(soundName) as? SimpleAudioDefinition
-        if (soundDef != null) {
-            playSimpleSound(soundName, soundDef, volume * soundDef.volume, pitch * soundDef.pitch)
+    fun playSound(sound: SoundDefinition, volume: Float = 1f, pitch: Float = 1f) {
+        val audio = registries.audios.get(sound.audio)
+        if (audio is SimpleAudioDefinition) {
+            playSimpleSound(sound, audio, volume * audio.volume, pitch * audio.pitch)
+        } else {
+            logger.warn("Could not find audio with id ${sound.audio}")
         }
     }
 
-    fun stopSound(soundId: Int) {
-        val soundName = registries.mappings.getName("sounds", soundId)
-        if (soundName == null) {
-            return
-        }
-
-        playingSounds[soundName]?.let { soundId ->
+    fun stopSound(soundDefinition: SoundDefinition) {
+        playingSounds[soundDefinition.id]?.let { soundId ->
             loadedSounds.values.forEach { sound ->
                 sound.stop(soundId)
             }
-            playingSounds.remove(soundName)
+            playingSounds.remove(soundDefinition.id)
         }
     }
 
@@ -49,14 +41,14 @@ class SoundManager(
         loadedSounds.values.forEach { it.stop() }
     }
 
-    private fun playSimpleSound(soundName: String, soundDef: SimpleAudioDefinition, volume: Float, pitch: Float) {
-        val sound = getOrLoadSound(soundDef.file)
-        val instanceId = if (soundDef.loop) {
+    private fun playSimpleSound(soundDefinition: SoundDefinition, audio: SimpleAudioDefinition, volume: Float, pitch: Float) {
+        val sound = getOrLoadSound(audio.file)
+        val instanceId = if (audio.loop) {
             sound.loop(volume, pitch, 0f)
         } else {
             sound.play(volume, pitch, 0f)
         }
-        playingSounds[soundName] = instanceId
+        playingSounds[soundDefinition.id] = instanceId
     }
 
     private fun getOrLoadSound(filePath: String): Sound {

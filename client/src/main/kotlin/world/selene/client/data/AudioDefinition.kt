@@ -2,6 +2,8 @@ package world.selene.client.data
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import world.selene.common.data.Registry
+import world.selene.common.data.RegistryObject
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
@@ -15,4 +17,18 @@ data class SimpleAudioDefinition(
     val pitch: Float = 1f,
     val loop: Boolean = false,
     val metadata: Map<String, String> = emptyMap()
-) : AudioDefinition
+) : AudioDefinition, RegistryObject<AudioDefinition> {
+    override var id: Int = 0; private set
+    override lateinit var name: String; private set
+    override lateinit var registry: Registry<AudioDefinition>; private set
+
+    override fun initializeFromRegistry(
+        registry: Registry<AudioDefinition>,
+        name: String,
+        id: Int
+    ) {
+        this.registry = registry
+        this.name = name
+        this.id = id
+    }
+}
