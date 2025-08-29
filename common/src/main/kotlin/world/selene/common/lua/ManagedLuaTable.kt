@@ -98,7 +98,7 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                 lua.push(managedTable.map, Lua.Conversion.FULL)
                 1
             }
-            callable("Lookup") { lua ->
+            callable("RawLookup") { lua ->
                 val managedTable = lua.checkSelf()
                 var result: Any? = managedTable.map
                 for (index in 2..lua.top) {
@@ -106,6 +106,23 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                     result = getMapValue(result, key) ?: return@callable lua.pushNil().let { 1 }
                 }
                 lua.push(result, Lua.Conversion.FULL)
+                1
+            }
+            callable("Lookup") { lua ->
+                val managedTable = lua.checkSelf()
+                var result: Any? = managedTable.map
+                for (index in 2..lua.top) {
+                    val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
+                    result = getMapValue(result, key) ?: return@callable lua.pushNil().let { 1 }
+                }
+                if (result !is LuaValue && result is Map<*, *>) {
+                    @Suppress("UNCHECKED_CAST")
+                    lua.push(ManagedLuaTable(result as MutableMap<Any, Any>), Lua.Conversion.NONE)
+                } else if (result is LuaReference<*, *>) {
+                    lua.push(result.resolve(), Lua.Conversion.NONE)
+                } else {
+                    lua.push(result, Lua.Conversion.FULL)
+                }
                 1
             }
             callable("Set") { lua ->
