@@ -9,7 +9,7 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         val key = when {
             lua.isInteger(2) -> lua.toInteger(2).toInt()
             lua.isString(2) -> lua.toString(2)!!
-            else -> return 0
+            else -> return lua.pushError("Key must be a string or number, got ${lua.type(2)}")
         }
         if (key is String && luaMeta.has(key)) {
             return luaMeta.luaGet(lua)
