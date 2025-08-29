@@ -1,6 +1,9 @@
 package world.selene.common.data
 
+import kotlin.reflect.KClass
+
 interface Registry<TData : Any> {
+    val clazz: KClass<TData>
     val name: String
     fun get(id: Int): TData?
     fun get(name: String): TData?

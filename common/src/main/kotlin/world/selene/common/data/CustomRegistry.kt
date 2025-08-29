@@ -25,6 +25,7 @@ import world.selene.common.lua.LuaReference
 import world.selene.common.lua.LuaReferenceResolver
 import world.selene.common.lua.checkString
 import java.io.File
+import kotlin.reflect.KClass
 
 class CustomRegistry(
     private val objectMapper: ObjectMapper,
@@ -88,6 +89,7 @@ class CustomRegistry(
     private val metadataLookupTable: Table<String, Any, MutableList<String>> = HashBasedTable.create()
 
     override val name: String = definition.suffix
+    override val clazz: KClass<CustomRegistryObject> = CustomRegistryObject::class
     override fun get(id: Int): CustomRegistryObject? = null
     override fun get(name: String): CustomRegistryObject? = entries[name]
     override fun getAll(): Map<String, CustomRegistryObject> = entries

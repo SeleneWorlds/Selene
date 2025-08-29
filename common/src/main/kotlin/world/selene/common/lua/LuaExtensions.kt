@@ -208,10 +208,16 @@ fun Lua.checkFunction(index: Int): LuaValue {
 }
 
 fun <T : Any> Lua.toRegistry(index: Int, registry: Registry<T>): T? {
+    if (isUserdata(index)) {
+        return toUserdata(index, registry.clazz)
+    }
     return toString(index)?.let { registry.get(it) }
 }
 
 fun <T : Any> Lua.checkRegistry(index: Int, registry: Registry<T>): T {
+    if (isUserdata(index)) {
+        return checkUserdata(index, registry.clazz)
+    }
     return toRegistry(index, registry) ?: throwTypeError(index, Registry::class)
 }
 

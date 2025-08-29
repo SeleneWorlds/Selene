@@ -19,6 +19,7 @@ abstract class JsonRegistry<TData : Any>(
     protected val entriesById: MutableMap<Int, TData> = mutableMapOf()
     private val metadataLookupTable: Table<String, Any, MutableList<String>> = HashBasedTable.create()
 
+    override val clazz: KClass<TData> = dataClass
     override fun get(id: Int): TData? = entriesById[id]
     override fun get(name: String): TData? = entries[name]
     override fun getAll(): Map<String, TData> = entries
