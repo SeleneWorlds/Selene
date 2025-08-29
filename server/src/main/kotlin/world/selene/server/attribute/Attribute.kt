@@ -81,11 +81,7 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
                 @Suppress("UNCHECKED_CAST")
                 val attribute = lua.checkSelf() as Attribute<Any?>
                 val filter = when (lua.type(3)) {
-                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(
-                        lua.checkFunction(3),
-                        lua.toAny(4)
-                    )
-
+                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(lua.checkFunction(3))
                     Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(3)
                     else -> lua.throwTypeError(3, AttributeFilter::class)
                 }
@@ -102,11 +98,7 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
                 @Suppress("UNCHECKED_CAST")
                 val attribute = lua.checkSelf() as Attribute<Any?>
                 val filter = when (lua.type(3)) {
-                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(
-                        lua.checkFunction(3),
-                        lua.toAny(4)
-                    )
-
+                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(lua.checkFunction(3))
                     Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(3)
                     else -> lua.throwTypeError(3, AttributeFilter::class)
                 }
