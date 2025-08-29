@@ -103,7 +103,7 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                 var result: Any? = managedTable.map
                 for (index in 2..lua.top) {
                     val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
-                    result = getMapValue(result, key) ?: return@callable 0
+                    result = getMapValue(result, key) ?: return@callable lua.pushNil().let { 1 }
                 }
                 lua.push(result, Lua.Conversion.FULL)
                 1
