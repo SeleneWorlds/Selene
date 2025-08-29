@@ -86,8 +86,8 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
                         lua.toAny(4)
                     )
 
-                    Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(2)
-                    else -> lua.throwTypeError(2, AttributeFilter::class)
+                    Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(3)
+                    else -> lua.throwTypeError(3, AttributeFilter::class)
                 }
                 attribute.addConstraint(lua.checkString(2), filter)
                 lua.push(filter, Lua.Conversion.NONE)
@@ -107,8 +107,8 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
                         lua.toAny(4)
                     )
 
-                    Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(2)
-                    else -> lua.throwTypeError(2, AttributeFilter::class)
+                    Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(3)
+                    else -> lua.throwTypeError(3, AttributeFilter::class)
                 }
                 attribute.addModifier(lua.checkString(2), filter)
                 lua.push(filter, Lua.Conversion.NONE)
