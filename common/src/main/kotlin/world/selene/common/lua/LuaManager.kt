@@ -1,10 +1,9 @@
 package world.selene.common.lua
 
 import org.koin.mp.KoinPlatform.getKoin
-import org.slf4j.LoggerFactory
+import party.iroiro.luajava.ClassPathLoader
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.lua54.Lua54
-import party.iroiro.luajava.lua54.Lua54Consts
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.bundles.LocatedBundle
 import java.io.File
@@ -33,6 +32,10 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
             set("clock", luaClock)
         })
 
+        lua.setExternalLoader(ClassPathLoader())
+        lua.loadExternal("bit32")
+        lua.setGlobal("bit32")
+
         lua.openLibrary("string")
         lua.set("stringx", lua.newTable {
             register("trim", this@LuaManager::luaTrim)
@@ -41,8 +44,6 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
             register("split", this@LuaManager::luaSplit)
             register("substringAfter", this@LuaManager::luaSubstringAfter)
         })
-
-        lua.openLibrary("bit32")
 
         lua.openLibrary("math")
         lua.set("mathx", lua.newTable {
@@ -74,6 +75,8 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.newTable()
         lua.getGlobal("math")
         lua.setField(-2, "math")
+        lua.getGlobal("bit32")
+        lua.setField(-2, "bit32")
         lua.setField(-2, "loaded")
         lua.newTable()
         lua.setField(-2, "preload")
@@ -412,8 +415,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
             }
         }
 
-        lua.pushNil()
-        return 1
+        return lua.pushError("module '$moduleName' not found")
     }
 
     private fun loadBuffer(script: String): Buffer {
