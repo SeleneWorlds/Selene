@@ -71,6 +71,7 @@ import world.selene.server.lua.LuaConfigModule
 import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.login.LoginQueue
 import world.selene.server.login.SessionAuthentication
+import world.selene.server.lua.LuaAttributesModule
 import world.selene.server.lua.Scripting
 import world.selene.server.maps.TransitionResolver
 import world.selene.server.network.NetworkServer
@@ -130,6 +131,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaHttpModule) { bind<LuaModule>(); bind<Disposable>() }
         singleOf(::LuaConfigModule) { bind<LuaModule>() }
         singleOf(::LuaI18nModule) { bind<LuaModule>() }
+        singleOf(::LuaAttributesModule) { bind<LuaModule>() }
         singleOf(::Scripting)
     }
     val bundleModule = module {
