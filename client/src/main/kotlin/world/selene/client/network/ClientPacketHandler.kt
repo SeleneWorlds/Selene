@@ -14,6 +14,7 @@ import world.selene.common.network.packet.NameIdMappingsPacket
 import world.selene.client.camera.CameraManager
 import world.selene.client.controls.GridMovement
 import world.selene.client.controls.PlayerController
+import world.selene.client.data.Registries
 import world.selene.client.maps.ClientMap
 import world.selene.common.network.packet.CustomPayloadPacket
 import world.selene.common.network.packet.EntityPacket
@@ -33,6 +34,7 @@ class ClientPacketHandler(
     private val logger: Logger,
     private val objectMapper: ObjectMapper,
     private val luaManager: LuaManager,
+    private val registries: Registries,
     private val payloadRegistry: LuaPayloadRegistry,
     private val nameIdRegistry: NameIdRegistry,
     private val clientMap: ClientMap,
@@ -45,101 +47,139 @@ class ClientPacketHandler(
         context: NetworkClient,
         packet: Packet
     ) {
-        if (packet is NameIdMappingsPacket) {
-            context.enqueueWork {
-                packet.mappings.forEach { nameIdRegistry.addExisting(packet.scope, it.key, it.value) }
-            }
-        } else if (packet is MapChunkPacket) {
-            context.enqueueWork {
-                clientMap.setChunk(
-                    packet.x,
-                    packet.y,
-                    packet.z,
-                    packet.width,
-                    packet.height,
-                    packet.baseTiles,
-                    packet.additionalTiles
-                )
-            }
-        } else if (packet is RemoveMapChunkPacket) {
-            context.enqueueWork {
-                clientMap.removeChunk(packet.x, packet.y, packet.z, packet.width, packet.height)
-            }
-        } else if (packet is UpdateMapTilesPacket) {
-            context.enqueueWork {
-                clientMap.updateTile(
-                    packet.coordinate,
-                    packet.baseTileId,
-                    packet.additionalTileIds
-                )
-            }
-        } else if (packet is EntityPacket) {
-            context.enqueueWork {
-                val componentOverrides =
-                    packet.components.mapValues { objectMapper.readValue(it.value, ComponentConfiguration::class.java) }
-                clientMap.placeOrUpdateEntity(
-                    packet.entityId,
-                    packet.networkId,
-                    packet.coordinate,
-                    packet.facing,
-                    componentOverrides
-                )
-            }
-        } else if (packet is RemoveEntityPacket) {
-            context.enqueueWork {
-                clientMap.removeEntityByNetworkId(packet.networkId)
-            }
-        } else if (packet is SetCameraPositionPacket) {
-            context.enqueueWork {
-                cameraManager.focusCamera(packet.coordinate)
-            }
-        } else if (packet is SetCameraFollowEntityPacket) {
-            context.enqueueWork {
-                cameraManager.focusEntity(packet.networkId)
-            }
-        } else if (packet is SetControlledEntityPacket) {
-            context.enqueueWork {
-                playerController.controlledEntityNetworkId = packet.networkId
-            }
-        } else if (packet is MoveEntityPacket) {
-            context.enqueueWork {
-                clientMap.getEntityByNetworkId(packet.networkId)?.move(packet.end, packet.duration, packet.facing)
-                if (playerController.controlledEntityNetworkId == packet.networkId) {
-                    gridMovement.confirmMove()
+        when (packet) {
+            is NameIdMappingsPacket -> {
+                context.enqueueWork {
+                    packet.mappings.forEach { nameIdRegistry.addExisting(packet.scope, it.key, it.value) }
                 }
             }
-        } else if (packet is PlaySoundPacket) {
-            context.enqueueWork {
-                soundManager.playSound(packet.soundId, packet.volume, packet.pitch)
-            }
-        } else if (packet is StopSoundPacket) {
-            context.enqueueWork {
-                if (packet.soundId == -1) {
-                    soundManager.stopAllSounds()
-                } else {
-                    soundManager.stopSound(packet.soundId)
+
+            is MapChunkPacket -> {
+                context.enqueueWork {
+                    clientMap.setChunk(
+                        packet.x,
+                        packet.y,
+                        packet.z,
+                        packet.width,
+                        packet.height,
+                        packet.baseTiles,
+                        packet.additionalTiles
+                    )
                 }
             }
-        } else if (packet is CustomPayloadPacket) {
-            context.enqueueWork {
-                val handler = payloadRegistry.retrieveHandler(packet.payloadId)
-                if (handler != null) {
-                    handler.callback.push(luaManager.lua)
-                    val payload = objectMapper.readValue(packet.payload, Map::class.java)
-                    luaManager.lua.push(payload)
-                    try {
-                        luaManager.lua.pCall(1, 0)
-                    } catch (e: LuaException) {
-                        logger.error(
-                            "Error while handling custom payload ${packet.payloadId} (registered at ${handler.registrationSite})",
-                            e
-                        )
+
+            is RemoveMapChunkPacket -> {
+                context.enqueueWork {
+                    clientMap.removeChunk(packet.x, packet.y, packet.z, packet.width, packet.height)
+                }
+            }
+
+            is UpdateMapTilesPacket -> {
+                context.enqueueWork {
+                    clientMap.updateTile(
+                        packet.coordinate,
+                        packet.baseTileId,
+                        packet.additionalTileIds
+                    )
+                }
+            }
+
+            is EntityPacket -> {
+                context.enqueueWork {
+                    val componentOverrides =
+                        packet.components.mapValues { objectMapper.readValue(it.value, ComponentConfiguration::class.java) }
+                    clientMap.placeOrUpdateEntity(
+                        packet.entityId,
+                        packet.networkId,
+                        packet.coordinate,
+                        packet.facing,
+                        componentOverrides
+                    )
+                }
+            }
+
+            is RemoveEntityPacket -> {
+                context.enqueueWork {
+                    clientMap.removeEntityByNetworkId(packet.networkId)
+                }
+            }
+
+            is SetCameraPositionPacket -> {
+                context.enqueueWork {
+                    cameraManager.focusCamera(packet.coordinate)
+                }
+            }
+
+            is SetCameraFollowEntityPacket -> {
+                context.enqueueWork {
+                    cameraManager.focusEntity(packet.networkId)
+                }
+            }
+
+            is SetControlledEntityPacket -> {
+                context.enqueueWork {
+                    playerController.controlledEntityNetworkId = packet.networkId
+                }
+            }
+
+            is MoveEntityPacket -> {
+                context.enqueueWork {
+                    clientMap.getEntityByNetworkId(packet.networkId)?.move(packet.end, packet.duration, packet.facing)
+                    if (playerController.controlledEntityNetworkId == packet.networkId) {
+                        gridMovement.confirmMove()
                     }
                 }
             }
-        } else if (packet is DisconnectPacket) {
-            context.disconnect()
-            logger.info("Disconnected from server: ${packet.reason}")
+
+            is PlaySoundPacket -> {
+                context.enqueueWork {
+                    val sound = registries.sounds.get(packet.soundId)
+                    if (sound == null) {
+                        logger.warn("Could not play sound with id ${packet.soundId}")
+                        return@enqueueWork
+                    }
+                    soundManager.playSound(sound, packet.volume, packet.pitch)
+                }
+            }
+
+            is StopSoundPacket -> {
+                context.enqueueWork {
+                    if (packet.soundId == -1) {
+                        soundManager.stopAllSounds()
+                    } else {
+                        val sound = registries.sounds.get(packet.soundId)
+                        if (sound == null) {
+                            logger.warn("Could not stop sound with id ${packet.soundId}")
+                            return@enqueueWork
+                        }
+                        soundManager.stopSound(sound)
+                    }
+                }
+            }
+
+            is CustomPayloadPacket -> {
+                context.enqueueWork {
+                    val handler = payloadRegistry.retrieveHandler(packet.payloadId)
+                    if (handler != null) {
+                        handler.callback.push(luaManager.lua)
+                        val payload = objectMapper.readValue(packet.payload, Map::class.java)
+                        luaManager.lua.push(payload)
+                        try {
+                            luaManager.lua.pCall(1, 0)
+                        } catch (e: LuaException) {
+                            logger.error(
+                                "Error while handling custom payload ${packet.payloadId} (registered at ${handler.registrationSite})",
+                                e
+                            )
+                        }
+                    }
+                }
+            }
+
+            is DisconnectPacket -> {
+                context.disconnect()
+                logger.info("Disconnected from server: ${packet.reason}")
+            }
         }
     }
 }
