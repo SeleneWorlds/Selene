@@ -30,26 +30,26 @@ class TransitionResolver(private val registries: Registries) {
                 }
 
                 val centerTileId = view.getBaseTileAtRelative(x, y)
-                val centerTileName = registries.mappings.getName("tiles", centerTileId)
-                val centerTransition = centerTileName?.let { registries.transitions.get(it) }
+                val centerTile = registries.tiles.get(centerTileId)
+                val centerTransition = centerTile?.let { registries.transitions.get(it.name) }
                 val sortedTileCounts = Multisets.copyHighestCountFirst(tileCounts)
                 val transition = sortedTileCounts.entrySet().mapNotNull { entry ->
                     val tileId = entry.element
-                    val tileName = registries.mappings.getName("tiles", tileId) ?: return@mapNotNull null
+                    val tile = registries.tiles.get(tileId) ?: return@mapNotNull null
                     var mask = 0
                     for (i in 0 until 8) {
                         if (surrounding[i] == tileId) {
                             mask = mask or (1 shl i)
                         }
                     }
-                    val transitions = registries.transitions.get(tileName)
+                    val transitions = registries.transitions.get(tile.name)
                     val transitionTile = transitions?.findTransitionTile(mask)
                     transitionTile?.let { Pair(transitions, transitionTile) }
                 }.filter { it.first.priority > (centerTransition?.priority ?: 0) }.maxByOrNull { it.first.priority }
                 if (transition != null) {
-                    val transitionTileId = registries.mappings.getId("tiles", transition.second)
-                    if (transitionTileId != null) {
-                        view.addAdditionalTileFirst(Coordinate(window.x + x, window.y + y, window.z), transitionTileId)
+                    val transitionTile = registries.tiles.get(transition.second)
+                    if (transitionTile != null) {
+                        view.addAdditionalTileFirst(Coordinate(window.x + x, window.y + y, window.z), transitionTile.id)
                     }
                 }
             }

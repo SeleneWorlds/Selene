@@ -9,7 +9,6 @@ import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkRegistry
-import world.selene.common.lua.checkString
 import world.selene.server.cameras.DefaultViewer
 import world.selene.server.cameras.Viewer
 import world.selene.server.data.Registries
@@ -65,17 +64,16 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             callable("HasTile") {
                 val dimension = it.checkSelf()
                 val (coordinate, index) = it.checkCoordinate(2)
-                val tileName = it.checkString(index + 1)
+                val tile = it.checkRegistry(index + 1, dimension.registries.tiles)
                 val viewer = if (it.isUserdata(index + 1)) it.checkUserdata<Viewer>(index + 1) else DefaultViewer
-                val tileId = dimension.registries.mappings.getId("tiles", tileName)
                 val chunkView = dimension.world.chunkViewManager.atCoordinate(dimension, viewer, coordinate)
                 val baseTile = chunkView.getBaseTileAt(coordinate)
-                if (baseTile == tileId) {
+                if (baseTile == tile.id) {
                     it.push(true)
                     return@callable 1
                 }
 
-                it.push(chunkView.getAdditionalTilesAt(coordinate).contains(tileId))
+                it.push(chunkView.getAdditionalTilesAt(coordinate).contains(tile.id))
                 1
             }
             callable("PlaceTile") { lua ->
@@ -94,18 +92,16 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
 
                 val tiles = mutableListOf<TransientTile>()
                 val chunkView = dimension.world.chunkViewManager.atCoordinate(dimension, viewer, coordinate)
-                val baseTile = chunkView.getBaseTileAt(coordinate)
-                val baseTileName = dimension.registries.mappings.getName("tiles", baseTile)
-                val baseTileDef = baseTileName?.let { dimension.registries.tiles.get(it) }
-                if (baseTileDef != null) {
-                    tiles.add(TransientTile(baseTileDef, dimension, coordinate))
+                val baseTileId = chunkView.getBaseTileAt(coordinate)
+                val baseTile = dimension.registries.tiles.get(baseTileId)
+                if (baseTile != null) {
+                    tiles.add(TransientTile(baseTile, dimension, coordinate))
                 }
                 val additionalTiles = chunkView.getAdditionalTilesAt(coordinate)
                 additionalTiles.forEach { tileId ->
-                    val tileName = dimension.registries.mappings.getName("tiles", tileId)
-                    val tileDef = tileName?.let { dimension.registries.tiles.get(it) }
-                    if (tileDef != null) {
-                        tiles.add(TransientTile(tileDef, dimension, coordinate))
+                    val tile = dimension.registries.tiles.get(tileId)
+                    if (tile != null) {
+                        tiles.add(TransientTile(tile, dimension, coordinate))
                     }
                 }
                 lua.push(tiles, Lua.Conversion.FULL)

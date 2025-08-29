@@ -228,8 +228,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                             val relativeY = index / chunk.size
                             val absoluteX = chunkCoordinate.x + relativeX
                             val absoluteY = chunkCoordinate.y + relativeY
-                            val tileName = registries.mappings.getName("tiles", tileId) ?: return@forEach
-                            val tileDef = registries.tiles.get(tileName) ?: return@forEach
+                            val tileDef = registries.tiles.get(tileId) ?: return@forEach
                             placeTile(Coordinate(absoluteX, absoluteY, chunkCoordinate.z), tileDef)
                         }
                         chunk.annotations.cellSet().forEach {

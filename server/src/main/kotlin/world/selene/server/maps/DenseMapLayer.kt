@@ -109,16 +109,13 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
                 throw IllegalArgumentException("Coordinates ($relativeX, $relativeY) is out of bounds")
             }
 
-            val tileId = tileDef?.let {
-                registries.mappings.getId("tiles", tileDef.name) ?: throw IllegalArgumentException("Tile ${tileDef.name} has no id mapping")
-            } ?: 0
+            val tileId = tileDef?.id ?: 0
             tiles[index] = tileId
         }
 
         fun getTileAbsolute(x: Int, y: Int): TileDefinition {
             val tileId = getTileIdAbsolute(x, y)
-            val tileName = registries.mappings.getName("tiles", tileId) ?: throw IllegalArgumentException("Tile $tileId has no name mapping")
-            return registries.tiles.get(tileName) ?: throw IllegalArgumentException("Tile $tileName has no definition")
+            return registries.tiles.get(tileId) ?: throw IllegalArgumentException("Tile $tileId has no definition")
         }
 
         fun getTileIdAbsolute(x: Int, y: Int): Int {

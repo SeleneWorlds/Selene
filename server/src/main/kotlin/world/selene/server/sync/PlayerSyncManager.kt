@@ -145,7 +145,7 @@ class PlayerSyncManager(
             player.client.send(
                 EntityPacket(
                     networkId = entity.networkId,
-                    entityId = registries.mappings.getId("entities", entity.entityType) ?: 0,
+                    entityId = entity.entityDefinition?.id ?: 0,
                     coordinate = entity.coordinate,
                     facing = entity.facing?.angle ?: 0f,
                     components = entity.resolveComponentsFor(player)
