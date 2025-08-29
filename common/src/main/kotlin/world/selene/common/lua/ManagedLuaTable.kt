@@ -16,10 +16,16 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         }
         val value = map[key]
         if (value != null) {
-            if (value !is LuaValue && (value is Map<*, *> || value is Collection<*>)) {
+            if (value !is LuaValue && value is Map<*, *>) {
+                @Suppress("UNCHECKED_CAST")
+                lua.push(ManagedLuaTable(value as MutableMap<Any, Any>), Lua.Conversion.NONE)
+            } else if (value !is LuaValue && value is Collection<*>) {
                 lua.throwError("Cannot directly access a table field of a managed table. Use Lookup(\"${key}\") instead to create a local copy.")
+            } else if (value is LuaReference<*, *>) {
+                lua.push(value.resolve(), Lua.Conversion.NONE)
+            } else {
+                lua.push(value, Lua.Conversion.FULL)
             }
-            lua.push(value, Lua.Conversion.FULL)
             return 1
         }
         return lua.pushNil().let { 1 }
@@ -32,7 +38,9 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
             else -> return lua.pushNil().let { 1 }
         }
         val value = lua.toAny(3)
-        if (value != null) {
+        if (value is LuaReferencable<*, *>) {
+            map[key] = value.luaReference()
+        } else if (value != null) {
             map[key] = value
         } else {
             map.remove(key)
@@ -60,11 +68,21 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                     val iterator = innerLua.checkUserdata<Iterator<Map.Entry<*, *>>>(1)
                     if (iterator.hasNext()) {
                         val entry = iterator.next()
+                        val value = entry.value
                         innerLua.push(entry.key, Lua.Conversion.FULL)
-                        if (entry.value != null && entry.value is MutableMap<*, *>) {
-                            innerLua.push(ManagedLuaTable(entry.value as MutableMap<Any, Any>), Lua.Conversion.NONE)
-                        } else {
-                            innerLua.push(entry.value, Lua.Conversion.FULL)
+                        when (value) {
+                            is MutableMap<*, *> -> {
+                                @Suppress("UNCHECKED_CAST")
+                                innerLua.push(ManagedLuaTable(value as MutableMap<Any, Any>), Lua.Conversion.NONE)
+                            }
+
+                            is LuaReference<*, *> -> {
+                                innerLua.push(value.resolve(), Lua.Conversion.NONE)
+                            }
+
+                            else -> {
+                                innerLua.push(value, Lua.Conversion.FULL)
+                            }
                         }
                         2
                     } else {
@@ -74,6 +92,11 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                 lua.push(managedLuaTable.map.iterator(), Lua.Conversion.NONE)
                 lua.pushNil()
                 3
+            }
+            callable("ToTable") { lua ->
+                val managedTable = lua.checkSelf()
+                lua.push(managedTable.map, Lua.Conversion.FULL)
+                1
             }
             callable("Lookup") { lua ->
                 val managedTable = lua.checkSelf()
@@ -104,7 +127,7 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
 
                 when (container) {
                     is Map<*, *> -> {
-                        val mutableMap = container as MutableMap<Any, Any>
+                        @Suppress("UNCHECKED_CAST") val mutableMap = container as MutableMap<Any, Any>
                         if (value != null) {
                             mutableMap[key] = value
                         } else {
