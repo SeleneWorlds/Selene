@@ -26,6 +26,7 @@ class TransientTile(
 
     companion object {
         val luaMeta = LuaMappedMetatable(TransientTile::class) {
+            readOnly(TransientTile::definition)
             readOnly(TransientTile::name)
             readOnly(TransientTile::dimension)
             readOnly(TransientTile::coordinate)
