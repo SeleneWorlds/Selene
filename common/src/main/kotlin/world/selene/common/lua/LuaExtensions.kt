@@ -25,6 +25,11 @@ fun AbstractLua.register(name: String?, function: JFunction) {
     setGlobal(name)
 }
 
+fun Lua.pushError(message: String): Int {
+    val callerInfo = getCallerInfo()
+    return error(LuaException(LuaException.LuaError.RUNTIME, "$callerInfo: $message"))
+}
+
 fun Lua.throwError(message: String): Nothing {
     val callerInfo = getCallerInfo()
     throw LuaException(LuaException.LuaError.RUNTIME, "$callerInfo: $message")
