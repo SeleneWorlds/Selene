@@ -7,12 +7,12 @@ import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.toAny
 
-class LuaAttributeFilter(override val name: String, val callback: LuaValue, val filterData: Any?) : AttributeFilter<Any> {
+class LuaAttributeFilter<T : Any?>(override val name: String, val callback: LuaValue, val filterData: Any?) : AttributeFilter<T> {
     private val logger: Logger = LoggerFactory.getLogger(LuaAttributeFilter::class.java)
 
     override var enabled: Boolean = true
 
-    override fun apply(attribute: Attribute<*>, value: Any?): Any? {
+    override fun apply(attribute: Attribute<T>, value: T): T {
         val lua = callback.state()
         lua.push(callback)
         lua.push(attribute, Lua.Conversion.NONE)
@@ -20,7 +20,8 @@ class LuaAttributeFilter(override val name: String, val callback: LuaValue, val 
         lua.push(filterData, Lua.Conversion.FULL)
         try {
             lua.pCall(3, 1)
-            return lua.toAny(-1)
+            @Suppress("UNCHECKED_CAST")
+            return lua.toAny(-1) as T
         } catch (e: LuaException) {
             logger.error("Error calling Lua filter", e)
             return value

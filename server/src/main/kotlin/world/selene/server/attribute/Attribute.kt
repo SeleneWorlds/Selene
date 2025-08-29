@@ -5,17 +5,18 @@ import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkFunction
+import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkString
 import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.throwTypeError
 import world.selene.common.lua.toAny
 
-class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : LuaMetatableProvider {
+class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : LuaMetatableProvider {
     val observers = mutableListOf<AttributeObserver>()
     val constraints = mutableListOf<AttributeFilter<T>>()
     val modifiers = mutableListOf<AttributeFilter<T>>()
 
-    var value: T? = initialValue
+    var value: T = initialValue
         set(value) {
             val prev = field
             if (prev != value) {
@@ -29,7 +30,7 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
             }
         }
 
-    val effectiveValue: T?
+    val effectiveValue: T
         get() {
             var value = this.value
             modifiers.forEach {
@@ -75,10 +76,32 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
                 attribute.observers.remove(observer)
                 0
             }
+            callable("AddClampConstraint") { lua ->
+                @Suppress("UNCHECKED_CAST")
+                val attribute = lua.checkSelf() as Attribute<Int>
+                val name = lua.checkString(2)
+                val min: AttributeClampFilter.ClampValue<Int> = when (lua.type(3)) {
+                    Lua.LuaType.NUMBER -> AttributeClampFilter.ConstantClampValue(lua.checkInt(3))
+                    Lua.LuaType.USERDATA -> AttributeClampFilter.AttributeClampValue(lua.checkUserdata<Attribute<Int>>(3))
+                    else -> {
+                        lua.throwTypeError(3, Lua.LuaType.NUMBER)
+                    }
+                }
+                val max: AttributeClampFilter.ClampValue<Int> = when (lua.type(4)) {
+                    Lua.LuaType.NUMBER -> AttributeClampFilter.ConstantClampValue(lua.checkInt(4))
+                    Lua.LuaType.USERDATA -> AttributeClampFilter.AttributeClampValue(lua.checkUserdata<Attribute<Int>>(4))
+                    else -> {
+                        lua.throwTypeError(4, Lua.LuaType.NUMBER)
+                    }
+                }
+                val filter = IntAttributeClampFilter(name, min, max)
+                attribute.addConstraint(filter)
+                0
+            }
             callable("AddConstraint") { lua ->
                 val attribute = lua.checkSelf()
                 val filter = when (lua.type(3)) {
-                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(
+                    Lua.LuaType.FUNCTION -> LuaAttributeFilter<Any?>(
                         lua.checkString(2),
                         lua.checkFunction(3),
                         lua.toAny(4)
@@ -101,7 +124,7 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
             callable("AddModifier") { lua ->
                 val attribute = lua.checkSelf()
                 val filter = when (lua.type(3)) {
-                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(
+                    Lua.LuaType.FUNCTION -> LuaAttributeFilter<Any?>(
                         lua.checkString(2),
                         lua.checkFunction(3),
                         lua.toAny(4)
@@ -127,5 +150,9 @@ class Attribute<T : Any>(val owner: Any, val name: String, initialValue: T?) : L
                 0
             }
         }
+    }
+
+    private fun addConstraint(filter: AttributeFilter<T>) {
+        constraints.add(filter)
     }
 }

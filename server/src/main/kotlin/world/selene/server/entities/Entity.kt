@@ -312,11 +312,17 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
                 val entity = it.checkSelf()
                 val name = it.checkString(2)
                 val attribute = entity.attributes[name]
-                if (attribute != null) {
-                    it.push(attribute, Lua.Conversion.NONE)
-                    return@callable 1
-                }
-                0
+                it.push(attribute, Lua.Conversion.NONE)
+                1
+            }
+            callable("CreateAttribute") {
+                val entity = it.checkSelf()
+                val name = it.checkString(2)
+                val initialValue = it.toAny(3)
+                val attribute = Attribute(entity, name, initialValue)
+                entity.attributes[name] = attribute
+                it.push(attribute, Lua.Conversion.NONE)
+                1
             }
             callable("GetOrCreateAttribute") {
                 val entity = it.checkSelf()

@@ -65,7 +65,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
                 val dimension = it.checkSelf()
                 val (coordinate, index) = it.checkCoordinate(2)
                 val tile = it.checkRegistry(index + 1, dimension.registries.tiles)
-                val viewer = if (it.isUserdata(index + 1)) it.checkUserdata<Viewer>(index + 1) else DefaultViewer
+                val viewer = if (it.isUserdata(index + 2)) it.checkUserdata<Viewer>(index + 2) else DefaultViewer
                 val chunkView = dimension.world.chunkViewManager.atCoordinate(dimension, viewer, coordinate)
                 val baseTile = chunkView.getBaseTileAt(coordinate)
                 if (baseTile == tile.id) {
