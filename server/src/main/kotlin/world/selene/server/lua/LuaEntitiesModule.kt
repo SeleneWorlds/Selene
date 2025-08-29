@@ -2,13 +2,13 @@ package world.selene.server.lua
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.data.EntityRegistry
 import world.selene.common.lua.LuaModule
-import world.selene.common.lua.checkString
+import world.selene.common.lua.checkRegistry
 import world.selene.common.lua.register
+import world.selene.server.data.Registries
 import world.selene.server.entities.EntityManager
 
-class LuaEntitiesModule(private val entityManager: EntityManager, private val entityRegistry: EntityRegistry, private val signals: ServerLuaSignals) : LuaModule {
+class LuaEntitiesModule(private val entityManager: EntityManager, private val registries: Registries, private val signals: ServerLuaSignals) : LuaModule {
     override val name = "selene.entities"
 
     override fun register(table: LuaValue) {
@@ -19,23 +19,15 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val en
     }
 
     private fun luaCreate(lua: Lua): Int {
-        val entityType = lua.checkString(-1)
-        val entityDefinition = entityRegistry.get(entityType)
-        if (entityDefinition == null) {
-            return lua.error(IllegalArgumentException("Unknown entity type: $entityType"))
-        }
-
-        val entity = entityManager.createEntity(entityType)
+        val entityDefinition = lua.checkRegistry(1, registries.entities)
+        val entity = entityManager.createEntity(entityDefinition)
         lua.push(entity, Lua.Conversion.NONE)
         return 1
     }
 
     private fun luaCreateTransient(lua: Lua): Int {
-        val entityType = lua.checkString(1)
-        entityRegistry.get(entityType)
-            ?: return lua.error(IllegalArgumentException("Unknown entity type: $entityType"))
-
-        val entity = entityManager.createTransientEntity(entityType)
+        val entityDefinition = lua.checkRegistry(1, registries.entities)
+        val entity = entityManager.createTransientEntity(entityDefinition)
         lua.push(entity, Lua.Conversion.NONE)
         return 1
     }

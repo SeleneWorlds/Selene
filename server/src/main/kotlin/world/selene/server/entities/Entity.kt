@@ -2,6 +2,7 @@ package world.selene.server.entities
 
 import party.iroiro.luajava.Lua
 import world.selene.common.data.ComponentConfiguration
+import world.selene.common.data.EntityDefinition
 import world.selene.common.grid.Grid
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
@@ -35,7 +36,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     LuaReferencable<Int, Entity> {
     val impassable: Boolean = true
     var networkId: Int = -1
-    var entityType: String = ""
+    lateinit var entityDefinition: EntityDefinition
     var name = "John Selene"
     var coordinate = Coordinate(0, 0, 0)
     var facing: Grid.Direction? = null
@@ -45,8 +46,6 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     val attributes = mutableMapOf<String, Attribute<*>>()
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
     val attributeViews = mutableMapOf<String, AttributeView>()
-
-    val entityDefinition get() = registries.entities.get(entityType)
 
     val transient get() = networkId == -1
 
@@ -132,7 +131,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     }
 
     override fun toString(): String {
-        return "Entity($networkId, $name, $entityType)"
+        return "Entity($networkId, $name, ${entityDefinition.name})"
     }
 
     companion object {
@@ -367,7 +366,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             callable("HasTag") { lua ->
                 val entity = lua.checkSelf()
                 val tag = lua.checkString(2)
-                lua.push(entity.entityDefinition?.tags?.contains(tag) ?: false)
+                lua.push(entity.entityDefinition.tags.contains(tag))
                 1
             }
         }

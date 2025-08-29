@@ -1,6 +1,7 @@
 package world.selene.server.entities
 
 import org.koin.mp.KoinPlatform.getKoin
+import world.selene.common.data.EntityDefinition
 import world.selene.common.lua.LuaReferenceResolver
 import world.selene.server.dimensions.Dimension
 import world.selene.common.util.Coordinate
@@ -32,20 +33,18 @@ class EntityManager : LuaReferenceResolver<Int, Entity> {
         }
     }
 
-    fun getAll(): Collection<Entity> = entities.values
-
-    fun createEntity(entityType: String): Entity {
+    fun createEntity(entityDefinition: EntityDefinition): Entity {
         val entity = getKoin().get<Entity>()
         entity.networkId = nextEntityId()
-        entity.entityType = entityType
+        entity.entityDefinition = entityDefinition
         addEntity(entity)
         return entity
     }
 
-    fun createTransientEntity(entityType: String): Entity {
+    fun createTransientEntity(entityDefinition: EntityDefinition): Entity {
         val entity = getKoin().get<Entity>()
         entity.networkId = -1
-        entity.entityType = entityType
+        entity.entityDefinition = entityDefinition
         return entity
     }
 
