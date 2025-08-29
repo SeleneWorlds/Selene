@@ -55,10 +55,10 @@ abstract class JsonRegistry<TData : Any>(
         }
     }
 
-    override fun registryPopulated(mappings: NameIdRegistry) {
+    override fun registryPopulated(mappings: NameIdRegistry, throwOnMissingId: Boolean) {
         for ((name, data) in entries) {
             val id = mappings.getId(this.name, name)
-                ?: throw RuntimeException("Missing id mapping for $name in ${this.name}")
+                ?: if (throwOnMissingId) throw RuntimeException("Missing id mapping for $name in ${this.name}") else -1
             @Suppress("UNCHECKED_CAST")
             ((data as? RegistryObject<TData>)?.initializeFromRegistry(this, name, id))
             entriesById[id] = data

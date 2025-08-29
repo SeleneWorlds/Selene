@@ -50,7 +50,12 @@ class ClientPacketHandler(
         when (packet) {
             is NameIdMappingsPacket -> {
                 context.enqueueWork {
-                    packet.mappings.forEach { nameIdRegistry.addExisting(packet.scope, it.key, it.value) }
+                    if (packet.mappings.isEmpty()) {
+                        val registry = registries.getRegistry(packet.scope)
+                        registry?.registryPopulated(nameIdRegistry, false)
+                    } else {
+                        packet.mappings.forEach { nameIdRegistry.addExisting(packet.scope, it.key, it.value) }
+                    }
                 }
             }
 
@@ -87,7 +92,12 @@ class ClientPacketHandler(
             is EntityPacket -> {
                 context.enqueueWork {
                     val componentOverrides =
-                        packet.components.mapValues { objectMapper.readValue(it.value, ComponentConfiguration::class.java) }
+                        packet.components.mapValues {
+                            objectMapper.readValue(
+                                it.value,
+                                ComponentConfiguration::class.java
+                            )
+                        }
                     clientMap.placeOrUpdateEntity(
                         packet.entityId,
                         packet.networkId,

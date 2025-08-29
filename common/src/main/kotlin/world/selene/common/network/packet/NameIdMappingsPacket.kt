@@ -17,7 +17,7 @@ data class NameIdMappingsPacket(
             repeat(entryCount) {
                 val name = buf.readString()
                 val id = buf.readInt()
-                mappings.put(name, id)
+                mappings[name] = id
             }
             return NameIdMappingsPacket(scope, mappings.entries.toList())
         }

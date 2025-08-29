@@ -41,6 +41,7 @@ class ServerPacketHandler(
                 mappings.entries.windowed(500, partialWindows = true).forEach { chunk ->
                     context.send(NameIdMappingsPacket(scope, chunk))
                 }
+                context.send(NameIdMappingsPacket(scope, emptyList()))
             }
             player.connectionState = Player.ConnectionState.PENDING_JOIN
         }
