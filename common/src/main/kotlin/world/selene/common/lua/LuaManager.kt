@@ -82,6 +82,30 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.setField(-2, "preload")
         lua.setGlobal("package")
 
+        val luaPairs = lua.get("pairs")
+        lua.push { lua ->
+            if (lua.isNil(1)) {
+                return@push lua.pushError("attempt to index a nil value (in pairs)")
+            }
+            lua.push(luaPairs)
+            lua.pushValue(1)
+            lua.pCall(1, 3)
+            3
+        }
+        lua.setGlobal("pairs")
+
+        val luaIpairs = lua.get("ipairs")
+        lua.push { lua ->
+            if (lua.isNil(1)) {
+                return@push lua.pushError("attempt to index a nil value (in ipairs)")
+            }
+            lua.push(luaIpairs)
+            lua.pushValue(1)
+            lua.pCall(1, 3)
+            3
+        }
+        lua.setGlobal("ipairs")
+
         lua.set("dofile", null)
         lua.set("loadfile", null)
         lua.set("load", null)
