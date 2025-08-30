@@ -52,6 +52,45 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         return map.toString()
     }
 
+    fun deepCopy(): ManagedLuaTable {
+        return ManagedLuaTable(deepCopyMap(map))
+    }
+
+    private fun deepCopyMap(original: MutableMap<Any, Any>): MutableMap<Any, Any> {
+        val copy = mutableMapOf<Any, Any>()
+        for ((key, value) in original) {
+            copy[key] = deepCopyValue(value)
+        }
+        return copy
+    }
+
+    private fun deepCopyValue(value: Any): Any {
+        return when (value) {
+            is ManagedLuaTable -> value.deepCopy()
+            is MutableMap<*, *> -> {
+                @Suppress("UNCHECKED_CAST")
+                deepCopyMap(value as MutableMap<Any, Any>)
+            }
+            is MutableList<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                (value as MutableList<Any>).map { deepCopyValue(it) }.toMutableList()
+            }
+            is List<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                (value as List<Any>).map { deepCopyValue(it) }
+            }
+            is MutableSet<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                (value as MutableSet<Any>).map { deepCopyValue(it) }.toMutableSet()
+            }
+            is Set<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                (value as Set<Any>).map { deepCopyValue(it) }.toSet()
+            }
+            else -> value
+        }
+    }
+
     companion object {
         private fun getMapValue(container: Any?, key: Any): Any? {
             return when (container) {
@@ -161,6 +200,17 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                     }
                 }
                 0
+            }
+            callable("DeepCopy") { lua ->
+                val managedTable = lua.checkSelf()
+                lua.push(managedTable.deepCopy(), Lua.Conversion.NONE)
+                1
+            }
+            callable("HasKey") { lua ->
+                val managedTable = lua.checkSelf()
+                val key = lua.toAny(2) ?: lua.throwTypeError(2, Lua.LuaType.STRING)
+                lua.push(managedTable.map.containsKey(key))
+                1
             }
         }
     }
