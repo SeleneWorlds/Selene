@@ -131,6 +131,10 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
         return luaMeta
     }
 
+    fun getAnnotationAt(coordinate: Coordinate, key: String): Map<*, *>? {
+        return annotations.get(coordinate, key)
+    }
+
     companion object {
         fun create(dimension: Dimension, viewer: Viewer, window: ChunkWindow): ScopedChunkView {
             val result = ScopedChunkView(window)

@@ -9,6 +9,7 @@ import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkRegistry
+import world.selene.common.lua.checkString
 import world.selene.server.cameras.DefaultViewer
 import world.selene.server.cameras.Viewer
 import world.selene.server.data.Registries
@@ -56,6 +57,11 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
 
     fun getEntitiesInRange(coordinate: Coordinate, range: Int): List<Entity> {
         return world.entityManager.getNearbyEntities(coordinate, this, range)
+    }
+
+    private fun getAnnotationAt(coordinate: Coordinate, key: String, viewer: Viewer = DefaultViewer): Map<*, *>? {
+        val chunkView = world.chunkViewManager.atCoordinate(this, viewer, coordinate)
+        return chunkView.getAnnotationAt(coordinate, key)
     }
 
     companion object {
@@ -107,6 +113,14 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
                 lua.push(tiles, Lua.Conversion.FULL)
                 1
             }
+            callable("GetAnnotationAt") { lua ->
+                val dimension = lua.checkSelf()
+                val (coordinate, index) = lua.checkCoordinate(2)
+                val viewer = if (lua.isUserdata(index + 1)) lua.checkUserdata<Viewer>(index + 1) else DefaultViewer
+                val key = lua.checkString(index + 2)
+                lua.push(dimension.getAnnotationAt(coordinate, key, viewer), Lua.Conversion.FULL)
+                1
+            }
             callable("HasCollisionAt") { lua ->
                 val dimension = lua.checkSelf()
                 val (coordinate, index) = lua.checkCoordinate(2)
@@ -129,5 +143,6 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             }
         }
     }
+
 }
 
