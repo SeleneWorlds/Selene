@@ -9,6 +9,7 @@ import world.selene.server.maps.ChunkedMapLayer
 import world.selene.server.maps.DenseMapLayer
 import world.selene.server.maps.MapTree
 import world.selene.server.maps.SparseMapLayer
+import world.selene.server.maps.SparseTileAnnotation
 import world.selene.server.maps.SparseTilePlacement
 import world.selene.server.maps.SparseTileRemoval
 import world.selene.server.maps.SparseTileSwap
@@ -34,14 +35,37 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
         val z: Int,
         val tiles: IntArray,
         val annotations: List<MapTreeFileAnnotation>
-    ) : MapTreeFileChunk
+    ) : MapTreeFileChunk {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as MapTreeFileDenseChunk
+
+            if (x != other.x) return false
+            if (y != other.y) return false
+            if (z != other.z) return false
+            if (!tiles.contentEquals(other.tiles)) return false
+            if (annotations != other.annotations) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = x
+            result = 31 * result + y
+            result = 31 * result + z
+            result = 31 * result + tiles.contentHashCode()
+            result = 31 * result + annotations.hashCode()
+            return result
+        }
+    }
 
     data class MapTreeFileSparseChunk(
         val x: Int,
         val y: Int,
         val z: Int,
-        val operations: List<MapTreeFileSparseOperation>,
-        val annotations: List<MapTreeFileAnnotation>
+        val operations: List<MapTreeFileSparseOperation>
     ) : MapTreeFileChunk
 
     object MapTreeFileUnknownChunk : MapTreeFileChunk
@@ -53,7 +77,7 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
         JsonSubTypes.Type(value = MapTreeFileSparseReplaceOperation::class, name = "replace"),
         JsonSubTypes.Type(value = MapTreeFileSparseSwapOperation::class, name = "swap")
     )
-    interface MapTreeFileSparseOperation
+    sealed interface MapTreeFileSparseOperation
     data class MapTreeFileSparseAddOperation(val x: Int, val y: Int, val z: Int, val tileId: Int) :
         MapTreeFileSparseOperation
 
@@ -73,6 +97,14 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
         val z: Int,
         val oldTileId: Int,
         val newTileId: Int
+    ) : MapTreeFileSparseOperation
+
+    data class MapTreeFileSparseAnnotationOperation(
+        val x: Int,
+        val y: Int,
+        val z: Int,
+        val key: String,
+        val data: Map<Any, Any>?
     ) : MapTreeFileSparseOperation
 
     data class MapTreeFile(val header: MapTreeFileHeader, val layers: List<MapTreeFileLayer>)
@@ -130,6 +162,10 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
                                     result.swapTile(Coordinate(op.x, op.y, op.z), oldTileDef, newTileDef)
                                 }
 
+                                is MapTreeFileSparseAnnotationOperation -> {
+                                    result.annotateTile(Coordinate(op.x, op.y, op.z), op.key, op.data)
+                                }
+
                                 is MapTreeFileSparseReplaceOperation -> {
                                     val tileDef = registries.tiles.get(op.tileId)
                                         ?: throw RuntimeException("Missing tile definition for id ${op.tileId}")
@@ -142,13 +178,6 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
                                     result.removeTile(Coordinate(op.x, op.y, op.z), tileDef)
                                 }
                             }
-                        }
-                        chunk.annotations.forEach { annotation ->
-                            result.annotateTile(
-                                Coordinate(annotation.x, annotation.y, annotation.z),
-                                annotation.key,
-                                annotation.data
-                            )
                         }
                     }
 
@@ -208,6 +237,14 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
                                                         operation.newTileDef.id
                                                     )
 
+                                                    is SparseTileAnnotation -> MapTreeFileSparseAnnotationOperation(
+                                                        coordinate.x,
+                                                        coordinate.y,
+                                                        coordinate.z,
+                                                        operation.key,
+                                                        operation.data
+                                                    )
+
                                                     is SparseTileRemoval -> MapTreeFileSparseRemoveOperation(
                                                         coordinate.x,
                                                         coordinate.y,
@@ -223,15 +260,6 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
                                                     )
                                                 }
                                             }
-                                        },
-                                        chunk.annotations.cellSet().map { cell ->
-                                            MapTreeFileAnnotation(
-                                                cell.rowKey.x,
-                                                cell.rowKey.y,
-                                                cell.rowKey.z,
-                                                cell.columnKey,
-                                                cell.value
-                                            )
                                         }
                                     )
                                 }

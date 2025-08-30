@@ -46,7 +46,7 @@ class MapTreeLayer(override val name: String, private val mapTree: MapTree) : Ma
     override fun annotateTile(
         coordinate: Coordinate,
         key: String,
-        data: Map<Any, Any>
+        data: Map<Any, Any>?
     ) {
     }
 

@@ -6,6 +6,7 @@ import world.selene.server.maps.ChunkedMapLayer
 import world.selene.server.maps.DenseMapLayer
 import world.selene.server.maps.MapTree
 import world.selene.server.maps.SparseMapLayer
+import world.selene.server.maps.SparseTileAnnotation
 import world.selene.server.maps.SparseTilePlacement
 import world.selene.server.maps.SparseTileRemoval
 import world.selene.server.maps.SparseTileSwap
@@ -257,6 +258,7 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                                 is SparseTileRemoval -> OP_REMOVAL
                                                 is SparseTilesReplacement -> OP_REPLACEMENT
                                                 is SparseTileSwap -> OP_SWAP
+                                                is SparseTileAnnotation -> OP_ANNOTATION
                                             }
                                         )
                                         when (operation) {
@@ -276,19 +278,17 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                                 raf.writeInt(operation.oldTileDef.id)
                                                 raf.writeInt(operation.newTileDef.id)
                                             }
+
+                                            is SparseTileAnnotation -> {
+                                                raf.writeInt(operation.coordinate.x)
+                                                raf.writeInt(operation.coordinate.y)
+                                                raf.writeInt(operation.coordinate.z)
+                                                raf.writeString(operation.key)
+                                                raf.writeBoolean(operation.data != null)
+                                                operation.data?.let { raf.writeMap(it) }
+                                            }
                                         }
                                     }
-                                }
-
-                                // Write annotations
-                                val annotations = chunk.annotations.cellSet()
-                                raf.writeInt(annotations.size)
-                                annotations.forEach { cell ->
-                                    raf.writeInt(cell.rowKey.x)
-                                    raf.writeInt(cell.rowKey.y)
-                                    raf.writeInt(cell.rowKey.z)
-                                    raf.writeString(cell.columnKey)
-                                    raf.writeMap(cell.value)
                                 }
                             }
                         }
@@ -411,5 +411,6 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
         const val OP_REMOVAL = 2
         const val OP_REPLACEMENT = 3
         const val OP_SWAP = 4
+        const val OP_ANNOTATION = 5
     }
 }

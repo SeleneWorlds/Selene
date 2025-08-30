@@ -34,7 +34,7 @@ object EmptyMapLayer : MapLayer, BaseMapLayer {
     override fun annotateTile(
         coordinate: Coordinate,
         key: String,
-        data: Map<Any, Any>
+        data: Map<Any, Any>?
     ) {
     }
 

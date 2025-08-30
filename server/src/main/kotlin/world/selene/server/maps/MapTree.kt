@@ -67,7 +67,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         override fun annotateTile(
             coordinate: Coordinate,
             key: String,
-            data: Map<Any, Any>
+            data: Map<Any, Any>?
         ) {
             baseLayer.annotateTile(coordinate, key, data)
         }
@@ -167,7 +167,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         notifyListeners(coordinate)
     }
 
-    fun annotateTile(coordinate: Coordinate, key: String, data: Map<Any, Any>, layerName: String? = null) {
+    fun annotateTile(coordinate: Coordinate, key: String, data: Map<Any, Any>?, layerName: String? = null) {
         val layer = getLayer(layerName ?: "default")
         layer.annotateTile(coordinate, key, data)
     }
@@ -208,6 +208,10 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 swapTile(operation.coordinate, operation.oldTileDef, operation.newTileDef, layerName)
             }
 
+            is SparseTileAnnotation -> {
+                annotateTile(operation.coordinate, operation.key, operation.data, layerName)
+            }
+
             is SparseTileRemoval -> {
                 removeTile(
                     operation.coordinate,
@@ -238,14 +242,11 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                 }
 
                 is SparseMapLayer -> {
-                    otherLayer.chunks.forEach { (chunkCoordinate, chunk) ->
+                    otherLayer.chunks.forEach { (_, chunk) ->
                         chunk.operations.forEach { (_, operations) ->
                             operations.forEach { operation ->
                                 applyOperation(operation)
                             }
-                        }
-                        chunk.annotations.cellSet().forEach {
-                            annotateTile(Coordinate(it.rowKey.x, it.rowKey.y, chunkCoordinate.z), it.columnKey, it.value)
                         }
                     }
                 }

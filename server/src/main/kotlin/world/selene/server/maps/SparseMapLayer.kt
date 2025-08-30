@@ -1,7 +1,5 @@
 package world.selene.server.maps
 
-import com.google.common.collect.HashBasedTable
-import com.google.common.collect.Table
 import world.selene.common.data.TileDefinition
 import world.selene.common.util.Coordinate
 
@@ -49,9 +47,10 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
     override fun annotateTile(
         coordinate: Coordinate,
         key: String,
-        data: Map<Any, Any>
+        data: Map<Any, Any>?
     ) {
-        getOrCreateChunk(coordinate).setAnnotation(coordinate, key, data)
+        val chunk = getOrCreateChunk(coordinate)
+        chunk.addOperation(coordinate, SparseTileAnnotation(coordinate, key, data))
     }
 
     fun getOperations(coordinate: Coordinate): List<SparseOperation> {
@@ -76,7 +75,6 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
 
     class SparseChunk() : MapChunk {
         val operations = mutableMapOf<Coordinate, MutableList<SparseOperation>>()
-        val annotations = HashBasedTable.create<Coordinate, String, Map<Any, Any>>()
 
         fun addOperation(coordinate: Coordinate, op: SparseOperation) {
             operations.getOrPut(coordinate) { mutableListOf() }.add(op)
@@ -84,10 +82,6 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
 
         fun clearOperations(coordinate: Coordinate) {
             operations.remove(coordinate)
-        }
-
-        fun setAnnotation(coordinate: Coordinate, key: String, data: Map<Any, Any>) {
-            annotations.put(coordinate, key, data)
         }
     }
 
@@ -106,14 +100,6 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
     override fun removeCollisionTag(tagName: String) {
         collisionTags.remove(tagName)
     }
-
-    fun getAnnotations(): Table<Coordinate, String, Map<*, *>> {
-        val result = HashBasedTable.create<Coordinate, String, Map<*, *>>()
-        for (chunk in chunks.values) {
-            result.putAll(chunk.annotations)
-        }
-        return result
-    }
 }
 
 sealed interface SparseOperation
@@ -125,4 +111,8 @@ class SparseTileRemoval(val coordinate: Coordinate, val tileDef: TileDefinition)
 class SparseTilesReplacement(val coordinate: Coordinate, val tileDef: TileDefinition) :
     SparseOperation
 
-class SparseTileSwap(val coordinate: Coordinate, val oldTileDef: TileDefinition, val newTileDef: TileDefinition) : SparseOperation
+class SparseTileSwap(val coordinate: Coordinate, val oldTileDef: TileDefinition, val newTileDef: TileDefinition) :
+    SparseOperation
+
+class SparseTileAnnotation(val coordinate: Coordinate, val key: String, val data: Map<Any, Any>?) :
+    SparseOperation

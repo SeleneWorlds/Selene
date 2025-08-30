@@ -16,6 +16,7 @@ import world.selene.server.maps.DenseMapLayer
 import world.selene.server.maps.MapLayer
 import world.selene.server.maps.MapTreeLayer
 import world.selene.server.maps.SparseMapLayer
+import world.selene.server.maps.SparseTileAnnotation
 import world.selene.server.maps.SparseTilePlacement
 import world.selene.server.maps.SparseTileRemoval
 import world.selene.server.maps.SparseTileSwap
@@ -92,6 +93,12 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
                                         additionalTilesInCell[index] = operation.newTileDef.id
                                     }
                                 }
+                            } else if (operation is SparseTileAnnotation) {
+                                if (operation.data != null) {
+                                    annotations.put(coordinate, operation.key, operation.data)
+                                } else {
+                                    annotations.remove(coordinate, operation.key)
+                                }
                             } else if (operation is SparseTileRemoval) {
                                 if (baseTiles[index] == operation.tileDef.id) {
                                     baseTiles[index] = if (additionalTiles.size() > 0) additionalTiles.get(coordinate)
@@ -107,7 +114,6 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
                         }
                     }
                 }
-                annotations.putAll(layer.getAnnotations())
             }
         }
     }
