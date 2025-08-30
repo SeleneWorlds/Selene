@@ -1,20 +1,17 @@
 package world.selene.client.camera
 
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
 import world.selene.client.grid.ClientGrid
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.maps.ClientMap
-import world.selene.common.lua.LuaManager
 import world.selene.common.util.Coordinate
 
 class CameraManager(
     private val map: ClientMap,
     private val grid: ClientGrid,
-    private val luaManager: LuaManager,
     private val signals: ClientLuaSignals
 ) {
     val camera = OrthographicCamera().apply {
@@ -25,7 +22,7 @@ class CameraManager(
         set(value) {
             if (field != value) {
                 field = value
-                signals.cameraCoordinateChanged.emit() { lua -> lua.push(field, Lua.Conversion.NONE); 1 }
+                signals.cameraCoordinateChanged.emit { lua -> lua.push(field, Lua.Conversion.NONE); 1 }
             }
         }
     var viewportOffsetX = 0
@@ -47,11 +44,6 @@ class CameraManager(
             }
         }
 
-        if (Gdx.input.isKeyPressed(Input.Keys.Z)) {
-            camera.zoom = 10f
-        } else {
-            camera.zoom = 1f
-        }
         camera.update()
     }
 
@@ -86,7 +78,7 @@ class CameraManager(
         val camRight = camera.position.x + camera.viewportWidth / 2f
         val camBottom = camera.position.y - camera.viewportHeight / 2f
         val camTop = camera.position.y + camera.viewportHeight / 2f
-        return !(right < camLeft || left > camRight || top < camBottom || bottom > camTop) || true
+        return !(right < camLeft || left > camRight || top < camBottom || bottom > camTop)
     }
 
     fun isInsideInterior(): Boolean {
