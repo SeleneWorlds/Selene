@@ -5,11 +5,13 @@ import world.selene.common.data.TileDefinition
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.checkAnyMap
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkRegistry
 import world.selene.common.lua.checkString
+import world.selene.common.lua.toAnyMap
 import world.selene.server.cameras.DefaultViewer
 import world.selene.server.cameras.Viewer
 import world.selene.server.data.Registries
@@ -79,8 +81,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
                     return@callable 1
                 }
 
-                it.push(chunkView.getAdditionalTilesAt(coordinate).contains(tile.id))
-                1
+                it.push(chunkView.getAdditionalTilesAt(coordinate).contains(tile.id)); 1
             }
             callable("PlaceTile") { lua ->
                 val dimension = lua.checkSelf()
@@ -90,6 +91,15 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
                 dimension.mapTree.placeTile(coordinate, tileDef, layerName)
                 lua.push(TransientTile(tileDef, dimension, coordinate), Lua.Conversion.NONE)
                 return@callable 1
+            }
+            callable("AnnotateTile") { lua ->
+                val dimension = lua.checkSelf()
+                val (coordinate, index) = lua.checkCoordinate(2)
+                val key = lua.checkString(index + 1)
+                val data = lua.checkAnyMap(index + 2)
+                val layerName = lua.toString(index + 3)
+                dimension.mapTree.annotateTile(coordinate, key, data, layerName)
+                0
             }
             callable("GetTilesAt") { lua ->
                 val dimension = lua.checkSelf()
