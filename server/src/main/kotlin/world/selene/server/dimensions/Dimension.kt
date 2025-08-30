@@ -126,8 +126,8 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             callable("GetAnnotationAt") { lua ->
                 val dimension = lua.checkSelf()
                 val (coordinate, index) = lua.checkCoordinate(2)
-                val viewer = if (lua.isUserdata(index + 1)) lua.checkUserdata<Viewer>(index + 1) else DefaultViewer
-                val key = lua.checkString(index + 2)
+                val key = lua.checkString(index + 1)
+                val viewer = if (lua.isUserdata(index + 2)) lua.checkUserdata<Viewer>(index + 2) else DefaultViewer
                 lua.push(dimension.getAnnotationAt(coordinate, key, viewer), Lua.Conversion.FULL)
                 1
             }
