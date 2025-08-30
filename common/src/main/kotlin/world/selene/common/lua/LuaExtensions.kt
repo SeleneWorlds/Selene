@@ -9,6 +9,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.data.Registry
 import world.selene.common.grid.Grid
 import world.selene.common.util.Coordinate
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.reflect.KClass
 
@@ -303,4 +304,16 @@ fun <TKey : Any, TValue : Any> Lua.toTypedMap(
     }
 
     return null
+}
+
+fun Lua.toLocale(index: Int): Locale? {
+    return when(type(index)) {
+        Lua.LuaType.STRING -> Locale.forLanguageTag(toString(index)!!)
+        Lua.LuaType.USERDATA -> toUserdata(index, Locale::class)
+        else -> throwTypeError(index, Locale::class)
+    }
+}
+
+fun Lua.checkLocale(index: Int): Locale {
+    return toLocale(index) ?: throwTypeError(index, Locale::class)
 }
