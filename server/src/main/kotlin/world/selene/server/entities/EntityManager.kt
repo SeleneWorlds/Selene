@@ -51,4 +51,8 @@ class EntityManager : LuaReferenceResolver<Int, Entity> {
     override fun luaDereference(id: Int): Entity? {
         return entities[id]
     }
+
+    fun getEntityByNetworkId(networkId: Int): Entity? {
+        return entities[networkId]
+    }
 }

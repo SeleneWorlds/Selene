@@ -3,6 +3,7 @@ package world.selene.server.lua
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaModule
+import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkRegistry
 import world.selene.common.lua.register
 import world.selene.server.data.Registries
@@ -14,6 +15,7 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val re
     override fun register(table: LuaValue) {
         table.register("Create", this::luaCreate)
         table.register("CreateTransient", this::luaCreateTransient)
+        table.register("GetByNetworkId", this::luaGetByNetworkId)
         table.set("SteppedOnTile", signals.entitySteppedOnTile)
         table.set("SteppedOffTile", signals.entitySteppedOffTile)
     }
@@ -28,6 +30,13 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val re
     private fun luaCreateTransient(lua: Lua): Int {
         val entityDefinition = lua.checkRegistry(1, registries.entities)
         val entity = entityManager.createTransientEntity(entityDefinition)
+        lua.push(entity, Lua.Conversion.NONE)
+        return 1
+    }
+
+    private fun luaGetByNetworkId(lua: Lua): Int {
+        val networkId = lua.checkInt(1)
+        val entity = entityManager.getEntityByNetworkId(networkId)
         lua.push(entity, Lua.Conversion.NONE)
         return 1
     }
