@@ -42,6 +42,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
             register("trim", this@LuaManager::luaTrim)
             register("startsWith", this@LuaManager::luaStartsWith)
             register("endsWith", this@LuaManager::luaEndsWith)
+            register("removeSuffix", this@LuaManager::luaRemoveSuffix)
             register("split", this@LuaManager::luaSplit)
             register("substringAfter", this@LuaManager::luaSubstringAfter)
         })
@@ -276,6 +277,11 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
     private fun luaEndsWith(lua: Lua): Int {
         lua.push(lua.checkString(1).endsWith(lua.checkString(2)))
+        return 1
+    }
+
+    private fun luaRemoveSuffix(lua: Lua): Int {
+        lua.push(lua.checkString(1).removeSuffix(lua.checkString(2)))
         return 1
     }
 
