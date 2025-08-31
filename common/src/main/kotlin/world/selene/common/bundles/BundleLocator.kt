@@ -11,7 +11,14 @@ class LocatedBundle(val manifest: BundleManifest, val dir: File) {
     }
 
     fun getFileDebugName(file: File): String {
-        return manifest.name + ":" + file.name
+        val sb = StringBuilder()
+        sb.append(manifest.name.replace(Regex("[aiueoAIUEO]"), ""))
+        sb.append(":")
+        if (file.parentFile.name != "lua") {
+            sb.append(file.parentFile.name).append("/")
+        }
+        sb.append(file.name)
+        return sb.toString()
     }
 }
 
