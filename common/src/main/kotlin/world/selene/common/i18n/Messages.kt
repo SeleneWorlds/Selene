@@ -63,7 +63,7 @@ class Messages(
             val localeFiles = findLocaleFiles(i18nDir, locale)
             localeFiles.forEach { file ->
                 try {
-                    val content = bundleLoader.readBundleFileText(bundle, file)
+                    val content = file.readText()
                     val props = Properties()
                     props.load(content.byteInputStream())
                     messages.putAll(props)

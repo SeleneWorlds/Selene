@@ -16,25 +16,6 @@ class BundleLoader(
     private val bundleLocator: BundleLocator
 ) {
 
-    fun readBundleFileText(bundle: LocatedBundle, file: File, encoding: Charset = StandardCharsets.UTF_8): String {
-        val lua = luaManager.lua
-        var textContent = file.readText(encoding)
-        for ((_, transformer) in bundle.transformers) {
-            transformer.push(lua)
-            lua.getField(-1, "transformText")
-            if (lua.isFunction(-1)) {
-                lua.push(textContent)
-                lua.xpCall(1, 1)
-                if (lua.isString(-1)) {
-                    textContent = lua.toString(-1)!!
-                }
-            }
-            lua.pop(2) // transformer and result
-        }
-
-        return textContent
-    }
-
     fun loadBundles(bundles: Set<String>): List<LocatedBundle> {
         val bundleManifests = mutableMapOf<String, LocatedBundle>()
         val dependencyGraph = mutableMapOf<String, List<String>>()
@@ -58,7 +39,7 @@ class BundleLoader(
                     val luaInitFile =
                         File(locatedBundle.dir, "init.lua")
                     if (luaInitFile.exists()) {
-                        return@addPackageResolver (locatedBundle.getFileDebugName(luaInitFile)) to readBundleFileText(locatedBundle, luaInitFile)
+                        return@addPackageResolver (locatedBundle.getFileDebugName(luaInitFile)) to luaInitFile.readText()
                     }
                 }
                 if (!path.startsWith("$bundle.")) {
@@ -67,7 +48,7 @@ class BundleLoader(
                 val luaFile =
                     File(locatedBundle.dir, path.substringAfter('.').replace('.', File.separatorChar) + ".lua")
                 if (luaFile.exists()) {
-                    return@addPackageResolver (locatedBundle.getFileDebugName(luaFile)) to readBundleFileText(locatedBundle, luaFile)
+                    return@addPackageResolver (locatedBundle.getFileDebugName(luaFile)) to luaFile.readText()
                 }
                 null
             }
@@ -121,17 +102,12 @@ class BundleLoader(
             val locatedBundle = bundleManifests[bundle] ?: continue
             val manifest = locatedBundle.manifest
             val bundleDir = locatedBundle.dir
-            for (transformerPath in manifest.transformers) {
-                val transformerFile = File(bundleDir, transformerPath)
-                luaManager.runScript(locatedBundle, transformerFile, transformerFile.readText())
-                val transformer = luaManager.lua.get()
-                locatedBundle.transformers[transformerPath] = transformer
-            }
             for ((moduleName, preload) in manifest.preloads) {
                 try {
                     val (preloadFile, encoding) = when (preload) {
                         is String -> preload to StandardCharsets.UTF_8
                         is Map<*, *> -> {
+                            @Suppress("UNCHECKED_CAST")
                             val preloadMap = preload as Map<String, Any>
                             val file = preloadMap["file"] as? String
                                 ?: throw IllegalArgumentException("Preload object must have 'file' field")
@@ -145,8 +121,13 @@ class BundleLoader(
 
                     val scriptFile = File(bundleDir, preloadFile)
                     if (scriptFile.exists()) {
-                        logger.debug("Pre-loading Lua module $moduleName from $preloadFile with encoding $encoding")
-                        luaManager.preloadModule(moduleName, readBundleFileText(locatedBundle, scriptFile, encoding))
+                        logger.debug(
+                            "Pre-loading Lua module {} from {} with encoding {}",
+                            moduleName,
+                            preloadFile,
+                            encoding
+                        )
+                        luaManager.preloadModule(moduleName, scriptFile.readText(encoding))
                     } else {
                         logger.error("Preload file $preloadFile not found in bundle $bundle")
                     }
