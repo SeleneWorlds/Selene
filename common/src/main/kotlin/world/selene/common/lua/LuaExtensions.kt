@@ -3,13 +3,15 @@ package world.selene.common.lua
 import party.iroiro.luajava.AbstractLua
 import party.iroiro.luajava.JFunction
 import party.iroiro.luajava.Lua
+import party.iroiro.luajava.Lua.LuaType
 import party.iroiro.luajava.LuaException
+import party.iroiro.luajava.LuaException.LuaError
 import party.iroiro.luajava.value.LuaFunction
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.data.Registry
 import world.selene.common.grid.Grid
 import world.selene.common.util.Coordinate
-import java.util.Locale
+import java.util.*
 import kotlin.math.abs
 import kotlin.reflect.KClass
 
@@ -307,7 +309,7 @@ fun <TKey : Any, TValue : Any> Lua.toTypedMap(
 }
 
 fun Lua.toLocale(index: Int): Locale? {
-    return when(type(index)) {
+    return when (type(index)) {
         Lua.LuaType.STRING -> Locale.forLanguageTag(toString(index)!!)
         Lua.LuaType.USERDATA -> toUserdata(index, Locale::class)
         else -> throwTypeError(index, Locale::class)
@@ -316,4 +318,51 @@ fun Lua.toLocale(index: Int): Locale? {
 
 fun Lua.checkLocale(index: Int): Locale {
     return toLocale(index) ?: throwTypeError(index, Locale::class)
+}
+
+fun Lua.xpCall(nArgs: Int, nResults: Int, trace: LuaTrace? = null) {
+    val base = top - nArgs
+    pushErrorHandler()
+    insert(base)
+    xpCallWithErrorHandler(nArgs, nResults, base, trace)
+}
+
+fun Lua.xpCallWithErrorHandler(nArgs: Int, nResults: Int, errorHandler: Int, trace: LuaTrace? = null) {
+    checkStack((nResults - nArgs - 1).coerceAtLeast(0));
+    val code = luaNatives.lua_pcall(pointer, nArgs, nResults, errorHandler)
+    val error = (this as AbstractLua).convertError(code)
+    if (error == LuaError.OK) {
+        return
+    }
+
+    val message: String
+    if (type(-1) === LuaType.STRING) {
+        message = toString(-1)!! + if (trace != null) "\n\t${trace.luaTrace()}" else ""
+        pop(1)
+    } else {
+        message = "no error message available"
+    }
+    val e = LuaException(error, message.replace(Regex("\\[string \"(.*?)\"]"), "[$1]"))
+    val javaError = getJavaError()
+    if (javaError != null) {
+        e.initCause(javaError)
+        error(null as Throwable?)
+    }
+    throw e
+}
+
+fun handleError(lua: Lua): Int {
+    val message = lua.toString(1)
+    lua.getGlobal("debug")
+    lua.getField(-1, "traceback")
+    lua.pCall(0, 1)
+    val traceback = lua.toString(-1)
+    lua.pop(1)
+    lua.push("$message\n$traceback")
+    return 1
+}
+
+fun Lua.pushErrorHandler(): Int {
+    push(::handleError)
+    return top
 }
