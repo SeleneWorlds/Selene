@@ -34,6 +34,7 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
 
         lua.setExternalLoader(ClassPathLoader())
         lua.loadExternal("bit32")
+        lua.pCall(0, 1)
         lua.setGlobal("bit32")
 
         lua.openLibrary("string")
