@@ -3,6 +3,7 @@ package world.selene.client.controls
 import world.selene.client.maps.Entity
 import world.selene.client.network.NetworkClient
 import world.selene.common.grid.Grid
+import world.selene.common.network.packet.RequestFacingPacket
 import world.selene.common.network.packet.RequestMovePacket
 
 class GridMovement(
@@ -10,9 +11,8 @@ class GridMovement(
     private val networkClient: NetworkClient
 ) {
     var moveDirection: Grid.Direction? = null
+    var facingDirection: Grid.Direction? = null
     var requestedStep: Boolean = false
-
-    private val entity get() = playerController.controlledEntity
 
     fun update(delta: Float) {
         val entity = playerController.controlledEntity
@@ -22,7 +22,13 @@ class GridMovement(
                 requestedStep = true
             }
         }
+        facingDirection?.let { facingDirection ->
+            if (entity != null && entity.facing != facingDirection.angle) {
+                networkClient.send(RequestFacingPacket(facingDirection.angle))
+            }
+        }
         moveDirection = null
+        facingDirection = null
     }
 
 

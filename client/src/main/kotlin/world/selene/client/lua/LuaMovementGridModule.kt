@@ -13,11 +13,18 @@ class LuaMovementGridModule(private val gridMovement: GridMovement) : LuaModule 
 
     override fun register(table: LuaValue) {
         table.register("SetMotion", this::luaSetMotion)
+        table.register("SetFacing", this::luaSetFacing)
     }
 
     private fun luaSetMotion(lua: Lua): Int {
         val direction = lua.checkUserdata(1, Grid.Direction::class)
         gridMovement.moveDirection = direction
+        return 0
+    }
+
+    private fun luaSetFacing(lua: Lua): Int {
+        val direction = lua.checkUserdata(1, Grid.Direction::class)
+        gridMovement.facingDirection = direction
         return 0
     }
 }
