@@ -2,6 +2,7 @@ package world.selene.common.bundles
 
 import org.slf4j.Logger
 import world.selene.common.lua.LuaManager
+import world.selene.common.lua.xpCall
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
@@ -22,7 +23,7 @@ class BundleLoader(
             lua.getField(-1, "transformText")
             if (lua.isFunction(-1)) {
                 lua.push(textContent)
-                lua.pCall(1, 1)
+                lua.xpCall(1, 1)
                 if (lua.isString(-1)) {
                     textContent = lua.toString(-1)!!
                 }

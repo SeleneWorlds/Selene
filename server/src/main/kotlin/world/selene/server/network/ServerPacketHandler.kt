@@ -19,7 +19,6 @@ import world.selene.common.network.packet.NameIdMappingsPacket
 import world.selene.common.network.packet.PreferencesPacket
 import world.selene.common.network.packet.RequestFacingPacket
 import world.selene.common.network.packet.RequestMovePacket
-import world.selene.common.network.packet.TurnEntityPacket
 import world.selene.server.login.SessionAuthentication
 import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.player.Player

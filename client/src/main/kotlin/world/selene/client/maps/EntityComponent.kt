@@ -11,7 +11,9 @@ import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.LuaTrace
 import world.selene.common.lua.newTable
+import world.selene.common.lua.xpCall
 
 interface EntityComponent {
     fun update(entity: Entity) = Unit
@@ -37,7 +39,7 @@ class VisualComponent(val configuration: VisualComponentConfiguration) : EntityC
     }
 }
 
-class ClientScriptComponent(val configuration: ClientScriptComponentConfiguration) : EntityComponent {
+class ClientScriptComponent(val configuration: ClientScriptComponentConfiguration) : EntityComponent, LuaTrace {
     private val luaManager: LuaManager by getKoin().inject()
     private var module: LuaValue? = null
     private var data: LuaValue? = null
@@ -55,7 +57,7 @@ class ClientScriptComponent(val configuration: ClientScriptComponentConfiguratio
             if (lua.isFunction(-1)) {
                 lua.push(entity, Lua.Conversion.NONE)
                 lua.push(data)
-                lua.pCall(2, 0)
+                lua.xpCall(2, 0, this)
             } else lua.pop(1)
         }
         lua.getField(-1, "TickEntity")
@@ -63,9 +65,13 @@ class ClientScriptComponent(val configuration: ClientScriptComponentConfiguratio
             lua.push(entity, Lua.Conversion.NONE)
             lua.push(data)
             lua.push(Gdx.graphics.deltaTime)
-            lua.pCall(3, 0)
+            lua.xpCall(3, 0, this)
         } else lua.pop(1)
         lua.pop(1)
+    }
+
+    override fun luaTrace(): String {
+        return "[client script component \"${configuration.script}\"]"
     }
 }
 

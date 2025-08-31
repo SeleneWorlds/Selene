@@ -1,5 +1,7 @@
 package world.selene.client.lua
 
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
@@ -499,6 +501,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         val keyUp = lua.getFieldFunction(1, "KeyUp")
         val keyDown = lua.getFieldFunction(1, "KeyDown")
         val keyTyped = lua.getFieldFunction(1, "KeyTyped")
+
+        val registrationSite = lua.getCallerInfo()
         ui.stage.addListener { event ->
             if (event is InputEvent) {
                 return@addListener when (event.type) {
@@ -507,7 +511,10 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                             lua.push(keyUp)
                             lua.push(event, Lua.Conversion.NONE)
                             lua.push(event.keyCode, Lua.Conversion.FULL)
-                            lua.pCall(2, 1)
+                            lua.xpCall(
+                                2,
+                                1,
+                                ClosureTrace { "[ui keyUp \"${Input.Keys.toString(event.keyCode)}\"] registered in $registrationSite" })
                             lua.toBoolean(-1)
                         } else false
                     }
@@ -517,7 +524,10 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                             lua.push(keyDown)
                             lua.push(event, Lua.Conversion.NONE)
                             lua.push(event.keyCode, Lua.Conversion.FULL)
-                            lua.pCall(2, 1)
+                            lua.xpCall(
+                                2,
+                                1,
+                                ClosureTrace { "[ui keyDown \"${Input.Keys.toString(event.keyCode)}\"] registered in $registrationSite" })
                             lua.toBoolean(-1)
                         } else false
                     }
@@ -527,7 +537,10 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                             lua.push(keyTyped)
                             lua.push(event, Lua.Conversion.NONE)
                             lua.push(event.character, Lua.Conversion.FULL)
-                            lua.pCall(2, 1)
+                            lua.xpCall(
+                                2,
+                                1,
+                                ClosureTrace { "[ui keyTyped \"${Input.Keys.toString(event.keyCode)}\"] registered in $registrationSite" })
                             lua.toBoolean(-1)
                         } else false
                     }
@@ -591,6 +604,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             lua.pop(1)
         }
 
+        val registrationSite = lua.getCallerInfo()
+
         try {
             val parser = SeleneLmlParser.parser().skin(skin ?: ui.systemSkin)
 
@@ -603,7 +618,10 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
                         for (parameter in parameters) {
                             lua.push(parameter, Lua.Conversion.FULL)
                         }
-                        lua.pCall(parameters.size + 1, 1)
+                        lua.xpCall(
+                            parameters.size + 1,
+                            1,
+                            ClosureTrace { "[ui action \"$actionName\"] registered in $registrationSite" })
                         return lua.toAny(-1)
                     }
                 })

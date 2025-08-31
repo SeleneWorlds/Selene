@@ -6,6 +6,7 @@ import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkFunction
 import world.selene.common.lua.checkString
 import world.selene.common.lua.checkUserdata
+import world.selene.common.lua.getCallerInfo
 import world.selene.common.lua.throwTypeError
 import world.selene.common.observable.Observable
 import world.selene.common.observable.Observer
@@ -71,8 +72,9 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
             callable("AddConstraint") { lua ->
                 @Suppress("UNCHECKED_CAST")
                 val attribute = lua.checkSelf() as Attribute<Any?>
+                val registrationSite = lua.getCallerInfo()
                 val filter = when (lua.type(3)) {
-                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(lua.checkFunction(3))
+                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(lua.checkFunction(3), registrationSite)
                     Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(3)
                     else -> lua.throwTypeError(3, AttributeFilter::class)
                 }
@@ -88,8 +90,9 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
             callable("AddModifier") { lua ->
                 @Suppress("UNCHECKED_CAST")
                 val attribute = lua.checkSelf() as Attribute<Any?>
+                val registrationSite = lua.getCallerInfo()
                 val filter = when (lua.type(3)) {
-                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(lua.checkFunction(3))
+                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(lua.checkFunction(3), registrationSite)
                     Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(3)
                     else -> lua.throwTypeError(3, AttributeFilter::class)
                 }

@@ -28,6 +28,7 @@ import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.network.packet.StopSoundPacket
 import world.selene.client.sound.SoundManager
 import world.selene.common.data.ComponentConfiguration
+import world.selene.common.lua.xpCall
 import world.selene.common.network.packet.DisconnectPacket
 import world.selene.common.network.packet.TurnEntityPacket
 
@@ -178,16 +179,14 @@ class ClientPacketHandler(
                 context.enqueueWork {
                     val handler = payloadRegistry.retrieveHandler(packet.payloadId)
                     if (handler != null) {
-                        handler.callback.push(luaManager.lua)
+                        val lua = luaManager.lua
+                        handler.callback.push(lua)
                         val payload = objectMapper.readValue(packet.payload, Map::class.java)
-                        luaManager.lua.push(payload)
+                        lua.push(payload)
                         try {
-                            luaManager.lua.pCall(1, 0)
+                            lua.xpCall(1, 0, handler)
                         } catch (e: LuaException) {
-                            logger.error(
-                                "Error while handling custom payload ${packet.payloadId} (registered at ${handler.registrationSite})",
-                                e
-                            )
+                            logger.error("Lua Error in Payload Handler", e)
                         }
                     }
                 }

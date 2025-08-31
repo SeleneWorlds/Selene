@@ -4,6 +4,7 @@ import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.checkFunction
 import world.selene.common.lua.checkUserdata
+import world.selene.common.lua.getCallerInfo
 import world.selene.common.lua.throwTypeError
 import world.selene.common.lua.toAny
 
@@ -17,8 +18,9 @@ interface Observable<T> {
             callable("Subscribe") { lua ->
                 @Suppress("UNCHECKED_CAST")
                 val observable = lua.checkSelf() as Observable<Any>
+                val registrationSite = lua.getCallerInfo()
                 val observer = when (lua.type(2)) {
-                    Lua.LuaType.FUNCTION -> LuaObserver(lua.checkFunction(2))
+                    Lua.LuaType.FUNCTION -> LuaObserver(lua.checkFunction(2), registrationSite)
                     Lua.LuaType.USERDATA -> lua.checkUserdata<Observer<Any>>(2)
                     else -> lua.throwTypeError(2, Observer::class)
                 }
