@@ -24,7 +24,7 @@ class LocatedBundle(val manifest: BundleManifest, val dir: File) {
         }
         
         for (part in pathParts) {
-            sb.append(part).append(".")
+            sb.append(part).append("/")
         }
         
         sb.append(file.name)
