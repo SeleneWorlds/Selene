@@ -5,6 +5,7 @@ import org.slf4j.Logger
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import world.selene.common.data.NameIdRegistry
+import world.selene.common.grid.Grid
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaPayloadRegistry
 import world.selene.common.network.Packet
@@ -15,7 +16,9 @@ import world.selene.common.network.packet.FinalizeJoinPacket
 import world.selene.common.network.packet.MoveEntityPacket
 import world.selene.common.network.packet.NameIdMappingsPacket
 import world.selene.common.network.packet.PreferencesPacket
+import world.selene.common.network.packet.RequestFacingPacket
 import world.selene.common.network.packet.RequestMovePacket
+import world.selene.common.network.packet.TurnEntityPacket
 import world.selene.server.login.SessionAuthentication
 import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.player.Player
@@ -28,6 +31,7 @@ class ServerPacketHandler(
     private val nameIdRegistry: NameIdRegistry,
     private val luaManager: LuaManager,
     private val payloadRegistry: LuaPayloadRegistry,
+    private val grid: Grid,
     private val sessionAuthentication: SessionAuthentication
 ) : PacketHandler<NetworkClient> {
 
@@ -86,6 +90,13 @@ class ServerPacketHandler(
                         0f
                     )
                 )
+            }
+        } else if (packet is RequestFacingPacket) {
+            player.resetLastInputTime()
+            val controlledEntity = player.controlledEntity ?: return
+            val facing = grid.getDirection(packet.angle)
+            if (controlledEntity.facing != facing) {
+                controlledEntity.turnTo(facing)
             }
         } else if (packet is CustomPayloadPacket) {
             context.enqueueWork {

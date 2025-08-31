@@ -3,6 +3,7 @@ package world.selene.server.sync
 import world.selene.common.grid.Grid
 import world.selene.common.network.Packet
 import world.selene.common.network.packet.MoveEntityPacket
+import world.selene.common.network.packet.TurnEntityPacket
 import world.selene.common.util.Coordinate
 import world.selene.server.entities.Entity
 
@@ -34,10 +35,7 @@ class DimensionSyncManager {
     }
 
     fun entityTurned(entity: Entity, direction: Grid.Direction) {
-        sendToAllWatching(
-            entity.networkId,
-            MoveEntityPacket(entity.networkId, entity.coordinate, entity.coordinate, direction.angle, 0f)
-        )
+        sendToAllWatching(entity.networkId, TurnEntityPacket(entity.networkId, direction.angle))
     }
 
     fun entityMoved(entity: Entity, start: Coordinate, end: Coordinate, duration: Float) {

@@ -20,6 +20,7 @@ import world.selene.common.lua.toAnyMap
 import world.selene.common.lua.toFunction
 import world.selene.common.lua.toUserdata
 import world.selene.common.network.packet.EntityAnimationPacket
+import world.selene.common.network.packet.TurnEntityPacket
 import world.selene.common.util.Coordinate
 import world.selene.server.attribute.Attribute
 import world.selene.server.attribute.AttributeView
@@ -89,6 +90,12 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             }
         }
         return components
+    }
+
+    fun turnTo(facing: Grid.Direction) {
+        this.facing = facing
+        val dimension = dimension ?: return
+        dimension.syncManager.entityTurned(this, facing)
     }
 
     fun moveTo(coordinate: Coordinate): Boolean {

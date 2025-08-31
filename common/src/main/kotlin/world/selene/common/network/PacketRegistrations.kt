@@ -4,6 +4,7 @@ import world.selene.common.network.packet.AuthenticatePacket
 import world.selene.common.network.packet.SetCameraPositionPacket
 import world.selene.common.network.packet.CustomPayloadPacket
 import world.selene.common.network.packet.DisconnectPacket
+import world.selene.common.network.packet.EntityAnimationPacket
 import world.selene.common.network.packet.EntityPacket
 import world.selene.common.network.packet.FinalizeJoinPacket
 import world.selene.common.network.packet.MapChunkPacket
@@ -18,6 +19,7 @@ import world.selene.common.network.packet.RequestMovePacket
 import world.selene.common.network.packet.SetCameraFollowEntityPacket
 import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.network.packet.StopSoundPacket
+import world.selene.common.network.packet.TurnEntityPacket
 
 class PacketRegistrations(private val packetFactory: PacketFactory) {
     fun register() {
@@ -116,6 +118,18 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             FinalizeJoinPacket::class,
             FinalizeJoinPacket::encode,
             FinalizeJoinPacket::decode
+        )
+        packetFactory.registerPacket(
+            17,
+            TurnEntityPacket::class,
+            TurnEntityPacket::encode,
+            TurnEntityPacket::decode
+        )
+        packetFactory.registerPacket(
+            18,
+            EntityAnimationPacket::class,
+            EntityAnimationPacket::encode,
+            EntityAnimationPacket::decode
         )
         packetFactory.registerPacket(
             254,
