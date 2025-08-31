@@ -26,10 +26,10 @@ class LocatedBundle(val manifest: BundleManifest, val dir: File) {
         
         sb.append(file.name)
         var result = sb.toString()
-        if (result.length > 45) {
+        if (result.length >= 45) {
             result = result.removeSuffix(".lua")
         }
-        if (result.length > 45) {
+        if (result.length >= 45) {
             result = result.replaceFirst(manifest.name, manifest.name.replace(Regex("[AIUEOaiueo]"), ""))
         }
         return result
