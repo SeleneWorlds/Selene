@@ -18,12 +18,36 @@ class LuaSchedulesModule(
 ) : LuaModule, Disposable {
     override val name = "selene.schedules"
 
+    data class LuaTimeout(
+        val timeoutId: Int,
+        val callback: LuaValue,
+        val intervalMs: Int,
+        val registrationSite: CallerInfo,
+        var task: ScheduledFuture<*>? = null
+    ) : LuaTrace {
+        override fun luaTrace(): String {
+            return "[timeout #$timeoutId, ${intervalMs}ms] scheduled at <$registrationSite>"
+        }
+    }
+
+    data class LuaInterval(
+        val intervalId: Int,
+        val callback: LuaValue,
+        val intervalMs: Int,
+        val registrationSite: CallerInfo,
+        var task: ScheduledFuture<*>? = null
+    ) : LuaTrace {
+        override fun luaTrace(): String {
+            return "[interval #$intervalId, ${intervalMs}ms] scheduled at <$registrationSite>"
+        }
+    }
+
     private val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
     private var lastSecond = -1
     private var lastMinute = -1
     private var lastHour = -1
-    private val timeouts = mutableMapOf<Int, ScheduledFuture<*>>()
-    private val intervals = mutableMapOf<Int, ScheduledFuture<*>>()
+    private val timeouts = mutableMapOf<Int, LuaTimeout>()
+    private val intervals = mutableMapOf<Int, LuaInterval>()
     private var nextTimeoutId = 1
     private var nextIntervalId = 1
 
@@ -83,29 +107,31 @@ class LuaSchedulesModule(
 
         val registrationSite = lua.getCallerInfo()
         val timeoutId = nextTimeoutId++
+        val handler = LuaTimeout(timeoutId, callback, intervalMs, registrationSite)
 
         val task = executor.schedule({
             mainThreadDispatcher.runOnMainThread {
                 val lua = callback.state()
                 try {
                     lua.push(callback)
-                    lua.pCall(0, 0)
+                    lua.xpCall(0, 0, handler)
                 } catch (e: LuaException) {
-                    logger.error("Error firing $name (scheduled at $registrationSite)", e)
+                    logger.error("Error firing timeout", e)
                 }
             }
             timeouts.remove(timeoutId)
         }, intervalMs.toLong(), TimeUnit.MILLISECONDS)
 
-        timeouts[timeoutId] = task
+        handler.task = task
+        timeouts[timeoutId] = handler
         lua.push(timeoutId)
         return 1
     }
 
     private fun luaClearTimeout(lua: Lua): Int {
         val timeoutId = lua.checkInt(1)
-        val task = timeouts.remove(timeoutId)
-        task?.cancel(false)
+        val handler = timeouts.remove(timeoutId)
+        handler?.task?.cancel(false)
         return 0
     }
 
@@ -122,24 +148,26 @@ class LuaSchedulesModule(
 
         val registrationSite = lua.getCallerInfo()
         val intervalId = nextIntervalId++
+        val handler = LuaInterval(intervalId, callback, intervalMs, registrationSite)
 
         val task = executor.scheduleAtFixedRate({
             mainThreadDispatcher.runOnMainThread {
                 val lua = callback.state()
                 try {
                     lua.push(callback)
-                    lua.pCall(0, 0)
+                    lua.xpCall(0, 0, handler)
                 } catch (e: LuaException) {
-                    logger.error("Error firing $name interval (scheduled at $registrationSite)", e)
+                    logger.error("Error firing interval", e)
                 }
             }
         }, intervalMs.toLong(), intervalMs.toLong(), TimeUnit.MILLISECONDS)
 
-        intervals[intervalId] = task
+        handler.task = task
+        intervals[intervalId] = handler
 
-        if(immediate) {
+        if (immediate) {
             lua.push(callback)
-            lua.pCall(0, 0)
+            lua.xpCall(0, 0, handler)
         }
 
         lua.push(intervalId)
@@ -148,16 +176,16 @@ class LuaSchedulesModule(
 
     private fun luaClearInterval(lua: Lua): Int {
         val intervalId = lua.checkInt(1)
-        val task = intervals.remove(intervalId)
-        task?.cancel(false)
+        val handler = intervals.remove(intervalId)
+        handler?.task?.cancel(false)
         return 0
     }
 
     override fun dispose() {
-        timeouts.values.forEach { it.cancel(false) }
+        timeouts.values.forEach { it.task?.cancel(false) }
         timeouts.clear()
 
-        intervals.values.forEach { it.cancel(false) }
+        intervals.values.forEach { it.task?.cancel(false) }
         intervals.clear()
 
         executor.shutdown()
