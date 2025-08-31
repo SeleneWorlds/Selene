@@ -343,7 +343,10 @@ fun Lua.xpCallWithErrorHandler(nArgs: Int, nResults: Int, errorHandler: Int, tra
     } else {
         message = "no error message available"
     }
-    val e = LuaException(error, message.replace(Regex("\\[string \"(.*?)\"]"), "[$1]"))
+    val e = LuaException(error, message
+        .replace(Regex("\\[string \"(.*?)\"]"), "[$1]")
+        .replace("\t[C]: in ?\n", "")
+        .replace("[C]", "[Selene]"))
     val javaError = getJavaError()
     if (javaError != null) {
         e.initCause(javaError)
