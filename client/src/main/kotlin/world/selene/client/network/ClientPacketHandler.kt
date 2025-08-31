@@ -29,6 +29,7 @@ import world.selene.common.network.packet.StopSoundPacket
 import world.selene.client.sound.SoundManager
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.network.packet.DisconnectPacket
+import world.selene.common.network.packet.TurnEntityPacket
 
 class ClientPacketHandler(
     private val logger: Logger,
@@ -138,6 +139,12 @@ class ClientPacketHandler(
                     if (playerController.controlledEntityNetworkId == packet.networkId) {
                         gridMovement.confirmMove()
                     }
+                }
+            }
+
+            is TurnEntityPacket -> {
+                context.enqueueWork {
+                    clientMap.getEntityByNetworkId(packet.networkId)?.turnTo(packet.facing)
                 }
             }
 

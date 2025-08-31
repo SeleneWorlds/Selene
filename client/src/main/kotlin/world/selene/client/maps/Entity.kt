@@ -200,6 +200,10 @@ class Entity(
         return luaMeta
     }
 
+    fun turnTo(facing: Float) {
+        this.facing = facing
+    }
+
     companion object {
         val luaMeta = LuaMappedMetatable(Entity::class) {
             readOnly(Entity::coordinate)
