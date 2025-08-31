@@ -20,25 +20,27 @@ class LuaSchedulesModule(
 
     data class LuaTimeout(
         val timeoutId: Int,
+        val name: String,
         val callback: LuaValue,
         val intervalMs: Int,
         val registrationSite: CallerInfo,
         var task: ScheduledFuture<*>? = null
     ) : LuaTrace {
         override fun luaTrace(): String {
-            return "[timeout #$timeoutId, ${intervalMs}ms] scheduled at <$registrationSite>"
+            return "[timeout \"$name\", ${intervalMs}ms] scheduled at <$registrationSite>"
         }
     }
 
     data class LuaInterval(
         val intervalId: Int,
+        val name: String,
         val callback: LuaValue,
         val intervalMs: Int,
         val registrationSite: CallerInfo,
         var task: ScheduledFuture<*>? = null
     ) : LuaTrace {
         override fun luaTrace(): String {
-            return "[interval #$intervalId, ${intervalMs}ms] scheduled at <$registrationSite>"
+            return "[interval \"$name\", ${intervalMs}ms] scheduled at <$registrationSite>"
         }
     }
 
@@ -100,14 +102,17 @@ class LuaSchedulesModule(
     private fun luaSetTimeout(lua: Lua): Int {
         val intervalMs = lua.checkInt(1)
         val callback = lua.checkFunction(2)
+        if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
 
         if (intervalMs < 0) {
             return lua.error(IllegalArgumentException("Timeout interval must be non-negative"))
         }
 
+        val name = lua.getFieldString(3, "name")
+
         val registrationSite = lua.getCallerInfo()
         val timeoutId = nextTimeoutId++
-        val handler = LuaTimeout(timeoutId, callback, intervalMs, registrationSite)
+        val handler = LuaTimeout(timeoutId, name ?: "#$timeoutId", callback, intervalMs, registrationSite)
 
         val task = executor.schedule({
             mainThreadDispatcher.runOnMainThread {
@@ -140,6 +145,7 @@ class LuaSchedulesModule(
         val callback = lua.checkFunction(2)
         if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
 
+        val name = lua.getFieldString(3, "name")
         val immediate = lua.getFieldBoolean(3, "immediate") ?: false
 
         if (intervalMs <= 0) {
@@ -148,7 +154,7 @@ class LuaSchedulesModule(
 
         val registrationSite = lua.getCallerInfo()
         val intervalId = nextIntervalId++
-        val handler = LuaInterval(intervalId, callback, intervalMs, registrationSite)
+        val handler = LuaInterval(intervalId, name ?: "#$intervalId", callback, intervalMs, registrationSite)
 
         val task = executor.scheduleAtFixedRate({
             mainThreadDispatcher.runOnMainThread {
