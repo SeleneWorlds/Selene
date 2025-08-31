@@ -8,6 +8,7 @@ import world.selene.common.data.NameIdRegistry
 import world.selene.common.grid.Grid
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaPayloadRegistry
+import world.selene.common.lua.xpCall
 import world.selene.common.network.Packet
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.packet.AuthenticatePacket
@@ -102,17 +103,15 @@ class ServerPacketHandler(
             context.enqueueWork {
                 val handler = payloadRegistry.retrieveHandler(packet.payloadId)
                 if (handler != null) {
-                    handler.callback.push(luaManager.lua)
-                    luaManager.lua.push(player, Lua.Conversion.NONE)
+                    val lua = luaManager.lua
+                    handler.callback.push(lua)
+                    lua.push(player, Lua.Conversion.NONE)
                     val payload = objectMapper.readValue(packet.payload, Map::class.java)
-                    luaManager.lua.push(payload)
+                    lua.push(payload)
                     try {
-                        luaManager.lua.pCall(2, 0)
+                        lua.xpCall(2, 0, handler)
                     } catch (e: LuaException) {
-                        logger.error(
-                            "Error while handling custom payload ${packet.payloadId} (registered at ${handler.registrationSite})",
-                            e
-                        )
+                        logger.error("Lua Error in Payload Handler", e)
                     }
                 }
             }
