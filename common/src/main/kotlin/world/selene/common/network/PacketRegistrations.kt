@@ -15,6 +15,7 @@ import world.selene.common.network.packet.PlaySoundPacket
 import world.selene.common.network.packet.PreferencesPacket
 import world.selene.common.network.packet.RemoveEntityPacket
 import world.selene.common.network.packet.RemoveMapChunkPacket
+import world.selene.common.network.packet.RequestFacingPacket
 import world.selene.common.network.packet.RequestMovePacket
 import world.selene.common.network.packet.SetCameraFollowEntityPacket
 import world.selene.common.network.packet.SetControlledEntityPacket
@@ -130,6 +131,12 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             EntityAnimationPacket::class,
             EntityAnimationPacket::encode,
             EntityAnimationPacket::decode
+        )
+        packetFactory.registerPacket(
+            19,
+            RequestFacingPacket::class,
+            RequestFacingPacket::encode,
+            RequestFacingPacket::decode
         )
         packetFactory.registerPacket(
             254,
