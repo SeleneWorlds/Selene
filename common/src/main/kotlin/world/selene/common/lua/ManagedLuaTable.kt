@@ -2,8 +2,24 @@ package world.selene.common.lua
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.observable.Observable
+import world.selene.common.observable.Observer
 
-class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatable {
+class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatable, Observable<ManagedLuaTable> {
+
+    private var observers: MutableList<Observer<ManagedLuaTable>>? = null
+
+    override fun subscribe(observer: Observer<ManagedLuaTable>) {
+        observers?.add(observer) ?: mutableListOf(observer).let { observers = it }
+    }
+
+    override fun unsubscribe(observer: Observer<ManagedLuaTable>) {
+        observers?.remove(observer)
+    }
+
+    override fun notifyObservers(data: ManagedLuaTable) {
+        observers?.forEach { it.notifyObserver(data) }
+    }
 
     override fun luaGet(lua: Lua): Int {
         val key = when {
@@ -71,22 +87,27 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                 @Suppress("UNCHECKED_CAST")
                 deepCopyMap(value as MutableMap<Any, Any>)
             }
+
             is MutableList<*> -> {
                 @Suppress("UNCHECKED_CAST")
                 (value as MutableList<Any>).map { deepCopyValue(it) }.toMutableList()
             }
+
             is List<*> -> {
                 @Suppress("UNCHECKED_CAST")
                 (value as List<Any>).map { deepCopyValue(it) }
             }
+
             is MutableSet<*> -> {
                 @Suppress("UNCHECKED_CAST")
                 (value as MutableSet<Any>).map { deepCopyValue(it) }.toMutableSet()
             }
+
             is Set<*> -> {
                 @Suppress("UNCHECKED_CAST")
                 (value as Set<Any>).map { deepCopyValue(it) }.toSet()
             }
+
             else -> value
         }
     }
@@ -100,7 +121,7 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
             }
         }
 
-        val luaMeta = LuaMappedMetatable(ManagedLuaTable::class) {
+        val luaMeta = Observable.luaMeta.extend(ManagedLuaTable::class) {
             callable("Pairs") { lua ->
                 val managedLuaTable = lua.checkSelf()
                 lua.push { innerLua ->

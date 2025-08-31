@@ -1,17 +1,17 @@
 package world.selene.server.attribute
 
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkFunction
 import world.selene.common.lua.checkString
 import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.throwTypeError
-import world.selene.common.lua.toAny
+import world.selene.common.observable.Observable
+import world.selene.common.observable.Observer
 
-class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : LuaMetatableProvider {
-    val observers = mutableListOf<AttributeObserver>()
+class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : LuaMetatableProvider, Observable<Attribute<*>> {
+    val observers = mutableListOf<Observer<Attribute<*>>>()
     val constraints = mutableListOf<AttributeFilter<T>>()
     val constraintsByName = mutableMapOf<String, AttributeFilter<T>>()
     val modifiers = mutableListOf<AttributeFilter<T>>()
@@ -27,7 +27,7 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
                         field = it.apply(this, field)
                     }
                 }
-                notifyObservers()
+                notifyObservers(this)
             }
         }
 
@@ -42,8 +42,16 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
             return value
         }
 
-    private fun notifyObservers() {
-        observers.forEach { it.attributeChanged(this) }
+    override fun subscribe(observer: Observer<Attribute<*>>) {
+        observers.add(observer)
+    }
+
+    override fun unsubscribe(observer: Observer<Attribute<*>>) {
+        observers.remove(observer)
+    }
+
+    override fun notifyObservers(data: Attribute<*>) {
+        observers.forEach { it.notifyObserver(this) }
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
@@ -55,28 +63,11 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
     }
 
     companion object {
-        val luaMeta = LuaMappedMetatable(Attribute::class) {
+        val luaMeta = Observable.luaMeta.extend(Attribute::class) {
             readOnly(Attribute<*>::name)
             writable(Attribute<*>::value)
             readOnly(Attribute<*>::effectiveValue)
             readOnly(Attribute<*>::owner)
-            callable("AddObserver") { lua ->
-                val attribute = lua.checkSelf()
-                val observer = when (lua.type(2)) {
-                    Lua.LuaType.FUNCTION -> LuaAttributeObserver(lua.checkFunction(2))
-                    Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeObserver>(2)
-                    else -> lua.throwTypeError(2, AttributeObserver::class)
-                }
-                attribute.observers.add(observer)
-                lua.push(observer, Lua.Conversion.NONE)
-                1
-            }
-            callable("RemoveObserver") { lua ->
-                val attribute = lua.checkSelf()
-                val observer = lua.checkUserdata(2, AttributeObserver::class)
-                attribute.observers.remove(observer)
-                0
-            }
             callable("AddConstraint") { lua ->
                 @Suppress("UNCHECKED_CAST")
                 val attribute = lua.checkSelf() as Attribute<Any?>
@@ -113,7 +104,7 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
             }
             callable("Refresh") { lua ->
                 val attribute = lua.checkSelf()
-                attribute.notifyObservers()
+                attribute.notifyObservers(attribute)
                 0
             }
         }
