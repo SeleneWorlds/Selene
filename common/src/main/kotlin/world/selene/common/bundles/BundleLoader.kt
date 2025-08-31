@@ -1,6 +1,7 @@
 package world.selene.common.bundles
 
 import org.slf4j.Logger
+import world.selene.common.lua.ClosureTrace
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.xpCall
 import java.io.File
@@ -170,9 +171,10 @@ class BundleLoader(
                 val scriptFile = File(bundleDir, entrypoint)
                 if (scriptFile.exists()) {
                     try {
-                        luaManager.runScript(bundle, scriptFile, readBundleFileText(bundle, scriptFile))
+                        luaManager.load(bundle, scriptFile, scriptFile.readText())
+                        luaManager.lua.xpCall(0, 1, ClosureTrace { "[entrypoint \"${entrypoint}\"] in bundle \"${bundle.manifest.name}\"" })
                     } catch (e: Exception) {
-                        logger.error("Error loading ${bundle.manifest.name} entrypoint $entrypoint: ${e.message}", e)
+                        logger.error("Lua Error in Entrypoint", e)
                     }
                 } else {
                     logger.error("Entrypoint $entrypoint not found in bundle $bundle")

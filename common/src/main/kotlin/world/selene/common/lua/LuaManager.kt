@@ -411,7 +411,8 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         val found = packageResolvers.asSequence().mapNotNull { it(moduleName) }.firstOrNull()
         if (found != null) {
             val preTop = lua.top
-            runScript(found.first, found.second)
+            load(found.first, found.second)
+            lua.pCall(0, 1)
             if (lua.top > preTop) {
                 lua.getGlobal("package")
                 lua.getField(-1, "loaded")
@@ -441,12 +442,12 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.pop(2)
     }
 
-    fun runScript(bundle: LocatedBundle, file: File, script: String) {
-        return runScript(bundle.getFileDebugName(file), script)
+    fun load(bundle: LocatedBundle, file: File, script: String) {
+        return load(bundle.getFileDebugName(file), script)
     }
 
-    private fun runScript(name: String, script: String) {
-        lua.run(loadBuffer(script), name)
+    private fun load(name: String, script: String) {
+        lua.load(loadBuffer(script), name)
     }
 
     fun setGlobal(key: String, value: Any) {
