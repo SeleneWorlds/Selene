@@ -19,6 +19,7 @@ import world.selene.common.lua.toAny
 import world.selene.common.lua.toAnyMap
 import world.selene.common.lua.toFunction
 import world.selene.common.lua.toUserdata
+import world.selene.common.network.packet.EntityAnimationPacket
 import world.selene.common.util.Coordinate
 import world.selene.server.attribute.Attribute
 import world.selene.server.attribute.AttributeView
@@ -132,6 +133,10 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
     override fun toString(): String {
         return "Entity($networkId, $name, ${entityDefinition.name})"
+    }
+
+    private fun playAnimation(animationName: String) {
+        dimension?.syncManager?.sendToAllWatching(networkId, EntityAnimationPacket(networkId, animationName))
     }
 
     companion object {
@@ -375,6 +380,13 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
                 lua.push(entity.entityDefinition.tags.contains(tag))
                 1
             }
+            callable("PlayAnimation") { lua ->
+                val entity = lua.checkSelf()
+                val animationName = lua.checkString(2)
+                entity.playAnimation(animationName)
+                0
+            }
         }
     }
+
 }
