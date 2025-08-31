@@ -116,7 +116,7 @@ class LuaSchedulesModule(
                     lua.push(callback)
                     lua.xpCall(0, 0, handler)
                 } catch (e: LuaException) {
-                    logger.error("Error firing timeout", e)
+                    logger.error("Lua Error in Timeout", e)
                 }
             }
             timeouts.remove(timeoutId)
@@ -157,7 +157,7 @@ class LuaSchedulesModule(
                     lua.push(callback)
                     lua.xpCall(0, 0, handler)
                 } catch (e: LuaException) {
-                    logger.error("Error firing interval", e)
+                    logger.error("Lua Error in Interval", e)
                 }
             }
         }, intervalMs.toLong(), intervalMs.toLong(), TimeUnit.MILLISECONDS)

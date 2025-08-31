@@ -6,26 +6,30 @@ import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 
 class Signal(private val name: String) : LuaMetatableProvider {
-    data class NamedCallback(val callback: LuaValue, val registrationSite: CallerInfo)
+    data class SignalHandler(val name: String, val callback: LuaValue, val registrationSite: CallerInfo) : LuaTrace {
+        override fun luaTrace(): String {
+            return "[signal $name] registered in <$registrationSite>"
+        }
+    }
 
     private val logger = LoggerFactory.getLogger(Signal::class.java)
-    private val callbacks = mutableListOf<NamedCallback>()
+    private val callbacks = mutableListOf<SignalHandler>()
 
     fun emit(args: (Lua) -> Int = { 0 }) {
-        callbacks.forEach { (callback, registrationSite) ->
-            val lua = callback.state()
+        callbacks.forEach { handler ->
+            val lua = handler.callback.state()
             try {
-                lua.push(callback)
-                lua.pCall(args(lua), 0)
+                lua.push(handler.callback)
+                lua.xpCall(args(lua), 0, handler)
             } catch (e: LuaException) {
-                logger.error("Error firing $name (connected at $registrationSite)", e)
+                logger.error("Lua Error in Signal", e)
             }
         }
     }
 
     fun connect(lua: Lua): Int {
         val callback = lua.checkFunction(2)
-        callbacks.add(NamedCallback(callback, callback.state().getCallerInfo()))
+        callbacks.add(SignalHandler(name, callback, lua.getCallerInfo()))
         return 0
     }
 
