@@ -330,6 +330,7 @@ fun Lua.xpCall(nArgs: Int, nResults: Int, trace: LuaTrace? = null) {
 fun Lua.xpCallWithErrorHandler(nArgs: Int, nResults: Int, errorHandler: Int, trace: LuaTrace? = null) {
     checkStack((nResults - nArgs - 1).coerceAtLeast(0));
     val code = luaNatives.lua_pcall(pointer, nArgs, nResults, errorHandler)
+    remove(errorHandler)
     val error = (this as AbstractLua).convertError(code)
     if (error == LuaError.OK) {
         return
