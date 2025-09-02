@@ -9,7 +9,7 @@ import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 
-class Visual2DComponent(val visual: Visual2D) : EntityComponent, RenderableComponent, LuaMetatableProvider {
+class Visual2DComponent(val visual: Visual2D, override val positioner: ComponentPositioner) : EntityComponent, RenderableComponent, LuaMetatableProvider {
     var red = 1f
     var green = 1f
     var blue = 1f

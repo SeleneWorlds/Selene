@@ -30,6 +30,16 @@ data class EntityDefinition(
 )
 interface ComponentConfiguration
 
-data class VisualComponentConfiguration(val visual: String, val overrides: Map<String, Any> = emptyMap()) : ComponentConfiguration
+data class VisualComponentPosition(val origin: String = "none", val offsetX: Float = 0f, val offsetY: Float = 0f) {
+    companion object {
+        val Default = VisualComponentPosition()
+    }
+}
+
+data class VisualComponentConfiguration(
+    val visual: String,
+    val position: VisualComponentPosition = VisualComponentPosition.Default,
+    val overrides: Map<String, Any> = emptyMap()
+) : ComponentConfiguration
 
 data class ClientScriptComponentConfiguration(val script: String) : ComponentConfiguration

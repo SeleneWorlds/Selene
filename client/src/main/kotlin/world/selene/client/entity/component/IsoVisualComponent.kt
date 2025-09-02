@@ -9,7 +9,7 @@ import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 
-class IsoVisualComponent(val visual: IsoVisual) : EntityComponent, RenderableComponent, IsoComponent,
+class IsoVisualComponent(val visual: IsoVisual, override val positioner: ComponentPositioner) : EntityComponent, RenderableComponent, IsoComponent,
     LuaMetatableProvider {
     var red = 1f
     var green = 1f

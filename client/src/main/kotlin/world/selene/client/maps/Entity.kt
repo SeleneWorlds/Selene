@@ -2,6 +2,7 @@ package world.selene.client.maps
 
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Pool
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -149,19 +150,20 @@ class Entity(
         componentsToBeRemoved.clear()
     }
 
+    private val tmpDisplayPos = Vector2()
     private val tmpRenderRectangle = Rectangle()
     override fun render(batch: Batch, environment: Environment) {
         lastRenderBounds.set(0f, 0f, 0f, 0f)
         processComponents {
             renderableComponents.forEach { component ->
-                val displayX = screenX
-                val displayY = screenY - environment.getSurfaceOffset(coordinate)
+                tmpDisplayPos.set(screenX, screenY - environment.getSurfaceOffset(coordinate))
+                component.positioner.applyPositioning(this, tmpDisplayPos)
                 batch.color.set(environment.getColor(coordinate))
-                component.render(this, batch, displayX, displayY)
+                component.render(this, batch, tmpDisplayPos.x, tmpDisplayPos.y)
                 if (component is IsoComponent) {
                     environment.applySurfaceOffset(coordinate, component.surfaceHeight)
                 }
-                component.getBounds(displayX, displayY, tmpRenderRectangle)
+                component.getBounds(tmpDisplayPos.x, tmpDisplayPos.y, tmpRenderRectangle)
                 if (lastRenderBounds.width == 0f) {
                     lastRenderBounds.set(tmpRenderRectangle)
                 } else {

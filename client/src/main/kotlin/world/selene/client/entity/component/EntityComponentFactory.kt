@@ -14,13 +14,14 @@ class EntityComponentFactory(private val visualManager: VisualManager) {
         return when (configuration) {
             is VisualComponentConfiguration -> {
                 val context = VisualCreationContext(entity.coordinate, entity.animator, configuration.overrides)
+                val positioner = ComponentPositioner.of(configuration.position)
                 when (val visual = visualManager.createVisual(configuration.visual, context)) {
                     is IsoVisual -> {
-                        IsoVisualComponent(visual)
+                        IsoVisualComponent(visual, positioner)
                     }
 
                     is Visual2D -> {
-                        Visual2DComponent(visual)
+                        Visual2DComponent(visual, positioner)
                     }
 
                     else -> null
