@@ -1,12 +1,13 @@
 package world.selene.client.maps
 
+import com.badlogic.gdx.graphics.g2d.Batch
 import org.koin.mp.KoinPlatform.getKoin
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
+import world.selene.client.entity.component.IsoComponent
+import world.selene.client.entity.component.RenderableComponent
 import world.selene.client.entity.component.TickableComponent
-import world.selene.common.data.ClientScriptComponentConfiguration
-import world.selene.common.data.ComponentConfiguration
-import world.selene.common.data.VisualComponentConfiguration
+import world.selene.client.rendering.visual2d.iso.IsoVisual
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
@@ -17,27 +18,41 @@ import world.selene.common.lua.xpCall
 
 interface EntityComponent
 
-class VisualComponent(val configuration: VisualComponentConfiguration) : EntityComponent, LuaMetatableProvider {
+class IsoVisualComponent(val visual: IsoVisual) : EntityComponent, RenderableComponent, IsoComponent,
+    LuaMetatableProvider {
     var red = 1f
     var green = 1f
     var blue = 1f
     var alpha = 1f
 
+    override val sortLayerOffset: Int
+        get() = visual.sortLayerOffset
+
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
     }
 
+    override fun render(
+        entity: Entity,
+        batch: Batch,
+        x: Float,
+        y: Float
+    ) {
+        batch.color.mul(red, green, blue, alpha)
+        visual.render(batch, x, y)
+    }
+
     companion object {
-        val luaMeta = LuaMappedMetatable(VisualComponent::class) {
-            writable(VisualComponent::red)
-            writable(VisualComponent::green)
-            writable(VisualComponent::blue)
-            writable(VisualComponent::alpha)
+        val luaMeta = LuaMappedMetatable(IsoVisualComponent::class) {
+            writable(IsoVisualComponent::red)
+            writable(IsoVisualComponent::green)
+            writable(IsoVisualComponent::blue)
+            writable(IsoVisualComponent::alpha)
         }
     }
 }
 
-class ClientScriptComponent(val configuration: ClientScriptComponentConfiguration) : EntityComponent, TickableComponent,
+class ClientScriptComponent(val moduleName: String) : EntityComponent, TickableComponent,
     LuaTrace {
     private val luaManager: LuaManager by getKoin().inject()
     private var module: LuaValue? = null
@@ -49,7 +64,7 @@ class ClientScriptComponent(val configuration: ClientScriptComponentConfiguratio
         val data = data ?: lua.newTable {}.also {
             data = it
         }
-        lua.push(configuration.script)
+        lua.push(moduleName)
         luaManager.luaRequire(lua)
         if (initPending) {
             lua.getField(-1, "Initialize")
@@ -70,14 +85,6 @@ class ClientScriptComponent(val configuration: ClientScriptComponentConfiguratio
     }
 
     override fun luaTrace(): String {
-        return "[client script component \"${configuration.script}\"]"
-    }
-}
-
-fun ComponentConfiguration.create(): EntityComponent {
-    return when (this) {
-        is VisualComponentConfiguration -> VisualComponent(this)
-        is ClientScriptComponentConfiguration -> ClientScriptComponent(this)
-        else -> throw IllegalArgumentException("Unknown component configuration: $this")
+        return "[client script component \"${moduleName}\"]"
     }
 }

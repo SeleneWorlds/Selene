@@ -62,7 +62,7 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
             }
 
             is AnimatorVisualDefinition -> {
-                val animationController = context.animationController ?: return null
+                val animationController = context.animatorController ?: return null
                 val drawableAnimator = DrawableAnimator(animationController)
                 visualDef.animations.forEach { (animationName, frames) ->
                     val options = AnimatedDrawableOptions(

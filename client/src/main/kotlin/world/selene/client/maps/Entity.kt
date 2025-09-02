@@ -7,10 +7,12 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import party.iroiro.luajava.Lua
 import java.util.ArrayDeque
 import world.selene.client.controls.EntityMotion
+import world.selene.client.entity.component.EntityComponentFactory
 import world.selene.client.grid.ClientGrid
 import world.selene.client.entity.component.IsoComponent
 import world.selene.client.entity.component.RenderableComponent
 import world.selene.client.entity.component.TickableComponent
+import world.selene.client.rendering.animator.HumanoidAnimatorController
 import world.selene.client.scene.Renderable
 import world.selene.client.scene.Scene
 import world.selene.client.rendering.environment.Environment
@@ -29,7 +31,8 @@ class Entity(
     val objectMapper: ObjectMapper,
     val scene: Scene,
     val map: ClientMap,
-    val grid: ClientGrid
+    val grid: ClientGrid,
+    val entityComponentFactory: EntityComponentFactory
 ) :
     Pool.Poolable, Renderable, LuaMetatableProvider {
     var networkId: Int = 0
@@ -40,7 +43,7 @@ class Entity(
             tickableComponents.clear()
             renderableComponents.clear()
             value?.components?.forEach {
-                addComponent(it.key, it.value.create())
+                addComponent(it.key, it.value)
             }
         }
 
@@ -48,6 +51,7 @@ class Entity(
     val tickableComponents = mutableListOf<TickableComponent>()
     val renderableComponents = mutableListOf<RenderableComponent>()
     val motionQueue: ArrayDeque<EntityMotion> = ArrayDeque()
+    val animator = HumanoidAnimatorController(this)
 
     override var coordinate: Coordinate = Coordinate.Zero
         private set(value) {
@@ -61,7 +65,7 @@ class Entity(
     var facing: Float = 0f
     val direction get() = grid.getDirection(facing)
     override val sortLayerOffset: Int
-        get() = components.asSequence().mapNotNull { it as? IsoComponent }.maxOfOrNull { it.sortLayerOffset } ?: 0
+        get() = renderableComponents.asSequence().mapNotNull { it as? IsoComponent }.maxOfOrNull { it.sortLayerOffset } ?: 0
     override val sortLayer: Int get() = grid.getSortLayer(position, sortLayerOffset)
     override var localSortLayer: Int = 0
 
@@ -146,7 +150,10 @@ class Entity(
     }
 
     fun addComponent(name: String, componentConfiguration: ComponentConfiguration) {
-        addComponent(name, componentConfiguration.create())
+        val component = entityComponentFactory.create(this, componentConfiguration)
+        if (component != null) {
+            addComponent(name, component)
+        }
     }
 
     fun addComponent(name: String, component: EntityComponent) {

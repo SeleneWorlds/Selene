@@ -35,6 +35,7 @@ import world.selene.client.data.AudioRegistry
 import world.selene.common.data.ComponentRegistry
 import world.selene.common.data.TileRegistry
 import world.selene.client.data.VisualRegistry
+import world.selene.client.entity.component.EntityComponentFactory
 import world.selene.client.grid.ClientGrid
 import world.selene.client.input.InputManager
 import world.selene.client.lua.ClientLuaSignals
@@ -183,6 +184,7 @@ class SeleneApplication(
             singleOf(::EntityPool)
             singleOf(::Scene)
             singleOf(::ClientGrid)
+            singleOf(::EntityComponentFactory)
             factoryOf(::Tile)
             factoryOf(::Entity)
         }
