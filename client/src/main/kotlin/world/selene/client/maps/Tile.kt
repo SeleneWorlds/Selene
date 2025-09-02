@@ -4,12 +4,12 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.Pool
 import party.iroiro.luajava.Lua
 import world.selene.client.grid.ClientGrid
-import world.selene.client.rendering.IsoVisual
+import world.selene.client.rendering.visual2d.iso.IsoVisual
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.scene.Renderable
-import world.selene.client.visual.VisualContext
-import world.selene.client.visual.VisualCreationContext
-import world.selene.client.visual.VisualManager
+import world.selene.client.old.VisualContext
+import world.selene.client.rendering.visual.VisualCreationContext
+import world.selene.client.rendering.visual.VisualManager
 import world.selene.common.data.TileDefinition
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable

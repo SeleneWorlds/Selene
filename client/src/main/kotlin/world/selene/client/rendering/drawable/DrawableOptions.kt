@@ -1,4 +1,4 @@
-package world.selene.client.rendering
+package world.selene.client.rendering.drawable
 
 data class DrawableOptions(
     val offsetX: Float = 0f,

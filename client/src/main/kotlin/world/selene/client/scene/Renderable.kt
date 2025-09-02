@@ -2,7 +2,7 @@ package world.selene.client.scene
 
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import world.selene.client.rendering.SceneRenderer
-import world.selene.client.visual.VisualContext
+import world.selene.client.old.VisualContext
 import world.selene.common.util.Coordinate
 
 interface Renderable {

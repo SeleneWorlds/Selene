@@ -1,4 +1,4 @@
-package world.selene.client.visual
+package world.selene.client.old
 
 data class TextureOptions(val flipX: Boolean, val flipY: Boolean) {
     companion object {

@@ -1,13 +1,13 @@
-package world.selene.client.visual
+package world.selene.client.rendering.visual
 
 import world.selene.client.data.VisualRegistry
 import world.selene.client.data.AnimatedVisualDefinition
 import world.selene.client.data.SimpleVisualDefinition
 import world.selene.client.data.VariantsVisualDefinition
-import world.selene.client.rendering.AnimatedDrawableOptions
-import world.selene.client.rendering.DrawableManager
-import world.selene.client.rendering.DrawableOptions
-import world.selene.client.rendering.Visual
+import world.selene.client.rendering.drawable.AnimatedDrawableOptions
+import world.selene.client.rendering.drawable.DrawableManager
+import world.selene.client.rendering.drawable.DrawableOptions
+import world.selene.client.rendering.visual2d.iso.DrawableIsoVisual
 
 class VisualManager(private val drawableManager: DrawableManager, private val visualRegistry: VisualRegistry) {
 

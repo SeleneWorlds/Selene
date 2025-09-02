@@ -1,4 +1,4 @@
-package world.selene.client.visual
+package world.selene.client.rendering.visual
 
 import world.selene.common.util.Coordinate
 

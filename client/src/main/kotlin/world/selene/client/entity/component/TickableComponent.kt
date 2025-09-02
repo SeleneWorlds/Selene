@@ -1,4 +1,4 @@
-package world.selene.client.rendering
+package world.selene.client.entity.component
 
 import world.selene.client.maps.Entity
 

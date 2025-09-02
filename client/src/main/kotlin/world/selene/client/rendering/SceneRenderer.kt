@@ -6,7 +6,7 @@ import com.badlogic.gdx.math.MathUtils
 import world.selene.client.camera.CameraManager
 import world.selene.client.grid.ClientGrid
 import world.selene.client.scene.Scene
-import world.selene.client.visual.VisualContext
+import world.selene.client.old.VisualContext
 import world.selene.common.util.Coordinate
 
 class SceneRenderer(

@@ -1,8 +1,7 @@
-package world.selene.client.visual
+package world.selene.client.rendering.visual2d.iso
 
 import com.badlogic.gdx.graphics.g2d.Batch
-import world.selene.client.rendering.Drawable
-import world.selene.client.rendering.IsoVisual
+import world.selene.client.rendering.drawable.Drawable
 
 class DrawableIsoVisual(
     private val drawable: Drawable,

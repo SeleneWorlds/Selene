@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import ktx.assets.async.AssetLoadingException
 import ktx.assets.async.AssetStorage
 import org.slf4j.Logger
-import world.selene.client.visual.TextureOptions
+import world.selene.client.old.TextureOptions
 import world.selene.common.util.Disposable
 
 class AssetProvider(private val logger: Logger, private val assetStorage: AssetStorage) : Disposable {

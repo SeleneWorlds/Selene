@@ -9,13 +9,13 @@ import party.iroiro.luajava.Lua
 import java.util.ArrayDeque
 import world.selene.client.controls.EntityMotion
 import world.selene.client.grid.ClientGrid
-import world.selene.client.rendering.IsoComponent
-import world.selene.client.rendering.RenderableComponent
+import world.selene.client.entity.component.IsoComponent
+import world.selene.client.entity.component.RenderableComponent
 import world.selene.client.rendering.SceneRenderer
-import world.selene.client.rendering.TickableComponent
+import world.selene.client.entity.component.TickableComponent
 import world.selene.client.scene.Renderable
 import world.selene.client.scene.Scene
-import world.selene.client.visual.VisualContext
+import world.selene.client.old.VisualContext
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.data.EntityDefinition
 import world.selene.common.lua.LuaMappedMetatable

@@ -2,7 +2,6 @@ package world.selene.client
 
 import com.badlogic.gdx.ApplicationListener
 import com.badlogic.gdx.Gdx
-import com.badlogic.gdx.Input
 import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
@@ -19,10 +18,10 @@ import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.maps.ClientMap
 import world.selene.client.network.NetworkClient
 import world.selene.client.rendering.DebugRenderer
-import world.selene.client.rendering.DrawableManager
+import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.ui.UI
-import world.selene.client.visual.VisualManager
+import world.selene.client.rendering.visual.VisualManager
 import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.util.Disposable
 

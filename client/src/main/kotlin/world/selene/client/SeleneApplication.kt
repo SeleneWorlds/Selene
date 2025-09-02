@@ -70,10 +70,10 @@ import world.selene.client.maps.EntityPool
 import world.selene.client.maps.Tile
 import world.selene.client.maps.TilePool
 import world.selene.client.rendering.DebugRenderer
-import world.selene.client.rendering.DrawableManager
+import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.scene.Scene
-import world.selene.client.visual.VisualManager
+import world.selene.client.rendering.visual.VisualManager
 import world.selene.common.data.CustomRegistries
 import world.selene.common.data.EntityRegistry
 import world.selene.common.data.NameIdRegistry

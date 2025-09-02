@@ -1,4 +1,4 @@
-package world.selene.client.visual
+package world.selene.client.old
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.g2d.Batch

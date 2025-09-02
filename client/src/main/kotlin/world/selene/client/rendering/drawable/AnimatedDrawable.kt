@@ -1,4 +1,4 @@
-package world.selene.client.rendering
+package world.selene.client.rendering.drawable
 
 import com.badlogic.gdx.graphics.g2d.Batch
 import party.iroiro.luajava.Lua
