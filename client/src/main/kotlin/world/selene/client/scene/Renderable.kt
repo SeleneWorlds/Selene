@@ -12,5 +12,6 @@ interface Renderable {
     fun update(delta: Float)
     fun render(batch: Batch, environment: Environment)
 
-    fun removedFromScene()
+    fun addedToScene(scene: Scene)
+    fun removedFromScene(scene: Scene)
 }

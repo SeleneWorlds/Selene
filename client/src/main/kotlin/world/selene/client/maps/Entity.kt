@@ -29,7 +29,6 @@ import kotlin.collections.forEach
 
 class Entity(
     val objectMapper: ObjectMapper,
-    val scene: Scene,
     val pool: EntityPool,
     val map: ClientMap,
     val grid: ClientGrid,
@@ -47,6 +46,8 @@ class Entity(
                 addComponent(it.key, it.value)
             }
         }
+
+    var scene: Scene? = null
 
     val components = mutableMapOf<String, EntityComponent>()
     val tickableComponents = mutableListOf<TickableComponent>()
@@ -70,9 +71,7 @@ class Entity(
 
     var facing: Float = 0f
     val direction get() = grid.getDirection(facing)
-    override val sortLayerOffset: Int
-        get() = renderableComponents.asSequence().mapNotNull { it as? IsoComponent }.maxOfOrNull { it.sortLayerOffset }
-            ?: 0
+    override var sortLayerOffset: Int = 0
     override val sortLayer: Int get() = grid.getSortLayer(position, sortLayerOffset)
     override var localSortLayer: Int = 0
 
@@ -121,7 +120,7 @@ class Entity(
                 position.z = motion.end.z.toFloat()
                 motionQueue.removeFirst()
             }
-            scene.updateSorting(this)
+            scene?.updateSorting(this)
         }
 
         processComponents {
@@ -131,26 +130,16 @@ class Entity(
         }
     }
 
-    inline fun processComponents(runnable: () -> Unit) {
+    private inline fun processComponents(runnable: () -> Unit) {
         processingComponents = true
         runnable()
         processingComponents = false
         for (component in componentsToBeAdded) {
-            if (component is TickableComponent) {
-                tickableComponents.add(component)
-            }
-            if (component is RenderableComponent) {
-                renderableComponents.add(component)
-            }
+            processAddedComponent(component)
         }
         componentsToBeAdded.clear()
         for (component in componentsToBeRemoved) {
-            if (component is TickableComponent) {
-                tickableComponents.remove(component)
-            }
-            if (component is RenderableComponent) {
-                renderableComponents.remove(component)
-            }
+            processRemovedComponent(component)
         }
         componentsToBeRemoved.clear()
     }
@@ -170,6 +159,9 @@ class Entity(
         facing = 0f
         localSortLayer = 0
         entityDefinition = null
+        processingComponents = false
+        componentsToBeAdded.clear()
+        componentsToBeRemoved.clear()
         position.set(0f, 0f, 0f)
     }
 
@@ -179,7 +171,7 @@ class Entity(
             position.x = coordinate.x.toFloat()
             position.y = coordinate.y.toFloat()
             position.z = coordinate.z.toFloat()
-            scene.updateSorting(this)
+            scene?.updateSorting(this)
         }
     }
 
@@ -200,18 +192,36 @@ class Entity(
             componentsToBeRemoved.remove(component)
             componentsToBeAdded.add(component)
         } else {
-            if (prev is TickableComponent) {
-                tickableComponents.remove(prev)
-            }
-            if (prev is RenderableComponent) {
-                renderableComponents.remove(prev)
-            }
-            if (component is TickableComponent) {
-                tickableComponents.add(component)
-            }
-            if (component is RenderableComponent) {
-                renderableComponents.add(component)
-            }
+            prev?.let { processRemovedComponent(it) }
+            processAddedComponent(component)
+        }
+    }
+
+    private fun computeSortLayerOffset(): Int {
+        return renderableComponents.asSequence().mapNotNull { it as? IsoComponent }.maxOfOrNull { it.sortLayerOffset }
+            ?: 0
+    }
+
+    private fun processAddedComponent(component: EntityComponent) {
+        if (component is TickableComponent) {
+            tickableComponents.add(component)
+        }
+        if (component is RenderableComponent) {
+            renderableComponents.add(component)
+        }
+        val prevSortLayerOffset = sortLayerOffset
+        sortLayerOffset = computeSortLayerOffset()
+        if (prevSortLayerOffset != sortLayerOffset) {
+            scene?.updateSorting(this)
+        }
+    }
+
+    private fun processRemovedComponent(component: EntityComponent) {
+        if (component is TickableComponent) {
+            tickableComponents.remove(component)
+        }
+        if (component is RenderableComponent) {
+            renderableComponents.remove(component)
         }
     }
 
@@ -227,8 +237,13 @@ class Entity(
         return entityDefinition?.tags?.contains(tag) ?: false
     }
 
-    override fun removedFromScene() {
-        pool.free(this)
+    override fun addedToScene(scene: Scene) {
+        this.scene = scene
+    }
+
+    override fun removedFromScene(scene: Scene) {
+        this.scene = null
+        // pool.free(this)
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {

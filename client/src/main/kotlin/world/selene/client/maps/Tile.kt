@@ -9,6 +9,7 @@ import world.selene.client.scene.Renderable
 import world.selene.client.rendering.environment.Environment
 import world.selene.client.rendering.visual.VisualCreationContext
 import world.selene.client.rendering.visual.VisualManager
+import world.selene.client.scene.Scene
 import world.selene.common.data.TileDefinition
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
@@ -81,7 +82,10 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
         visual = visualManager.createVisual(tileDefinition.visual, VisualCreationContext(coordinate)) as? IsoVisual
     }
 
-    override fun removedFromScene() {
+    override fun addedToScene(scene: Scene) {
+    }
+
+    override fun removedFromScene(scene: Scene) {
         pool.free(this)
     }
 
