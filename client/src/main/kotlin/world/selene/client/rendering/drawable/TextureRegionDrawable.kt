@@ -3,6 +3,8 @@ package world.selene.client.rendering.drawable
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Rectangle
+import party.iroiro.luajava.Lua
+import world.selene.common.lua.LuaMetatable
 
 class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float, val offsetY: Float) : Drawable {
     override fun update(delta: Float) = Unit
@@ -38,5 +40,20 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
             textureRegion.regionHeight.toFloat()
         )
         return outRect
+    }
+
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
+
+    fun withoutOffset(): TextureRegionDrawable {
+        return TextureRegionDrawable(textureRegion, 0f, 0f)
+    }
+
+    companion object {
+        val luaMeta = Drawable.luaMeta.extend(TextureRegionDrawable::class) {
+            readOnly(TextureRegionDrawable::textureRegion)
+            callable(TextureRegionDrawable::withoutOffset)
+        }
     }
 }

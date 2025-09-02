@@ -15,7 +15,7 @@ interface IsoVisual : Visual2D, LuaMetatableProvider {
     }
 
     companion object {
-        val luaMeta = LuaMappedMetatable(IsoVisual::class) {
+        val luaMeta = Visual2D.luaMeta.extend(IsoVisual::class) {
             readOnly(IsoVisual::surfaceHeight)
         }
     }

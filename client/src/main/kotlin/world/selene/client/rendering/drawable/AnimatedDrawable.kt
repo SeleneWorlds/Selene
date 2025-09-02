@@ -61,12 +61,19 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
         return luaMeta
     }
 
+    fun withoutOffset(): AnimatedDrawable {
+        return AnimatedDrawable(frames.map {
+            if (it is TextureRegionDrawable) it.withoutOffset() else it
+        }, duration)
+    }
+
     companion object {
         val luaMeta = Drawable.luaMeta.extend(AnimatedDrawable::class) {
             readOnly(AnimatedDrawable::currentFrame)
             readOnly(AnimatedDrawable::elapsedTime)
             readOnly(AnimatedDrawable::duration)
             readOnly(AnimatedDrawable::animationCompleted)
+            callable(AnimatedDrawable::withoutOffset)
         }
     }
 }
