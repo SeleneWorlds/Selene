@@ -72,6 +72,7 @@ import world.selene.client.maps.TilePool
 import world.selene.client.rendering.DebugRenderer
 import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.rendering.SceneRenderer
+import world.selene.client.rendering.environment.Environment
 import world.selene.client.scene.Scene
 import world.selene.client.rendering.visual.VisualManager
 import world.selene.common.data.CustomRegistries
@@ -189,6 +190,7 @@ class SeleneApplication(
             singleOf(::VisualManager)
             singleOf(::CameraManager)
             singleOf(::SceneRenderer)
+            singleOf(::Environment)
             singleOf(::DebugRenderer)
         }
         val audioModule = module {
