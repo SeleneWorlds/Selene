@@ -1,23 +1,22 @@
 package world.selene.client.maps
 
-import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.graphics.g2d.Batch
+import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Pool
 import com.fasterxml.jackson.databind.ObjectMapper
 import party.iroiro.luajava.Lua
-import world.selene.client.animator.HumanoidAnimator
 import java.util.ArrayDeque
 import world.selene.client.controls.EntityMotion
+import world.selene.client.entity.component.EntityComponentFactory
 import world.selene.client.grid.ClientGrid
-import world.selene.client.rendering.SceneRenderer
+import world.selene.client.entity.component.IsoComponent
+import world.selene.client.entity.component.RenderableComponent
+import world.selene.client.entity.component.TickableComponent
+import world.selene.client.rendering.animator.HumanoidAnimatorController
 import world.selene.client.scene.Renderable
 import world.selene.client.scene.Scene
-import world.selene.client.visual.AnimatorVisualInstance
-import world.selene.client.visual.SizedVisualInstance
-import world.selene.client.visual.VisualContext
-import world.selene.client.visual.VisualInstance
-import world.selene.client.visual.VisualManager
+import world.selene.client.rendering.environment.Environment
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.data.EntityDefinition
 import world.selene.common.lua.LuaMappedMetatable
@@ -28,44 +27,57 @@ import world.selene.common.lua.checkString
 import world.selene.common.lua.toAnyMap
 import world.selene.common.util.Coordinate
 import kotlin.collections.forEach
-import kotlin.math.max
 
 class Entity(
     val objectMapper: ObjectMapper,
-    val visualManager: VisualManager,
-    val scene: Scene,
+    val pool: EntityPool,
     val map: ClientMap,
-    val grid: ClientGrid
+    val grid: ClientGrid,
+    val entityComponentFactory: EntityComponentFactory
 ) :
     Pool.Poolable, Renderable, LuaMetatableProvider {
     var networkId: Int = 0
-    lateinit var entityDefinition: EntityDefinition
-    var components: MutableMap<String, EntityComponent> = mutableMapOf()
+    var entityDefinition: EntityDefinition? = null
+        set(value) {
+            field = value
+            components.clear()
+            tickableComponents.clear()
+            renderableComponents.clear()
+            value?.components?.forEach {
+                addComponent(it.key, it.value)
+            }
+        }
+
+    var scene: Scene? = null
+    var removed: Boolean = false
+
+    val components = mutableMapOf<String, EntityComponent>()
+    val tickableComponents = mutableListOf<TickableComponent>()
+    val renderableComponents = mutableListOf<RenderableComponent>()
+
+    val lastRenderBounds = Rectangle()
+
+    var processingComponents = false
+    val componentsToBeAdded = mutableSetOf<EntityComponent>()
+    val componentsToBeRemoved = mutableSetOf<EntityComponent>()
+
     val motionQueue: ArrayDeque<EntityMotion> = ArrayDeque()
+    val animator = HumanoidAnimatorController(this)
 
     override var coordinate: Coordinate = Coordinate.Zero
         private set(value) {
             val prev = field
             field = value
-            if (prev != value) {
+            if (prev != value && !removed) {
                 map.entityMoved(this, prev)
             }
         }
 
     var facing: Float = 0f
     val direction get() = grid.getDirection(facing)
-    override val sortLayerOffset: Int get() = visualInstances.maxOfOrNull { it.visualInstance.sortLayerOffset } ?: 0
+    override var sortLayerOffset: Int = 0
     override val sortLayer: Int get() = grid.getSortLayer(position, sortLayerOffset)
     override var localSortLayer: Int = 0
-
-    data class ComponentVisualInstance(
-        val componentName: String,
-        val component: VisualComponent,
-        val visualInstance: VisualInstance
-    )
-
-    val visualInstances = mutableListOf<ComponentVisualInstance>()
-    val mainVisualInstance get() = visualInstances.firstOrNull()?.visualInstance
 
     val position: Vector3 = Vector3(coordinate.x.toFloat(), coordinate.y.toFloat(), coordinate.z.toFloat())
 
@@ -112,54 +124,64 @@ class Entity(
                 position.z = motion.end.z.toFloat()
                 motionQueue.removeFirst()
             }
-            scene.updateSorting(this)
+            scene?.updateSorting(this)
         }
-        visualInstances.forEach { it.visualInstance.update(delta) }
+
+        processComponents {
+            tickableComponents.forEach { component ->
+                component.update(this, delta)
+            }
+        }
     }
 
-    override fun render(sceneRenderer: SceneRenderer, spriteBatch: SpriteBatch, visualContext: VisualContext) {
-        components.values.forEach { component ->
-            component.update(this)
+    private inline fun processComponents(runnable: () -> Unit) {
+        processingComponents = true
+        runnable()
+        processingComponents = false
+        for (component in componentsToBeAdded) {
+            processAddedComponent(component)
         }
+        componentsToBeAdded.clear()
+        for (component in componentsToBeRemoved) {
+            processRemovedComponent(component)
+        }
+        componentsToBeRemoved.clear()
+    }
 
-        val displayX = screenX
-        val displayY = screenY
-        val context = visualContext.copy(maxWidth = 0f, maxHeight = 0f, color = Color.WHITE.cpy())
-        visualInstances.forEach { (_, component, visualInstance) ->
-            if (visualInstance is SizedVisualInstance) {
-                context.maxWidth = max(context.maxWidth, visualInstance.width)
-                context.maxHeight = max(context.maxHeight, visualInstance.height)
-            }
-            if (visualInstance.shouldRender(sceneRenderer, displayX, displayY, context)) {
-                context.color.set(component.red, component.green, component.blue, component.alpha)
-                visualInstance.render(spriteBatch, displayX, displayY, context)
+    private val tmpRenderRectangle = Rectangle()
+    override fun render(batch: Batch, environment: Environment) {
+        lastRenderBounds.set(0f, 0f, 0f, 0f)
+        processComponents {
+            renderableComponents.forEach { component ->
+                val displayX = screenX
+                val displayY = screenY - environment.getSurfaceOffset(coordinate)
+                batch.color.set(environment.getColor(coordinate))
+                component.render(this, batch, displayX, displayY)
+                if (component is IsoComponent) {
+                    environment.applySurfaceOffset(coordinate, component.surfaceHeight)
+                }
+                component.getBounds(displayX, displayY, tmpRenderRectangle)
+                if (lastRenderBounds.width == 0f) {
+                    lastRenderBounds.set(tmpRenderRectangle)
+                } else {
+                    lastRenderBounds.merge(tmpRenderRectangle)
+                }
             }
         }
     }
 
     override fun reset() {
         networkId = 0
-        components.clear()
         motionQueue.clear()
         coordinate = Coordinate.Zero
         facing = 0f
         localSortLayer = 0
-        visualInstances.clear()
+        entityDefinition = null
+        processingComponents = false
+        removed = false
+        componentsToBeAdded.clear()
+        componentsToBeRemoved.clear()
         position.set(0f, 0f, 0f)
-    }
-
-    fun updateVisual() {
-        visualInstances.clear()
-        components.entries.forEach { (name, component) ->
-            if (component is VisualComponent) {
-                visualManager.buildInstance(component.configuration.visual, component.configuration.properties)?.let {
-                    if (it is AnimatorVisualInstance) {
-                        it.animator = HumanoidAnimator(this)
-                    }
-                    visualInstances.add(ComponentVisualInstance(name, component, it))
-                }
-            }
-        }
     }
 
     fun setCoordinateAndUpdate(coordinate: Coordinate) {
@@ -168,32 +190,85 @@ class Entity(
             position.x = coordinate.x.toFloat()
             position.y = coordinate.y.toFloat()
             position.z = coordinate.z.toFloat()
-            scene.updateSorting(this)
+            scene?.updateSorting(this)
         }
     }
 
-    fun setupComponents(overrides: Map<String, ComponentConfiguration>) {
-        entityDefinition.components.forEach {
-            this.components[it.key] = it.value.create()
+    fun addComponent(name: String, componentConfiguration: ComponentConfiguration) {
+        val component = entityComponentFactory.create(this, componentConfiguration)
+        if (component != null) {
+            addComponent(name, component)
         }
-        overrides.forEach {
-            this.components[it.key] = it.value.create()
+    }
+
+    fun addComponent(name: String, component: EntityComponent) {
+        val prev = components.put(name, component)
+        if (processingComponents) {
+            prev?.let {
+                componentsToBeAdded.remove(it)
+                componentsToBeRemoved.add(it)
+            }
+            componentsToBeRemoved.remove(component)
+            componentsToBeAdded.add(component)
+        } else {
+            prev?.let { processRemovedComponent(it) }
+            processAddedComponent(component)
+        }
+    }
+
+    private fun computeSortLayerOffset(): Int {
+        return renderableComponents.asSequence().mapNotNull { it as? IsoComponent }.maxOfOrNull { it.sortLayerOffset }
+            ?: 0
+    }
+
+    private fun processAddedComponent(component: EntityComponent) {
+        if (component is TickableComponent) {
+            tickableComponents.add(component)
+        }
+        if (component is RenderableComponent) {
+            renderableComponents.add(component)
+        }
+        val prevSortLayerOffset = sortLayerOffset
+        sortLayerOffset = computeSortLayerOffset()
+        if (prevSortLayerOffset != sortLayerOffset) {
+            scene?.updateSorting(this)
+        }
+    }
+
+    private fun processRemovedComponent(component: EntityComponent) {
+        if (component is TickableComponent) {
+            tickableComponents.remove(component)
+        }
+        if (component is RenderableComponent) {
+            renderableComponents.remove(component)
         }
     }
 
     private fun spawn() {
-        if (visualInstances.isEmpty()) {
-            updateVisual()
-        }
+        removed = false
         map.addEntity(this)
     }
 
     private fun despawn() {
-        map.removeEntity(this)
+        if (!removed) {
+            map.removeEntity(this)
+            removed = true
+        }
     }
 
     fun hasTag(tag: String): Boolean {
-        return entityDefinition.tags.contains(tag)
+        return entityDefinition?.tags?.contains(tag) ?: false
+    }
+
+    override fun addedToScene(scene: Scene) {
+        this.scene = scene
+    }
+
+    override fun removedFromScene(scene: Scene) {
+        if (this.scene != null) {
+            pool.free(this)
+        }
+        this.scene = null
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
@@ -207,7 +282,6 @@ class Entity(
     companion object {
         val luaMeta = LuaMappedMetatable(Entity::class) {
             readOnly(Entity::coordinate)
-            callable(Entity::updateVisual)
             callable(Entity::spawn)
             callable(Entity::despawn)
             callable("SetCoordinate") {
@@ -220,8 +294,9 @@ class Entity(
                 val self = it.checkSelf()
                 val componentName = it.checkString(2)
                 val componentData = it.toAnyMap(3)
-                val componentConfiguration = self.objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
-                self.components[componentName] = componentConfiguration.create()
+                val componentConfiguration =
+                    self.objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
+                self.addComponent(componentName, componentConfiguration)
                 0
             }
             callable("GetComponent") {
@@ -229,13 +304,6 @@ class Entity(
                 val componentName = it.checkString(2)
                 val component = self.components[componentName]
                 it.push(component, Lua.Conversion.NONE)
-                1
-            }
-            callable("GetVisual") { lua ->
-                val self = lua.checkSelf()
-                val componentName = lua.checkString(2)
-                val visualInstance = self.visualInstances.firstOrNull { it.componentName == componentName }?.visualInstance
-                lua.push(visualInstance, Lua.Conversion.NONE)
                 1
             }
         }

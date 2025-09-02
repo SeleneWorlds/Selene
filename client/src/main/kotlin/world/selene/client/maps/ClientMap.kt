@@ -57,7 +57,6 @@ class ClientMap(
         removedTiles.forEach {
             scene.remove(it)
         }
-        tilePool.freeAll(removedTiles)
     }
 
     fun placeTile(coordinate: Coordinate, tileId: Int) {
@@ -67,9 +66,11 @@ class ClientMap(
             return
         }
 
-        val tile = tilePool.obtain(tileDefinition)
+        val tile = tilePool.obtain()
+        tile.tileDefinition = tileDefinition
         tile.coordinate = coordinate
         tile.localSortLayer = tiles.get(coordinate).size
+        tile.updateVisual()
         tiles.put(coordinate, tile)
         scene.add(tile)
     }
@@ -86,15 +87,17 @@ class ClientMap(
             logger.error("Unknown entity id: $entityId")
             return
         }
-        val entity = entitiesByNetworkId[networkId] ?: entityPool.obtain(entityDefinition).also {
+        val entity = entitiesByNetworkId[networkId] ?: entityPool.obtain().also {
+            it.entityDefinition = entityDefinition
             it.networkId = networkId
             it.setCoordinateAndUpdate(coordinate)
             addEntity(it)
         }
         entity.setCoordinateAndUpdate(coordinate)
         entity.facing = facing
-        entity.setupComponents(componentOverrides)
-        entity.updateVisual()
+        componentOverrides.forEach { (key, value) ->
+            entity.addComponent(key, value)
+        }
     }
 
     fun addEntity(entity: Entity) {
@@ -121,7 +124,6 @@ class ClientMap(
         entitiesByCoordinate.remove(entity.coordinate, entity)
         entitiesByNetworkId.remove(entity.networkId)
         scene.remove(entity)
-        entityPool.free(entity)
     }
 
     fun getTilesAt(coordinate: Coordinate): List<Tile> {

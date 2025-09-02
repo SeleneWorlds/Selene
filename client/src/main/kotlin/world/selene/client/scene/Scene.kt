@@ -33,6 +33,7 @@ class Scene {
 
         val actualIndex = if (insertionIndex < 0) -(insertionIndex + 1) else insertionIndex
         renderables.add(actualIndex, renderable)
+        renderable.addedToScene(this)
     }
 
     fun updateAllSorting() {
@@ -70,6 +71,7 @@ class Scene {
             removedRenderables.add(renderable)
         } else {
             renderables.remove(renderable)
+            renderable.removedFromScene(this)
         }
     }
 

@@ -35,6 +35,7 @@ import world.selene.client.data.AudioRegistry
 import world.selene.common.data.ComponentRegistry
 import world.selene.common.data.TileRegistry
 import world.selene.client.data.VisualRegistry
+import world.selene.client.entity.component.EntityComponentFactory
 import world.selene.client.grid.ClientGrid
 import world.selene.client.input.InputManager
 import world.selene.client.lua.ClientLuaSignals
@@ -67,11 +68,14 @@ import world.selene.client.lua.LuaMovementGridModule
 import world.selene.client.maps.ClientMap
 import world.selene.client.maps.Entity
 import world.selene.client.maps.EntityPool
+import world.selene.client.maps.Tile
 import world.selene.client.maps.TilePool
 import world.selene.client.rendering.DebugRenderer
+import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.rendering.SceneRenderer
+import world.selene.client.rendering.environment.Environment
 import world.selene.client.scene.Scene
-import world.selene.client.visual.VisualManager
+import world.selene.client.rendering.visual.VisualManager
 import world.selene.common.data.CustomRegistries
 import world.selene.common.data.EntityRegistry
 import world.selene.common.data.NameIdRegistry
@@ -172,6 +176,7 @@ class SeleneApplication(
             singleOf(::BundleFileResolver)
             single { AssetStorage(fileResolver = get<BundleFileResolver>()) }
             singleOf(::AssetProvider) { bind<Disposable>() }
+            singleOf(::DrawableManager) { bind<Disposable>() }
         }
         val worldModule = module {
             singleOf(::ClientMap)
@@ -179,12 +184,15 @@ class SeleneApplication(
             singleOf(::EntityPool)
             singleOf(::Scene)
             singleOf(::ClientGrid)
+            singleOf(::EntityComponentFactory)
+            factoryOf(::Tile)
             factoryOf(::Entity)
         }
         val renderingModule = module {
             singleOf(::VisualManager)
             singleOf(::CameraManager)
             singleOf(::SceneRenderer)
+            singleOf(::Environment)
             singleOf(::DebugRenderer)
         }
         val audioModule = module {
