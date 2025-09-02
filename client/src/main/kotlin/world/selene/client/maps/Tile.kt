@@ -1,13 +1,12 @@
 package world.selene.client.maps
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.utils.Pool
 import party.iroiro.luajava.Lua
 import world.selene.client.grid.ClientGrid
 import world.selene.client.rendering.visual2d.iso.IsoVisual
-import world.selene.client.rendering.SceneRenderer
 import world.selene.client.scene.Renderable
-import world.selene.client.old.VisualContext
+import world.selene.client.rendering.environment.Environment
 import world.selene.client.rendering.visual.VisualCreationContext
 import world.selene.client.rendering.visual.VisualManager
 import world.selene.common.data.TileDefinition
@@ -16,7 +15,8 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.util.Coordinate
 
-class Tile(private val grid: ClientGrid, private val visualManager: VisualManager) : Pool.Poolable, Renderable, LuaMetatableProvider {
+class Tile(private val grid: ClientGrid, private val visualManager: VisualManager) : Pool.Poolable, Renderable,
+    LuaMetatableProvider {
     lateinit var tileDefinition: TileDefinition
     var visual: IsoVisual? = null
 
@@ -50,14 +50,17 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
         }
     }
 
-    override fun render(sceneRenderer: SceneRenderer, spriteBatch: SpriteBatch, visualContext: VisualContext) {
+    override fun render(batch: Batch, environment: Environment) {
         // val alpha = visualContext.interiorFadeAlpha
         // val occluded = visual.occludes(sceneRenderer, displayX, displayY, visualContext)
         // targetOcclusionAlpha = if (occluded) min(alpha, 0.3f) else alpha
         // visualContext.color.set(1f, 1f, 1f, currentOcclusionAlpha)
         visual?.let {
-            it.render(spriteBatch, screenX, screenY - visualContext.offsetY)
-            visualContext.offsetY += it.surfaceHeight
+            if (environment.shouldRender(coordinate)) {
+                batch.color = environment.getColor(coordinate)
+                it.render(batch, screenX, screenY - environment.getSurfaceOffset(coordinate))
+                environment.applySurfaceOffset(coordinate, it.surfaceHeight)
+            }
         }
     }
 

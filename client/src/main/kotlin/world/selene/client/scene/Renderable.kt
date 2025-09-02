@@ -1,8 +1,7 @@
 package world.selene.client.scene
 
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
-import world.selene.client.rendering.SceneRenderer
-import world.selene.client.old.VisualContext
+import com.badlogic.gdx.graphics.g2d.Batch
+import world.selene.client.rendering.environment.Environment
 import world.selene.common.util.Coordinate
 
 interface Renderable {
@@ -11,5 +10,5 @@ interface Renderable {
     val sortLayer: Int
     val localSortLayer: Int
     fun update(delta: Float)
-    fun render(sceneRenderer: SceneRenderer, spriteBatch: SpriteBatch, visualContext: VisualContext)
+    fun render(batch: Batch, environment: Environment)
 }

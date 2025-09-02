@@ -1,7 +1,6 @@
 package world.selene.client.maps
 
-import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Pool
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -11,11 +10,10 @@ import world.selene.client.controls.EntityMotion
 import world.selene.client.grid.ClientGrid
 import world.selene.client.entity.component.IsoComponent
 import world.selene.client.entity.component.RenderableComponent
-import world.selene.client.rendering.SceneRenderer
 import world.selene.client.entity.component.TickableComponent
 import world.selene.client.scene.Renderable
 import world.selene.client.scene.Scene
-import world.selene.client.old.VisualContext
+import world.selene.client.rendering.environment.Environment
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.data.EntityDefinition
 import world.selene.common.lua.LuaMappedMetatable
@@ -109,10 +107,9 @@ class Entity(
         }
     }
 
-    override fun render(sceneRenderer: SceneRenderer, spriteBatch: SpriteBatch, visualContext: VisualContext) {
-        val context = visualContext.copy(maxWidth = 0f, maxHeight = 0f, color = Color.WHITE.cpy())
+    override fun render(batch: Batch, environment: Environment) {
         renderableComponents.forEach { component ->
-            component.render(this, spriteBatch, screenX, screenY)
+            component.render(this, batch, screenX, screenY)
         }
     }
 
