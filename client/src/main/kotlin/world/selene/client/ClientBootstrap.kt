@@ -2,10 +2,17 @@ package world.selene.client
 
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application
 import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration
+import com.fasterxml.jackson.databind.MapperFeature
+import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
 import world.selene.client.config.ClientConfig
 import world.selene.client.config.ClientRuntimeConfig
+
+val objectMapper = JsonMapper.builder()
+    .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS).build()
+    .registerKotlinModule()
 
 @OptIn(ExperimentalHoplite::class)
 fun main(args: Array<String>) {

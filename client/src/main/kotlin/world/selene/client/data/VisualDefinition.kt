@@ -1,5 +1,6 @@
 package world.selene.client.data
 
+import com.badlogic.gdx.utils.Align
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -85,7 +86,14 @@ data class AnimationFrames(
     val flipY: Boolean = false,
 )
 
+enum class HorizontalAlign(val align: Int) {
+    LEFT(Align.left),
+    CENTER(Align.center),
+    RIGHT(Align.right)
+}
+
 data class TextVisualDefinition(
     val text: String,
+    val align: HorizontalAlign = HorizontalAlign.LEFT,
     override val metadata: Map<String, Any> = emptyMap()
 ) : VisualDefinition(), MetadataHolder

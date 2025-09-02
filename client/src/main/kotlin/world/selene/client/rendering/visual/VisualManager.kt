@@ -10,6 +10,7 @@ import world.selene.client.rendering.animator.DrawableAnimator
 import world.selene.client.rendering.drawable.AnimatedDrawableOptions
 import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.rendering.drawable.DrawableOptions
+import world.selene.client.rendering.drawable.TextDrawableOptions
 import world.selene.client.rendering.visual2d.DrawableVisual2D
 import world.selene.client.rendering.visual2d.iso.DrawableIsoVisual
 import world.selene.client.rendering.visual2d.iso.DynamicDrawableIsoVisual
@@ -90,7 +91,8 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
 
             is TextVisualDefinition -> {
                 val text = context.overrides["text"] as String? ?: visualDef.text
-                val drawable = drawableManager.getTextDrawable(text)
+                val options = TextDrawableOptions(horizontalAlign = visualDef.align.align)
+                val drawable = drawableManager.getTextDrawable(text, options)
                 DrawableVisual2D(visualDef, drawable)
             }
 

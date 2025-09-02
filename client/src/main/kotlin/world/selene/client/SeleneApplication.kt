@@ -20,6 +20,7 @@ import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
 
 import org.koin.logger.slf4jLogger
 import world.selene.client.assets.AssetProvider
@@ -153,7 +154,7 @@ class SeleneApplication(
             }
         }
         val dataModule = module {
-            single { ObjectMapper().registerKotlinModule() }
+            single { objectMapper }.bind(ObjectMapper::class)
             singleOf(::TileRegistry)
             singleOf(::EntityRegistry)
             singleOf(::ComponentRegistry)

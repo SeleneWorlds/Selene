@@ -67,14 +67,15 @@ class CustomRegistry(
                 callable("GetField") { lua ->
                     val registryObject = lua.checkSelf()
                     val key = lua.checkString(2)
+                    val objectMapper = registryObject.registry.objectMapper
                     when (val value = registryObject.element[key]) {
                         is LongNode -> lua.push(value.asLong())
                         is IntNode, is ShortNode -> lua.push(value.asInt())
                         is FloatNode, is DoubleNode -> lua.push(value.asDouble())
                         is BooleanNode -> lua.push(value.asBoolean())
                         is TextNode -> lua.push(value.asText())
-                        is ArrayNode -> lua.push(ObjectMapper().treeToValue(value), Lua.Conversion.FULL)
-                        is ObjectNode -> lua.push(ObjectMapper().treeToValue(value), Lua.Conversion.FULL)
+                        is ArrayNode -> lua.push(objectMapper.treeToValue(value), Lua.Conversion.FULL)
+                        is ObjectNode -> lua.push(objectMapper.treeToValue(value), Lua.Conversion.FULL)
                         else -> lua.pushNil()
                     }
                     return@callable 1

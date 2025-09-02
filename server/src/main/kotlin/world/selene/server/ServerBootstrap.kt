@@ -1,6 +1,8 @@
 package world.selene.server
 
+import com.fasterxml.jackson.databind.MapperFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
@@ -13,6 +15,7 @@ import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.createdAtStart
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.dsl.bind
 import org.koin.dsl.module
 
 import org.koin.logger.slf4jLogger
@@ -85,7 +88,9 @@ import world.selene.server.saves.SaveManager
 import world.selene.server.sync.ChunkViewManager
 import world.selene.server.world.World
 
-val objectMapper = ObjectMapper().registerKotlinModule()
+val objectMapper = JsonMapper.builder()
+    .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS).build()
+    .registerKotlinModule()
 
 @OptIn(ExperimentalHoplite::class)
 fun main(args: Array<String>) {
@@ -148,7 +153,7 @@ fun main(args: Array<String>) {
         singleOf(::LoginQueue)
     }
     val dataModule = module {
-        single { objectMapper }
+        single { objectMapper }.bind(ObjectMapper::class)
         singleOf(::TileRegistry)
         singleOf(::TransitionRegistry)
         singleOf(::EntityRegistry)
