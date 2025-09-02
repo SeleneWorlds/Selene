@@ -62,17 +62,20 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
             }
 
             is AnimatorVisualDefinition -> {
-                val drawableAnimator = DrawableAnimator()
+                val animationController = context.animationController ?: return null
+                val drawableAnimator = DrawableAnimator(animationController)
                 visualDef.animations.forEach { (animationName, frames) ->
                     val options = AnimatedDrawableOptions(
                         duration = frames.speed ?: 0.13f
                     )
-                    val drawableFrames = frames.textures.map { it to DrawableOptions(
-                        offsetX = frames.offsetX ?: visualDef.offsetX,
-                        offsetY = frames.offsetY ?: visualDef.offsetY,
-                        flipX = frames.flipX,
-                        flipY = frames.flipY
-                    ) }
+                    val drawableFrames = frames.textures.map {
+                        it to DrawableOptions(
+                            offsetX = frames.offsetX ?: visualDef.offsetX,
+                            offsetY = frames.offsetY ?: visualDef.offsetY,
+                            flipX = frames.flipX,
+                            flipY = frames.flipY
+                        )
+                    }
                     val drawable = drawableManager.getAnimatedDrawable(drawableFrames, options)
                     drawableAnimator.addAnimation(animationName, drawable)
                 }
