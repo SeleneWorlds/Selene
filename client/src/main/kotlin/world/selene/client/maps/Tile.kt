@@ -1,6 +1,7 @@
 package world.selene.client.maps
 
 import com.badlogic.gdx.graphics.g2d.Batch
+import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.utils.Pool
 import party.iroiro.luajava.Lua
 import world.selene.client.grid.ClientGrid
@@ -27,9 +28,6 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     override var localSortLayer: Int = 0
     override var coordinate: Coordinate = Coordinate.Zero
 
-    val screenX get() = grid.getScreenX(coordinate)
-    val screenY get() = grid.getScreenY(coordinate)
-
     val x get() = coordinate.x
     val y get() = coordinate.y
     val z get() = coordinate.z
@@ -51,17 +49,24 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
         }
     }
 
+    private val tmpRenderBounds = Rectangle()
     override fun render(batch: Batch, environment: Environment) {
         visual?.let {
             if (environment.shouldRender(coordinate)) {
-                val occluding = false // TODO environment.occludes()
+                val displayX = grid.getScreenX(coordinate)
+                val displayY = grid.getScreenY(coordinate) - environment.getSurfaceOffset(coordinate)
+                val occluding = environment.occludesFocus(coordinate, getBounds(displayX, displayY, tmpRenderBounds))
                 targetOcclusionAlpha = if (occluding) 0.3f else 1f
                 batch.color.set(environment.getColor(coordinate))
                 batch.color = batch.color.mul(1f, 1f, 1f, currentOcclusionAlpha)
-                it.render(batch, screenX, screenY - environment.getSurfaceOffset(coordinate))
+                it.render(batch, displayX, displayY)
                 environment.applySurfaceOffset(coordinate, it.surfaceHeight)
             }
         }
+    }
+
+    fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle {
+        return visual?.getBounds(x, y, outRect) ?: outRect.set(x, y, 0f, 0f)
     }
 
     override fun reset() {

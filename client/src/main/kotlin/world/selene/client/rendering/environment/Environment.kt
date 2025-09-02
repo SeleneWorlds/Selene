@@ -2,16 +2,20 @@ package world.selene.client.rendering.environment
 
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.math.MathUtils
+import com.badlogic.gdx.math.Rectangle
 import world.selene.client.camera.CameraManager
+import world.selene.client.grid.ClientGrid
 import world.selene.common.util.Coordinate
 
-class Environment(val cameraManager: CameraManager) {
+class Environment(val cameraManager: CameraManager, val grid: ClientGrid) {
 
     private val surfaceOffsets = mutableMapOf<Coordinate, Float>()
 
     private var isInsideInterior = false
     private val interiorFadeSpeed = 20f
     private var interiorFadeAlpha = 1f
+
+    private val focusBounds = Rectangle()
 
     fun update(delta: Float) {
         surfaceOffsets.clear()
@@ -22,6 +26,11 @@ class Environment(val cameraManager: CameraManager) {
         } else {
             MathUtils.lerp(interiorFadeAlpha, 1f, delta * interiorFadeSpeed)
         }
+
+        val focusCoordinate = cameraManager.focusCoordinate
+        cameraManager.focusedEntity?.lastRenderBounds ?: focusBounds.set(
+            grid.getScreenX(focusCoordinate), grid.getScreenY(focusCoordinate), 1f, 1f
+        )
     }
 
     fun getSurfaceOffset(coordinate: Coordinate): Float {
@@ -52,6 +61,19 @@ class Environment(val cameraManager: CameraManager) {
             baseColor.a = interiorFadeAlpha
         }
         return baseColor
+    }
+
+    fun occludesFocus(coordinate: Coordinate, bounds: Rectangle): Boolean {
+        val focusCoordinate = cameraManager.focusCoordinate
+        val occluderSortLayer = grid.getSortLayer(coordinate, 0)
+        val focusSortLayer = grid.getSortLayer(focusCoordinate, 0)
+        if (focusSortLayer - occluderSortLayer < grid.rowSortScale) {
+            return false
+        }
+
+        val isLargerThanFocus = bounds.height >= focusBounds.height
+        val isAboveFocus = focusCoordinate.z < coordinate.z
+        return (isLargerThanFocus || isAboveFocus) && bounds.overlaps(focusBounds)
     }
 
 }

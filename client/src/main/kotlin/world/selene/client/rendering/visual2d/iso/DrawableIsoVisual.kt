@@ -1,6 +1,7 @@
 package world.selene.client.rendering.visual2d.iso
 
 import com.badlogic.gdx.graphics.g2d.Batch
+import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
 import world.selene.client.data.VisualDefinition
 import world.selene.client.rendering.drawable.Drawable
@@ -17,6 +18,14 @@ class DrawableIsoVisual(
         if (shouldUpdate) {
             drawable.update(delta)
         }
+    }
+
+    override fun getBounds(
+        x: Float,
+        y: Float,
+        outRect: Rectangle
+    ): Rectangle {
+        return drawable.getBounds(x, y, outRect)
     }
 
     override fun render(batch: Batch, x: Float, y: Float) {

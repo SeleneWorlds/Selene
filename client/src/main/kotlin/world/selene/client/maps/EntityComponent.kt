@@ -1,6 +1,7 @@
 package world.selene.client.maps
 
 import com.badlogic.gdx.graphics.g2d.Batch
+import com.badlogic.gdx.math.Rectangle
 import org.koin.mp.KoinPlatform.getKoin
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
@@ -33,6 +34,10 @@ class IsoVisualComponent(val visual: IsoVisual) : EntityComponent, RenderableCom
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
+    }
+
+    override fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle {
+        return visual.getBounds(x, y, outRect)
     }
 
     override fun render(
