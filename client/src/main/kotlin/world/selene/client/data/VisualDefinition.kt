@@ -51,10 +51,10 @@ data class AnimatedVisualDefinition(
     val flipX: Boolean = false,
     val flipY: Boolean = false,
     override val metadata: Map<String, Any> = emptyMap(),
-    val instance: Boolean = false
+    val instanced: Boolean = false
 ) : VisualDefinition, MetadataHolder {
     override val isShared: Boolean
-        get() = !instance
+        get() = !instanced
 }
 
 data class AnimatorVisualDefinition(

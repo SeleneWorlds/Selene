@@ -242,8 +242,12 @@ class Entity(
     }
 
     override fun removedFromScene(scene: Scene) {
+        if (this.scene != null) {
+            pool.free(this)
+        } else {
+            println("almost freed twice")
+        }
         this.scene = null
-        pool.free(this)
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {

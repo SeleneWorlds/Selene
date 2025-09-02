@@ -52,7 +52,7 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
                 val options = AnimatedDrawableOptions(
                     duration = visualDef.duration
                 )
-                val managedKey = if (!visualDef.instance) name else null
+                val managedKey = if (!visualDef.instanced) name else null
                 val drawable = drawableManager.getAnimatedDrawable(frames, options, managedKey)
                 DrawableIsoVisual(drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY).apply {
                     if (managedKey != null) {
