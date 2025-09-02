@@ -45,7 +45,11 @@ abstract class JsonRegistry<TData : Any>(
                         val parsed = objectMapper.readValue<RegistryFile<TData>>(file, type)
                         for ((name, data) in parsed.entries) {
                             @Suppress("UNCHECKED_CAST")
-                            entries[name] = data
+                            entries[name] = data.apply {
+                                if (data is RegistryObject<*>) {
+                                    (data as RegistryObject<TData>).initializeFromRegistry(this@JsonRegistry, name, -1)
+                                }
+                            }
                         }
                     } catch (e: Exception) {
                         logger.error("Failed to load $file from bundle ${bundle.manifest.name}", e)
