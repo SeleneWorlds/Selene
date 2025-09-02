@@ -75,7 +75,6 @@ class SeleneApplicationListener(
         inputManager.update(delta)
         gridMovement.update(delta)
         cameraManager.update(delta)
-        visualManager.updateShared(delta)
         drawableManager.update(delta)
 
         ScreenUtils.clear(0f, 0f, 0f, 0f)

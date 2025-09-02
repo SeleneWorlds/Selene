@@ -7,10 +7,7 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
-import world.selene.client.animator.Animator
-import world.selene.client.assets.AssetProvider
 import world.selene.client.data.Anchor
-import world.selene.client.data.AnimatorVisualDefinition
 import world.selene.client.data.LabelVisualDefinition
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.rendering.VisualContextProvider
@@ -131,53 +128,6 @@ abstract class TextureBasedVisualInstance(private val metadataHolder: MetadataHo
                 }
                 0
             }
-        }
-    }
-}
-
-class AnimatorVisualInstance(
-    private val visualDef: AnimatorVisualDefinition,
-    private val assetProvider: AssetProvider
-) : TextureBasedVisualInstance(visualDef), SizedVisualInstance {
-    lateinit var animator: Animator
-    private var currentAnimation = ""
-    private var frameIndex = 0
-    private var time = 0f
-    private val regions: Map<String, List<TextureRegion>> = visualDef.animations.mapValues { (_, frames) ->
-        val textureOptions = TextureOptions(frames.flipX, frames.flipY)
-        frames.textures.map { path ->
-            assetProvider.loadTextureRegion(path, textureOptions) ?: assetProvider.missingTexture
-        }
-    }
-    private val speeds: Map<String, Float> = visualDef.animations.mapValues { it.value.speed ?: 0.13f }
-
-    override val textureRegion: TextureRegion
-        get() = regions[currentAnimation]?.getOrNull(frameIndex) ?: regions.values.first().first()
-
-    override val sortLayerOffset: Int get() = visualDef.sortLayerOffset
-    val animFrames get() = visualDef.animations[currentAnimation]
-    override val offsetX: Float get() = (animFrames?.offsetX ?: visualDef.offsetX).toFloat()
-    override val offsetY: Float get() = (animFrames?.offsetY ?: visualDef.offsetY).toFloat()
-
-    override fun render(batch: Batch, x: Float, y: Float, context: VisualContext) {
-        super.render(batch, x, y, context)
-        context.offsetY += visualDef.surfaceOffsetY
-    }
-
-    override fun update(delta: Float) {
-        val nextAnimation = animator.getAnimation()
-        if (currentAnimation != nextAnimation) {
-            currentAnimation = nextAnimation
-            frameIndex = 0
-            time = 0f
-        }
-
-        val frames = regions[currentAnimation] ?: return
-        val speed = speeds[currentAnimation] ?: 0.13f
-        time += delta
-        if (time >= speed) {
-            time = 0f
-            frameIndex = (frameIndex + 1) % frames.size
         }
     }
 }

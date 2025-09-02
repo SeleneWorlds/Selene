@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import ktx.assets.async.AssetLoadingException
 import ktx.assets.async.AssetStorage
 import org.slf4j.Logger
-import world.selene.client.old.TextureOptions
 import world.selene.common.util.Disposable
 
 class AssetProvider(private val logger: Logger, private val assetStorage: AssetStorage) : Disposable {
@@ -16,16 +15,6 @@ class AssetProvider(private val logger: Logger, private val assetStorage: AssetS
     fun loadTexture(texturePath: String): Texture? {
         try {
             return assetStorage.loadSync<Texture>(texturePath)
-        } catch (e: AssetLoadingException) {
-            logger.error("Failed to load texture $texturePath", e)
-            return null
-        }
-    }
-
-    fun loadTextureRegion(texturePath: String, options: TextureOptions = TextureOptions.Default): TextureRegion? {
-        try {
-            val texture = assetStorage.loadSync<Texture>(texturePath)
-            return TextureRegion(texture).apply { flip(options.flipX, !options.flipY) }
         } catch (e: AssetLoadingException) {
             logger.error("Failed to load texture $texturePath", e)
             return null
