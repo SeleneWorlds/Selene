@@ -15,7 +15,7 @@ class CameraManager(
     private val signals: ClientLuaSignals
 ) {
     val camera = OrthographicCamera().apply {
-        setToOrtho(true)
+        setToOrtho(false)
     }
 
     var focusCoordinate = Coordinate.Zero
@@ -58,7 +58,7 @@ class CameraManager(
         viewportWidth = width
         viewportHeight = height
         viewportOffsetX = (Gdx.graphics.width - width) / 2
-        viewportOffsetY = (Gdx.graphics.height - height) / 2
+        viewportOffsetY = -(Gdx.graphics.height - height) / 2
         camera.position.x = grid.getScreenX(focusCoordinate) + viewportOffsetX
         camera.position.y = grid.getScreenY(focusCoordinate) + viewportOffsetY
         camera.update()

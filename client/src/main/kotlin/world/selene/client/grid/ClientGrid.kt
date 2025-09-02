@@ -18,11 +18,11 @@ class ClientGrid : Grid() {
 
     fun getScreenX(coordinate: Coordinate) = (coordinate.x + coordinate.y) * tileStepX
     fun getScreenY(coordinate: Coordinate) =
-        -(((coordinate.x - coordinate.y) * tileStepY) + (coordinate.z * tileStepZ))
+        (((coordinate.x - coordinate.y) * tileStepY) + (coordinate.z * tileStepZ))
 
     fun getScreenX(position: Vector3) = (position.x + position.y) * tileStepX
     fun getScreenY(position: Vector3) =
-        -(((position.x - position.y) * tileStepY) + (position.z * tileStepZ))
+        (((position.x - position.y) * tileStepY) + (position.z * tileStepZ))
 
     fun getSortLayer(coordinate: Coordinate, sortLayerOffset: Int) =
         ((coordinate.x - coordinate.y - (coordinate.z * zSortScale)) * rowSortScale) - sortLayerOffset
@@ -30,8 +30,8 @@ class ClientGrid : Grid() {
         ((floor(position.x) - ceil(position.y) - (floor(position.z) * zSortScale)).toInt() * rowSortScale) - sortLayerOffset
 
     fun screenToCoordinate(x: Float, y: Float): Coordinate {
-        val isoX = (x / tileStepX + (-y / tileStepY)) / 2
-        val isoY = (x / tileStepX - (-y / tileStepY)) / 2
+        val isoX = (x / tileStepX + (y / tileStepY)) / 2
+        val isoY = (x / tileStepX - (y / tileStepY)) / 2
         return Coordinate(isoX.roundToInt(), isoY.roundToInt(), 0)
     }
 

@@ -53,7 +53,7 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     override fun render(batch: Batch, environment: Environment) {
         visual?.let {
             val displayX = grid.getScreenX(coordinate)
-            val displayY = grid.getScreenY(coordinate) - environment.getSurfaceOffset(coordinate)
+            val displayY = grid.getScreenY(coordinate) + environment.getSurfaceOffset(coordinate)
             val bounds = getBounds(displayX, displayY, tmpRenderBounds)
             if (environment.shouldRender(coordinate, bounds)) {
                 val occluding = environment.occludesFocus(coordinate, bounds)

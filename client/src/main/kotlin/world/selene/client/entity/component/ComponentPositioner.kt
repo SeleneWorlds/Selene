@@ -26,7 +26,7 @@ sealed interface ComponentPositioner {
         ): Vector2 {
             return outVec.apply {
                 x += offsetX
-                y = entity.lastRenderBounds.y + offsetY
+                y = entity.lastRenderBounds.y + entity.lastRenderBounds.height + offsetY
             }
         }
     }

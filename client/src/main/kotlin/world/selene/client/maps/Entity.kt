@@ -156,7 +156,7 @@ class Entity(
         lastRenderBounds.set(0f, 0f, 0f, 0f)
         processComponents {
             renderableComponents.forEach { component ->
-                tmpDisplayPos.set(screenX, screenY - environment.getSurfaceOffset(coordinate))
+                tmpDisplayPos.set(screenX, screenY + environment.getSurfaceOffset(coordinate))
                 component.positioner.applyPositioning(this, tmpDisplayPos)
                 batch.color.set(environment.getColor(coordinate))
                 component.render(this, batch, tmpDisplayPos.x, tmpDisplayPos.y)

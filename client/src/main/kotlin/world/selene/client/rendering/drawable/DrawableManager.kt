@@ -18,11 +18,10 @@ class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
     private fun createDrawable(texture: String, options: DrawableOptions): Drawable? {
         val texture = assetProvider.loadTexture(texture) ?: return null
         val textureRegion = TextureRegion(texture)
-        textureRegion.flip(options.flipX, !options.flipY)
-        // TODO Test textures currently have their offsets configured with an origin
+        textureRegion.flip(options.flipX, options.flipY)
+        // TODO Test textures currently have their offsets configured with a center origin
         val hackyOffsetX = options.offsetX - textureRegion.regionWidth / 2f
-        val hackyOffsetY = -options.offsetY - textureRegion.regionHeight
-        return TextureRegionDrawable(textureRegion, hackyOffsetX, hackyOffsetY)
+        return TextureRegionDrawable(textureRegion, hackyOffsetX, options.offsetY)
     }
 
     fun getDrawable(texture: String, options: DrawableOptions): Drawable? {
@@ -55,7 +54,7 @@ class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
     }
 
     fun getTextDrawable(text: String, options: TextDrawableOptions): TextDrawable {
-        val font = BitmapFont(true)
+        val font = BitmapFont()
         return TextDrawable(
             font,
             GlyphLayout(font, text, Color.WHITE, options.maxWidth, options.horizontalAlign, options.wrap)

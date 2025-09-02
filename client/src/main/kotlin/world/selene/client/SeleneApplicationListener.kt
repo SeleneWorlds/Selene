@@ -53,7 +53,7 @@ class SeleneApplicationListener(
         debugRenderer.initialize()
         spriteBatch = SpriteBatch()
         markerTexture = Texture("icon_16.png")
-        systemFont = BitmapFont(true)
+        systemFont = BitmapFont()
 
         inputMultiplexer.addProcessor(ui.stage)
         inputMultiplexer.addProcessor(inputManager)
