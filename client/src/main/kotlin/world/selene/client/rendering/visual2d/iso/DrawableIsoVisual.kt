@@ -1,7 +1,9 @@
 package world.selene.client.rendering.visual2d.iso
 
 import com.badlogic.gdx.graphics.g2d.Batch
+import party.iroiro.luajava.Lua
 import world.selene.client.rendering.drawable.Drawable
+import world.selene.common.lua.LuaMetatable
 
 class DrawableIsoVisual(
     private val drawable: Drawable,
@@ -17,6 +19,16 @@ class DrawableIsoVisual(
 
     override fun render(batch: Batch, x: Float, y: Float) {
         drawable.render(batch, x, y)
+    }
+
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
+
+    companion object {
+        val luaMeta = IsoVisual.luaMeta.extend(DrawableIsoVisual::class) {
+            readOnly(DrawableIsoVisual::drawable)
+        }
     }
 }
 

@@ -3,12 +3,10 @@ package world.selene.client.rendering.drawable
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.Signal
 
-class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawable, LuaMetatableProvider {
+class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawable {
     private var currentFrame = 0
     private var elapsedTime = 0f
 
@@ -44,9 +42,10 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
     }
 
     companion object {
-        val luaMeta = LuaMappedMetatable(AnimatedDrawable::class) {
+        val luaMeta = Drawable.luaMeta.extend(AnimatedDrawable::class) {
             readOnly(AnimatedDrawable::currentFrame)
             readOnly(AnimatedDrawable::elapsedTime)
+            readOnly(AnimatedDrawable::duration)
             readOnly(AnimatedDrawable::animationCompleted)
         }
     }

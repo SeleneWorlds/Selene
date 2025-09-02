@@ -44,6 +44,7 @@ class IsoVisualComponent(val visual: IsoVisual) : EntityComponent, RenderableCom
 
     companion object {
         val luaMeta = LuaMappedMetatable(IsoVisualComponent::class) {
+            readOnly(IsoVisualComponent::visual)
             writable(IsoVisualComponent::red)
             writable(IsoVisualComponent::green)
             writable(IsoVisualComponent::blue)
