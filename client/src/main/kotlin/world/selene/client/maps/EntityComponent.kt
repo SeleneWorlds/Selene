@@ -1,9 +1,9 @@
 package world.selene.client.maps
 
-import com.badlogic.gdx.Gdx
 import org.koin.mp.KoinPlatform.getKoin
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
+import world.selene.client.entity.component.TickableComponent
 import world.selene.common.data.ClientScriptComponentConfiguration
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.data.VisualComponentConfiguration
@@ -15,9 +15,7 @@ import world.selene.common.lua.LuaTrace
 import world.selene.common.lua.newTable
 import world.selene.common.lua.xpCall
 
-interface EntityComponent {
-    fun update(entity: Entity) = Unit
-}
+interface EntityComponent
 
 class VisualComponent(val configuration: VisualComponentConfiguration) : EntityComponent, LuaMetatableProvider {
     var red = 1f
@@ -39,12 +37,13 @@ class VisualComponent(val configuration: VisualComponentConfiguration) : EntityC
     }
 }
 
-class ClientScriptComponent(val configuration: ClientScriptComponentConfiguration) : EntityComponent, LuaTrace {
+class ClientScriptComponent(val configuration: ClientScriptComponentConfiguration) : EntityComponent, TickableComponent,
+    LuaTrace {
     private val luaManager: LuaManager by getKoin().inject()
     private var module: LuaValue? = null
     private var data: LuaValue? = null
 
-    override fun update(entity: Entity) {
+    override fun update(entity: Entity, delta: Float) {
         val lua = luaManager.lua
         val initPending = module == null
         val data = data ?: lua.newTable {}.also {
@@ -64,7 +63,7 @@ class ClientScriptComponent(val configuration: ClientScriptComponentConfiguratio
         if (lua.isFunction(-1)) {
             lua.push(entity, Lua.Conversion.NONE)
             lua.push(data)
-            lua.push(Gdx.graphics.deltaTime)
+            lua.push(delta)
             lua.xpCall(3, 0, this)
         } else lua.pop(1)
         lua.pop(1)

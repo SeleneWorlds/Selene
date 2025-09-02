@@ -96,7 +96,9 @@ class ClientMap(
         }
         entity.setCoordinateAndUpdate(coordinate)
         entity.facing = facing
-        entity.setupComponents(componentOverrides)
+        componentOverrides.forEach { (key, value) ->
+            entity.addComponent(key, value)
+        }
     }
 
     fun addEntity(entity: Entity) {

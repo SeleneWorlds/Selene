@@ -33,7 +33,17 @@ class Entity(
 ) :
     Pool.Poolable, Renderable, LuaMetatableProvider {
     var networkId: Int = 0
-    lateinit var entityDefinition: EntityDefinition
+    var entityDefinition: EntityDefinition? = null
+        set(value) {
+            field = value
+            components.clear()
+            tickableComponents.clear()
+            renderableComponents.clear()
+            value?.components?.forEach {
+                addComponent(it.key, it.value.create())
+            }
+        }
+
     val components = mutableMapOf<String, EntityComponent>()
     val tickableComponents = mutableListOf<TickableComponent>()
     val renderableComponents = mutableListOf<RenderableComponent>()
@@ -50,7 +60,8 @@ class Entity(
 
     var facing: Float = 0f
     val direction get() = grid.getDirection(facing)
-    override val sortLayerOffset: Int get() = components.asSequence().mapNotNull { it as? IsoComponent }.maxOfOrNull { it.sortLayerOffset } ?: 0
+    override val sortLayerOffset: Int
+        get() = components.asSequence().mapNotNull { it as? IsoComponent }.maxOfOrNull { it.sortLayerOffset } ?: 0
     override val sortLayer: Int get() = grid.getSortLayer(position, sortLayerOffset)
     override var localSortLayer: Int = 0
 
@@ -102,8 +113,8 @@ class Entity(
             scene.updateSorting(this)
         }
 
-        components.values.forEach { component ->
-            component.update(this)
+        tickableComponents.forEach { component ->
+            component.update(this, delta)
         }
     }
 
@@ -120,9 +131,7 @@ class Entity(
         coordinate = Coordinate.Zero
         facing = 0f
         localSortLayer = 0
-        components.clear()
-        tickableComponents.clear()
-        renderableComponents.clear()
+        entityDefinition = null
         position.set(0f, 0f, 0f)
     }
 
@@ -136,12 +145,17 @@ class Entity(
         }
     }
 
-    fun setupComponents(overrides: Map<String, ComponentConfiguration>) {
-        entityDefinition.components.forEach {
-            this.components[it.key] = it.value.create()
+    fun addComponent(name: String, componentConfiguration: ComponentConfiguration) {
+        addComponent(name, componentConfiguration.create())
+    }
+
+    fun addComponent(name: String, component: EntityComponent) {
+        this.components[name] = component
+        if (component is TickableComponent) {
+            tickableComponents.add(component)
         }
-        overrides.forEach {
-            this.components[it.key] = it.value.create()
+        if (component is RenderableComponent) {
+            renderableComponents.add(component)
         }
     }
 
@@ -154,7 +168,7 @@ class Entity(
     }
 
     fun hasTag(tag: String): Boolean {
-        return entityDefinition.tags.contains(tag)
+        return entityDefinition?.tags?.contains(tag) ?: false
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
@@ -180,8 +194,9 @@ class Entity(
                 val self = it.checkSelf()
                 val componentName = it.checkString(2)
                 val componentData = it.toAnyMap(3)
-                val componentConfiguration = self.objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
-                self.components[componentName] = componentConfiguration.create()
+                val componentConfiguration =
+                    self.objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
+                self.addComponent(componentName, componentConfiguration)
                 0
             }
             callable("GetComponent") {
