@@ -48,6 +48,7 @@ class Entity(
         }
 
     var scene: Scene? = null
+    var removed: Boolean = false
 
     val components = mutableMapOf<String, EntityComponent>()
     val tickableComponents = mutableListOf<TickableComponent>()
@@ -64,7 +65,7 @@ class Entity(
         private set(value) {
             val prev = field
             field = value
-            if (prev != value && scene != null) {
+            if (prev != value && !removed) {
                 map.entityMoved(this, prev)
             }
         }
@@ -160,6 +161,7 @@ class Entity(
         localSortLayer = 0
         entityDefinition = null
         processingComponents = false
+        removed = false
         componentsToBeAdded.clear()
         componentsToBeRemoved.clear()
         position.set(0f, 0f, 0f)
@@ -226,11 +228,15 @@ class Entity(
     }
 
     private fun spawn() {
+        removed = false
         map.addEntity(this)
     }
 
     private fun despawn() {
-        map.removeEntity(this)
+        if (!removed) {
+            map.removeEntity(this)
+            removed = true
+        }
     }
 
     fun hasTag(tag: String): Boolean {
@@ -244,8 +250,6 @@ class Entity(
     override fun removedFromScene(scene: Scene) {
         if (this.scene != null) {
             pool.free(this)
-        } else {
-            println("almost freed twice")
         }
         this.scene = null
     }
