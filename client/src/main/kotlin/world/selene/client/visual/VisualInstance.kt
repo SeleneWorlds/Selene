@@ -1,9 +1,9 @@
 package world.selene.client.visual
 
 import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.GlyphLayout
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
@@ -30,7 +30,7 @@ interface VisualInstance {
     val sortLayerOffset: Int
     fun updateShared(delta: Float) {}
     fun update(delta: Float) {}
-    fun render(spriteBatch: SpriteBatch, x: Float, y: Float, context: VisualContext)
+    fun render(batch: Batch, x: Float, y: Float, context: VisualContext)
     fun shouldRender(sceneRenderer: SceneRenderer, x: Float, y: Float, context: VisualContext): Boolean
     fun getBounds(context: VisualContext, x: Float, y: Float): Rectangle {
         return getBounds(context, x, y, Rectangle())
@@ -116,9 +116,9 @@ abstract class TextureBasedVisualInstance(private val metadataHolder: MetadataHo
         return false
     }
 
-    override fun render(spriteBatch: SpriteBatch, x: Float, y: Float, context: VisualContext) {
-        spriteBatch.color = context.color
-        spriteBatch.draw(textureRegion, getDisplayX(context, x), getDisplayY(context, y))
+    override fun render(batch: Batch, x: Float, y: Float, context: VisualContext) {
+        batch.color = context.color
+        batch.draw(textureRegion, getDisplayX(context, x), getDisplayY(context, y))
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
@@ -155,8 +155,8 @@ data class SimpleVisualInstance(
     override val offsetY: Float get() = visualDef.offsetY.toFloat()
     override val sortLayerOffset: Int get() = visualDef.sortLayerOffset
 
-    override fun render(spriteBatch: SpriteBatch, x: Float, y: Float, context: VisualContext) {
-        super.render(spriteBatch, x, y, context)
+    override fun render(batch: Batch, x: Float, y: Float, context: VisualContext) {
+        super.render(batch, x, y, context)
         context.offsetY += visualDef.surfaceOffsetY
     }
 }
@@ -175,8 +175,8 @@ data class VariantsVisualInstance(
 
     override val sortLayerOffset: Int get() = visualDef.sortLayerOffset
 
-    override fun render(spriteBatch: SpriteBatch, x: Float, y: Float, context: VisualContext) {
-        super.render(spriteBatch, x, y, context)
+    override fun render(batch: Batch, x: Float, y: Float, context: VisualContext) {
+        super.render(batch, x, y, context)
         context.offsetY += visualDef.surfaceOffsetY
     }
 }
@@ -215,8 +215,8 @@ data class AnimatedVisualInstance(
         }
     }
 
-    override fun render(spriteBatch: SpriteBatch, x: Float, y: Float, context: VisualContext) {
-        super.render(spriteBatch, x, y, context)
+    override fun render(batch: Batch, x: Float, y: Float, context: VisualContext) {
+        super.render(batch, x, y, context)
         context.offsetY += visualDef.surfaceOffsetY
     }
 
@@ -257,8 +257,8 @@ class AnimatorVisualInstance(
     override val offsetX: Float get() = (animFrames?.offsetX ?: visualDef.offsetX).toFloat()
     override val offsetY: Float get() = (animFrames?.offsetY ?: visualDef.offsetY).toFloat()
 
-    override fun render(spriteBatch: SpriteBatch, x: Float, y: Float, context: VisualContext) {
-        super.render(spriteBatch, x, y, context)
+    override fun render(batch: Batch, x: Float, y: Float, context: VisualContext) {
+        super.render(batch, x, y, context)
         context.offsetY += visualDef.surfaceOffsetY
     }
 
@@ -327,14 +327,14 @@ class LabelVisualInstance(private val visualDef: LabelVisualDefinition, label: S
         return sceneRenderer.cameraManager.isRegionVisible(regionLeft, regionRight, regionBottom, regionTop)
     }
 
-    override fun render(spriteBatch: SpriteBatch, x: Float, y: Float, context: VisualContext) {
+    override fun render(batch: Batch, x: Float, y: Float, context: VisualContext) {
         val effectiveX = x
         var effectiveY = y
         if (visualDef.anchor == Anchor.TOP_CENTER) {
             effectiveY -= context.maxHeight
         }
         font.draw(
-            spriteBatch,
+            batch,
             glyphLayout,
             effectiveX + visualDef.offsetX - glyphLayout.width / 2f,
             effectiveY + visualDef.offsetY - glyphLayout.height - context.offsetY
