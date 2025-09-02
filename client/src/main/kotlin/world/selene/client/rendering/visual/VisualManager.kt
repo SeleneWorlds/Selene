@@ -3,12 +3,14 @@ package world.selene.client.rendering.visual
 import world.selene.client.data.VisualRegistry
 import world.selene.client.data.AnimatedVisualDefinition
 import world.selene.client.data.AnimatorVisualDefinition
+import world.selene.client.data.TextVisualDefinition
 import world.selene.client.data.SimpleVisualDefinition
 import world.selene.client.data.VariantsVisualDefinition
 import world.selene.client.rendering.animator.DrawableAnimator
 import world.selene.client.rendering.drawable.AnimatedDrawableOptions
 import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.rendering.drawable.DrawableOptions
+import world.selene.client.rendering.visual2d.DrawableVisual2D
 import world.selene.client.rendering.visual2d.iso.DrawableIsoVisual
 import world.selene.client.rendering.visual2d.iso.DynamicDrawableIsoVisual
 
@@ -84,6 +86,12 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
                     visualDef.sortLayerOffset,
                     visualDef.surfaceOffsetY
                 )
+            }
+
+            is TextVisualDefinition -> {
+                val text = context.overrides["text"] as String? ?: visualDef.text
+                val drawable = drawableManager.getTextDrawable(text)
+                DrawableVisual2D(visualDef, drawable)
             }
 
             else -> null

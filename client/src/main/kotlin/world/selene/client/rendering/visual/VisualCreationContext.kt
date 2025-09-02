@@ -5,5 +5,6 @@ import world.selene.common.util.Coordinate
 
 data class VisualCreationContext(
     val coordinate: Coordinate,
-    var animatorController: AnimatorController? = null
+    var animatorController: AnimatorController? = null,
+    val overrides: Map<String, Any> = emptyMap()
 )

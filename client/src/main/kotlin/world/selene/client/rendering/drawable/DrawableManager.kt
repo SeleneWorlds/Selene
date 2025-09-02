@@ -1,5 +1,7 @@
 package world.selene.client.rendering.drawable
 
+import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.GlyphLayout
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import world.selene.client.assets.AssetProvider
 import world.selene.common.util.Disposable
@@ -49,6 +51,11 @@ class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
         return animatedDrawables.getOrPut(managedKey) {
             createAnimatedDrawable(frames, options)
         }
+    }
+
+    fun getTextDrawable(text: String): TextDrawable {
+        val font = BitmapFont(true)
+        return TextDrawable(font, GlyphLayout(font, text))
     }
 
     fun update(delta: Float) {

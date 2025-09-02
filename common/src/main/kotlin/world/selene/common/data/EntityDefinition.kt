@@ -30,6 +30,6 @@ data class EntityDefinition(
 )
 interface ComponentConfiguration
 
-data class VisualComponentConfiguration(val visual: String, val properties: Map<String, String> = emptyMap()) : ComponentConfiguration
+data class VisualComponentConfiguration(val visual: String, val overrides: Map<String, Any> = emptyMap()) : ComponentConfiguration
 
 data class ClientScriptComponentConfiguration(val script: String) : ComponentConfiguration

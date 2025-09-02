@@ -13,7 +13,7 @@ import world.selene.common.data.RegistryObject
     JsonSubTypes.Type(value = VariantsVisualDefinition::class, name = "variants"),
     JsonSubTypes.Type(value = AnimatedVisualDefinition::class, name = "animated"),
     JsonSubTypes.Type(value = AnimatorVisualDefinition::class, name = "animator"),
-    JsonSubTypes.Type(value = LabelVisualDefinition::class, name = "label")
+    JsonSubTypes.Type(value = TextVisualDefinition::class, name = "text")
 )
 abstract class VisualDefinition : MetadataHolder, RegistryObject<VisualDefinition> {
     override var id: Int = 0; protected set
@@ -85,10 +85,7 @@ data class AnimationFrames(
     val flipY: Boolean = false,
 )
 
-data class LabelVisualDefinition(
-    val label: String,
-    val offsetX: Float = 0f,
-    val offsetY: Float = 0f,
-    val sortLayerOffset: Int = 0,
+data class TextVisualDefinition(
+    val text: String,
     override val metadata: Map<String, Any> = emptyMap()
 ) : VisualDefinition(), MetadataHolder

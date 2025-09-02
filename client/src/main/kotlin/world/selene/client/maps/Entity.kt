@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import party.iroiro.luajava.Lua
 import java.util.ArrayDeque
 import world.selene.client.controls.EntityMotion
+import world.selene.client.entity.component.EntityComponent
 import world.selene.client.entity.component.EntityComponentFactory
 import world.selene.client.grid.ClientGrid
 import world.selene.client.entity.component.IsoComponent
