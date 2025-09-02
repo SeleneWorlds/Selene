@@ -15,7 +15,8 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.util.Coordinate
 
-class Tile(private val grid: ClientGrid, private val visualManager: VisualManager) : Pool.Poolable, Renderable,
+class Tile(private val grid: ClientGrid, private val visualManager: VisualManager, private val pool: TilePool) :
+    Pool.Poolable, Renderable,
     LuaMetatableProvider {
     lateinit var tileDefinition: TileDefinition
     var visual: IsoVisual? = null
@@ -78,6 +79,10 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
 
     fun updateVisual() {
         visual = visualManager.createVisual(tileDefinition.visual, VisualCreationContext(coordinate)) as? IsoVisual
+    }
+
+    override fun removedFromScene() {
+        pool.free(this)
     }
 
     companion object {

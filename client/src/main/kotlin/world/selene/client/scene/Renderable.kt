@@ -11,4 +11,6 @@ interface Renderable {
     val localSortLayer: Int
     fun update(delta: Float)
     fun render(batch: Batch, environment: Environment)
+
+    fun removedFromScene()
 }

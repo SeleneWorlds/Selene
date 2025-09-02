@@ -57,7 +57,6 @@ class ClientMap(
         removedTiles.forEach {
             scene.remove(it)
         }
-        tilePool.freeAll(removedTiles)
     }
 
     fun placeTile(coordinate: Coordinate, tileId: Int) {
@@ -125,7 +124,6 @@ class ClientMap(
         entitiesByCoordinate.remove(entity.coordinate, entity)
         entitiesByNetworkId.remove(entity.networkId)
         scene.remove(entity)
-        entityPool.free(entity)
     }
 
     fun getTilesAt(coordinate: Coordinate): List<Tile> {

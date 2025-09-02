@@ -30,6 +30,7 @@ import kotlin.collections.forEach
 class Entity(
     val objectMapper: ObjectMapper,
     val scene: Scene,
+    val pool: EntityPool,
     val map: ClientMap,
     val grid: ClientGrid,
     val entityComponentFactory: EntityComponentFactory
@@ -50,6 +51,11 @@ class Entity(
     val components = mutableMapOf<String, EntityComponent>()
     val tickableComponents = mutableListOf<TickableComponent>()
     val renderableComponents = mutableListOf<RenderableComponent>()
+
+    var processingComponents = false
+    val componentsToBeAdded = mutableSetOf<EntityComponent>()
+    val componentsToBeRemoved = mutableSetOf<EntityComponent>()
+
     val motionQueue: ArrayDeque<EntityMotion> = ArrayDeque()
     val animator = HumanoidAnimatorController(this)
 
@@ -65,7 +71,8 @@ class Entity(
     var facing: Float = 0f
     val direction get() = grid.getDirection(facing)
     override val sortLayerOffset: Int
-        get() = renderableComponents.asSequence().mapNotNull { it as? IsoComponent }.maxOfOrNull { it.sortLayerOffset } ?: 0
+        get() = renderableComponents.asSequence().mapNotNull { it as? IsoComponent }.maxOfOrNull { it.sortLayerOffset }
+            ?: 0
     override val sortLayer: Int get() = grid.getSortLayer(position, sortLayerOffset)
     override var localSortLayer: Int = 0
 
@@ -117,20 +124,47 @@ class Entity(
             scene.updateSorting(this)
         }
 
-        tickableComponents.forEach { component ->
-            component.update(this, delta)
+        processComponents {
+            tickableComponents.forEach { component ->
+                component.update(this, delta)
+            }
         }
     }
 
+    inline fun processComponents(runnable: () -> Unit) {
+        processingComponents = true
+        runnable()
+        processingComponents = false
+        for (component in componentsToBeAdded) {
+            if (component is TickableComponent) {
+                tickableComponents.add(component)
+            }
+            if (component is RenderableComponent) {
+                renderableComponents.add(component)
+            }
+        }
+        componentsToBeAdded.clear()
+        for (component in componentsToBeRemoved) {
+            if (component is TickableComponent) {
+                tickableComponents.remove(component)
+            }
+            if (component is RenderableComponent) {
+                renderableComponents.remove(component)
+            }
+        }
+        componentsToBeRemoved.clear()
+    }
+
     override fun render(batch: Batch, environment: Environment) {
-        renderableComponents.forEach { component ->
-            component.render(this, batch, screenX, screenY)
+        processComponents {
+            renderableComponents.forEach { component ->
+                component.render(this, batch, screenX, screenY)
+            }
         }
     }
 
     override fun reset() {
         networkId = 0
-        components.clear()
         motionQueue.clear()
         coordinate = Coordinate.Zero
         facing = 0f
@@ -157,12 +191,27 @@ class Entity(
     }
 
     fun addComponent(name: String, component: EntityComponent) {
-        this.components[name] = component
-        if (component is TickableComponent) {
-            tickableComponents.add(component)
-        }
-        if (component is RenderableComponent) {
-            renderableComponents.add(component)
+        val prev = components.put(name, component)
+        if (processingComponents) {
+            prev?.let {
+                componentsToBeAdded.remove(it)
+                componentsToBeRemoved.add(it)
+            }
+            componentsToBeRemoved.remove(component)
+            componentsToBeAdded.add(component)
+        } else {
+            if (prev is TickableComponent) {
+                tickableComponents.remove(prev)
+            }
+            if (prev is RenderableComponent) {
+                renderableComponents.remove(prev)
+            }
+            if (component is TickableComponent) {
+                tickableComponents.add(component)
+            }
+            if (component is RenderableComponent) {
+                renderableComponents.add(component)
+            }
         }
     }
 
@@ -176,6 +225,10 @@ class Entity(
 
     fun hasTag(tag: String): Boolean {
         return entityDefinition?.tags?.contains(tag) ?: false
+    }
+
+    override fun removedFromScene() {
+        pool.free(this)
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {

@@ -70,6 +70,7 @@ class Scene {
             removedRenderables.add(renderable)
         } else {
             renderables.remove(renderable)
+            renderable.removedFromScene()
         }
     }
 
