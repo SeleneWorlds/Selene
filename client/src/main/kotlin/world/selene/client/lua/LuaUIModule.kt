@@ -1,6 +1,5 @@
 package world.selene.client.lua
 
-import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
@@ -30,12 +29,15 @@ import com.kotcrab.vis.ui.widget.LinkLabel
 import com.kotcrab.vis.ui.widget.VisImageButton
 import com.kotcrab.vis.ui.widget.VisImageButton.VisImageButtonStyle
 import com.kotcrab.vis.ui.widget.VisTextField
+import kotlinx.serialization.descriptors.PrimitiveKind
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.assets.BundleFileResolver
+import world.selene.client.rendering.visual2d.Visual2D
 import world.selene.client.ui.ParameterizedActorConsumer
 import world.selene.client.ui.SeleneLmlParser
 import world.selene.client.ui.UI
+import world.selene.client.ui.Visual2DDrawable
 import world.selene.common.lua.*
 
 class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFileResolver) : LuaModule {
@@ -800,8 +802,12 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         val checked = lua.getFieldString(tableIndex, "checked")?.let {
             resolveDrawable(skin, it)
         }
-        val imageUp = lua.getFieldString(tableIndex, "imageUp")?.let {
-            resolveDrawable(skin, it)
+        val imageUp = lua.getField(tableIndex, "imageUp") { type ->
+            when(type) {
+                Lua.LuaType.STRING -> resolveDrawable(skin, lua.toString(-1)!!)
+                Lua.LuaType.USERDATA -> Visual2DDrawable(lua.checkUserdata(-1, Visual2D::class))
+                else -> null
+            }
         }
         val imageDown = lua.getFieldString(tableIndex, "imageDown")?.let {
             resolveDrawable(skin, it)

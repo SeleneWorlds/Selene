@@ -4,7 +4,7 @@ import world.selene.client.rendering.animator.AnimatorController
 import world.selene.common.util.Coordinate
 
 data class VisualCreationContext(
-    val coordinate: Coordinate,
+    val coordinate: Coordinate = Coordinate.Zero,
     var animatorController: AnimatorController? = null,
     val overrides: Map<String, Any> = emptyMap()
 )
