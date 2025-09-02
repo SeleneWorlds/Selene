@@ -64,7 +64,7 @@ class Entity(
         private set(value) {
             val prev = field
             field = value
-            if (prev != value) {
+            if (prev != value && scene != null) {
                 map.entityMoved(this, prev)
             }
         }
@@ -243,7 +243,7 @@ class Entity(
 
     override fun removedFromScene(scene: Scene) {
         this.scene = null
-        // pool.free(this)
+        pool.free(this)
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
