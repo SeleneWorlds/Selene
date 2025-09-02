@@ -38,7 +38,9 @@ class IsoVisualComponent(val visual: IsoVisual) : EntityComponent, RenderableCom
         x: Float,
         y: Float
     ) {
-        batch.color.mul(red, green, blue, alpha)
+        if (red != 1f || green != 1f || blue != 1f || alpha != 1f) {
+            batch.color = batch.color.mul(red, green, blue, alpha)
+        }
         visual.render(batch, x, y)
     }
 
