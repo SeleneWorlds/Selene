@@ -3,10 +3,12 @@ package world.selene.client.rendering.visual2d.iso
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
+import world.selene.client.data.AnimatorVisualDefinition
 import world.selene.client.rendering.drawable.Drawable
 import world.selene.common.lua.LuaMetatable
 
 class DynamicDrawableIsoVisual(
+    private val visualDef: AnimatorVisualDefinition,
     private val drawableProvider: () -> Drawable?,
     override val sortLayerOffset: Int,
     override val surfaceHeight: Float
@@ -35,6 +37,10 @@ class DynamicDrawableIsoVisual(
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
+    }
+
+    override fun toString(): String {
+        return "DynamicDrawableIsoVisual(visual=${visualDef.name})"
     }
 
     companion object {

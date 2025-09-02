@@ -42,6 +42,10 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         visual.render(batch, x, y)
     }
 
+    override fun toString(): String {
+        return "IsoVisualComponent(visual=$visual)"
+    }
+
     companion object {
         val luaMeta = LuaMappedMetatable(IsoVisualComponent::class) {
             readOnly(IsoVisualComponent::visual)

@@ -36,6 +36,10 @@ class DrawableIsoVisual(
         return luaMeta
     }
 
+    override fun toString(): String {
+        return "DrawableIsoVisual(visual=${visualDefinition.name})"
+    }
+
     companion object {
         val luaMeta = IsoVisual.luaMeta.extend(DrawableIsoVisual::class) {
             readOnly(DrawableIsoVisual::drawable)

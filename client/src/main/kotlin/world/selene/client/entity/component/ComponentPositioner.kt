@@ -17,6 +17,10 @@ sealed interface ComponentPositioner {
                 y += offsetY
             }
         }
+
+        override fun toString(): String {
+            return "None(offsetX=$offsetX, offsetY=$offsetY)"
+        }
     }
 
     class Top(val offsetX: Float, val offsetY: Float) : ComponentPositioner {
@@ -28,6 +32,10 @@ sealed interface ComponentPositioner {
                 x += offsetX
                 y = entity.lastRenderBounds.y + entity.lastRenderBounds.height + offsetY
             }
+        }
+
+        override fun toString(): String {
+            return "Top(offsetX=$offsetX, offsetY=$offsetY)"
         }
     }
 

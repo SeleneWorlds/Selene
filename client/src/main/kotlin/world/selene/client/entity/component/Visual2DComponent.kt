@@ -35,6 +35,10 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
         visual.render(batch, x, y)
     }
 
+    override fun toString(): String {
+        return "Visual2DComponent(visual=${visual})"
+    }
+
     companion object {
         val luaMeta = LuaMappedMetatable(IsoVisualComponent::class) {
             readOnly(IsoVisualComponent::visual)

@@ -36,6 +36,10 @@ class DrawableVisual2D(
         return luaMeta
     }
 
+    override fun toString(): String {
+        return "DrawableVisual2D(visual=${visualDefinition.name})"
+    }
+
     companion object {
         val luaMeta = LuaMappedMetatable(DrawableVisual2D::class) {
             readOnly(DrawableVisual2D::drawable)

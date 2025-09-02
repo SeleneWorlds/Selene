@@ -83,6 +83,7 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
                     drawableAnimator.addAnimation(animationName, drawable)
                 }
                 DynamicDrawableIsoVisual(
+                    visualDef,
                     drawableAnimator::drawable,
                     visualDef.sortLayerOffset,
                     visualDef.surfaceOffsetY
