@@ -26,7 +26,7 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
                         flipY = visualDef.flipY
                     )
                 ) ?: return null
-                DrawableIsoVisual(drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY)
+                DrawableIsoVisual(visualDef, drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY)
             }
 
             is VariantsVisualDefinition -> {
@@ -38,7 +38,7 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
                 )
                 val variant = visualDef.textures[context.coordinate.x % visualDef.textures.size]
                 val drawable = drawableManager.getDrawable(variant, options) ?: return null
-                DrawableIsoVisual(drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY)
+                DrawableIsoVisual(visualDef, drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY)
             }
 
             is AnimatedVisualDefinition -> {
@@ -54,7 +54,7 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
                 )
                 val managedKey = if (!visualDef.instanced) name else null
                 val drawable = drawableManager.getAnimatedDrawable(frames, options, managedKey)
-                DrawableIsoVisual(drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY).apply {
+                DrawableIsoVisual(visualDef, drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY).apply {
                     if (managedKey != null) {
                         shouldUpdate = false
                     }

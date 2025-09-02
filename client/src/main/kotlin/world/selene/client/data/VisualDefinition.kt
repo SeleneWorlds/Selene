@@ -1,10 +1,11 @@
 package world.selene.client.data
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import world.selene.common.data.MetadataHolder
+import world.selene.common.data.Registry
+import world.selene.common.data.RegistryObject
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
@@ -14,9 +15,19 @@ import world.selene.common.data.MetadataHolder
     JsonSubTypes.Type(value = AnimatorVisualDefinition::class, name = "animator"),
     JsonSubTypes.Type(value = LabelVisualDefinition::class, name = "label")
 )
-interface VisualDefinition {
-    @get:JsonIgnore
-    val isShared: Boolean get() = true
+abstract class VisualDefinition : MetadataHolder, RegistryObject<VisualDefinition> {
+    override var id: Int = 0; protected set
+    override lateinit var name: String; protected set
+    override lateinit var registry: Registry<VisualDefinition>; protected set
+    override fun initializeFromRegistry(
+        registry: Registry<VisualDefinition>,
+        name: String,
+        id: Int
+    ) {
+        this.registry = registry
+        this.name = name
+        this.id = id
+    }
 }
 
 data class SimpleVisualDefinition(
@@ -28,7 +39,7 @@ data class SimpleVisualDefinition(
     val flipX: Boolean = false,
     val flipY: Boolean = false,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition, MetadataHolder
+) : VisualDefinition()
 
 data class VariantsVisualDefinition(
     val textures: List<String>,
@@ -39,7 +50,7 @@ data class VariantsVisualDefinition(
     val flipX: Boolean = false,
     val flipY: Boolean = false,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition, MetadataHolder
+) : VisualDefinition(), MetadataHolder
 
 data class AnimatedVisualDefinition(
     val textures: List<String>,
@@ -50,12 +61,9 @@ data class AnimatedVisualDefinition(
     val sortLayerOffset: Int = 0,
     val flipX: Boolean = false,
     val flipY: Boolean = false,
-    override val metadata: Map<String, Any> = emptyMap(),
-    val instanced: Boolean = false
-) : VisualDefinition, MetadataHolder {
-    override val isShared: Boolean
-        get() = !instanced
-}
+    val instanced: Boolean = false,
+    override val metadata: Map<String, Any> = emptyMap()
+) : VisualDefinition(), MetadataHolder
 
 data class AnimatorVisualDefinition(
     val animator: String,
@@ -65,9 +73,7 @@ data class AnimatorVisualDefinition(
     val surfaceOffsetY: Float = 0f,
     val sortLayerOffset: Int = 0,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition, MetadataHolder {
-    override val isShared: Boolean get() = false
-}
+) : VisualDefinition(), MetadataHolder
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class AnimationFrames(
@@ -79,20 +85,10 @@ data class AnimationFrames(
     val flipY: Boolean = false,
 )
 
-enum class Anchor {
-    TOP_LEFT, TOP_CENTER, TOP_RIGHT,
-    CENTER_LEFT, CENTER, CENTER_RIGHT,
-    BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT
-}
-
 data class LabelVisualDefinition(
     val label: String,
-    val anchor: Anchor = Anchor.CENTER,
     val offsetX: Float = 0f,
     val offsetY: Float = 0f,
     val sortLayerOffset: Int = 0,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition, MetadataHolder {
-    override val isShared: Boolean
-        get() = false
-}
+) : VisualDefinition(), MetadataHolder
