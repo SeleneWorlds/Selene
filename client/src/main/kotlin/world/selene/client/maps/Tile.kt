@@ -52,10 +52,11 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     private val tmpRenderBounds = Rectangle()
     override fun render(batch: Batch, environment: Environment) {
         visual?.let {
-            if (environment.shouldRender(coordinate)) {
-                val displayX = grid.getScreenX(coordinate)
-                val displayY = grid.getScreenY(coordinate) - environment.getSurfaceOffset(coordinate)
-                val occluding = environment.occludesFocus(coordinate, getBounds(displayX, displayY, tmpRenderBounds))
+            val displayX = grid.getScreenX(coordinate)
+            val displayY = grid.getScreenY(coordinate) - environment.getSurfaceOffset(coordinate)
+            val bounds = getBounds(displayX, displayY, tmpRenderBounds)
+            if (environment.shouldRender(coordinate, bounds)) {
+                val occluding = environment.occludesFocus(coordinate, bounds)
                 targetOcclusionAlpha = if (occluding) 0.3f else 1f
                 batch.color.set(environment.getColor(coordinate))
                 batch.color = batch.color.mul(1f, 1f, 1f, currentOcclusionAlpha)

@@ -47,12 +47,11 @@ class Environment(val cameraManager: CameraManager, val grid: ClientGrid) {
         return coordinate.z > cameraManager.focusCoordinate.z
     }
 
-    fun shouldRender(coordinate: Coordinate): Boolean {
+    fun shouldRender(coordinate: Coordinate, bounds: Rectangle): Boolean {
         if (isInsideInterior && isAboveFocus(coordinate) && interiorFadeAlpha < 0.01f) {
             return false
         }
-        // TODO cameraManager.isRegionVisible(getBounds(context, x, y))
-        return true
+        return cameraManager.isRegionVisible(bounds)
     }
 
     fun getColor(coordinate: Coordinate): Color {
