@@ -28,7 +28,7 @@ class Environment(val cameraManager: CameraManager, val grid: ClientGrid) {
         }
 
         val focusCoordinate = cameraManager.focusCoordinate
-        cameraManager.focusedEntity?.lastRenderBounds ?: focusBounds.set(
+        cameraManager.focusedEntity?.lastRenderBounds?.let { focusBounds.set(it) } ?: focusBounds.set(
             grid.getScreenX(focusCoordinate), grid.getScreenY(focusCoordinate), 1f, 1f
         )
     }

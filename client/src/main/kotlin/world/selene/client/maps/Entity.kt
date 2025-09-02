@@ -150,6 +150,7 @@ class Entity(
 
     private val tmpRenderRectangle = Rectangle()
     override fun render(batch: Batch, environment: Environment) {
+        lastRenderBounds.set(0f, 0f, 0f, 0f)
         processComponents {
             renderableComponents.forEach { component ->
                 val displayX = screenX
@@ -159,7 +160,12 @@ class Entity(
                 if (component is IsoComponent) {
                     environment.applySurfaceOffset(coordinate, component.surfaceHeight)
                 }
-                lastRenderBounds.merge(component.getBounds(displayX, displayY, tmpRenderRectangle))
+                component.getBounds(displayX, displayY, tmpRenderRectangle)
+                if (lastRenderBounds.width == 0f) {
+                    lastRenderBounds.set(tmpRenderRectangle)
+                } else {
+                    lastRenderBounds.merge(tmpRenderRectangle)
+                }
             }
         }
     }
