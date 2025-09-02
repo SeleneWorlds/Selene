@@ -29,11 +29,11 @@ import com.kotcrab.vis.ui.widget.LinkLabel
 import com.kotcrab.vis.ui.widget.VisImageButton
 import com.kotcrab.vis.ui.widget.VisImageButton.VisImageButtonStyle
 import com.kotcrab.vis.ui.widget.VisTextField
-import kotlinx.serialization.descriptors.PrimitiveKind
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.assets.BundleFileResolver
 import world.selene.client.rendering.visual2d.Visual2D
+import world.selene.client.ui.DrawableDrawable
 import world.selene.client.ui.ParameterizedActorConsumer
 import world.selene.client.ui.SeleneLmlParser
 import world.selene.client.ui.UI
@@ -803,9 +803,16 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             resolveDrawable(skin, it)
         }
         val imageUp = lua.getField(tableIndex, "imageUp") { type ->
-            when(type) {
+            when (type) {
                 Lua.LuaType.STRING -> resolveDrawable(skin, lua.toString(-1)!!)
-                Lua.LuaType.USERDATA -> Visual2DDrawable(lua.checkUserdata(-1, Visual2D::class))
+                Lua.LuaType.USERDATA -> {
+                    when (val value = lua.toJavaObject(-1)) {
+                        is Visual2D -> Visual2DDrawable(value)
+                        is world.selene.client.rendering.drawable.Drawable -> DrawableDrawable(value)
+                        else -> null
+                    }
+                }
+
                 else -> null
             }
         }

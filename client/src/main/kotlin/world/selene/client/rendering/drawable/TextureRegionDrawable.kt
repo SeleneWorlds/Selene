@@ -10,6 +10,26 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
         batch.draw(textureRegion, x + offsetX, y + offsetY)
     }
 
+    override fun render(
+        batch: Batch,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float
+    ) {
+        batch.draw(textureRegion, x + offsetX, y + offsetY, width, height)
+    }
+
+    override fun render(
+        batch: Batch, x: Float, y: Float,
+        originX: Float, originY: Float,
+        width: Float, height: Float,
+        scaleX: Float, scaleY: Float,
+        rotation: Float
+    ) {
+        batch.draw(textureRegion, x + offsetX, y + offsetY, originX, originY, width, height, scaleX, scaleY, rotation)
+    }
+
     override fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle {
         outRect.set(
             x + offsetX,

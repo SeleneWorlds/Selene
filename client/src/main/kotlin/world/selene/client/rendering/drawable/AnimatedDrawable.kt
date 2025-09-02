@@ -37,6 +37,26 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
         frames.getOrNull(currentFrame)?.render(batch, x, y)
     }
 
+    override fun render(
+        batch: Batch,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float
+    ) {
+        frames.getOrNull(currentFrame)?.render(batch, x, y, width, height)
+    }
+
+    override fun render(
+        batch: Batch, x: Float, y: Float,
+        originX: Float, originY: Float,
+        width: Float, height: Float,
+        scaleX: Float, scaleY: Float,
+        rotation: Float
+    ) {
+        frames.getOrNull(currentFrame)?.render(batch, x, y, originX, originY, width, height, scaleX, scaleY, rotation)
+    }
+
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
     }

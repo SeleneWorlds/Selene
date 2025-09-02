@@ -11,6 +11,14 @@ interface Drawable : LuaMetatableProvider {
     fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle
     fun update(delta: Float)
     fun render(batch: Batch, x: Float, y: Float)
+    fun render(batch: Batch, x: Float, y: Float, width: Float, height: Float)
+    fun render(
+        batch: Batch, x: Float, y: Float,
+        originX: Float, originY: Float,
+        width: Float, height: Float,
+        scaleX: Float, scaleY: Float,
+        rotation: Float
+    )
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta

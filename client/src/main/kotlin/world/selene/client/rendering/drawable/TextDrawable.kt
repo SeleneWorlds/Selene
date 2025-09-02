@@ -16,7 +16,28 @@ class TextDrawable(private val font: BitmapFont, private val glyphLayout: GlyphL
     }
 
     override fun update(delta: Float) = Unit
+
     override fun render(batch: Batch, x: Float, y: Float) {
         font.draw(batch, glyphLayout, x, y)
+    }
+
+    override fun render(
+        batch: Batch,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float
+    ) {
+        font.draw(batch, glyphLayout, x, y)
+    }
+
+    override fun render(
+        batch: Batch, x: Float, y: Float,
+        originX: Float, originY: Float,
+        width: Float, height: Float,
+        scaleX: Float, scaleY: Float,
+        rotation: Float
+    ) {
+        render(batch, x, y)
     }
 }
