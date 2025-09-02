@@ -18,7 +18,6 @@ import world.selene.common.lua.checkString
 import world.selene.common.lua.getCallerInfo
 import world.selene.common.lua.toAny
 import world.selene.common.lua.toAnyMap
-import world.selene.common.lua.toFunction
 import world.selene.common.lua.toUserdata
 import world.selene.common.lua.xpCall
 import world.selene.common.network.packet.EntityAnimationPacket

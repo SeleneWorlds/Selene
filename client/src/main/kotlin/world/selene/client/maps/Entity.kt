@@ -148,7 +148,11 @@ class Entity(
     override fun render(batch: Batch, environment: Environment) {
         processComponents {
             renderableComponents.forEach { component ->
-                component.render(this, batch, screenX, screenY)
+                batch.color.set(environment.getColor(coordinate))
+                component.render(this, batch, screenX, screenY - environment.getSurfaceOffset(coordinate))
+                if(component is IsoComponent) {
+                    environment.applySurfaceOffset(coordinate, component.surfaceHeight)
+                }
             }
         }
     }

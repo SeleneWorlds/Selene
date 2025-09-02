@@ -40,7 +40,6 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
 
     override fun update(delta: Float) {
         visual?.update(delta)
-        // Smoothly approach targetOcclusionAlpha
         if (currentOcclusionAlpha != targetOcclusionAlpha) {
             val diff = targetOcclusionAlpha - currentOcclusionAlpha
             val step = fadeSpeed * delta
@@ -53,13 +52,12 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     }
 
     override fun render(batch: Batch, environment: Environment) {
-        // val alpha = visualContext.interiorFadeAlpha
-        // val occluded = visual.occludes(sceneRenderer, displayX, displayY, visualContext)
-        // targetOcclusionAlpha = if (occluded) min(alpha, 0.3f) else alpha
-        // visualContext.color.set(1f, 1f, 1f, currentOcclusionAlpha)
         visual?.let {
             if (environment.shouldRender(coordinate)) {
-                batch.color = environment.getColor(coordinate)
+                val occluding = false // TODO environment.occludes()
+                targetOcclusionAlpha = if (occluding) 0.3f else 1f
+                batch.color.set(environment.getColor(coordinate))
+                batch.color = batch.color.mul(1f, 1f, 1f, currentOcclusionAlpha)
                 it.render(batch, screenX, screenY - environment.getSurfaceOffset(coordinate))
                 environment.applySurfaceOffset(coordinate, it.surfaceHeight)
             }
@@ -92,6 +90,7 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     companion object {
         val luaMeta = LuaMappedMetatable(Tile::class) {
             readOnly(Tile::coordinate)
+            readOnly(Tile::tileDefinition, "Definition")
             readOnly(Tile::visual)
             readOnly(Tile::x)
             readOnly(Tile::y)

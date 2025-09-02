@@ -28,6 +28,9 @@ class IsoVisualComponent(val visual: IsoVisual) : EntityComponent, RenderableCom
     override val sortLayerOffset: Int
         get() = visual.sortLayerOffset
 
+    override val surfaceHeight: Float
+        get() = visual.surfaceHeight
+
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
     }
