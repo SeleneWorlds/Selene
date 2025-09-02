@@ -60,9 +60,9 @@ data class AnimatedVisualDefinition(
 data class AnimatorVisualDefinition(
     val animator: String,
     val animations: Map<String, AnimationFrames>,
-    val offsetX: Int = 0,
-    val offsetY: Int = 0,
-    val surfaceOffsetY: Int = 0,
+    val offsetX: Float = 0f,
+    val offsetY: Float = 0f,
+    val surfaceOffsetY: Float = 0f,
     val sortLayerOffset: Int = 0,
     override val metadata: Map<String, Any> = emptyMap()
 ) : VisualDefinition, MetadataHolder {
@@ -73,8 +73,8 @@ data class AnimatorVisualDefinition(
 data class AnimationFrames(
     val textures: List<String>,
     val speed: Float? = null,
-    val offsetX: Int? = null,
-    val offsetY: Int? = null,
+    val offsetX: Float? = null,
+    val offsetY: Float? = null,
     val flipX: Boolean = false,
     val flipY: Boolean = false,
 )

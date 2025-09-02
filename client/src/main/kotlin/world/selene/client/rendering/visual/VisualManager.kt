@@ -2,12 +2,15 @@ package world.selene.client.rendering.visual
 
 import world.selene.client.data.VisualRegistry
 import world.selene.client.data.AnimatedVisualDefinition
+import world.selene.client.data.AnimatorVisualDefinition
 import world.selene.client.data.SimpleVisualDefinition
 import world.selene.client.data.VariantsVisualDefinition
+import world.selene.client.rendering.animator.DrawableAnimator
 import world.selene.client.rendering.drawable.AnimatedDrawableOptions
 import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.rendering.drawable.DrawableOptions
 import world.selene.client.rendering.visual2d.iso.DrawableIsoVisual
+import world.selene.client.rendering.visual2d.iso.DynamicDrawableIsoVisual
 
 class VisualManager(private val drawableManager: DrawableManager, private val visualRegistry: VisualRegistry) {
 
@@ -56,6 +59,28 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
                         shouldUpdate = false
                     }
                 }
+            }
+
+            is AnimatorVisualDefinition -> {
+                val drawableAnimator = DrawableAnimator()
+                visualDef.animations.forEach { (animationName, frames) ->
+                    val options = AnimatedDrawableOptions(
+                        duration = frames.speed ?: 0.13f
+                    )
+                    val drawableFrames = frames.textures.map { it to DrawableOptions(
+                        offsetX = frames.offsetX ?: visualDef.offsetX,
+                        offsetY = frames.offsetY ?: visualDef.offsetY,
+                        flipX = frames.flipX,
+                        flipY = frames.flipY
+                    ) }
+                    val drawable = drawableManager.getAnimatedDrawable(drawableFrames, options)
+                    drawableAnimator.addAnimation(animationName, drawable)
+                }
+                DynamicDrawableIsoVisual(
+                    drawableAnimator::drawable,
+                    visualDef.sortLayerOffset,
+                    visualDef.surfaceOffsetY
+                )
             }
 
             else -> null
