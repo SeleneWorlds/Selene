@@ -4,27 +4,27 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch
 import com.badlogic.gdx.utils.Pool
 import party.iroiro.luajava.Lua
 import world.selene.client.grid.ClientGrid
+import world.selene.client.rendering.IsoVisual
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.scene.Renderable
 import world.selene.client.visual.VisualContext
-import world.selene.client.visual.VisualInstance
+import world.selene.client.visual.VisualCreationContext
+import world.selene.client.visual.VisualManager
 import world.selene.common.data.TileDefinition
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.util.Coordinate
-import kotlin.math.min
 
-class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable, LuaMetatableProvider {
+class Tile(private val grid: ClientGrid, private val visualManager: VisualManager) : Pool.Poolable, Renderable, LuaMetatableProvider {
     lateinit var tileDefinition: TileDefinition
-    val visual get() = visualInstance
+    var visual: IsoVisual? = null
 
-    override val sortLayerOffset: Int get() = visualInstance?.sortLayerOffset ?: 0
+    override val sortLayerOffset: Int get() = visual?.sortLayerOffset ?: 0
     override val sortLayer: Int get() = grid.getSortLayer(coordinate, sortLayerOffset)
     override var localSortLayer: Int = 0
     override var coordinate: Coordinate = Coordinate.Zero
-    var visualInstance: VisualInstance? = null
-    
+
     val screenX get() = grid.getScreenX(coordinate)
     val screenY get() = grid.getScreenY(coordinate)
 
@@ -37,7 +37,7 @@ class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable, LuaMetatab
     private val fadeSpeed: Float = 5f
 
     override fun update(delta: Float) {
-        visualInstance?.update(delta)
+        visual?.update(delta)
         // Smoothly approach targetOcclusionAlpha
         if (currentOcclusionAlpha != targetOcclusionAlpha) {
             val diff = targetOcclusionAlpha - currentOcclusionAlpha
@@ -51,29 +51,30 @@ class Tile(private val grid: ClientGrid) : Pool.Poolable, Renderable, LuaMetatab
     }
 
     override fun render(sceneRenderer: SceneRenderer, spriteBatch: SpriteBatch, visualContext: VisualContext) {
-        val displayX = screenX
-        val displayY = screenY
-        visualInstance?.let { visualInstance ->
-            if (visualInstance.shouldRender(sceneRenderer, displayX, displayY, visualContext)) {
-                val alpha = visualContext.interiorFadeAlpha
-                val occluded = visualInstance.occludes(sceneRenderer, displayX, displayY, visualContext)
-                targetOcclusionAlpha = if (occluded) min(alpha, 0.3f) else alpha
-                visualContext.color.set(1f, 1f, 1f, currentOcclusionAlpha)
-                visualInstance.render(spriteBatch, displayX, displayY, visualContext)
-            }
+        // val alpha = visualContext.interiorFadeAlpha
+        // val occluded = visual.occludes(sceneRenderer, displayX, displayY, visualContext)
+        // targetOcclusionAlpha = if (occluded) min(alpha, 0.3f) else alpha
+        // visualContext.color.set(1f, 1f, 1f, currentOcclusionAlpha)
+        visual?.let {
+            it.render(spriteBatch, screenX, screenY - visualContext.offsetY)
+            visualContext.offsetY += it.surfaceHeight
         }
     }
 
     override fun reset() {
         localSortLayer = 0
         coordinate = Coordinate.Zero
-        visualInstance = null
+        visual = null
         currentOcclusionAlpha = 1f
         targetOcclusionAlpha = 1f
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
+    }
+
+    fun updateVisual() {
+        visual = visualManager.createVisual(tileDefinition.visual, VisualCreationContext(coordinate)) as? IsoVisual
     }
 
     companion object {

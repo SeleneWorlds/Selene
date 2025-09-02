@@ -1,56 +1,64 @@
 package world.selene.client.visual
 
 import world.selene.client.data.VisualRegistry
-import world.selene.client.maps.Tile
-import world.selene.client.assets.AssetProvider
 import world.selene.client.data.AnimatedVisualDefinition
-import world.selene.client.data.AnimatorVisualDefinition
-import world.selene.client.data.LabelVisualDefinition
 import world.selene.client.data.SimpleVisualDefinition
 import world.selene.client.data.VariantsVisualDefinition
-import world.selene.common.lua.LuaManager
+import world.selene.client.rendering.AnimatedDrawableOptions
+import world.selene.client.rendering.DrawableManager
+import world.selene.client.rendering.DrawableOptions
+import world.selene.client.rendering.Visual
 
-class VisualManager(
-    private val assetProvider: AssetProvider,
-    private val luaManager: LuaManager,
-    private val visualRegistry: VisualRegistry
-) {
-    private val visualCache = mutableMapOf<String, VisualInstance>()
+class VisualManager(private val drawableManager: DrawableManager, private val visualRegistry: VisualRegistry) {
 
-    fun updateShared(delta: Float) {
-        visualCache.values.forEach {
-            it.updateShared(delta)
-        }
-    }
-
-    fun getVisualInstance(tile: Tile): VisualInstance? {
-        return buildInstance(tile.tileDefinition.visual)
-    }
-
-    fun buildInstance(visualName: String, properties: Map<String, String> = emptyMap()): VisualInstance? {
-        val visualDef = visualRegistry.get(visualName) ?: return null
-        if (visualDef.isShared) {
-            visualCache[visualName]?.let {
-                return it
-            }
-        }
-
-        val instance = when (visualDef) {
-            is SimpleVisualDefinition -> SimpleVisualInstance(visualDef, assetProvider)
-            is VariantsVisualDefinition -> VariantsVisualInstance(visualDef, assetProvider)
-            is AnimatedVisualDefinition -> AnimatedVisualInstance(visualDef, assetProvider, luaManager)
-            is AnimatorVisualDefinition -> {
-                AnimatorVisualInstance(visualDef, assetProvider)
+    fun createVisual(name: String, context: VisualCreationContext): Visual? {
+        val visualDef = visualRegistry.get(name) ?: return null
+        return when (visualDef) {
+            is SimpleVisualDefinition -> {
+                val drawable = drawableManager.getDrawable(
+                    visualDef.texture, DrawableOptions(
+                        offsetX = visualDef.offsetX,
+                        offsetY = visualDef.offsetY,
+                        flipX = visualDef.flipX,
+                        flipY = visualDef.flipY
+                    )
+                ) ?: return null
+                DrawableIsoVisual(drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY)
             }
 
-            is LabelVisualDefinition -> LabelVisualInstance(visualDef, properties["label"] ?: visualDef.label)
+            is VariantsVisualDefinition -> {
+                val options = DrawableOptions(
+                    offsetX = visualDef.offsetX,
+                    offsetY = visualDef.offsetY,
+                    flipX = visualDef.flipX,
+                    flipY = visualDef.flipY
+                )
+                val variant = visualDef.textures[context.coordinate.x % visualDef.textures.size]
+                val drawable = drawableManager.getDrawable(variant, options) ?: return null
+                DrawableIsoVisual(drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY)
+            }
+
+            is AnimatedVisualDefinition -> {
+                val frameOptions = DrawableOptions(
+                    offsetX = visualDef.offsetX,
+                    offsetY = visualDef.offsetY,
+                    flipX = visualDef.flipX,
+                    flipY = visualDef.flipY
+                )
+                val frames = visualDef.textures.map { it to frameOptions }
+                val options = AnimatedDrawableOptions(
+                    duration = visualDef.duration
+                )
+                val managedKey = if (!visualDef.instance) name else null
+                val drawable = drawableManager.getAnimatedDrawable(frames, options, managedKey)
+                DrawableIsoVisual(drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY).apply {
+                    if (managedKey != null) {
+                        shouldUpdate = false
+                    }
+                }
+            }
 
             else -> null
-        }?.also {
-            if (visualDef.isShared) {
-                visualCache[visualName] = it
-            }
         }
-        return instance
     }
 }

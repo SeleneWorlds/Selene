@@ -10,25 +10,19 @@ import party.iroiro.luajava.Lua
 import world.selene.client.animator.Animator
 import world.selene.client.assets.AssetProvider
 import world.selene.client.data.Anchor
-import world.selene.client.data.AnimatedVisualDefinition
 import world.selene.client.data.AnimatorVisualDefinition
 import world.selene.client.data.LabelVisualDefinition
-import world.selene.client.data.SimpleVisualDefinition
-import world.selene.client.data.VariantsVisualDefinition
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.rendering.VisualContextProvider
 import world.selene.common.data.MetadataHolder
-import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.Signal
 import world.selene.common.lua.checkString
 import world.selene.common.util.Coordinate
 
 interface VisualInstance {
     val sortLayerOffset: Int
-    fun updateShared(delta: Float) {}
     fun update(delta: Float) {}
     fun render(batch: Batch, x: Float, y: Float, context: VisualContext)
     fun shouldRender(sceneRenderer: SceneRenderer, x: Float, y: Float, context: VisualContext): Boolean
@@ -93,14 +87,14 @@ abstract class TextureBasedVisualInstance(private val metadataHolder: MetadataHo
         val thisBounds = getBounds(context, x, y)
         val focusBounds = Rectangle()
         val focusedEntity = sceneRenderer.cameraManager.focusedEntity
-        val focusedVisual = focusedEntity?.mainVisualInstance
+        val focusedVisual = null // focusedEntity?.mainVisualInstance
         if (focusedVisual != null) {
-            focusedVisual.getBounds(
-                context.contextProvider.getVisualContext(focusedEntity.coordinate),
-                focusedEntity.screenX,
-                focusedEntity.screenY,
-                focusBounds
-            )
+            // focusedVisual.getBounds(
+            //     context.contextProvider.getVisualContext(focusedEntity.coordinate),
+            //     focusedEntity.screenX,
+            //     focusedEntity.screenY,
+            //     focusBounds
+            // )
         } else {
             focusBounds.x = sceneRenderer.grid.getScreenX(context.cameraFocusCoordinate)
             focusBounds.y = sceneRenderer.grid.getScreenY(context.cameraFocusCoordinate)
@@ -137,98 +131,6 @@ abstract class TextureBasedVisualInstance(private val metadataHolder: MetadataHo
                 }
                 0
             }
-        }
-    }
-}
-
-data class SimpleVisualInstance(
-    private val visualDef: SimpleVisualDefinition,
-    private val assetProvider: AssetProvider
-) : TextureBasedVisualInstance(visualDef), SizedVisualInstance, LuaMetatableProvider {
-    val textureOptions = TextureOptions(visualDef.flipX, visualDef.flipY)
-    override val textureRegion: TextureRegion by lazy {
-        val texturePath = visualDef.texture
-        assetProvider.loadTextureRegion(texturePath, textureOptions) ?: assetProvider.missingTexture
-    }
-
-    override val offsetX: Float get() = visualDef.offsetX.toFloat()
-    override val offsetY: Float get() = visualDef.offsetY.toFloat()
-    override val sortLayerOffset: Int get() = visualDef.sortLayerOffset
-
-    override fun render(batch: Batch, x: Float, y: Float, context: VisualContext) {
-        super.render(batch, x, y, context)
-        context.offsetY += visualDef.surfaceOffsetY
-    }
-}
-
-data class VariantsVisualInstance(
-    private val visualDef: VariantsVisualDefinition,
-    private val assetProvider: AssetProvider
-) : TextureBasedVisualInstance(visualDef), SizedVisualInstance, LuaMetatableProvider {
-    val textureOptions = TextureOptions(visualDef.flipX, visualDef.flipY)
-    override val textureRegion: TextureRegion by lazy {
-        val texturePath = visualDef.textures.first()
-        assetProvider.loadTextureRegion(texturePath, textureOptions) ?: assetProvider.missingTexture
-    }
-    override val offsetX: Float get() = visualDef.offsetX.toFloat()
-    override val offsetY: Float get() = visualDef.offsetY.toFloat()
-
-    override val sortLayerOffset: Int get() = visualDef.sortLayerOffset
-
-    override fun render(batch: Batch, x: Float, y: Float, context: VisualContext) {
-        super.render(batch, x, y, context)
-        context.offsetY += visualDef.surfaceOffsetY
-    }
-}
-
-data class AnimatedVisualInstance(
-    private val visualDef: AnimatedVisualDefinition,
-    private val assetProvider: AssetProvider,
-    private val luaManager: LuaManager
-) : TextureBasedVisualInstance(visualDef), SizedVisualInstance, LuaMetatableProvider {
-    val animationCompleted = Signal("AnimationCompleted")
-
-    val textureOptions = TextureOptions(visualDef.flipX, visualDef.flipY)
-    private val textureRegions: List<TextureRegion> by lazy {
-        visualDef.textures.map { path ->
-            assetProvider.loadTextureRegion(path, textureOptions) ?: assetProvider.missingTexture
-        }
-    }
-    private var currentFrame = 0
-    private var elapsedTime = 0f
-
-    override val sortLayerOffset: Int get() = visualDef.sortLayerOffset
-    override val textureRegion: TextureRegion get() = textureRegions[currentFrame]
-    override val offsetX: Float get() = visualDef.offsetX.toFloat()
-    override val offsetY: Float get() = visualDef.offsetY.toFloat()
-
-    override fun updateShared(delta: Float) {
-        if (textureRegions.size <= 1) return
-        elapsedTime += delta
-        val frameDuration = visualDef.duration
-        while (elapsedTime >= frameDuration) {
-            elapsedTime -= frameDuration
-            currentFrame = (currentFrame + 1) % textureRegions.size
-            if (currentFrame == 0) {
-                animationCompleted.emit()
-            }
-        }
-    }
-
-    override fun render(batch: Batch, x: Float, y: Float, context: VisualContext) {
-        super.render(batch, x, y, context)
-        context.offsetY += visualDef.surfaceOffsetY
-    }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
-
-    companion object {
-        val luaMeta = TextureBasedVisualInstance.luaMeta.extend(AnimatedVisualInstance::class) {
-            readOnly(AnimatedVisualInstance::currentFrame)
-            readOnly(AnimatedVisualInstance::elapsedTime)
-            readOnly(AnimatedVisualInstance::animationCompleted)
         }
     }
 }

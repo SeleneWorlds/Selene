@@ -67,8 +67,10 @@ import world.selene.client.lua.LuaMovementGridModule
 import world.selene.client.maps.ClientMap
 import world.selene.client.maps.Entity
 import world.selene.client.maps.EntityPool
+import world.selene.client.maps.Tile
 import world.selene.client.maps.TilePool
 import world.selene.client.rendering.DebugRenderer
+import world.selene.client.rendering.DrawableManager
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.scene.Scene
 import world.selene.client.visual.VisualManager
@@ -172,6 +174,7 @@ class SeleneApplication(
             singleOf(::BundleFileResolver)
             single { AssetStorage(fileResolver = get<BundleFileResolver>()) }
             singleOf(::AssetProvider) { bind<Disposable>() }
+            singleOf(::DrawableManager) { bind<Disposable>() }
         }
         val worldModule = module {
             singleOf(::ClientMap)
@@ -179,6 +182,7 @@ class SeleneApplication(
             singleOf(::EntityPool)
             singleOf(::Scene)
             singleOf(::ClientGrid)
+            factoryOf(::Tile)
             factoryOf(::Entity)
         }
         val renderingModule = module {

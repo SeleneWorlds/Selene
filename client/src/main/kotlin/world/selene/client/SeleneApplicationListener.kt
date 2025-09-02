@@ -19,6 +19,7 @@ import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.maps.ClientMap
 import world.selene.client.network.NetworkClient
 import world.selene.client.rendering.DebugRenderer
+import world.selene.client.rendering.DrawableManager
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.ui.UI
 import world.selene.client.visual.VisualManager
@@ -35,6 +36,7 @@ class SeleneApplicationListener(
     private val ui: UI,
     private val clientMap: ClientMap,
     private val playerController: PlayerController,
+    private val drawableManager: DrawableManager,
     private val gridMovement: GridMovement,
     private val sceneRenderer: SceneRenderer,
     private val debugRenderer: DebugRenderer,
@@ -75,6 +77,7 @@ class SeleneApplicationListener(
         gridMovement.update(delta)
         cameraManager.update(delta)
         visualManager.updateShared(delta)
+        drawableManager.update(delta)
 
         ScreenUtils.clear(0f, 0f, 0f, 0f)
 

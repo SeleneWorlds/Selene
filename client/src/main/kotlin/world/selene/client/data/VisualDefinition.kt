@@ -21,9 +21,9 @@ interface VisualDefinition {
 
 data class SimpleVisualDefinition(
     val texture: String,
-    val offsetX: Int = 0,
-    val offsetY: Int = 0,
-    val surfaceOffsetY: Int = 0,
+    val offsetX: Float = 0f,
+    val offsetY: Float = 0f,
+    val surfaceOffsetY: Float = 0f,
     val sortLayerOffset: Int = 0,
     val flipX: Boolean = false,
     val flipY: Boolean = false,
@@ -32,9 +32,9 @@ data class SimpleVisualDefinition(
 
 data class VariantsVisualDefinition(
     val textures: List<String>,
-    val offsetX: Int = 0,
-    val offsetY: Int = 0,
-    val surfaceOffsetY: Int = 0,
+    val offsetX: Float = 0f,
+    val offsetY: Float = 0f,
+    val surfaceOffsetY: Float = 0f,
     val sortLayerOffset: Int = 0,
     val flipX: Boolean = false,
     val flipY: Boolean = false,
@@ -44,9 +44,9 @@ data class VariantsVisualDefinition(
 data class AnimatedVisualDefinition(
     val textures: List<String>,
     val duration: Float = 0.1f,
-    val offsetX: Int = 0,
-    val offsetY: Int = 0,
-    val surfaceOffsetY: Int = 0,
+    val offsetX: Float = 0f,
+    val offsetY: Float = 0f,
+    val surfaceOffsetY: Float = 0f,
     val sortLayerOffset: Int = 0,
     val flipX: Boolean = false,
     val flipY: Boolean = false,

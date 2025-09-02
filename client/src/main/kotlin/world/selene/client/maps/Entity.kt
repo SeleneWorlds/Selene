@@ -6,18 +6,16 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Pool
 import com.fasterxml.jackson.databind.ObjectMapper
 import party.iroiro.luajava.Lua
-import world.selene.client.animator.HumanoidAnimator
 import java.util.ArrayDeque
 import world.selene.client.controls.EntityMotion
 import world.selene.client.grid.ClientGrid
+import world.selene.client.rendering.IsoComponent
+import world.selene.client.rendering.RenderableComponent
 import world.selene.client.rendering.SceneRenderer
+import world.selene.client.rendering.TickableComponent
 import world.selene.client.scene.Renderable
 import world.selene.client.scene.Scene
-import world.selene.client.visual.AnimatorVisualInstance
-import world.selene.client.visual.SizedVisualInstance
 import world.selene.client.visual.VisualContext
-import world.selene.client.visual.VisualInstance
-import world.selene.client.visual.VisualManager
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.data.EntityDefinition
 import world.selene.common.lua.LuaMappedMetatable
@@ -28,11 +26,9 @@ import world.selene.common.lua.checkString
 import world.selene.common.lua.toAnyMap
 import world.selene.common.util.Coordinate
 import kotlin.collections.forEach
-import kotlin.math.max
 
 class Entity(
     val objectMapper: ObjectMapper,
-    val visualManager: VisualManager,
     val scene: Scene,
     val map: ClientMap,
     val grid: ClientGrid
@@ -40,7 +36,9 @@ class Entity(
     Pool.Poolable, Renderable, LuaMetatableProvider {
     var networkId: Int = 0
     lateinit var entityDefinition: EntityDefinition
-    var components: MutableMap<String, EntityComponent> = mutableMapOf()
+    val components = mutableMapOf<String, EntityComponent>()
+    val tickableComponents = mutableListOf<TickableComponent>()
+    val renderableComponents = mutableListOf<RenderableComponent>()
     val motionQueue: ArrayDeque<EntityMotion> = ArrayDeque()
 
     override var coordinate: Coordinate = Coordinate.Zero
@@ -54,18 +52,9 @@ class Entity(
 
     var facing: Float = 0f
     val direction get() = grid.getDirection(facing)
-    override val sortLayerOffset: Int get() = visualInstances.maxOfOrNull { it.visualInstance.sortLayerOffset } ?: 0
+    override val sortLayerOffset: Int get() = components.asSequence().mapNotNull { it as? IsoComponent }.maxOfOrNull { it.sortLayerOffset } ?: 0
     override val sortLayer: Int get() = grid.getSortLayer(position, sortLayerOffset)
     override var localSortLayer: Int = 0
-
-    data class ComponentVisualInstance(
-        val componentName: String,
-        val component: VisualComponent,
-        val visualInstance: VisualInstance
-    )
-
-    val visualInstances = mutableListOf<ComponentVisualInstance>()
-    val mainVisualInstance get() = visualInstances.firstOrNull()?.visualInstance
 
     val position: Vector3 = Vector3(coordinate.x.toFloat(), coordinate.y.toFloat(), coordinate.z.toFloat())
 
@@ -114,26 +103,16 @@ class Entity(
             }
             scene.updateSorting(this)
         }
-        visualInstances.forEach { it.visualInstance.update(delta) }
-    }
 
-    override fun render(sceneRenderer: SceneRenderer, spriteBatch: SpriteBatch, visualContext: VisualContext) {
         components.values.forEach { component ->
             component.update(this)
         }
+    }
 
-        val displayX = screenX
-        val displayY = screenY
+    override fun render(sceneRenderer: SceneRenderer, spriteBatch: SpriteBatch, visualContext: VisualContext) {
         val context = visualContext.copy(maxWidth = 0f, maxHeight = 0f, color = Color.WHITE.cpy())
-        visualInstances.forEach { (_, component, visualInstance) ->
-            if (visualInstance is SizedVisualInstance) {
-                context.maxWidth = max(context.maxWidth, visualInstance.width)
-                context.maxHeight = max(context.maxHeight, visualInstance.height)
-            }
-            if (visualInstance.shouldRender(sceneRenderer, displayX, displayY, context)) {
-                context.color.set(component.red, component.green, component.blue, component.alpha)
-                visualInstance.render(spriteBatch, displayX, displayY, context)
-            }
+        renderableComponents.forEach { component ->
+            component.render(this, spriteBatch, screenX, screenY)
         }
     }
 
@@ -144,22 +123,10 @@ class Entity(
         coordinate = Coordinate.Zero
         facing = 0f
         localSortLayer = 0
-        visualInstances.clear()
+        components.clear()
+        tickableComponents.clear()
+        renderableComponents.clear()
         position.set(0f, 0f, 0f)
-    }
-
-    fun updateVisual() {
-        visualInstances.clear()
-        components.entries.forEach { (name, component) ->
-            if (component is VisualComponent) {
-                visualManager.buildInstance(component.configuration.visual, component.configuration.properties)?.let {
-                    if (it is AnimatorVisualInstance) {
-                        it.animator = HumanoidAnimator(this)
-                    }
-                    visualInstances.add(ComponentVisualInstance(name, component, it))
-                }
-            }
-        }
     }
 
     fun setCoordinateAndUpdate(coordinate: Coordinate) {
@@ -182,9 +149,6 @@ class Entity(
     }
 
     private fun spawn() {
-        if (visualInstances.isEmpty()) {
-            updateVisual()
-        }
         map.addEntity(this)
     }
 
@@ -207,7 +171,6 @@ class Entity(
     companion object {
         val luaMeta = LuaMappedMetatable(Entity::class) {
             readOnly(Entity::coordinate)
-            callable(Entity::updateVisual)
             callable(Entity::spawn)
             callable(Entity::despawn)
             callable("SetCoordinate") {
@@ -229,13 +192,6 @@ class Entity(
                 val componentName = it.checkString(2)
                 val component = self.components[componentName]
                 it.push(component, Lua.Conversion.NONE)
-                1
-            }
-            callable("GetVisual") { lua ->
-                val self = lua.checkSelf()
-                val componentName = lua.checkString(2)
-                val visualInstance = self.visualInstances.firstOrNull { it.componentName == componentName }?.visualInstance
-                lua.push(visualInstance, Lua.Conversion.NONE)
                 1
             }
         }

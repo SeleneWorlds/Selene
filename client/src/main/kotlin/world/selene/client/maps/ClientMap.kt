@@ -67,9 +67,11 @@ class ClientMap(
             return
         }
 
-        val tile = tilePool.obtain(tileDefinition)
+        val tile = tilePool.obtain()
+        tile.tileDefinition = tileDefinition
         tile.coordinate = coordinate
         tile.localSortLayer = tiles.get(coordinate).size
+        tile.updateVisual()
         tiles.put(coordinate, tile)
         scene.add(tile)
     }
@@ -86,7 +88,8 @@ class ClientMap(
             logger.error("Unknown entity id: $entityId")
             return
         }
-        val entity = entitiesByNetworkId[networkId] ?: entityPool.obtain(entityDefinition).also {
+        val entity = entitiesByNetworkId[networkId] ?: entityPool.obtain().also {
+            it.entityDefinition = entityDefinition
             it.networkId = networkId
             it.setCoordinateAndUpdate(coordinate)
             addEntity(it)
@@ -94,7 +97,6 @@ class ClientMap(
         entity.setCoordinateAndUpdate(coordinate)
         entity.facing = facing
         entity.setupComponents(componentOverrides)
-        entity.updateVisual()
     }
 
     fun addEntity(entity: Entity) {

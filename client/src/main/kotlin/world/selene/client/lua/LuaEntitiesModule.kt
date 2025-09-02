@@ -29,7 +29,8 @@ class LuaEntitiesModule(
 
     private fun luaCreate(lua: Lua): Int {
         val entityDefinition = lua.checkRegistry(1, registries.entities)
-        val entity = entityPool.obtain(entityDefinition)
+        val entity = entityPool.obtain()
+        entity.entityDefinition = entityDefinition
         entity.setupComponents(emptyMap())
         lua.push(entity, Lua.Conversion.NONE)
         return 1
