@@ -57,6 +57,12 @@ import world.selene.server.data.PersistentNameIdRegistry
 import world.selene.server.data.Registries
 import world.selene.common.data.RegistryProvider
 import world.selene.common.data.SoundRegistry
+import world.selene.common.lua.LuaDebugModule
+import world.selene.common.lua.LuaMathxModule
+import world.selene.common.lua.LuaOsModule
+import world.selene.common.lua.LuaPackageModule
+import world.selene.common.lua.LuaStringxModule
+import world.selene.common.lua.LuaTablexModule
 import world.selene.common.util.Disposable
 import world.selene.server.dimensions.Dimension
 import world.selene.server.dimensions.DimensionManager
@@ -120,6 +126,12 @@ fun main(args: Array<String>) {
         singleOf(::ServerLuaSignals)
         singleOf(::ServerCustomData)
         singleOf(::Messages)
+        singleOf(::LuaDebugModule) { bind<LuaModule>() }
+        singleOf(::LuaOsModule) { bind<LuaModule>() }
+        singleOf(::LuaPackageModule) { bind<LuaModule>() }
+        singleOf(::LuaMathxModule) { bind<LuaModule>() }
+        singleOf(::LuaStringxModule) { bind<LuaModule>() }
+        singleOf(::LuaTablexModule) { bind<LuaModule>() }
         singleOf(::LuaServerModule) { bind<LuaModule>() }
         singleOf(::LuaPlayersModule) { bind<LuaModule>() }
         singleOf(::LuaMixinModule) { bind<LuaModule>() }

@@ -52,8 +52,8 @@ class SeleneServer(
     init {
         logger.info("Starting Selene server")
         packetRegistrations.register()
-        luaManager.setGlobal("SELENE_IS_SERVER", true)
-        luaManager.setGlobal("SELENE_IS_CLIENT", false)
+        luaManager.lua.set("SELENE_IS_SERVER", true)
+        luaManager.lua.set("SELENE_IS_CLIENT", false)
         luaManager.loadModules()
         val bundles = bundleLoader.loadBundles(config.bundles.filter { it.isNotBlank() }.toSet())
         tileRegistry.load(bundleDatabase)

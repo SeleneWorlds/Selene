@@ -4,7 +4,6 @@ import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.ApplicationListener
 import com.badlogic.gdx.InputMultiplexer
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.koin.dsl.module
 import org.slf4j.LoggerFactory
 import world.selene.client.config.ClientConfig
@@ -87,6 +86,12 @@ import world.selene.common.lua.LuaResourcesModule
 import world.selene.common.lua.LuaHttpModule
 import world.selene.common.lua.LuaI18nModule
 import world.selene.common.i18n.Messages
+import world.selene.common.lua.LuaDebugModule
+import world.selene.common.lua.LuaMathxModule
+import world.selene.common.lua.LuaOsModule
+import world.selene.common.lua.LuaPackageModule
+import world.selene.common.lua.LuaStringxModule
+import world.selene.common.lua.LuaTablexModule
 import world.selene.common.network.PacketFactory
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.PacketRegistrations
@@ -112,6 +117,12 @@ class SeleneApplication(
             singleOf(::LuaPayloadRegistry)
             singleOf(::ClientLuaSignals)
             singleOf(::Messages)
+            singleOf(::LuaDebugModule) { bind<LuaModule>() }
+            singleOf(::LuaOsModule) { bind<LuaModule>() }
+            singleOf(::LuaPackageModule) { bind<LuaModule>() }
+            singleOf(::LuaMathxModule) { bind<LuaModule>() }
+            singleOf(::LuaStringxModule) { bind<LuaModule>() }
+            singleOf(::LuaTablexModule) { bind<LuaModule>() }
             singleOf(::LuaUIModule) { bind<LuaModule>() }
             singleOf(::LuaVisualsModule) { bind<LuaModule>() }
             singleOf(::LuaMixinModule) { bind<LuaModule>() }

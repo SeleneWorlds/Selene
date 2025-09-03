@@ -21,8 +21,9 @@ class ClientScriptComponent(val moduleName: String) : EntityComponent, TickableC
         val data = data ?: lua.newTable {}.also {
             data = it
         }
+        lua.getGlobal("require")
         lua.push(moduleName)
-        luaManager.luaRequire(lua)
+        lua.pCall(1, 1)
         if (initPending) {
             lua.getField(-1, "Initialize")
             if (lua.isFunction(-1)) {

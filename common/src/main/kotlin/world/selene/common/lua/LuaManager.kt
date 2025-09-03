@@ -4,118 +4,70 @@ import org.koin.mp.KoinPlatform.getKoin
 import party.iroiro.luajava.ClassPathLoader
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.lua54.Lua54
-import party.iroiro.luajava.value.LuaValue
-import world.selene.common.bundles.LocatedBundle
-import java.io.File
 import java.nio.Buffer
 import java.nio.ByteBuffer
 import kotlin.reflect.KClass
 
-class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
+class LuaManager(private val mixinRegistry: LuaMixinRegistry, private val luaPackage: LuaPackageModule) {
 
     val lua = Lua54()
     private val metatables = mutableMapOf<KClass<*>, LuaMetatable>()
-    private val packageResolvers = mutableListOf<(String) -> Pair<String, String>?>()
 
     init {
+        // Default metatables of LuaJava are unsafe, we override them. Adds support for LuaMetatable interface too.
         secureClassMetatable()
         secureObjectMetatable()
 
-        lua.openLibrary("os")
-        val os = lua.get("os")
-        val luaOsDate = os.get("date")
-        val luaOsTime = os.get("time")
-        val luaClock = os.get("clock")
-        lua.set("os", lua.newTable {
-            set("date", luaOsDate)
-            set("time", luaOsTime)
-            set("clock", luaClock)
-        })
+        luaPackage.initializeEarly(lua)
 
+        // bit32 was removed from this version of Lua, we provide a polyfill from classpath
         lua.setExternalLoader(ClassPathLoader())
+        lua.push(luaPackage.packageLoaded)
         lua.loadExternal("bit32")
         lua.pCall(0, 1)
+        lua.pushValue(-1)
         lua.setGlobal("bit32")
-
-        lua.openLibrary("string")
-        lua.set("stringx", lua.newTable {
-            register("trim", this@LuaManager::luaTrim)
-            register("startsWith", this@LuaManager::luaStartsWith)
-            register("endsWith", this@LuaManager::luaEndsWith)
-            register("removeSuffix", this@LuaManager::luaRemoveSuffix)
-            register("split", this@LuaManager::luaSplit)
-            register("substringAfter", this@LuaManager::luaSubstringAfter)
-        })
-
-        lua.openLibrary("math")
-        lua.set("mathx", lua.newTable {
-            register("clamp", this@LuaManager::luaClamp)
-        })
-
-        lua.openLibrary("debug")
-        debugLibrary = lua.get("debug")
-        lua.set("debug", lua.newTable {
-            this.register("getinfo", this@LuaManager::luaDebugGetInfo)
-            this.register("traceback", this@LuaManager::luaTraceback)
-        })
-
-        lua.openLibrary("table")
-
-        lua.set("tablex", lua.newTable {
-            register("managed") { lua ->
-                val data = lua.toAnyMap(1) as MutableMap?
-                lua.push(ManagedLuaTable(data ?: mutableMapOf()), Lua.Conversion.NONE)
-                1
-            }
-            register("find", this@LuaManager::luaTableFind)
-            register("tostring", this@LuaManager::luaTableToString)
-        })
-
-        lua.register("require", this::luaRequire)
-
-        lua.newTable()
-        lua.newTable()
-        lua.getGlobal("math")
-        lua.setField(-2, "math")
-        lua.getGlobal("bit32")
         lua.setField(-2, "bit32")
-        lua.setField(-2, "loaded")
-        lua.newTable()
-        lua.setField(-2, "preload")
-        lua.setGlobal("package")
+        lua.pop(1)
 
-        lua.set("dofile", null)
-        lua.set("loadfile", null)
-        lua.set("load", null)
-        lua.set("loadstring", null)
-        lua.set("setfenv", null)
-        lua.set("getfenv", null)
-        lua.set("collectgarbage", null)
-        lua.set("module", null)
-        lua.set("java", null)
-        lua.set("_G", lua.newTable {})
+        // Load standard libraries, but only those that are safe
+        val libraries = setOf("string", "math", "table")
+        lua.push(luaPackage.packageLoaded)
+        libraries.forEach {
+            lua.openLibrary(it)
+            lua.getGlobal(it)
+            lua.setField(-2, it)
+        }
+        lua.pop(1)
+
+        // Remove some globals that shouldn't be used in Lua scripts
+        val bannedGlobals = setOf("dofile", "loadfile", "load", "loadstring", "setfenv", "getfenv", "collectgarbage", "module", "java")
+        bannedGlobals.forEach { lua.set(it, null) }
+
+        // Reset _G to make sure it doesn't leak access to anything we don't want
+        lua.newTable()
+        lua.setGlobal("_G")
     }
 
     fun loadModules() {
         val modules = getKoin().getAll<LuaModule>()
         for (module in modules) {
             module.initialize(this)
-            lua.getGlobal("package")
-            lua.getField(-1, "loaded")
+            lua.push(luaPackage.packageLoaded)
             lua.push(lua.newTable {
                 module.register(this)
             })
+            if (module.registerAsGlobal) {
+                lua.pushValue(-1)
+                lua.setGlobal(module.name)
+            }
             lua.setField(-2, module.name)
-            lua.pop(2)
+            lua.pop(1)
         }
     }
 
     fun defineMetatable(clazz: KClass<*>, metatable: LuaMetatable) {
         metatables[clazz] = metatable
-    }
-
-    fun addPackageResolver(resolver: (String) -> Pair<String, String>?) {
-        packageResolvers.add(resolver)
     }
 
     private fun secureClassMetatable() {
@@ -246,215 +198,13 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry) {
         lua.pop(1)
     }
 
-    private fun luaStartsWith(lua: Lua): Int {
-        lua.push(lua.checkString(1).startsWith(lua.checkString(2)))
-        return 1
-    }
-
-    private fun luaEndsWith(lua: Lua): Int {
-        lua.push(lua.checkString(1).endsWith(lua.checkString(2)))
-        return 1
-    }
-
-    private fun luaRemoveSuffix(lua: Lua): Int {
-        lua.push(lua.checkString(1).removeSuffix(lua.checkString(2)))
-        return 1
-    }
-
-    private fun luaTableToString(lua: Lua): Int {
-        if (lua.isNil(1)) {
-            lua.push("nil")
-            return 1
-        }
-
-        when (lua.type(1)) {
-            Lua.LuaType.TABLE -> {
-                lua.pushNil()
-                val sb = StringBuilder("{")
-                while (lua.next(-2) != 0) {
-                    if (sb.length > 1) {
-                        sb.append(", ")
-                    }
-
-                    lua.getGlobal("tostring")
-                    lua.pushValue(-3)
-                    lua.pCall(1, 1)
-                    val key = lua.toString(-1).also { lua.pop(1) }
-
-                    lua.getGlobal("tostring")
-                    lua.pushValue(-2)
-                    lua.pCall(1, 1)
-                    val value = lua.toString(-1).also { lua.pop(1) }
-
-                    sb.append(key)
-                    sb.append(" = ")
-                    sb.append(value)
-                    lua.pop(1)
-                }
-                sb.append("}")
-                lua.push(sb.toString())
-            }
-
-            Lua.LuaType.USERDATA -> {
-                lua.push(lua.checkUserdata(1, ManagedLuaTable::class).toString())
-            }
-
-            else -> lua.throwTypeError(1, Lua.LuaType.TABLE)
-        }
-
-        return 1
-    }
-
-    private fun luaClamp(lua: Lua): Int {
-        if (lua.isInteger(1) && lua.isInteger(2) && lua.isInteger(3)) {
-            lua.push(lua.checkInt(1).coerceIn(lua.checkInt(2), lua.checkInt(3)))
-        } else {
-            lua.push(lua.checkFloat(1).coerceIn(lua.checkFloat(2), lua.checkFloat(3)))
-        }
-        return 1
-    }
-
-    private fun luaTrim(lua: Lua): Int {
-        lua.push(lua.checkString(1).trim())
-        return 1
-    }
-
-    private fun luaSubstringAfter(lua: Lua): Int {
-        val str = lua.checkString(1)
-        val separator = lua.checkString(2)
-        val result = str.substringAfter(separator)
-        lua.push(result)
-        return 1
-    }
-
-    private fun luaSplit(lua: Lua): Int {
-        val str = lua.checkString(1)
-        val separator = lua.checkString(2)
-        val result = str.split(separator)
-        lua.push(result, Lua.Conversion.FULL)
-        return 1
-    }
-
-    private fun luaDebugGetInfo(lua: Lua): Int {
-        val offset = lua.checkInt(1)
-
-        val callerInfo = lua.getCallerInfo(offset)
-        lua.newTable()
-        lua.push(callerInfo.source)
-        lua.setField(-2, "short_src")
-        lua.push(callerInfo.line)
-        lua.setField(-2, "currentline")
-        return 1
-    }
-
-    private fun luaTraceback(lua: Lua): Int {
-        debugLibrary.push(lua)
-        lua.getField(-1, "traceback")
-        lua.pCall(0, 1)
-        return 1
-    }
-
-    private fun luaTableFind(lua: Lua): Int {
-        lua.checkType(1, Lua.LuaType.TABLE)
-        lua.top = 2
-
-        var idx = 1
-        lua.pushNil() // initial key for next call
-
-        // Stack: table(1), target(2), nil(3)
-        while (lua.next(1) != 0) { // pushes key-value pair
-            // Stack: table(1), target(2), key(3), value(4)
-
-            // Compare the value with target
-            if (lua.equal(4, 2)) {
-                lua.pushValue(3) // push the key as return value
-                return 1
-            }
-
-            lua.pop(1) // pop value, keep key for next iteration
-            // Stack: table(1), target(2), key(3)
-            idx++
-        }
-
-        // Return nil if not found
-        lua.pushNil()
-        return 1
-    }
-
-    fun luaRequire(lua: Lua): Int {
-        val moduleName = lua.checkString(-1)
-        lua.getGlobal("package")
-        lua.getField(-1, "loaded")
-        lua.getField(-1, moduleName)
-        lua.remove(-2)
-        lua.remove(-2)
-        if (!lua.isNil(-1)) {
-            return 1
-        }
-        lua.pop(1)
-
-        lua.getGlobal("package")
-        lua.getField(-1, "preload")
-        lua.getField(-1, moduleName)
-        if (!lua.isNil(-1)) {
-            lua.remove(-2)
-            lua.remove(-2)
-            lua.pCall(0, 1)
-            lua.getGlobal("package")
-            lua.getField(-1, "loaded")
-            lua.pushValue(-3)
-            lua.setField(-2, moduleName)
-            lua.pop(2)
-            return 1
-        }
-
-        val found = packageResolvers.asSequence().mapNotNull { it(moduleName) }.firstOrNull()
-        if (found != null) {
-            val preTop = lua.top
-            load(found.first, found.second)
-            lua.pCall(0, 1)
-            if (lua.top > preTop) {
-                lua.getGlobal("package")
-                lua.getField(-1, "loaded")
-                lua.pushValue(-3)
-                lua.setField(-2, moduleName)
-                lua.pop(2)
-                return 1
-            }
-        }
-
-        return lua.pushError("module '$moduleName' not found")
-    }
-
-    private fun loadBuffer(script: String): Buffer {
-        val bytes = script.toByteArray()
-        val buffer = ByteBuffer.allocateDirect(bytes.size)
-        buffer.put(bytes)
-        buffer.flip()
-        return buffer
-    }
-
-    fun preloadModule(moduleName: String, script: String) {
-        lua.getGlobal("package")
-        lua.getField(-1, "preload")
-        lua.load(loadBuffer(script), moduleName)
-        lua.setField(-2, moduleName)
-        lua.pop(2)
-    }
-
-    fun load(bundle: LocatedBundle, file: File, script: String) {
-        return load(bundle.getFileDebugName(file), script)
-    }
-
-    private fun load(name: String, script: String) {
-        lua.load(loadBuffer(script), name)
-    }
-
-    fun setGlobal(key: String, value: Any) {
-        lua.set(key, value)
-    }
-
     companion object {
-        lateinit var debugLibrary: LuaValue
+        fun loadBuffer(script: String): Buffer {
+            val bytes = script.toByteArray()
+            val buffer = ByteBuffer.allocateDirect(bytes.size)
+            buffer.put(bytes)
+            buffer.flip()
+            return buffer
+        }
     }
 }

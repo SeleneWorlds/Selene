@@ -3,6 +3,7 @@ package world.selene.common.bundles
 import org.slf4j.Logger
 import world.selene.common.lua.ClosureTrace
 import world.selene.common.lua.LuaManager
+import world.selene.common.lua.LuaPackageModule
 import world.selene.common.lua.xpCall
 import java.io.File
 import java.nio.charset.Charset
@@ -12,6 +13,7 @@ import kotlin.collections.iterator
 class BundleLoader(
     private val logger: Logger,
     private val luaManager: LuaManager,
+    private val luaPackage: LuaPackageModule,
     private val bundleDatabase: BundleDatabase,
     private val bundleLocator: BundleLocator
 ) {
@@ -34,7 +36,7 @@ class BundleLoader(
             for (dependency in locatedBundle.manifest.dependencies) {
                 collectDependencies(dependency)
             }
-            luaManager.addPackageResolver { path ->
+            luaPackage.addPackageResolver { path ->
                 if (path == bundle) {
                     val luaInitFile =
                         File(locatedBundle.dir, "init.lua")
@@ -127,7 +129,7 @@ class BundleLoader(
                             preloadFile,
                             encoding
                         )
-                        luaManager.preloadModule(moduleName, scriptFile.readText(encoding))
+                        luaPackage.preloadModule(luaManager.lua, moduleName, scriptFile.readText(encoding))
                     } else {
                         logger.error("Preload file $preloadFile not found in bundle $bundle")
                     }
@@ -152,8 +154,12 @@ class BundleLoader(
                 val scriptFile = File(bundleDir, entrypoint)
                 if (scriptFile.exists()) {
                     try {
-                        luaManager.load(bundle, scriptFile, scriptFile.readText())
-                        luaManager.lua.xpCall(0, 1, ClosureTrace { "[entrypoint \"${entrypoint}\"] in bundle \"${bundle.manifest.name}\"" })
+                        val lua = luaManager.lua
+                        lua.load(LuaManager.loadBuffer(scriptFile.readText()), bundle.getFileDebugName(scriptFile))
+                        lua.xpCall(
+                            0,
+                            1,
+                            ClosureTrace { "[entrypoint \"${entrypoint}\"] in bundle \"${bundle.manifest.name}\"" })
                     } catch (e: Exception) {
                         logger.error("Lua Error in Entrypoint", e)
                     }
