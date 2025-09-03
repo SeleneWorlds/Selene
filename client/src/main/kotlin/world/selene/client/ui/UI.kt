@@ -15,7 +15,7 @@ class UI {
         VisUI.getSkin()
     }
 
-    val bundlesRoot = Stack().apply {
+    val bundlesRoot: Stack = Stack().apply {
         name = "Bundles"
         setFillParent(true)
     }

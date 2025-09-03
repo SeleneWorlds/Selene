@@ -5,6 +5,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.camera.CameraManager
 import world.selene.common.lua.LuaModule
+import world.selene.common.lua.Signal
 import world.selene.common.lua.checkFloat
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.register
@@ -15,11 +16,16 @@ class LuaCameraModule(
 ) : LuaModule {
     override val name = "selene.camera"
 
+    /**
+     * Fired when the camera coordinate changes.
+     */
+    private val cameraCoordinateChanged: Signal = signals.cameraCoordinateChanged
+
     override fun register(table: LuaValue) {
         table.register("SetViewport", this::luaSetViewport)
         table.register("ScreenToWorld", this::luaScreenToWorld)
         table.register("GetCoordinate", this::luaGetCoordinate)
-        table.set("OnCoordinateChanged", signals.cameraCoordinateChanged)
+        table.set("OnCoordinateChanged", cameraCoordinateChanged)
     }
 
     private fun luaGetCoordinate(lua: Lua): Int {

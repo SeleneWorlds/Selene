@@ -18,6 +18,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.ui.Slider
+import com.badlogic.gdx.scenes.scene2d.ui.Stack
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.badlogic.gdx.scenes.scene2d.ui.Touchpad
 import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup
@@ -483,6 +484,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
             })
     }
 
+    private val bundlesRoot: Stack = ui.bundlesRoot
+
     override fun register(table: LuaValue) {
         table.register("LoadUI", this::luaLoadUI)
         table.register("LoadSkin", this::luaLoadSkin)
@@ -494,7 +497,7 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         table.register("GetFocus", this::luaGetFocus)
         table.register("CreateImageButtonStyle", this::luaCreateImageButtonStyle)
         table.register("AddInputProcessor", this::luaAddInputProcessor)
-        table.set("Root", ui.bundlesRoot)
+        table.set("Root", bundlesRoot)
     }
 
     private fun luaAddInputProcessor(lua: Lua): Int {

@@ -5,9 +5,6 @@ import com.badlogic.gdx.Input
 import com.badlogic.gdx.InputProcessor
 
 class InputManager : InputProcessor {
-    enum class InputType {
-        KEYBOARD, MOUSE
-    }
 
     fun lookupKeyboardKey(input: String): Int {
         return Input.Keys.valueOf(input)

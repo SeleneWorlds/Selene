@@ -6,6 +6,7 @@ import world.selene.client.maps.ClientMap
 import world.selene.client.maps.Tile
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
+import world.selene.common.lua.Signal
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.register
 import world.selene.common.util.Coordinate
@@ -16,10 +17,15 @@ class LuaClientMapModule(
 ) : LuaModule {
     override val name = "selene.map"
 
+    /**
+     * Fired when tiles inside a map chunk changed.
+     */
+    private val mapChunkChanged: Signal = signals.mapChunkChanged
+
     override fun register(table: LuaValue) {
         table.register("GetTilesAt", this::luaGetTilesAt)
         table.register("HasTileAt", this::luaHasTileAt)
-        table.set("OnChunkChanged", signals.mapChunkChanged)
+        table.set("OnChunkChanged", mapChunkChanged)
     }
 
     private fun luaGetTilesAt(lua: Lua): Int {

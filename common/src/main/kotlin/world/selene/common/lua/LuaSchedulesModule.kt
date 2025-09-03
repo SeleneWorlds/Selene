@@ -12,6 +12,9 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
+/**
+ * Provides scheduling functions for timeouts, intervals, and periodic signals.
+ */
 class LuaSchedulesModule(
     private val logger: Logger,
     private val mainThreadDispatcher: MainThreadDispatcher
@@ -53,9 +56,20 @@ class LuaSchedulesModule(
     private var nextTimeoutId = 1
     private var nextIntervalId = 1
 
-    val secondSignal = Signal("Second")
-    val minuteSignal = Signal("Minute")
-    val hourSignal = Signal("Hour")
+    /**
+     * Fired every second.
+     */
+    val secondSignal: Signal = Signal("Second")
+
+    /**
+     * Fired every full minute.
+     */
+    val minuteSignal: Signal = Signal("Minute")
+
+    /**
+     * Fired every full hour.
+     */
+    val hourSignal: Signal = Signal("Hour")
 
     init {
         executor.scheduleAtFixedRate(::runPeriodicSignals, 0, 1, TimeUnit.SECONDS)
@@ -99,6 +113,13 @@ class LuaSchedulesModule(
         }
     }
 
+    /**
+     * Schedules a function to run once after a delay.
+     *
+     * ```lua
+     * number timeoutId SetTimeout(number intervalMs, function callback, {string name} options)
+     * ```
+     */
     private fun luaSetTimeout(lua: Lua): Int {
         val intervalMs = lua.checkInt(1)
         val callback = lua.checkFunction(2)
@@ -133,6 +154,13 @@ class LuaSchedulesModule(
         return 1
     }
 
+    /**
+     * Cancels a scheduled timeout by its ID.
+     *
+     * ```lua
+     * ClearTimeout(number timeoutId)
+     * ```
+     */
     private fun luaClearTimeout(lua: Lua): Int {
         val timeoutId = lua.checkInt(1)
         val handler = timeouts.remove(timeoutId)
@@ -140,6 +168,13 @@ class LuaSchedulesModule(
         return 0
     }
 
+    /**
+     * Schedules a function to run repeatedly at intervals.
+     *
+     * ```lua
+     * number intervalId SetInterval(number intervalMs, function callback, {string name, boolean immediate} options)
+     * ```
+     */
     private fun luaSetInterval(lua: Lua): Int {
         val intervalMs = lua.checkInt(1)
         val callback = lua.checkFunction(2)
@@ -180,6 +215,13 @@ class LuaSchedulesModule(
         return 1
     }
 
+    /**
+     * Cancels a scheduled interval by its ID.
+     *
+     * ```lua
+     * ClearInterval(number intervalId)
+     * ```
+     */
     private fun luaClearInterval(lua: Lua): Int {
         val intervalId = lua.checkInt(1)
         val handler = intervals.remove(intervalId)
