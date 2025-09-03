@@ -121,118 +121,135 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
             }
         }
 
-        val luaMeta = Observable.luaMeta.extend(ManagedLuaTable::class) {
-            callable("Pairs") { lua ->
-                val managedLuaTable = lua.checkSelf()
-                lua.push { innerLua ->
-                    val iterator = innerLua.checkUserdata<Iterator<Map.Entry<*, *>>>(1)
-                    if (iterator.hasNext()) {
-                        val entry = iterator.next()
-                        val value = entry.value
-                        innerLua.push(entry.key, Lua.Conversion.FULL)
-                        when (value) {
-                            is MutableMap<*, *> -> {
-                                @Suppress("UNCHECKED_CAST")
-                                innerLua.push(ManagedLuaTable(value as MutableMap<Any, Any>), Lua.Conversion.NONE)
-                            }
-
-                            is LuaReference<*, *> -> {
-                                innerLua.push(value.resolve(), Lua.Conversion.NONE)
-                            }
-
-                            else -> {
-                                innerLua.push(value, Lua.Conversion.FULL)
-                            }
+        private fun luaPairs(lua: Lua): Int {
+            val managedLuaTable = lua.checkUserdata<ManagedLuaTable>(1)
+            lua.push { lua ->
+                val iterator = lua.checkUserdata<Iterator<Map.Entry<*, *>>>(1)
+                if (iterator.hasNext()) {
+                    val entry = iterator.next()
+                    val value = entry.value
+                    lua.push(entry.key, Lua.Conversion.FULL)
+                    when (value) {
+                        is MutableMap<*, *> -> {
+                            @Suppress("UNCHECKED_CAST")
+                            lua.push(ManagedLuaTable(value as MutableMap<Any, Any>), Lua.Conversion.NONE)
                         }
-                        2
-                    } else {
-                        0
+
+                        is LuaReference<*, *> -> {
+                            lua.push(value.resolve(), Lua.Conversion.NONE)
+                        }
+
+                        else -> {
+                            lua.push(value, Lua.Conversion.FULL)
+                        }
                     }
-                }
-                lua.push(managedLuaTable.map.iterator(), Lua.Conversion.NONE)
-                lua.pushNil()
-                3
-            }
-            callable("ToTable") { lua ->
-                val managedTable = lua.checkSelf()
-                lua.push(managedTable.map, Lua.Conversion.FULL)
-                1
-            }
-            callable("RawLookup") { lua ->
-                val managedTable = lua.checkSelf()
-                var result: Any? = managedTable.map
-                for (index in 2..lua.top) {
-                    val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
-                    result = getMapValue(result, key) ?: return@callable lua.pushNil().let { 1 }
-                }
-                lua.push(result, Lua.Conversion.FULL)
-                1
-            }
-            callable("Lookup") { lua ->
-                val managedTable = lua.checkSelf()
-                var result: Any? = managedTable.map
-                for (index in 2..lua.top) {
-                    val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
-                    result = getMapValue(result, key) ?: return@callable lua.pushNil().let { 1 }
-                }
-                if (result !is LuaValue && result is Map<*, *>) {
-                    @Suppress("UNCHECKED_CAST")
-                    lua.push(ManagedLuaTable(result as MutableMap<Any, Any>), Lua.Conversion.NONE)
-                } else if (result is LuaReference<*, *>) {
-                    lua.push(result.resolve(), Lua.Conversion.NONE)
+                    2
                 } else {
-                    lua.push(result, Lua.Conversion.FULL)
+                    0
                 }
-                1
             }
-            callable("Set") { lua ->
-                val managedTable = lua.checkSelf()
-                var container: Any? = managedTable.map
+            lua.push(managedLuaTable.map.iterator(), Lua.Conversion.NONE)
+            lua.pushNil()
+            return 3
+        }
 
-                for (index in 2..lua.top - 2) {
-                    val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
-                    val next = getMapValue(container, key)
-                        ?: lua.throwError("Cannot set field, key [$key] does not exist")
-                    if (next !is Map<*, *> && next !is ManagedLuaTable) {
-                        lua.throwError("Cannot set field, key [$key] is not a table")
+        private fun luaToTable(lua: Lua): Int {
+            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
+            lua.push(managedTable.map, Lua.Conversion.FULL)
+            return 1
+        }
+
+        private fun luaRawLookup(lua: Lua): Int {
+            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
+            var result: Any? = managedTable.map
+            for (index in 2..lua.top) {
+                val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
+                result = getMapValue(result, key)
+                if (result == null) {
+                    return lua.pushNil().let { 1 }
+                }
+            }
+            lua.push(result, Lua.Conversion.FULL)
+            return 1
+        }
+
+        private fun luaLookup(lua: Lua): Int {
+            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
+            var result: Any? = managedTable.map
+            for (index in 2..lua.top) {
+                val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
+                result = getMapValue(result, key) ?: return lua.pushNil().let { 1 }
+            }
+            if (result !is LuaValue && result is Map<*, *>) {
+                @Suppress("UNCHECKED_CAST")
+                lua.push(ManagedLuaTable(result as MutableMap<Any, Any>), Lua.Conversion.NONE)
+            } else if (result is LuaReference<*, *>) {
+                lua.push(result.resolve(), Lua.Conversion.NONE)
+            } else {
+                lua.push(result, Lua.Conversion.FULL)
+            }
+            return 1
+        }
+
+        private fun luaSetNested(lua: Lua): Int {
+            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
+            var container: Any? = managedTable.map
+
+            for (index in 2..lua.top - 2) {
+                val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
+                val next = getMapValue(container, key)
+                    ?: lua.throwError("Cannot set field, key [$key] does not exist")
+                if (next !is Map<*, *> && next !is ManagedLuaTable) {
+                    lua.throwError("Cannot set field, key [$key] is not a table")
+                }
+                container = next
+            }
+
+            val key = lua.toAny(-2) ?: lua.throwTypeError(-2, Lua.LuaType.STRING)
+            val value = lua.toAny(-1)
+
+            when (container) {
+                is Map<*, *> -> {
+                    @Suppress("UNCHECKED_CAST") val mutableMap = container as MutableMap<Any, Any>
+                    if (value != null) {
+                        mutableMap[key] = value
+                    } else {
+                        mutableMap.remove(key)
                     }
-                    container = next
                 }
 
-                val key = lua.toAny(-2) ?: lua.throwTypeError(-2, Lua.LuaType.STRING)
-                val value = lua.toAny(-1)
-
-                when (container) {
-                    is Map<*, *> -> {
-                        @Suppress("UNCHECKED_CAST") val mutableMap = container as MutableMap<Any, Any>
-                        if (value != null) {
-                            mutableMap[key] = value
-                        } else {
-                            mutableMap.remove(key)
-                        }
-                    }
-
-                    is ManagedLuaTable -> {
-                        if (value != null) {
-                            container.map[key] = value
-                        } else {
-                            container.map.remove(key)
-                        }
+                is ManagedLuaTable -> {
+                    if (value != null) {
+                        container.map[key] = value
+                    } else {
+                        container.map.remove(key)
                     }
                 }
-                0
             }
-            callable("DeepCopy") { lua ->
-                val managedTable = lua.checkSelf()
-                lua.push(managedTable.deepCopy(), Lua.Conversion.NONE)
-                1
-            }
-            callable("HasKey") { lua ->
-                val managedTable = lua.checkSelf()
-                val key = lua.toAny(2) ?: lua.throwTypeError(2, Lua.LuaType.STRING)
-                lua.push(managedTable.map.containsKey(key))
-                1
-            }
+            return 0
+        }
+
+        private fun luaDeepCopy(lua: Lua): Int {
+            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
+            lua.push(managedTable.deepCopy(), Lua.Conversion.NONE)
+            return 1
+        }
+
+        private fun luaHasKey(lua: Lua): Int {
+            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
+            val key = lua.toAny(2) ?: lua.throwTypeError(2, Lua.LuaType.STRING)
+            lua.push(managedTable.map.containsKey(key))
+            return 1
+        }
+
+        val luaMeta = Observable.luaMeta.extend(ManagedLuaTable::class) {
+            callable(:: luaPairs)
+            callable(::luaToTable)
+            callable(::luaRawLookup)
+            callable(::luaLookup)
+            callable(::luaSetNested, "Set")
+            callable(::luaDeepCopy)
+            callable(::luaHasKey)
         }
     }
 }

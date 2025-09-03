@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.checkUserdata
 
 class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float, val offsetY: Float) : Drawable {
     override fun update(delta: Float) = Unit
@@ -51,9 +52,16 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
     }
 
     companion object {
+
+        private fun luaWithoutOffset(lua: Lua): Int {
+            val self = lua.checkUserdata<TextureRegionDrawable>(1)
+            lua.push(self.withoutOffset(), Lua.Conversion.NONE)
+            return 1
+        }
+
         val luaMeta = Drawable.luaMeta.extend(TextureRegionDrawable::class) {
             readOnly(TextureRegionDrawable::textureRegion)
-            callable(TextureRegionDrawable::withoutOffset)
+            callable(::luaWithoutOffset)
         }
     }
 }

@@ -7,6 +7,7 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkRegistry
 import world.selene.common.lua.checkString
+import world.selene.common.lua.checkUserdata
 import world.selene.common.util.Coordinate
 import world.selene.server.dimensions.Dimension
 
@@ -25,6 +26,30 @@ class TransientTile(
     }
 
     companion object {
+        private fun luaGetMetadata(lua: Lua): Int {
+            val tile = lua.checkUserdata<TransientTile>(1)
+            val key = lua.checkString(2)
+            val value = tile.definition.metadata[key]
+            lua.push(value, Lua.Conversion.FULL)
+            return 1
+        }
+
+        private fun luaHasTag(lua: Lua): Int {
+            val tile = lua.checkUserdata<TransientTile>(1)
+            val tag = lua.checkString(2)
+            lua.push(tile.definition.tags.contains(tag))
+            return 1
+        }
+
+        private fun luaSwap(lua: Lua): Int {
+            val tile = lua.checkUserdata<TransientTile>(1)
+            val newTileDef = lua.checkRegistry(2, tile.definition.registry)
+            val layer = lua.toString(3)
+            val newTile = tile.dimension.swapTile(tile.coordinate, tile.definition, newTileDef, layer)
+            lua.push(newTile, Lua.Conversion.NONE)
+            return 1
+        }
+
         val luaMeta = LuaMappedMetatable(TransientTile::class) {
             readOnly(TransientTile::definition)
             readOnly(TransientTile::name)
@@ -33,30 +58,9 @@ class TransientTile(
             readOnly(TransientTile::x)
             readOnly(TransientTile::y)
             readOnly(TransientTile::z)
-            callable("GetMetadata") {
-                val tile = it.checkSelf()
-                val key = it.checkString(2)
-                val value = tile.definition.metadata[key]
-                if (value != null) {
-                    it.push(value, Lua.Conversion.FULL)
-                    return@callable 1
-                }
-                0
-            }
-            callable("HasTag") {
-                val tile = it.checkSelf()
-                val key = it.checkString(2)
-                it.push(tile.definition.tags.contains(key))
-                1
-            }
-            callable("Swap") {
-                val tile = it.checkSelf()
-                val newTileDef = it.checkRegistry(2, tile.definition.registry)
-                val layer = it.toString(3)
-                val newTile = tile.dimension.swapTile(tile.coordinate, tile.definition, newTileDef, layer)
-                it.push(newTile, Lua.Conversion.NONE)
-                1
-            }
+            callable(::luaGetMetadata)
+            callable(::luaHasTag)
+            callable(::luaSwap)
         }
     }
 }

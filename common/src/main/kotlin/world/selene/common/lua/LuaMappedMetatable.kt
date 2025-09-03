@@ -9,12 +9,11 @@ import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.jvmErasure
 
-class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMappedMetatable<T>.() -> Unit)) :
+open class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMappedMetatable<T>.() -> Unit)) :
     LuaMetatable {
     private val properties = mutableMapOf<String, KProperty<*>>()
     private val mutableProperties = mutableMapOf<String, KMutableProperty<*>>()
     private val callables = mutableMapOf<String, KFunction<*>>()
-    private val inlineCallables = mutableMapOf<String, (Lua) -> Int>()
     private val getters = mutableMapOf<String, KFunction<*>>()
     private val inlineGetters = mutableMapOf<String, (Lua) -> Int>()
     private val setters = mutableMapOf<String, KFunction<*>>()
@@ -90,22 +89,14 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
         property.isAccessible = true
     }
 
-    fun callable(function: KFunction<*>) {
+    fun callable(function: KFunction<*>, alias: String? = null) {
         require(!function.isSuspend) { "Suspend functions are not supported" }
-        require(function.parameters.size <= 2) { "Method '${function.name}' has invalid number of parameters: ${function.parameters.size}" }
-        require(function.parameters[0].type.classifier == clazz) { "Method '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
-        if (function.parameters.size == 2) {
-            require(function.parameters[1].type.classifier == Lua::class) { "Method '${function.name}' has invalid parameter type: ${function.parameters[1].type}" }
-        }
-        val key = capitalize(function.name.removePrefix("lua"))
-        inlineCallables.remove(key)
+        require(function.parameters.size == 1) { "Method '${function.name}' has invalid number of parameters: ${function.parameters.size}" }
+        require(function.parameters[0].type.classifier == Lua::class) { "Method '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
+        require(function.returnType.classifier == Int::class) { "Method '${function.name}' has invalid return type: ${function.returnType}" }
+        val key = alias ?: capitalize(function.name.removePrefix("lua"))
         callables[key] = function
         function.isAccessible = true
-    }
-
-    fun callable(key: String, function: (Lua) -> Int) {
-        callables.remove(key)
-        inlineCallables[key] = function
     }
 
     override fun luaGet(lua: Lua): Int {
@@ -114,35 +105,7 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
 
         callables[key]?.let { method ->
             lua.push { lua ->
-                try {
-                    val result = when (method.parameters.size) {
-                        1 -> method.call(self)
-                        2 -> method.call(self, lua)
-                        else -> return@push lua.error(IllegalStateException("Method '$key' has invalid number of parameters: ${method.parameters.size}"))
-                    }
-
-                    when (result) {
-                        is Int -> result
-                        is Unit -> 0
-                        else -> {
-                            lua.push(result, Lua.Conversion.FULL)
-                            1
-                        }
-                    }
-                } catch (e: Exception) {
-                    return@push lua.error(e)
-                }
-            }
-            return 1
-        }
-
-        inlineCallables[key]?.let { method ->
-            lua.push { lua ->
-                try {
-                    method(lua)
-                } catch (e: Exception) {
-                    lua.error(e)
-                }
+                method.call(lua) as Int
             }
             return 1
         }
@@ -256,9 +219,6 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
             for (entry in source.callables) {
                 callable(entry.value)
             }
-            for (entry in source.inlineCallables) {
-                callable(entry.key, entry.value)
-            }
             for (entry in source.getters) {
                 getter(entry.value)
             }
@@ -277,7 +237,6 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
     fun has(key: String): Boolean {
         return properties.containsKey(key)
                 || callables.containsKey(key)
-                || inlineCallables.containsKey(key)
                 || getters.containsKey(key)
                 || inlineGetters.containsKey(key)
     }

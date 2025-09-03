@@ -5,6 +5,7 @@ import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkString
+import world.selene.common.lua.checkUserdata
 import world.selene.server.lua.ServerLuaSignals
 
 enum class LoginQueueStatus {
@@ -21,23 +22,29 @@ data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var
     }
 
     companion object {
+        private fun luaNotify(lua: Lua): Int {
+            val entry = lua.checkUserdata<LoginQueueEntry>(1)
+            entry.message = lua.checkString(2)
+            return 0
+        }
+
+        private fun luaAccept(lua: Lua): Int {
+            val entry = lua.checkUserdata<LoginQueueEntry>(1)
+            entry.status = LoginQueueStatus.Accepted
+            return 0
+        }
+
+        private fun luaReject(lua: Lua): Int {
+            val entry = lua.checkUserdata<LoginQueueEntry>(1)
+            entry.status = LoginQueueStatus.Rejected
+            entry.message = lua.checkString(2)
+            return 0
+        }
+
         val luaMeta = LuaMappedMetatable(LoginQueueEntry::class) {
-            callable("Notify") {
-                val entry = it.checkSelf()
-                entry.message = it.checkString(1)
-                0
-            }
-            callable("Accept") {
-                val entry = it.checkSelf()
-                entry.status = LoginQueueStatus.Accepted
-                0
-            }
-            callable("Reject") {
-                val entry = it.checkSelf()
-                entry.status = LoginQueueStatus.Rejected
-                entry.message = it.checkString(1)
-                0
-            }
+            callable(::luaNotify)
+            callable(::luaAccept)
+            callable(::luaReject)
         }
     }
 }

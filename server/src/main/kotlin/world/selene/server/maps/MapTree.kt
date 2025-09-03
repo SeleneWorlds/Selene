@@ -259,159 +259,176 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
     }
 
     companion object {
-        val luaMeta = LuaMappedMetatable(MapTree::class) {
-            callable("Merge") {
-                val mapTree = it.checkSelf()
-                val other = it.checkUserdata<MapTree>(2)
-                mapTree.merge(other)
-                return@callable 0
-            }
+        private fun luaMerge(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val other = lua.checkUserdata<MapTree>(2)
+            mapTree.merge(other)
+            return 0
+        }
+        
+        private fun luaPlaceTile(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val tileDef = lua.checkRegistry(index + 1, mapTree.registries.tiles)
+            val layerName = lua.toString(index + 2)
+            mapTree.placeTile(coordinate, tileDef, layerName)
+            return 0
+        }
 
-            callable("PlaceTile") { lua ->
-                val mapTree = lua.checkSelf()
-                val (coordinate, index) = lua.checkCoordinate(2)
-                val tileDef = lua.checkRegistry(index + 1, mapTree.registries.tiles)
-                val layerName = lua.toString(index + 2)
-                mapTree.placeTile(coordinate, tileDef, layerName)
-                return@callable 0
-            }
+        private fun luaReplaceTiles(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val tileDef = lua.checkRegistry(index + 1, mapTree.registries.tiles)
+            val layerName = lua.toString(index + 2)
+            mapTree.replaceTiles(coordinate, tileDef, layerName)
+            return 0
+        }
 
-            callable("ReplaceTiles") { lua ->
-                val mapTree = lua.checkSelf()
-                val (coordinate, index) = lua.checkCoordinate(2)
-                val tileDef = lua.checkRegistry(index + 1, mapTree.registries.tiles)
-                val layerName = lua.toString(index + 2)
-                mapTree.replaceTiles(coordinate, tileDef, layerName)
-                return@callable 0
-            }
+        private fun luaSwapTile(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val oldTileDef = lua.checkRegistry(index + 1, mapTree.registries.tiles)
+            val newTileDef = lua.checkRegistry(index + 2, mapTree.registries.tiles)
+            val layerName = lua.toString(index + 3)
+            mapTree.swapTile(coordinate, oldTileDef, newTileDef, layerName)
+            return 0
+        }
 
-            callable("SwapTile") {
-                val mapTree = it.checkSelf()
-                val (coordinate, index) = it.checkCoordinate(2)
-                val oldTileDef = it.checkRegistry(index + 1, mapTree.registries.tiles)
-                val newTileDef = it.checkRegistry(index + 2, mapTree.registries.tiles)
-                val layerName = it.toString(index + 3)
-                mapTree.swapTile(coordinate, oldTileDef, newTileDef, layerName)
-                return@callable 0
-            }
+        private fun luaRemoveTile(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val tileDef = lua.checkRegistry(index + 1, mapTree.registries.tiles)
+            val layerName = lua.toString(index + 2)
+            mapTree.removeTile(coordinate, tileDef, layerName)
+            return 0
+        }
 
-            callable("RemoveTile") {
-                val mapTree = it.checkSelf()
-                val (coordinate, index) = it.checkCoordinate(2)
-                val tileDef = it.checkRegistry(index + 1, mapTree.registries.tiles)
-                val layerName = it.toString(index + 2)
-                mapTree.removeTile(coordinate, tileDef, layerName)
-                return@callable 0
-            }
+        private fun luaResetTile(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val layerName = lua.toString(index + 1)
+            mapTree.resetTile(coordinate, layerName)
+            return 0
+        }
 
-            callable("ResetTile") {
-                val mapTree = it.checkSelf()
-                val (coordinate, index) = it.checkCoordinate(2)
-                val layerName = it.toString(index + 1)
-                mapTree.resetTile(coordinate, layerName)
-                return@callable 0
-            }
+        private fun luaAnnotateTile(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val key = lua.checkString(index + 1)
+            val data = lua.checkAnyMap(index + 2)
+            val layerName = lua.toString(index + 3)
+            mapTree.annotateTile(coordinate, key, data, layerName)
+            return 0
+        }
 
-            callable("AnnotateTile") {
-                val mapTree = it.checkSelf()
-                val (coordinate, index) = it.checkCoordinate(2)
-                val key = it.checkString(index + 1)
-                val data = it.checkAnyMap(index + 2)
-                val layerName = it.toString(index + 3)
-                mapTree.annotateTile(coordinate, key, data, layerName)
-                return@callable 0
-            }
-
-            callable("SetVisibility") {
-                val mapTree = it.checkSelf()
-                val layerName = it.checkString(2)
-                val layer = mapTree.getLayer(layerName)
-                val enabled = it.checkBoolean(3)
-                val tagName = if (it.isString(4)) it.checkString(4) else "default"
-                if (enabled) {
-                    layer.addVisibilityTag(tagName)
-                } else {
-                    layer.removeVisibilityTag(tagName)
-                }
-                return@callable 0
-            }
-
-            callable("IsVisible") {
-                val mapTree = it.checkSelf()
-                val layerName = it.checkString(2)
-                val layer = mapTree.getLayer(layerName)
-                val tagName = if (it.isString(3)) it.checkString(3) else "default"
-                it.push(layer.visibilityTags.contains(tagName))
-                return@callable 1
-            }
-
-            callable("IsInvisible") {
-                val mapTree = it.checkSelf()
-                val layerName = it.checkString(2)
-                val layer = mapTree.getLayer(layerName)
-                val tagName = if (it.isString(3)) it.checkString(3) else "default"
-                it.push(!layer.visibilityTags.contains(tagName))
-                return@callable 1
-            }
-
-            callable("MakeVisible") {
-                val mapTree = it.checkSelf()
-                val layerName = it.checkString(2)
-                val layer = mapTree.getLayer(layerName)
-                val tagName = if (it.isString(3)) it.checkString(3) else "default"
+        private fun luaSetVisibility(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val layerName = lua.checkString(2)
+            val layer = mapTree.getLayer(layerName)
+            val enabled = lua.checkBoolean(3)
+            val tagName = if (lua.isString(4)) lua.checkString(4) else "default"
+            if (enabled) {
                 layer.addVisibilityTag(tagName)
-                return@callable 0
-            }
-
-            callable("MakeInvisible") {
-                val mapTree = it.checkSelf()
-                val layerName = it.checkString(2)
-                val layer = mapTree.getLayer(layerName)
-                val tagName = if (it.isString(3)) it.checkString(3) else "default"
+            } else {
                 layer.removeVisibilityTag(tagName)
-                return@callable 0
             }
+            return 0
+        }
 
-            callable("HasCollisions") {
-                val mapTree = it.checkSelf()
-                val layerName = it.checkString(2)
-                val layer = mapTree.getLayer(layerName)
-                val tagName = if (it.isString(3)) it.checkString(3) else "default"
-                it.push(layer.collisionTags.contains(tagName))
-                return@callable 0
-            }
+        private fun luaIsVisible(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val layerName = lua.checkString(2)
+            val layer = mapTree.getLayer(layerName)
+            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
+            lua.push(layer.visibilityTags.contains(tagName))
+            return 1
+        }
 
-            callable("SetCollisions") {
-                val mapTree = it.checkSelf()
-                val layerName = it.checkString(2)
-                val layer = mapTree.getLayer(layerName)
-                val enabled = it.checkBoolean(3)
-                val tagName = if (it.isString(4)) it.checkString(4) else "default"
-                if (enabled) {
-                    layer.addCollisionTag(tagName)
-                } else {
-                    layer.removeCollisionTag(tagName)
-                }
-                return@callable 0
-            }
+        private fun luaIsInvisible(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val layerName = lua.checkString(2)
+            val layer = mapTree.getLayer(layerName)
+            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
+            lua.push(!layer.visibilityTags.contains(tagName))
+            return 1
+        }
 
-            callable("EnableCollisions") {
-                val mapTree = it.checkSelf()
-                val layerName = it.checkString(2)
-                val layer = mapTree.getLayer(layerName)
-                val tagName = if (it.isString(3)) it.checkString(3) else "default"
+        private fun luaMakeVisible(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val layerName = lua.checkString(2)
+            val layer = mapTree.getLayer(layerName)
+            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
+            layer.addVisibilityTag(tagName)
+            return 0
+        }
+
+        private fun luaMakeInvisible(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val layerName = lua.checkString(2)
+            val layer = mapTree.getLayer(layerName)
+            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
+            layer.removeVisibilityTag(tagName)
+            return 0
+        }
+
+        private fun luaHasCollisions(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val layerName = lua.checkString(2)
+            val layer = mapTree.getLayer(layerName)
+            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
+            lua.push(layer.collisionTags.contains(tagName))
+            return 0
+        }
+
+        private fun luaSetCollisions(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val layerName = lua.checkString(2)
+            val layer = mapTree.getLayer(layerName)
+            val enabled = lua.checkBoolean(3)
+            val tagName = if (lua.isString(4)) lua.checkString(4) else "default"
+            if (enabled) {
                 layer.addCollisionTag(tagName)
-                return@callable 0
-            }
-
-            callable("DisableCollisions") {
-                val mapTree = it.checkSelf()
-                val layerName = it.checkString(2)
-                val layer = mapTree.getLayer(layerName)
-                val tagName = if (it.isString(3)) it.checkString(3) else "default"
+            } else {
                 layer.removeCollisionTag(tagName)
-                return@callable 0
             }
+            return 0
+        }
+
+        private fun luaEnableCollisions(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val layerName = lua.checkString(2)
+            val layer = mapTree.getLayer(layerName)
+            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
+            layer.addCollisionTag(tagName)
+            return 0
+        }
+
+        private fun luaDisableCollisions(lua: Lua): Int {
+            val mapTree = lua.checkUserdata<MapTree>(1)
+            val layerName = lua.checkString(2)
+            val layer = mapTree.getLayer(layerName)
+            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
+            layer.removeCollisionTag(tagName)
+            return 0
+        }
+        
+        val luaMeta = LuaMappedMetatable(MapTree::class) {
+            callable(::luaMerge)
+            callable(::luaPlaceTile)
+            callable(::luaReplaceTiles)
+            callable(::luaSwapTile)
+            callable(::luaRemoveTile)
+            callable(::luaResetTile)
+            callable(::luaAnnotateTile)
+            callable(::luaSetVisibility)
+            callable(::luaMakeVisible)
+            callable(::luaMakeInvisible)
+            callable(::luaIsVisible)
+            callable(::luaIsInvisible)
+            callable(::luaSetCollisions)
+            callable(::luaEnableCollisions)
+            callable(::luaDisableCollisions)
+            callable(::luaHasCollisions)
         }
     }
 

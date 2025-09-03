@@ -26,6 +26,7 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkString
+import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.toAnyMap
 import world.selene.common.util.Coordinate
 import kotlin.collections.forEach
@@ -283,32 +284,50 @@ class Entity(
     }
 
     companion object {
+        private fun luaSpawn(lua: Lua): Int {
+            val self = lua.checkUserdata<Entity>(1)
+            self.spawn()
+            return 0
+        }
+
+        private fun luaDespawn(lua: Lua): Int {
+            val self = lua.checkUserdata<Entity>(1)
+            self.despawn()
+            return 0
+        }
+
+        private fun luaSetCoordinate(lua: Lua): Int {
+            val self = lua.checkUserdata<Entity>(1)
+            val (coordinate, _) = lua.checkCoordinate(2)
+            self.setCoordinateAndUpdate(coordinate)
+            return 0
+        }
+
+        private fun luaAddComponent(lua: Lua): Int {
+            val self = lua.checkUserdata<Entity>(1)
+            val componentName = lua.checkString(2)
+            val componentData = lua.toAnyMap(3)
+            val componentConfiguration =
+                self.objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
+            self.addComponent(componentName, componentConfiguration)
+            return 0
+        }
+
+        private fun luaGetComponent(lua: Lua): Int {
+            val self = lua.checkUserdata<Entity>(1)
+            val componentName = lua.checkString(2)
+            val component = self.components[componentName]
+            lua.push(component, Lua.Conversion.NONE)
+            return 1
+        }
+
         val luaMeta = LuaMappedMetatable(Entity::class) {
             readOnly(Entity::coordinate)
-            callable(Entity::spawn)
-            callable(Entity::despawn)
-            callable("SetCoordinate") {
-                val self = it.checkSelf()
-                val (coordinate, _) = it.checkCoordinate(2)
-                self.setCoordinateAndUpdate(coordinate)
-                0
-            }
-            callable("AddComponent") {
-                val self = it.checkSelf()
-                val componentName = it.checkString(2)
-                val componentData = it.toAnyMap(3)
-                val componentConfiguration =
-                    self.objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
-                self.addComponent(componentName, componentConfiguration)
-                0
-            }
-            callable("GetComponent") {
-                val self = it.checkSelf()
-                val componentName = it.checkString(2)
-                val component = self.components[componentName]
-                it.push(component, Lua.Conversion.NONE)
-                1
-            }
+            callable(::luaSpawn)
+            callable(::luaDespawn)
+            callable(::luaSetCoordinate)
+            callable(::luaAddComponent)
+            callable(::luaGetComponent)
         }
     }
 }

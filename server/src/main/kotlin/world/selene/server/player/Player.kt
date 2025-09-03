@@ -96,6 +96,30 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
     }
 
     companion object {
+        private fun luaSetCameraToFollowControlledEntity(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            player.setCameraToFollowControlledEntity()
+            return 0
+        }
+
+        private fun luaSetCameraToFollowTarget(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            player.setCameraToFollowTarget()
+            return 0
+        }
+
+        private fun luaSetCameraToCoordinate(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            player.setCameraToCoordinate(lua)
+            return 0
+        }
+
+        private fun luaRef(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            lua.push(player.luaReference(), Lua.Conversion.NONE)
+            return 1
+        }
+
         val luaMeta = LuaMappedMetatable(Player::class) {
             readOnly(Player::customData)
             readOnly(Player::idleTime)
@@ -104,13 +128,10 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
             readOnly(Player::languageString, "Language")
             writable(Player::controlledEntity)
             writable(Player::cameraEntity)
-            callable(Player::setCameraToFollowControlledEntity)
-            callable(Player::setCameraToFollowTarget)
-            callable(Player::setCameraToCoordinate)
-            callable("Ref") {
-                it.push(it.checkSelf().luaReference(), Lua.Conversion.NONE)
-                1
-            }
+            callable(::luaSetCameraToFollowControlledEntity)
+            callable(::luaSetCameraToFollowTarget)
+            callable(::luaSetCameraToCoordinate)
+            callable(::luaRef)
         }
     }
 }

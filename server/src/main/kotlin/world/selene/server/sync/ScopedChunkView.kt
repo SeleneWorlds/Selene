@@ -153,14 +153,6 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
         }
 
         val luaMeta = LuaMappedMetatable(ScopedChunkView::class) {
-            callable("GetAnnotation") {
-                val chunkView = it.checkSelf()
-                val coordinate = it.checkUserdata<Coordinate>(2)
-                val key = it.checkString(3)
-                val value = chunkView.annotations.get(coordinate, key)
-                it.push(value, Lua.Conversion.FULL)
-                1
-            }
         }
     }
 

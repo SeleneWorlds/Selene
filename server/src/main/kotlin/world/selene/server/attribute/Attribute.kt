@@ -64,52 +64,62 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
     }
 
     companion object {
+        private fun luaAddConstraint(lua: Lua): Int {
+            val attribute = lua.checkUserdata<Attribute<Any?>>(1)
+            val name = lua.checkString(2)
+            val registrationSite = lua.getCallerInfo()
+            val filter = when (lua.type(3)) {
+                Lua.LuaType.FUNCTION -> LuaAttributeFilter(lua.checkFunction(3), registrationSite)
+                Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(3)
+                else -> lua.throwTypeError(3, AttributeFilter::class)
+            }
+            attribute.addConstraint(name, filter)
+            lua.push(filter, Lua.Conversion.NONE)
+            return 1
+        }
+
+        private fun luaRemoveConstraint(lua: Lua): Int {
+            val attribute = lua.checkUserdata<Attribute<Any?>>(1)
+            attribute.removeConstraint(lua.checkString(2))
+            return 0
+        }
+
+        private fun luaAddModifier(lua: Lua): Int {
+            val attribute = lua.checkUserdata<Attribute<Any?>>(1)
+            val registrationSite = lua.getCallerInfo()
+            val name = lua.checkString(2)
+            val filter = when (lua.type(3)) {
+                Lua.LuaType.FUNCTION -> LuaAttributeFilter(lua.checkFunction(3), registrationSite)
+                Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(3)
+                else -> lua.throwTypeError(3, AttributeFilter::class)
+            }
+            attribute.addModifier(name, filter)
+            lua.push(filter, Lua.Conversion.NONE)
+            return 1
+        }
+
+        private fun luaRemoveModifier(lua: Lua): Int {
+            val attribute = lua.checkUserdata<Attribute<Any?>>(1)
+            attribute.removeModifier(lua.checkString(2))
+            return 0
+        }
+
+        private fun luaRefresh(lua: Lua): Int {
+            val attribute = lua.checkUserdata<Attribute<Any?>>(1)
+            attribute.notifyObservers(attribute)
+            return 0
+        }
+
         val luaMeta = Observable.luaMeta.extend(Attribute::class) {
             readOnly(Attribute<*>::name)
             writable(Attribute<*>::value)
             readOnly(Attribute<*>::effectiveValue)
             readOnly(Attribute<*>::owner)
-            callable("AddConstraint") { lua ->
-                @Suppress("UNCHECKED_CAST")
-                val attribute = lua.checkSelf() as Attribute<Any?>
-                val registrationSite = lua.getCallerInfo()
-                val filter = when (lua.type(3)) {
-                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(lua.checkFunction(3), registrationSite)
-                    Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(3)
-                    else -> lua.throwTypeError(3, AttributeFilter::class)
-                }
-                attribute.addConstraint(lua.checkString(2), filter)
-                lua.push(filter, Lua.Conversion.NONE)
-                1
-            }
-            callable("RemoveConstraint") { lua ->
-                val attribute = lua.checkSelf()
-                attribute.removeConstraint(lua.checkString(2))
-                0
-            }
-            callable("AddModifier") { lua ->
-                @Suppress("UNCHECKED_CAST")
-                val attribute = lua.checkSelf() as Attribute<Any?>
-                val registrationSite = lua.getCallerInfo()
-                val filter = when (lua.type(3)) {
-                    Lua.LuaType.FUNCTION -> LuaAttributeFilter(lua.checkFunction(3), registrationSite)
-                    Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeFilter<Any?>>(3)
-                    else -> lua.throwTypeError(3, AttributeFilter::class)
-                }
-                attribute.addModifier(lua.checkString(2), filter)
-                lua.push(filter, Lua.Conversion.NONE)
-                1
-            }
-            callable("RemoveModifier") { lua ->
-                val attribute = lua.checkSelf()
-                attribute.removeModifier(lua.checkString(2))
-                0
-            }
-            callable("Refresh") { lua ->
-                val attribute = lua.checkSelf()
-                attribute.notifyObservers(attribute)
-                0
-            }
+            callable(::luaAddConstraint)
+            callable(::luaRemoveConstraint)
+            callable(::luaAddModifier)
+            callable(::luaRemoveModifier)
+            callable(::luaRefresh)
         }
     }
 

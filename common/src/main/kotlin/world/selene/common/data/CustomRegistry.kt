@@ -2,88 +2,19 @@ package world.selene.common.data
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.BooleanNode
-import com.fasterxml.jackson.databind.node.DoubleNode
-import com.fasterxml.jackson.databind.node.FloatNode
-import com.fasterxml.jackson.databind.node.IntNode
-import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.ShortNode
-import com.fasterxml.jackson.databind.node.TextNode
-import com.fasterxml.jackson.module.kotlin.treeToValue
 import com.google.common.collect.HashBasedTable
 import com.google.common.collect.Table
 import org.slf4j.LoggerFactory
-import party.iroiro.luajava.Lua
 import world.selene.common.bundles.BundleDatabase
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.LuaReferencable
-import world.selene.common.lua.LuaReference
 import world.selene.common.lua.LuaReferenceResolver
-import world.selene.common.lua.checkString
 import java.io.File
 import kotlin.reflect.KClass
 
 class CustomRegistry(
-    private val objectMapper: ObjectMapper,
+    val objectMapper: ObjectMapper,
     private val definition: RegistryDefinition
-) : Registry<CustomRegistry.CustomRegistryObject>, LuaReferenceResolver<String, CustomRegistry.CustomRegistryObject> {
-
-    class CustomRegistryObject(val registry: CustomRegistry, val name: String, val element: JsonNode) : LuaMetatableProvider, LuaReferencable<String, CustomRegistryObject> {
-        val luaReference = LuaReference(CustomRegistryObject::class, name, registry, this)
-
-        fun getMetadata(key: String): Any? {
-            return element["metadata"]?.get(key)?.asAny()
-        }
-
-        override fun luaReference(): LuaReference<String, CustomRegistryObject> {
-            return luaReference
-        }
-
-        override fun luaMetatable(lua: Lua): LuaMetatable {
-            return luaMeta
-        }
-
-        override fun toString(): String {
-            return "CustomRegistryObject(${registry.name}, $name, $element)"
-        }
-
-        companion object {
-            val luaMeta = LuaMappedMetatable(CustomRegistryObject::class) {
-                readOnly(CustomRegistryObject::name)
-                callable("GetMetadata") {
-                    val registryObject = it.checkSelf()
-                    val key = it.checkString(2)
-                    val value = registryObject.getMetadata(key)
-                    if (value != null) {
-                        it.push(value, Lua.Conversion.FULL)
-                        return@callable 1
-                    }
-                    0
-                }
-                callable("GetField") { lua ->
-                    val registryObject = lua.checkSelf()
-                    val key = lua.checkString(2)
-                    val objectMapper = registryObject.registry.objectMapper
-                    when (val value = registryObject.element[key]) {
-                        is LongNode -> lua.push(value.asLong())
-                        is IntNode, is ShortNode -> lua.push(value.asInt())
-                        is FloatNode, is DoubleNode -> lua.push(value.asDouble())
-                        is BooleanNode -> lua.push(value.asBoolean())
-                        is TextNode -> lua.push(value.asText())
-                        is ArrayNode -> lua.push(objectMapper.treeToValue(value), Lua.Conversion.FULL)
-                        is ObjectNode -> lua.push(objectMapper.treeToValue(value), Lua.Conversion.FULL)
-                        else -> lua.pushNil()
-                    }
-                    return@callable 1
-                    0
-                }
-            }
-        }
-    }
+) : Registry<CustomRegistryObject>, LuaReferenceResolver<String, CustomRegistryObject> {
 
     private val logger = LoggerFactory.getLogger(CustomRegistry::class.java)
     private val entries: MutableMap<String, CustomRegistryObject> = mutableMapOf()

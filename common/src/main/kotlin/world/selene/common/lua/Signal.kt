@@ -27,12 +27,6 @@ class Signal(private val name: String) : LuaMetatableProvider {
         }
     }
 
-    fun connect(lua: Lua): Int {
-        val callback = lua.checkFunction(2)
-        callbacks.add(SignalHandler(name, callback, lua.getCallerInfo()))
-        return 0
-    }
-
     fun hasListeners(): Boolean {
         return callbacks.isNotEmpty()
     }
@@ -42,8 +36,16 @@ class Signal(private val name: String) : LuaMetatableProvider {
     }
 
     companion object {
+
+        private fun luaConnect(lua: Lua): Int {
+            val signal = lua.checkUserdata<Signal>(1)
+            val callback = lua.checkFunction(2)
+            signal.callbacks.add(SignalHandler(signal.name, callback, lua.getCallerInfo()))
+            return 0
+        }
+
         val luaMeta = LuaMappedMetatable(Signal::class) {
-            callable(Signal::connect)
+            callable(::luaConnect)
         }
     }
 }

@@ -5,6 +5,7 @@ import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.Signal
+import world.selene.common.lua.checkUserdata
 
 class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawable {
     private var currentFrame = 0
@@ -68,12 +69,18 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
     }
 
     companion object {
+        private fun luaWithoutOffset(lua: Lua): Int {
+            val self = lua.checkUserdata<AnimatedDrawable>(1)
+            lua.push(self.withoutOffset(), Lua.Conversion.NONE)
+            return 1
+        }
+
         val luaMeta = Drawable.luaMeta.extend(AnimatedDrawable::class) {
             readOnly(AnimatedDrawable::currentFrame)
             readOnly(AnimatedDrawable::elapsedTime)
             readOnly(AnimatedDrawable::duration)
             readOnly(AnimatedDrawable::animationCompleted)
-            callable(AnimatedDrawable::withoutOffset)
+            callable(::luaWithoutOffset)
         }
     }
 }

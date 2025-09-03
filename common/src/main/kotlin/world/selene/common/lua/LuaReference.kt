@@ -76,13 +76,15 @@ class LuaReference<TID : Any, TObject : Any>(
     }
 
     companion object {
+        private fun luaGet(lua: Lua): Int {
+            val ref = lua.checkUserdata<LuaReference<Any, Any>>(1)
+            lua.push(ref.resolve(), Lua.Conversion.NONE)
+            return 1
+        }
+
         val luaMeta = LuaMappedMetatable(LuaReference::class) {
             readOnly(LuaReference<*, *>::id)
-            callable("Get") {
-                @Suppress("UNCHECKED_CAST") val ref = it.checkSelf() as LuaReference<Any, Any>
-                it.push(ref.resolve(), Lua.Conversion.NONE)
-                1
-            }
+            callable(::luaGet)
         }
     }
 }

@@ -63,7 +63,9 @@ import world.selene.client.lua.LuaGameModule
 import world.selene.client.lua.LuaClientGridModule
 import world.selene.client.lua.LuaInputModule
 import world.selene.client.lua.LuaMovementGridModule
+import world.selene.client.lua.LuaSkinUtils
 import world.selene.client.lua.LuaVisualsModule
+import world.selene.client.lua.SkinLuaMetatable
 import world.selene.client.maps.ClientMap
 import world.selene.client.maps.Entity
 import world.selene.client.maps.EntityPool
@@ -114,6 +116,8 @@ class SeleneApplication(
             singleOf(::LuaPayloadRegistry)
             singleOf(::ClientLuaSignals)
             singleOf(::Messages)
+            singleOf(::LuaSkinUtils)
+            singleOf(::SkinLuaMetatable)
             singleOf(::LuaDebugModule) { bind<LuaModule>() }
             singleOf(::LuaOsModule) { bind<LuaModule>() }
             singleOf(::LuaPackageModule) { bind<LuaModule>() }

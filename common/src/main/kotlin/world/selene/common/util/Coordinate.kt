@@ -5,6 +5,7 @@ import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.checkCoordinate
+import world.selene.common.lua.checkUserdata
 import kotlin.math.sqrt
 
 data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider {
@@ -29,6 +30,13 @@ data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider
     companion object {
         val Zero = Coordinate(0, 0, 0)
 
+        private fun luaGetHorizontalDistanceTo(lua: Lua): Int {
+            val self = lua.checkUserdata<Coordinate>(1)
+            val (other, _) = lua.checkCoordinate(2)
+            lua.push(self.horizontalDistanceTo(other))
+            return 1
+        }
+
         val luaMeta = LuaMappedMetatable(Coordinate::class) {
             readOnly(Coordinate::x)
             readOnly(Coordinate::y)
@@ -36,12 +44,7 @@ data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider
             readOnly(Coordinate::x, "x")
             readOnly(Coordinate::y, "y")
             readOnly(Coordinate::z, "z")
-            callable("GetHorizontalDistanceTo") {
-                val self = it.checkSelf()
-                val (other, _) = it.checkCoordinate(2)
-                it.push(self.horizontalDistanceTo(other))
-                1
-            }
+            callable(::luaGetHorizontalDistanceTo)
         }
     }
 }

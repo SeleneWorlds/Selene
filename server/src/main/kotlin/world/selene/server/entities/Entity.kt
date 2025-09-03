@@ -15,6 +15,7 @@ import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkDirection
 import world.selene.common.lua.checkString
+import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.getCallerInfo
 import world.selene.common.lua.toAny
 import world.selene.common.lua.toAnyMap
@@ -144,6 +145,219 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     }
 
     companion object {
+        private fun luaRef(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.luaReference(), Lua.Conversion.NONE)
+            return 1
+        }
+
+        private fun luaSetCoordinate(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val (coordinate, _) = lua.checkCoordinate(2)
+            entity.coordinate = coordinate
+            entity.dimension?.syncManager?.entityTeleported(entity)
+            return 0
+        }
+
+        private fun luaSpawn(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val dimension = lua.toUserdata<Dimension>(2) ?: entity.world.dimensionManager.getOrCreateDimension(0)
+            entity.dimension = dimension
+            dimension.syncManager.entityAdded(entity)
+            return 0
+        }
+
+        private fun luaDespawn(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            entity.despawn()
+            return 0
+        }
+
+        private fun luaRemove(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            entity.remove()
+            return 0
+        }
+
+        private fun luaSetFacing(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val direction = lua.checkDirection(2, entity.world.grid)
+            entity.facing = direction
+            entity.dimension?.syncManager?.entityTurned(entity, direction)
+            return 0
+        }
+
+        private fun luaMove(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val direction = lua.checkDirection(2, entity.world.grid)
+            val coordinate = entity.coordinate + direction.vector
+            lua.push(entity.moveTo(coordinate))
+            return 1
+        }
+
+        private fun luaSetVision(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val enabled = lua.checkBoolean(2)
+            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
+            if (enabled) {
+                entity.visionTags.add(tagName)
+            } else {
+                entity.visionTags.remove(tagName)
+            }
+            return 0
+        }
+
+        private fun luaHasVision(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+            lua.push(entity.visionTags.contains(tagName))
+            return 1
+        }
+
+        private fun luaGrantVision(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+            entity.visionTags.add(tagName)
+            return 0
+        }
+
+        private fun luaRevokeVision(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+            entity.visionTags.remove(tagName)
+            return 0
+        }
+
+        private fun luaSetVisibility(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val enabled = lua.checkBoolean(2)
+            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
+            if (enabled) {
+                entity.visibilityTags.add(tagName)
+            } else {
+                entity.visibilityTags.remove(tagName)
+            }
+            return 0
+        }
+
+        private fun luaIsVisible(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+            lua.push(entity.visibilityTags.contains(tagName))
+            return 1
+        }
+
+        private fun luaIsInvisible(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+            lua.push(!entity.visibilityTags.contains(tagName))
+            return 1
+        }
+
+        private fun luaMakeVisible(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+            entity.visibilityTags.add(tagName)
+            return 0
+        }
+
+        private fun luaMakeInvisible(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+            entity.visibilityTags.remove(tagName)
+            return 0
+        }
+
+        private fun luaHasCollisions(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+            lua.push(entity.collisionTags.contains(tagName))
+            return 1
+        }
+
+        private fun luaSetCollisions(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val enabled = lua.checkBoolean(2)
+            val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
+            if (enabled) {
+                entity.collisionTags.add(tagName)
+            } else {
+                entity.collisionTags.remove(tagName)
+            }
+            return 0
+        }
+
+        private fun luaEnableCollisions(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+            entity.collisionTags.add(tagName)
+            return 0
+        }
+
+        private fun luaDisableCollisions(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+            entity.collisionTags.remove(tagName)
+            return 0
+        }
+
+        private fun luaAddDynamicComponent(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val name = lua.checkString(2)
+            lua.pushValue(3)
+            val callback = lua.get()
+            val registrationSite = lua.getCallerInfo()
+            entity.dynamicComponents[name] = object : ComponentResolver {
+                override fun resolveForPlayer(player: Player): ComponentConfiguration? {
+                    val lua = callback.state()
+                    lua.push(callback)
+                    lua.push(entity, Lua.Conversion.NONE)
+                    lua.push(player, Lua.Conversion.NONE)
+                    lua.xpCall(2, 1, ClosureTrace { "[dynamic component \"$name\"] registered in $registrationSite" })
+                    return objectMapper.convertValue(lua.toAnyMap(-1), ComponentConfiguration::class.java)
+                }
+            }
+            return 0
+        }
+
+        private fun luaGetControllingPlayers(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.getControllingPlayers(), Lua.Conversion.FULL)
+            return 1
+        }
+
+        private fun luaGetAttribute(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val name = lua.checkString(2)
+            val attribute = entity.attributes[name]
+            lua.push(attribute, Lua.Conversion.NONE)
+            return 1
+        }
+
+        private fun luaCreateAttribute(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val name = lua.checkString(2)
+            val initialValue = lua.toAny(3)
+            val attribute = Attribute(entity, name, initialValue)
+            entity.attributes[name] = attribute
+            lua.push(attribute, Lua.Conversion.NONE)
+            return 1
+        }
+
+        private fun luaHasTag(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val tag = lua.checkString(2)
+            lua.push(entity.entityDefinition.tags.contains(tag))
+            return 1
+        }
+
+        private fun luaPlayAnimation(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val animationName = lua.checkString(2)
+            entity.playAnimation(animationName)
+            return 0
+        }
+
         val luaMeta = LuaMappedMetatable(Entity::class) {
             readOnly(Entity::networkId)
             readOnly(Entity::customData)
@@ -155,197 +369,32 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             readOnly(Entity::map)
             readOnly(Entity::collisionViewer, "Collision")
             readOnly(Entity::visionViewer, "Vision")
-            callable(Entity::despawn)
-            callable(Entity::remove)
-            callable("Ref") {
-                it.push(it.checkSelf().luaReference(), Lua.Conversion.NONE)
-                1
-            }
-            callable("SetCoordinate") {
-                val entity = it.checkSelf()
-                val (coordinate, _) = it.checkCoordinate(2)
-                entity.coordinate = coordinate
-                entity.dimension?.syncManager?.entityTeleported(entity)
-                0
-            }
-            callable("SetFacing") {
-                val entity = it.checkSelf()
-                val direction = it.checkDirection(2, entity.world.grid)
-                entity.facing = direction
-                entity.dimension?.syncManager?.entityTurned(
-                    entity,
-                    direction
-                )
-                0
-            }
-            callable("Move") {
-                val entity = it.checkSelf()
-                val direction = it.checkDirection(2, entity.world.grid)
-                val coordinate = entity.coordinate + direction.vector
-                if (entity.moveTo(coordinate)) 0 else 1
-            }
-            callable("CollisionMap") {
-                val entity = it.checkSelf()
-                val (coordinate, _) = it.checkCoordinate(2)
-                val chunkView = entity.world.chunkViewManager.atCoordinate(
-                    entity.dimension!!,
-                    entity.collisionViewer,
-                    coordinate
-                )
-                it.push(chunkView, Lua.Conversion.NONE)
-                1
-            }
-            callable("SetVision") {
-                val entity = it.checkSelf()
-                val enabled = it.checkBoolean(2)
-                val tagName = if (it.isString(3)) it.checkString(3) else "default"
-                if (enabled) {
-                    entity.visionTags.add(tagName)
-                } else {
-                    entity.visionTags.remove(tagName)
-                }
-                0
-            }
-            callable("HasVision") {
-                val entity = it.checkSelf()
-                val tagName = if (it.isString(2)) it.checkString(2) else "default"
-                it.push(entity.visionTags.contains(tagName))
-                1
-            }
-            callable("GrantVision") {
-                val entity = it.checkSelf()
-                val tagName = if (it.isString(2)) it.checkString(2) else "default"
-                entity.visionTags.add(tagName)
-                0
-            }
-            callable("RevokeVision") {
-                val entity = it.checkSelf()
-                val tagName = if (it.isString(2)) it.checkString(2) else "default"
-                entity.visionTags.remove(tagName)
-                0
-            }
-            callable("SetVisibility") {
-                val entity = it.checkSelf()
-                val enabled = it.checkBoolean(2)
-                val tagName = if (it.isString(3)) it.checkString(3) else "default"
-                if (enabled) {
-                    entity.visibilityTags.add(tagName)
-                } else {
-                    entity.visibilityTags.remove(tagName)
-                }
-                0
-            }
-            callable("IsVisible") {
-                val entity = it.checkSelf()
-                val tagName = if (it.isString(2)) it.checkString(2) else "default"
-                it.push(entity.visibilityTags.contains(tagName))
-                1
-            }
-            callable("IsInvisible") {
-                val entity = it.checkSelf()
-                val tagName = if (it.isString(2)) it.checkString(2) else "default"
-                it.push(!entity.visibilityTags.contains(tagName))
-                1
-            }
-            callable("MakeVisible") {
-                val entity = it.checkSelf()
-                val tagName = if (it.isString(2)) it.checkString(2) else "default"
-                entity.visibilityTags.add(tagName)
-                0
-            }
-            callable("MakeInvisible") {
-                val entity = it.checkSelf()
-                val tagName = if (it.isString(2)) it.checkString(2) else "default"
-                entity.visibilityTags.remove(tagName)
-                0
-            }
-            callable("HasCollisions") {
-                val entity = it.checkSelf()
-                val tagName = if (it.isString(2)) it.checkString(2) else "default"
-                it.push(entity.collisionTags.contains(tagName))
-                1
-            }
-            callable("SetCollisions") {
-                val entity = it.checkSelf()
-                val enabled = it.checkBoolean(2)
-                val tagName = if (it.isString(3)) it.checkString(3) else "default"
-                if (enabled) {
-                    entity.collisionTags.add(tagName)
-                } else {
-                    entity.collisionTags.remove(tagName)
-                }
-                0
-            }
-            callable("EnableCollisions") {
-                val entity = it.checkSelf()
-                val tagName = if (it.isString(2)) it.checkString(2) else "default"
-                entity.collisionTags.add(tagName)
-                0
-            }
-            callable("DisableCollisions") {
-                val entity = it.checkSelf()
-                val tagName = if (it.isString(2)) it.checkString(2) else "default"
-                entity.collisionTags.remove(tagName)
-                0
-            }
-            callable("Spawn") {
-                val entity = it.checkSelf()
-                val dimension = it.toUserdata<Dimension>(2) ?: entity.world.dimensionManager.getOrCreateDimension(0)
-                entity.dimension = dimension
-                dimension.syncManager.entityAdded(entity)
-                0
-            }
-            callable("AddDynamicComponent") { lua ->
-                val entity = lua.checkSelf()
-                val name = lua.checkString(2)
-                lua.pushValue(3)
-                val callback = lua.get()
-                val registrationSite = lua.getCallerInfo()
-                entity.dynamicComponents[name] = object : ComponentResolver {
-                    override fun resolveForPlayer(player: Player): ComponentConfiguration? {
-                        val lua = callback.state()
-                        lua.push(callback)
-                        lua.push(entity, Lua.Conversion.NONE)
-                        lua.push(player, Lua.Conversion.NONE)
-                        lua.xpCall(2, 1, ClosureTrace { "[dynamic component \"$name\"] registered in $registrationSite" })
-                        return objectMapper.convertValue(lua.toAnyMap(-1), ComponentConfiguration::class.java)
-                    }
-                }
-                0
-            }
-            callable("GetControllingPlayers") {
-                val entity = it.checkSelf()
-                it.push(entity.getControllingPlayers(), Lua.Conversion.FULL)
-                1
-            }
-            callable("GetAttribute") {
-                val entity = it.checkSelf()
-                val name = it.checkString(2)
-                val attribute = entity.attributes[name]
-                it.push(attribute, Lua.Conversion.NONE)
-                1
-            }
-            callable("CreateAttribute") {
-                val entity = it.checkSelf()
-                val name = it.checkString(2)
-                val initialValue = it.toAny(3)
-                val attribute = Attribute(entity, name, initialValue)
-                entity.attributes[name] = attribute
-                it.push(attribute, Lua.Conversion.NONE)
-                1
-            }
-            callable("HasTag") { lua ->
-                val entity = lua.checkSelf()
-                val tag = lua.checkString(2)
-                lua.push(entity.entityDefinition.tags.contains(tag))
-                1
-            }
-            callable("PlayAnimation") { lua ->
-                val entity = lua.checkSelf()
-                val animationName = lua.checkString(2)
-                entity.playAnimation(animationName)
-                0
-            }
+            callable(::luaSpawn)
+            callable(::luaDespawn)
+            callable(::luaRemove)
+            callable(::luaRef)
+            callable(::luaSetCoordinate)
+            callable(::luaSetFacing)
+            callable(::luaMove)
+            callable(::luaSetVision)
+            callable(::luaHasVision)
+            callable(::luaGrantVision)
+            callable(::luaRevokeVision)
+            callable(::luaSetVisibility)
+            callable(::luaIsVisible)
+            callable(::luaIsInvisible)
+            callable(::luaMakeVisible)
+            callable(::luaMakeInvisible)
+            callable(::luaHasCollisions)
+            callable(::luaSetCollisions)
+            callable(::luaEnableCollisions)
+            callable(::luaDisableCollisions)
+            callable(::luaAddDynamicComponent)
+            callable(::luaGetControllingPlayers)
+            callable(::luaGetAttribute)
+            callable(::luaCreateAttribute)
+            callable(::luaHasTag)
+            callable(::luaPlayAnimation)
         }
     }
 
