@@ -27,9 +27,7 @@ import world.selene.common.data.ComponentRegistry
 import world.selene.common.data.CustomRegistries
 import world.selene.common.data.NameIdRegistry
 import world.selene.common.lua.LuaManager
-import world.selene.common.lua.LuaMixinModule
 import world.selene.common.lua.LuaRegistriesModule
-import world.selene.common.lua.LuaMixinRegistry
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.LuaSchedulesModule
 import world.selene.common.threading.MainThreadDispatcher
@@ -121,7 +119,6 @@ fun main(args: Array<String>) {
     }
     val luaModule = module {
         singleOf(::LuaManager)
-        singleOf(::LuaMixinRegistry)
         singleOf(::LuaPayloadRegistry)
         singleOf(::ServerLuaSignals)
         singleOf(::ServerCustomData)
@@ -134,7 +131,6 @@ fun main(args: Array<String>) {
         singleOf(::LuaTablexModule) { bind<LuaModule>() }
         singleOf(::LuaServerModule) { bind<LuaModule>() }
         singleOf(::LuaPlayersModule) { bind<LuaModule>() }
-        singleOf(::LuaMixinModule) { bind<LuaModule>() }
         singleOf(::LuaServerNetworkModule) { bind<LuaModule>() }
         singleOf(::LuaSoundsModule) { bind<LuaModule>() }
         singleOf(::LuaGridModule) { bind<LuaModule>() }

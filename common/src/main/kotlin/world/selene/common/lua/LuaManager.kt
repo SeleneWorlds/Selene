@@ -2,13 +2,12 @@ package world.selene.common.lua
 
 import org.koin.mp.KoinPlatform.getKoin
 import party.iroiro.luajava.ClassPathLoader
-import party.iroiro.luajava.Lua
 import party.iroiro.luajava.lua54.Lua54
 import java.nio.Buffer
 import java.nio.ByteBuffer
 import kotlin.reflect.KClass
 
-class LuaManager(private val mixinRegistry: LuaMixinRegistry, private val luaPackage: LuaPackageModule) {
+class LuaManager(private val luaPackage: LuaPackageModule) {
 
     val lua = Lua54()
     private val metatables = mutableMapOf<KClass<*>, LuaMetatable>()
@@ -85,14 +84,6 @@ class LuaManager(private val mixinRegistry: LuaMixinRegistry, private val luaPac
         lua.getRegisteredMetatable("__jobject__")
         lua.push { lua ->
             val obj = lua.toJavaObject(1)!!
-            if (lua.type(2) == Lua.LuaType.STRING) {
-                val mixinFunction = obj::class.simpleName?.let { mixinRegistry.getMixin(it, lua.toString(2)!!) }
-                if (mixinFunction != null) {
-                    lua.push(mixinFunction)
-                    return@push 1
-                }
-            }
-
             if (obj is LuaMetatable) {
                 return@push obj.luaGet(lua)
             } else if (obj is LuaMetatableProvider) {

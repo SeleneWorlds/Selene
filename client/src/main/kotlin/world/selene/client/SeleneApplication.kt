@@ -53,9 +53,7 @@ import world.selene.common.bundles.BundleDatabase
 import world.selene.common.bundles.BundleLoader
 import world.selene.common.bundles.BundleLocator
 import world.selene.common.lua.LuaManager
-import world.selene.common.lua.LuaMixinModule
 import world.selene.common.lua.LuaRegistriesModule
-import world.selene.common.lua.LuaMixinRegistry
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.LuaSchedulesModule
 import world.selene.common.threading.MainThreadDispatcher
@@ -113,7 +111,6 @@ class SeleneApplication(
         }
         val luaModule = module {
             singleOf(::LuaManager)
-            singleOf(::LuaMixinRegistry)
             singleOf(::LuaPayloadRegistry)
             singleOf(::ClientLuaSignals)
             singleOf(::Messages)
@@ -125,7 +122,6 @@ class SeleneApplication(
             singleOf(::LuaTablexModule) { bind<LuaModule>() }
             singleOf(::LuaUIModule) { bind<LuaModule>() }
             singleOf(::LuaVisualsModule) { bind<LuaModule>() }
-            singleOf(::LuaMixinModule) { bind<LuaModule>() }
             singleOf(::LuaClientNetworkModule) { bind<LuaModule>() }
             singleOf(::LuaCameraModule) { bind<LuaModule>() }
             singleOf(::LuaClientMapModule) { bind<LuaModule>() }
