@@ -25,9 +25,9 @@ class LuaHttpModule(
      * Sends an HTTP POST request to the specified URL with optional body and headers.
      * Returns a response table containing status code, body text, and success flag.
      *
-     * ```lua
-     * {boolean success, number status, string body} Post(string url, string|table body)
-     * {boolean success, number status, string body} Post(string url, string|table body, table headers)
+     * ```signatures
+     * Post(url: string, body: string|table) -> table{success: boolean, status: number, body: string}
+     * Post(url: string, body: string|table, headers: table) -> table{success: boolean, status: number, body: string}
      * ```
      */
     private fun luaPost(lua: Lua): Int {

@@ -30,8 +30,8 @@ class LuaSoundsModule(
     /**
      * Plays a sound with optional volume and pitch settings.
      *
-     * ```lua
-     * PlaySound(Sound sound, {number volume, number pitch} options)
+     * ```signatures
+     * PlaySound(sound: Sound, options: table{volume: number, pitch: number})
      * ```
      */
     private fun luaPlaySound(lua: Lua): Int {
@@ -48,8 +48,8 @@ class LuaSoundsModule(
     /**
      * Stops all instances of a specific sound.
      *
-     * ```lua
-     * StopSound(Sound sound)
+     * ```signatures
+     * StopSound(sound: Sound)
      * ```
      */
     private fun luaStopSound(lua: Lua): Int {
@@ -61,7 +61,7 @@ class LuaSoundsModule(
     /**
      * Stops all currently playing sounds.
      *
-     * ```lua
+     * ```signatures
      * StopAllSounds()
      * ```
      */

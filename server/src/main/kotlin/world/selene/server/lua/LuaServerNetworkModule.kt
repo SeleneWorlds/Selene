@@ -33,8 +33,8 @@ class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry, pr
     /**
      * Registers a handler for incoming custom payloads from clients.
      *
-     * ```lua
-     * HandlePayload(string payloadId, function(Player player, table payload) callback)
+     * ```signatures
+     * HandlePayload(payloadId: string, callback: function(player: Player, payload: table))
      * ```
      */
     private fun luaHandlePayload(lua: Lua): Int {
@@ -48,8 +48,8 @@ class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry, pr
     /**
      * Sends a custom payload to a specific player.
      *
-     * ```lua
-     * SendToPlayer(Player player, string payloadId, table payload)
+     * ```signatures
+     * SendToPlayer(player: Player, payloadId: string, payload: table)
      * ```
      */
     private fun luaSendToPlayer(lua: Lua): Int {
@@ -63,8 +63,8 @@ class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry, pr
     /**
      * Sends a custom payload to multiple players.
      *
-     * ```lua
-     * SendToPlayers(table(Player) players, string payloadId, table payload)
+     * ```signatures
+     * SendToPlayers(players: table[Player], payloadId: string, payload: table)
      * ```
      */
     private fun luaSendToPlayers(lua: Lua): Int {
@@ -81,8 +81,8 @@ class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry, pr
     /**
      * Sends a custom payload to all players controlling an entity.
      *
-     * ```lua
-     * SendToEntity(Entity entity, string payloadId, table payload)
+     * ```signatures
+     * SendToEntity(entity: Entity, payloadId: string, payload: table)
      * ```
      */
     private fun luaSendToEntity(lua: Lua): Int {
@@ -99,8 +99,8 @@ class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry, pr
     /**
      * Sends a custom payload to all players controlling multiple entities.
      *
-     * ```lua
-     * SendToEntities(table(Entity) entities, string payloadId, table payload)
+     * ```signatures
+     * SendToEntities(entities: table[Entity], payloadId: string, payload: table)
      * ```
      */
     private fun luaSendToEntities(lua: Lua): Int {

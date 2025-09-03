@@ -21,9 +21,9 @@ class LuaI18nModule(private val messages: Messages) : LuaModule {
      * If no locale is given, the default locale will be used.
      * If the key is not defined, this function will return `nil`.
      *
-     * ```lua
-     * string|nil Get(string key)
-     * string|nil Get(string key, Locale locale)
+     * ```signatures
+     * Get(key: string) -> string|nil
+     * Get(key: string, locale: Locale) -> string|nil
      * ```
      */
     private fun luaGet(lua: Lua): Int {
@@ -43,10 +43,10 @@ class LuaI18nModule(private val messages: Messages) : LuaModule {
      * If no locale is given, the default locale will be used.
      * If the key is not defined, this function will return `nil`.
      *
-     * ```lua
-     * string|nil Format(string key)
-     * string|nil Format(string key, table args)
-     * string|nil Format(string key, table|nil args, Locale locale)
+     * ```signatures
+     * Format(key: string) -> string|nil
+     * Format(key: string, args: args) -> string|nil
+     * Format(key: string, args: table|nil, locale: Locale) -> string|nil
      * ```
      */
     private fun luaFormat(lua: Lua): Int {
@@ -66,9 +66,9 @@ class LuaI18nModule(private val messages: Messages) : LuaModule {
      * Checks whether a key is defined in a localization bundle for the given locale.
      * If no locale is given, the default locale will be used.
      *
-     * ```lua
-     * boolean HasKey(string key)
-     * boolean HasKey(string key, Locale locale)
+     * ```signatures
+     * HasKey(key: string) -> boolean
+     * HasKey(key: string, locale: Locale) -> boolean
      * ```
      */
     private fun luaHasKey(lua: Lua): Int {

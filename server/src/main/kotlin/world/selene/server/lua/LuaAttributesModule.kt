@@ -29,8 +29,8 @@ class LuaAttributesModule : LuaModule {
      * Creates a clamp filter that restricts attribute values between min and max bounds.
      * Both min and max can be constant numbers or other attributes.
      *
-     * ```lua
-     * AttributeFilter ClampFilter(Attribute|number min, Attribute|number max)
+     * ```signatures
+     * ClampFilter(min: Attribute|number, max: Attribute|number) -> AttributeFilter
      * ```
      */
     private fun luaClampFilter(lua: Lua): Int {
@@ -54,9 +54,9 @@ class LuaAttributesModule : LuaModule {
      *
      * Supported operators: +, -, *, /
      *
-     * ```lua
-     * AttributeFilter MathOpFilter(number value, string operator)
-     * AttributeFilter MathOpFilter(Attribute value, string operator)
+     * ```signatures
+     * MathOpFilter(value: number, operator: string) -> AttributeFilter
+     * MathOpFilter(value: Attribute, operator: string) -> AttributeFilter
      * ```
      */
     private fun luaMathOpFilter(lua: Lua): Int {

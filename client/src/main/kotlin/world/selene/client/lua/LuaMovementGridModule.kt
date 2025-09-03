@@ -22,8 +22,8 @@ class LuaMovementGridModule(private val gridMovement: GridMovement) : LuaModule 
     /**
      * Sets the movement direction for grid-based movement.
      *
-     * ```lua
-     * SetMotion(Direction direction)
+     * ```signatures
+     * SetMotion(direction: Direction)
      * ```
      */
     private fun luaSetMotion(lua: Lua): Int {
@@ -35,8 +35,8 @@ class LuaMovementGridModule(private val gridMovement: GridMovement) : LuaModule 
     /**
      * Sets the facing direction for grid-based movement.
      *
-     * ```lua
-     * SetFacing(Direction direction)
+     * ```signatures
+     * SetFacing(direction: Direction)
      * ```
      */
     private fun luaSetFacing(lua: Lua): Int {

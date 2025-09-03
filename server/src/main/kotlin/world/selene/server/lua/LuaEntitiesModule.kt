@@ -38,9 +38,9 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val re
      * Creates a new entity from an entity definition.
      * The entity will be saved and synchronized with clients.
      *
-     * ```lua
-     * Entity Create(string entityDef)
-     * Entity Create(EntityDefinition entityDef)
+     * ```signatures
+     * Create(entityDef: string) -> Entity
+     * Create(entityDef: EntityDefinition) -> Entity
      * ```
      */
     private fun luaCreate(lua: Lua): Int {
@@ -54,9 +54,9 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val re
      * Creates a new transient entity from an entity definition.
      * Transient entities are not assigned a network id - spawning them is fire-and-forget.
      *
-     * ```lua
-     * Entity CreateTransient(string entityDef)
-     * Entity CreateTransient(EntityDefinition entityDef)
+     * ```signatures
+     * CreateTransient(entityDef: string) -> Entity|nil
+     * CreateTransient(entityDef: EntityDefinition) -> Entity|nil
      * ```
      */
     private fun luaCreateTransient(lua: Lua): Int {
@@ -70,8 +70,8 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val re
      * Retrieves an entity by its network ID.
      * Returns the entity if found, otherwise returns nil.
      *
-     * ```lua
-     * Entity|nil GetByNetworkId(number networkId)
+     * ```signatures
+     * GetByNetworkId(networkId: number) -> Entity|nil
      * ```
      */
     private fun luaGetByNetworkId(lua: Lua): Int {

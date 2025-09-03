@@ -28,8 +28,8 @@ class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule
     /**
      * Lists files in a bundle matching a glob pattern.
      *
-     * ```lua
-     * table(string) ListFiles(string bundle, string filter)
+     * ```signatures
+     * ListFiles(bundle: string, filter: string) -> table[string]
      * ```
      */
     private fun luaListFiles(lua: Lua): Int {
@@ -60,8 +60,8 @@ class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule
      * Loads a file from a bundle as a string.
      * Throws an error if the file does not exist.
      *
-     * ```lua
-     * string LoadAsString(string path)
+     * ```signatures
+     * LoadAsString(path: string) -> string
      * ```
      */
     private fun luaLoadAsString(lua: Lua): Int {
@@ -89,8 +89,8 @@ class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule
     /**
      * Checks if a file exists in a bundle.
      *
-     * ```lua
-     * boolean FileExists(string path)
+     * ```signatures
+     * FileExists(path: string) -> boolean
      * ```
      */
     private fun luaFileExists(lua: Lua): Int {

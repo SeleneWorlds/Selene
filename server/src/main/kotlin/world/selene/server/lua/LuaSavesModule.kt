@@ -24,8 +24,8 @@ class LuaSavesModule(private val serverConfig: ServerConfig, private val saveMan
     /**
      * Checks if a save file exists at the specified path.
      *
-     * ```lua
-     * boolean Has(string path)
+     * ```signatures
+     * Has(path: string) -> boolean
      * ```
      */
     private fun luaHas(lua: Lua): Int {
@@ -38,8 +38,8 @@ class LuaSavesModule(private val serverConfig: ServerConfig, private val saveMan
     /**
      * Saves an object to a file at the specified path.
      *
-     * ```lua
-     * Save(any object, string path)
+     * ```signatures
+     * Save(object: any, path: string)
      * ```
      */
     private fun luaSave(lua: Lua): Int {
@@ -53,8 +53,8 @@ class LuaSavesModule(private val serverConfig: ServerConfig, private val saveMan
     /**
      * Loads an object from a file at the specified path.
      *
-     * ```lua
-     * any Load(string path)
+     * ```signatures
+     * Load(path: string) -> any
      * ```
      */
     private fun luaLoad(lua: Lua): Int {

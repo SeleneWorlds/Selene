@@ -31,8 +31,8 @@ class LuaClientNetworkModule(
     /**
      * Registers a handler for incoming custom payloads from the server.
      *
-     * ```lua
-     * HandlePayload(string payloadId, function(table payload) callback)
+     * ```signatures
+     * HandlePayload(payloadId: string, callback: function(payload: table))
      * ```
      */
     private fun luaHandlePayload(lua: Lua): Int {
@@ -46,8 +46,8 @@ class LuaClientNetworkModule(
     /**
      * Sends a custom payload to the server.
      *
-     * ```lua
-     * SendToServer(string payloadId, table payload)
+     * ```signatures
+     * SendToServer(payloadId: string, payload: table)
      * ```
      */
     private fun luaSendToServer(lua: Lua): Int {

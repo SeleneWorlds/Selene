@@ -116,8 +116,8 @@ class LuaSchedulesModule(
     /**
      * Schedules a function to run once after a delay.
      *
-     * ```lua
-     * number timeoutId SetTimeout(number intervalMs, function callback, {string name} options)
+     * ```signatures
+     * SetTimeout(intervalMs: number, callback: function, options: table{name: string}) -> timeoutId: number
      * ```
      */
     private fun luaSetTimeout(lua: Lua): Int {
@@ -157,8 +157,8 @@ class LuaSchedulesModule(
     /**
      * Cancels a scheduled timeout by its ID.
      *
-     * ```lua
-     * ClearTimeout(number timeoutId)
+     * ```signatures
+     * ClearTimeout(timeoutId: number)
      * ```
      */
     private fun luaClearTimeout(lua: Lua): Int {
@@ -171,8 +171,8 @@ class LuaSchedulesModule(
     /**
      * Schedules a function to run repeatedly at intervals.
      *
-     * ```lua
-     * number intervalId SetInterval(number intervalMs, function callback, {string name, boolean immediate} options)
+     * ```signatures
+     * SetInterval(intervalMs: number, callback: function, options: table{name: string, immediate: boolean}) -> intervalId: number
      * ```
      */
     private fun luaSetInterval(lua: Lua): Int {
@@ -218,8 +218,8 @@ class LuaSchedulesModule(
     /**
      * Cancels a scheduled interval by its ID.
      *
-     * ```lua
-     * ClearInterval(number intervalId)
+     * ```signatures
+     * ClearInterval(intervalId: number)
      * ```
      */
     private fun luaClearInterval(lua: Lua): Int {

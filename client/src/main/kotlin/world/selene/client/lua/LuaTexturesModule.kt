@@ -108,9 +108,9 @@ class LuaTexturesModule : LuaModule {
      *
      * Supported formats: "RGBA8888" (default), "RGB888", "RGBA4444", "RGB565", "Alpha"
      *
-     * ```lua
-     * LuaTexture Create(number width, number height)
-     * LuaTexture Create(number width, number height, string format)
+     * ```signatures
+     * Create(width: number, height: number) -> LuaTexture
+     * Create(width: number, height: number, format: string) -> LuaTexture
      * ```
      */
     private fun luaCreateTexture(lua: Lua): Int {

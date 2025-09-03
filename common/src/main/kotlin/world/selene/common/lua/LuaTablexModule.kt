@@ -22,9 +22,9 @@ class LuaTablexModule : LuaModule {
      * Managed tables are observable, read-writable key-value maps.
      * They are no longer considered a `table` and cannot be used in `table`-specific functions.
      *
-     * ```lua
-     * ManagedTable managed()
-     * ManagedTable managed(table data)
+     * ```signatures
+     * managed() -> ManagedTable
+     * managed(data: table) -> ManagedTable
      * ```
      */
     private fun luaManaged(lua: Lua): Int {
@@ -37,8 +37,8 @@ class LuaTablexModule : LuaModule {
      * Finds the key of the first occurrence of a value in a table.
      * Returns the key if found, otherwise returns nil.
      *
-     * ```lua
-     * any|nil find(table tbl, any value)
+     * ```signatures
+     * find(tbl: table, value: any) -> any|nil
      * ```
      */
     private fun luaFind(lua: Lua): Int {
@@ -72,8 +72,8 @@ class LuaTablexModule : LuaModule {
      * Converts a table to a string representation for debugging.
      * Handles nested tables and various data types.
      *
-     * ```lua
-     * string tostring(table|ManagedTable tbl)
+     * ```signatures
+     * tostring(tbl: table|ManagedTable) -> string
      * ```
      */
     private fun luaToString(lua: Lua): Int {

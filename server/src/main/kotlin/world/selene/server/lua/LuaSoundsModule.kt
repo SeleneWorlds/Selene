@@ -33,8 +33,8 @@ class LuaSoundsModule(
     /**
      * Plays a sound to a specific player.
      *
-     * ```lua
-     * PlaySound(Player player, Sound sound, {number volume, number pitch} options)
+     * ```signatures
+     * PlaySound(player: Player, sound: Sound, options: table{volume: number, pitch: number})
      * ```
      */
     private fun luaPlaySound(lua: Lua): Int {
@@ -52,8 +52,8 @@ class LuaSoundsModule(
     /**
      * Plays a positional sound at a coordinate to all nearby players in the dimension.
      *
-     * ```lua
-     * PlaySoundAt(Coordinate coordinate, Sound sound, Dimension dimension, {number volume, number pitch} options)
+     * ```signatures
+     * PlaySoundAt(coordinate: Coordinate, sound: Sound, dimension: Dimension, options: table{volume: number, pitch: number})
      * ```
      */
     private fun luaPlaySoundAt(lua: Lua): Int {
@@ -76,8 +76,8 @@ class LuaSoundsModule(
     /**
      * Plays a sound to all players in a dimension.
      *
-     * ```lua
-     * PlayGlobalSound(Sound sound, Dimension dimension, {number volume, number pitch} options)
+     * ```signatures
+     * PlayGlobalSound(sound: Sound, dimension: Dimension, options: table{volume: number, pitch: number})
      * ```
      */
     private fun luaPlayGlobalSound(lua: Lua): Int {

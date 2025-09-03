@@ -45,8 +45,8 @@ class LuaPlayersModule(private val signals: ServerLuaSignals, private val networ
     /**
      * Returns a list of all currently online players.
      *
-     * ```lua
-     * table(Player) GetOnlinePlayers()
+     * ```signatures
+     * GetOnlinePlayers() -> table[Player]
      * ```
      */
     private fun luaGetOnlinePlayers(lua: Lua): Int {

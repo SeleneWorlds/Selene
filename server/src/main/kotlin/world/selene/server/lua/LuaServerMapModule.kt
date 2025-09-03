@@ -20,8 +20,8 @@ class LuaServerMapModule(private val registries: Registries) : LuaModule {
     /**
      * Creates a new empty map tree for storing map layers.
      *
-     * ```lua
-     * MapTree Create()
+     * ```signatures
+     * Create() -> MapTree
      * ```
      */
     private fun luaCreate(lua: Lua): Int {

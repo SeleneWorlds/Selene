@@ -21,8 +21,8 @@ class LuaClientGridModule(private val grid: ClientGrid) : LuaGridModule(grid) {
     /**
      * Converts screen coordinates to grid coordinates.
      *
-     * ```lua
-     * Coordinate ScreenToCoordinate(number screenX, number screenY)
+     * ```signatures
+     * ScreenToCoordinate(screenX: number, screenY: number) -> Coordinate
      * ```
      */
     private fun luaScreenToCoordinate(lua: Lua): Int {

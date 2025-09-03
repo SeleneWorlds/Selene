@@ -507,8 +507,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
      * Adds an input processor for handling keyboard events to the UI.
      * The processor table can contain KeyUp, KeyDown, and KeyTyped functions.
      *
-     * ```lua
-     * AddInputProcessor({function(InputEvent event, number keyCode) KeyUp, function(InputEvent event, number keyCode) KeyDown, function(InputEvent event, number char) KeyTyped}} processor)
+     * ```signatures
+     * AddInputProcessor(processor: table{KeyUp: function(event: InputEvent, keyCode: number), KeyDown: function(event: InputEvent, keyCode: number), KeyTyped: function(event: InputEvent, char: number)}})
      * ```
      */
     private fun luaAddInputProcessor(lua: Lua): Int {
@@ -572,8 +572,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
     /**
      * Sets keyboard focus to the specified actor, or clears focus if nil.
      *
-     * ```lua
-     * SetFocus(Actor|nil actor)
+     * ```signatures
+     * SetFocus(actor: Actor|nil)
      * ```
      */
     private fun luaSetFocus(lua: Lua): Int {
@@ -585,8 +585,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
     /**
      * Gets the currently focused actor, or nil if no actor has focus.
      *
-     * ```lua
-     * Actor|nil GetFocus()
+     * ```signatures
+     * GetFocus() -> Actor|nil
      * ```
      */
     private fun luaGetFocus(lua: Lua): Int {
@@ -602,8 +602,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
     /**
      * Adds actors to the root UI container. Accepts a single actor or table of actors.
      *
-     * ```lua
-     * AddToRoot(Actor|table(Actor) actors)
+     * ```signatures
+     * AddToRoot(actors: Actor|table[Actor])
      * ```
      */
     private fun luaAddToRoot(lua: Lua): Int {
@@ -626,8 +626,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
      * Returns an array of root actors and a table of actors by name.
      * Throws an error if the XML file is not found.
      *
-     * ```lua
-     * table(Actor) actors, table(string, Actor) actorsByName LoadUI(string xmlFilePath, {string i18nBundle, Skin skin, table(function(Actor)) actions} config)
+     * ```signatures
+     * LoadUI(xmlFilePath: string, config: table{i18nBundle: string, skin: Skin, actions: table[string, function(actor: Actor)]}) -> actors: table[Actor], actorsByName: table[string, Actor]
      * ```
      */
     private fun luaLoadUI(lua: Lua): Int {
@@ -711,8 +711,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
      * Loads a skin from a JSON file.
      * Throws an error if the skin file is not found.
      *
-     * ```lua
-     * Skin LoadSkin(string skinPath)
+     * ```signatures
+     * LoadSkin(skinPath: string) -> Skin
      * ```
      */
     private fun luaLoadSkin(lua: Lua): Int {
@@ -735,8 +735,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
     /**
      * Creates a new empty skin with default font and styles.
      *
-     * ```lua
-     * Skin CreateSkin()
+     * ```signatures
+     * CreateSkin() -> Skin
      * ```
      */
     private fun luaCreateSkin(lua: Lua): Int {
@@ -753,8 +753,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
     /**
      * Creates a container actor with optional child and styling.
      *
-     * ```lua
-     * Container CreateContainer(Skin skin, {Actor child, string background, number width, number height} config)
+     * ```signatures
+     * CreateContainer(skin: Skin, config: table{child: Actor, background: string, width: number, height: number}) -> Container
      * ```
      */
     private fun luaCreateContainer(lua: Lua): Int {
@@ -782,8 +782,8 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
      * Creates a label actor with text and styling.
      * Throws an error if the label style is not found in the skin.
      *
-     * ```lua
-     * Label CreateLabel(Skin skin, {string style, string text, boolean wrap} config)
+     * ```signatures
+     * CreateLabel(skin: Skin, config: table{style: string, text: string, wrap: boolean}) -> Label
      * ```
      */
     private fun luaCreateLabel(lua: Lua): Int {
@@ -851,9 +851,9 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
      * Creates image button styles from configuration table.
      * Returns both ImageButtonStyle and VisImageButtonStyle.
      *
-     * ```lua
-     * ImageButtonStyle, VisImageButtonStyle CreateImageButtonStyle(table config)
-     * ImageButtonStyle, VisImageButtonStyle CreateImageButtonStyle(table config, Skin skin)
+     * ```signatures
+     * CreateImageButtonStyle(config: table) -> ImageButtonStyle, VisImageButtonStyle
+     * CreateImageButtonStyle(config: table, skin: Skin) -> ImageButtonStyle, VisImageButtonStyle
      * ```
      */
     private fun luaCreateImageButtonStyle(lua: Lua): Int {

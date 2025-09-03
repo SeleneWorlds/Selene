@@ -23,8 +23,8 @@ class LuaStringxModule : LuaModule {
     /**
      * Checks if a string starts with the specified prefix.
      *
-     * ```lua
-     * boolean startsWith(string str, string prefix)
+     * ```signatures
+     * startsWith(str: string, prefix: string) -> boolean
      * ```
      */
     private fun luaStartsWith(lua: Lua): Int {
@@ -35,8 +35,8 @@ class LuaStringxModule : LuaModule {
     /**
      * Checks if a string ends with the specified suffix.
      *
-     * ```lua
-     * boolean endsWith(string str, string suffix)
+     * ```signatures
+     * endsWith(str: string, suffix: string) -> boolean
      * ```
      */
     private fun luaEndsWith(lua: Lua): Int {
@@ -47,8 +47,8 @@ class LuaStringxModule : LuaModule {
     /**
      * Removes the specified suffix from a string if it exists.
      *
-     * ```lua
-     * string removeSuffix(string str, string suffix)
+     * ```signatures
+     * removeSuffix(str: string, suffix: string) -> string
      * ```
      */
     private fun luaRemoveSuffix(lua: Lua): Int {
@@ -59,8 +59,8 @@ class LuaStringxModule : LuaModule {
     /**
      * Removes leading and trailing whitespace from a string.
      *
-     * ```lua
-     * string trim(string str)
+     * ```signatures
+     * trim(str: string) -> string
      * ```
      */
     private fun luaTrim(lua: Lua): Int {
@@ -71,8 +71,8 @@ class LuaStringxModule : LuaModule {
     /**
      * Returns the substring after the first occurrence of the separator.
      *
-     * ```lua
-     * string substringAfter(string str, string separator)
+     * ```signatures
+     * substringAfter(str: string, separator: string) -> string
      * ```
      */
     private fun luaSubstringAfter(lua: Lua): Int {
@@ -86,8 +86,8 @@ class LuaStringxModule : LuaModule {
     /**
      * Splits a string into a table of substrings using the specified separator.
      *
-     * ```lua
-     * table split(string str, string separator)
+     * ```signatures
+     * split(str: string, separator: string) -> table
      * ```
      */
     private fun luaSplit(lua: Lua): Int {

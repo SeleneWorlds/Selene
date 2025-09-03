@@ -34,8 +34,8 @@ class LuaCameraModule(
     /**
      * Gets the current camera focus coordinate.
      *
-     * ```lua
-     * Coordinate GetCoordinate()
+     * ```signatures
+     * GetCoordinate() -> Coordinate
      * ```
      */
     private fun luaGetCoordinate(lua: Lua): Int {
@@ -46,8 +46,8 @@ class LuaCameraModule(
     /**
      * Sets the camera viewport dimensions.
      *
-     * ```lua
-     * SetViewport(number x, number y, number width, number height)
+     * ```signatures
+     * SetViewport(x: number, y: number, width: number, height: number)
      * ```
      */
     private fun luaSetViewport(lua: Lua): Int {
@@ -62,8 +62,8 @@ class LuaCameraModule(
     /**
      * Converts screen coordinates to world coordinates.
      *
-     * ```lua
-     * number worldX, number worldY ScreenToWorld(number screenX, number screenY)
+     * ```signatures
+     * ScreenToWorld(screenX: number, screenY: number) -> worldX: number, worldY: number
      * ```
      */
     private fun luaScreenToWorld(lua: Lua): Int {

@@ -33,8 +33,8 @@ class LuaEntitiesModule(
     /**
      * Creates a new entity from an entity definition.
      *
-     * ```lua
-     * Entity Create(EntityDefinition entityDefinition)
+     * ```signatures
+     * Create(entityDefinition: EntityDefinition) -> Entity
      * ```
      */
     private fun luaCreate(lua: Lua): Int {
@@ -48,8 +48,8 @@ class LuaEntitiesModule(
     /**
      * Gets all entities at the specified coordinate.
      *
-     * ```lua
-     * table(Entity) GetEntitiesAt(Coordinate coordinate)
+     * ```signatures
+     * GetEntitiesAt(coordinate: Coordinate) -> table[Entity]
      * ```
      */
     private fun luaGetEntitiesAt(lua: Lua): Int {
@@ -62,8 +62,8 @@ class LuaEntitiesModule(
     /**
      * Finds entities at a coordinate matching specified criteria.
      *
-     * ```lua
-     * table(Entity) FindEntitiesAt(Coordinate coordinate, {string tag} criteria)
+     * ```signatures
+     * FindEntitiesAt(coordinate: Coordinate, criteria: table{tag: string}) -> table[Entity]
      * ```
      */
     private fun luaFindEntitiesAt(lua: Lua): Int {

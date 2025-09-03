@@ -21,8 +21,8 @@ class LuaVisualsModule(private val visualManager: VisualManager) : LuaModule {
     /**
      * Creates a visual instance from a visual definition.
      *
-     * ```lua
-     * Visual Create(string visualName)
+     * ```signatures
+     * Create(visualName: string) -> Visual
      * ```
      */
     private fun luaCreate(lua: Lua): Int {

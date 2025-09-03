@@ -20,8 +20,8 @@ open class LuaGridModule(private val grid: Grid) : LuaModule {
      * Gets a direction by its name.
      * Throws an error if the direction is not found.
      *
-     * ```lua
-     * Direction GetDirectionByName(string name)
+     * ```signatures
+     * GetDirectionByName(name: string) -> Direction
      * ```
      */
     private fun luaGetDirectionByName(lua: Lua): Int {
@@ -35,8 +35,8 @@ open class LuaGridModule(private val grid: Grid) : LuaModule {
     /**
      * Defines a new direction with a name, coordinate offset, and angle.
      *
-     * ```lua
-     * Direction DefineDirection(string name, number x, number y, number z, number angle)
+     * ```signatures
+     * DefineDirection(name: string, x: number, y: number, z: number, angle: number) -> Direction
      * ```
      */
     private fun luaDefineDirection(lua: Lua): Int {

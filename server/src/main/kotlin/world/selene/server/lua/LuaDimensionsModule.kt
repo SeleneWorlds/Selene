@@ -19,8 +19,8 @@ class LuaDimensionsModule(private val dimensionManager: DimensionManager) : LuaM
     /**
      * Returns the default dimension (dimension 0), which is always available.
      *
-     * ```lua
-     * Dimension GetDefault()
+     * ```signatures
+     * GetDefault() -> Dimension
      * ```
      */
     private fun luaGetDefault(lua: Lua): Int {

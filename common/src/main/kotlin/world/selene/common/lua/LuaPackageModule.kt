@@ -49,8 +49,8 @@ class LuaPackageModule : LuaModule {
      * Loads a module by name. Throws an error if the module cannot be found or failed to load.
      * As with Lua's standard `require` function, this will only load the module once and then cache it for future use.
      *
-     * ```lua
-     * any require(string moduleName)
+     * ```signatures
+     * require(moduleName: string) -> any
      * ```
      */
     private fun luaRequire(lua: Lua): Int {

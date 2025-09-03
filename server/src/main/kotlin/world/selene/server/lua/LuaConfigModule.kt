@@ -22,9 +22,9 @@ class LuaConfigModule(private val scriptProperties: ScriptProperties) : LuaModul
      * Retrieves a configuration property value by key.
      * If the property is not found, returns the default value or nil.
      *
-     * ```lua
-     * string|nil GetProperty(string key)
-     * string GetProperty(string key, string defaultValue)
+     * ```signatures
+     * GetProperty(key: string) -> string|nil
+     * GetProperty(key: string, defaultValue: string) -> string
      * ```
      */
     private fun luaGetProperty(lua: Lua): Int {

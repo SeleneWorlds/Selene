@@ -19,15 +19,15 @@ class LuaRegistriesModule(private val registryProvider: RegistryProvider) : LuaM
     /**
      * Returns all entries in the specified registry.
      *
-     * ```lua
-     * table(CustomRegistryObject) FindAll(string registryName)
-     * table(TransitionDefinition) FindAll("transitions")
-     * table(AudioDefinition) FindAll("audio")
-     * table(VisualDefinition) FindAll("visuals")
-     * table(TileDefinition) FindAll("tiles")
-     * table(ComponentDefinition) FindAll("components")
-     * table(SoundsDefinition) FindAll("sounds")
-     * table(EntityDefinition) FindAll("entities")
+     * ```signatures
+     * FindAll(registryName: string) -> table[CustomRegistryObject]
+     * FindAll("transitions": string) -> table[TransitionDefinition]
+     * FindAll("audio": string) -> table[AudioDefinition]
+     * FindAll("visuals": string) -> table[VisualDefinition]
+     * FindAll("tiles": string) -> table[TileDefinition]
+     * FindAll("components": string) -> table[ComponentDefinition]
+     * FindAll("sounds": string) -> table[SoundsDefinition]
+     * FindAll("entities": string) -> table[EntityDefinition]
      * ```
      */
     private fun luaFindAll(lua: Lua): Int {
@@ -43,15 +43,15 @@ class LuaRegistriesModule(private val registryProvider: RegistryProvider) : LuaM
      * Finds the first registry entry that has matching metadata.
      * Returns the entry if found, otherwise returns `nil`.
      *
-     * ```lua
-     * CustomRegistryObject|nil FindByMetadata(string registryName, string key, any value)
-     * TransitionDefinition|nil FindByMetadata("transitions", string key, any value)
-     * AudioDefinition|nil FindByMetadata("audio", string key, any value)
-     * VisualDefinition|nil FindByMetadata("visuals", string key, any value)
-     * TileDefinition|nil FindByMetadata("tiles", string key, any value)
-     * ComponentDefinition|nil FindByMetadata("components", string key, any value)
-     * SoundsDefinition|nil FindByMetadata("sounds", string key, any value)
-     * EntityDefinition|nil FindByMetadata("entities", string key, any value)
+     * ```signatures
+     * FindByMetadata(registryName: string, key: string, value: any) -> CustomRegistryObject|nil
+     * FindByMetadata("transitions": string, key: string, value: any) -> TransitionDefinition|nil
+     * FindByMetadata("audio": string, key: string, value: any) -> AudioDefinition|nil
+     * FindByMetadata("visuals": string, key: string, value: any) -> VisualDefinition|nil
+     * FindByMetadata("tiles": string, key: string, value: any) -> TileDefinition|nil
+     * FindByMetadata("components": string, key: string, value: any) -> ComponentDefinition|nil
+     * FindByMetadata("sounds": string, key: string, value: any) -> SoundsDefinition|nil
+     * FindByMetadata("entities": string, key: string, value: any) -> EntityDefinition|nil
      * ```
      */
     private fun luaFindByMetadata(lua: Lua): Int {
@@ -76,15 +76,15 @@ class LuaRegistriesModule(private val registryProvider: RegistryProvider) : LuaM
      * Finds a registry entry by its exact name.
      * Returns the entry if found, otherwise returns `nil`.
      *
-     * ```lua
-     * CustomRegistryObject|nil FindByName(string registryName, string name)
-     * TransitionDefinition|nil FindByName("transitions", string name)
-     * AudioDefinition|nil FindByName("audio", string name)
-     * VisualDefinition|nil FindByName("visuals", string name)
-     * TileDefinition|nil FindByName("tiles", string name)
-     * ComponentDefinition|nil FindByName("components", string name)
-     * SoundsDefinition|nil FindByName("sounds", string name)
-     * EntityDefinition|nil FindByName("entities", string name)
+     * ```signatures
+     * FindByName(registryName: string, name: string) -> CustomRegistryObject|nil
+     * FindByName("transitions": string, name: string) -> TransitionDefinition|nil
+     * FindByName("audio": string, name: string) -> AudioDefinition|nil
+     * FindByName("visuals": string, name: string) -> VisualDefinition|nil
+     * FindByName("tiles": string, name: string) -> TileDefinition|nil
+     * FindByName("components": string, name: string) -> ComponentDefinition|nil
+     * FindByName("sounds": string, name: string) -> SoundsDefinition|nil
+     * FindByName("entities": string, name: string) -> EntityDefinition|nil
      * ```
      */
     private fun luaFindByName(lua: Lua): Int {

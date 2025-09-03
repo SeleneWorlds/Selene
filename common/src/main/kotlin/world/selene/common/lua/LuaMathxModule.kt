@@ -19,8 +19,8 @@ class LuaMathxModule : LuaModule {
      * Clamps a value between minimum and maximum bounds.
      * Works with both integers and floating-point numbers.
      *
-     * ```lua
-     * number clamp(number value, number min, number max)
+     * ```signatures
+     * clamp(value: number, min: number, max: number) -> number
      * ```
      */
     private fun luaClamp(lua: Lua): Int {

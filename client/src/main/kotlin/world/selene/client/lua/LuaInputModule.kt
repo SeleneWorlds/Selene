@@ -38,8 +38,8 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
      * Binds a function to be called continuously while an input is held down.
      * The function is called every frame while the input is active.
      *
-     * ```lua
-     * BindContinuousAction(InputType type, string input, function callback)
+     * ```signatures
+     * BindContinuousAction(type: InputType, input: string, callback: function)
      * ```
      */
     private fun luaBindContinuousAction(lua: Lua): Int {
@@ -66,9 +66,9 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
      * For type `KEYBOARD`: called on key press.
      * For type `MOUSE`: called on click with coordinates.
      *
-     * ```lua
-     * BindAction(KEYBOARD, string input, function callback)
-     * BindAction(MOUSE, string input, function(number screenX, number screenY) callback)
+     * ```signatures
+     * BindAction(KEYBOARD: InputType, input: string, callback: function)
+     * BindAction(MOUSE: InputType, input: string, callback: function(screenX: number, screenY: number))
      * ```
      */
     private fun luaBindAction(lua: Lua): Int {
@@ -111,9 +111,9 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
      * Binds a function to be called when an input is first pressed down.
      * Triggers only once per press, not continuously.
      *
-     * ```lua
-     * BindPressAction(KEYBOARD, string input, function callback)
-     * BindPressAction(MOUSE, string input, function(number screenX, number screenY) callback)
+     * ```signatures
+     * BindPressAction(KEYBOARD: InputType, input: string, callback: function)
+     * BindPressAction(MOUSE: InputType, input: string, callback: function(screenX: number, screenY: number))
      * ```
      */
     private fun luaBindPressAction(lua: Lua): Int {
@@ -156,9 +156,9 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
      * Binds a function to be called when an input is released.
      * Triggers when the key/button is let go.
      *
-     * ```lua
-     * BindReleaseAction(KEYBOARD, string input, function callback)
-     * BindReleaseAction(MOUSE, string input, function(number screenX, number screenY) callback)
+     * ```signatures
+     * BindReleaseAction(KEYBOARD: InputType, input: string, callback: function)
+     * BindReleaseAction(MOUSE: InputType, input: string, callback: function(screenX: number, screenY: number))
      * ```
      */
     private fun luaBindReleaseAction(lua: Lua): Int {
@@ -200,8 +200,8 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
     /**
      * Checks if a keyboard key is currently pressed.
      *
-     * ```lua
-     * boolean IsKeyPressed(string key)
+     * ```signatures
+     * IsKeyPressed(key: string) -> boolean
      * ```
      */
     private fun luaIsKeyPressed(lua: Lua): Int {
@@ -213,8 +213,8 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
     /**
      * Checks if a mouse button is currently pressed.
      *
-     * ```lua
-     * boolean IsMousePressed(string button)
+     * ```signatures
+     * IsMousePressed(button: string) -> boolean
      * ```
      */
     private fun luaIsMousePressed(lua: Lua): Int {
@@ -226,8 +226,8 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
     /**
      * Returns the current mouse position in screen coordinates.
      *
-     * ```lua
-     * number, number GetMousePosition()
+     * ```signatures
+     * GetMousePosition() -> number, number
      * ```
      */
     private fun luaGetMousePosition(lua: Lua): Int {

@@ -34,8 +34,8 @@ class LuaClientMapModule(
     /**
      * Gets all tiles at the specified coordinate.
      *
-     * ```lua
-     * table(Tile) GetTilesAt(number x, number y, number z)
+     * ```signatures
+     * GetTilesAt(x: number, y: number, z: number) -> table[Tile]
      * ```
      */
     private fun luaGetTilesAt(lua: Lua): Int {
@@ -52,8 +52,8 @@ class LuaClientMapModule(
     /**
      * Checks if any tiles exist at the specified coordinate.
      *
-     * ```lua
-     * boolean HasTileAt(number x, number y, number z)
+     * ```signatures
+     * HasTileAt(x: number, y: number, z: number) -> boolean
      * ```
      */
     private fun luaHasTileAt(lua: Lua): Int {
