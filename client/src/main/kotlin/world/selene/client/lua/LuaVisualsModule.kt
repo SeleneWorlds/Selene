@@ -8,6 +8,9 @@ import world.selene.common.lua.LuaModule
 import world.selene.common.lua.checkString
 import world.selene.common.lua.register
 
+/**
+ * Provides functions for creating visuals from visual definitions.
+ */
 class LuaVisualsModule(private val visualManager: VisualManager) : LuaModule {
     override val name = "selene.visuals"
 
@@ -15,6 +18,13 @@ class LuaVisualsModule(private val visualManager: VisualManager) : LuaModule {
         table.register("Create", ::luaCreate)
     }
 
+    /**
+     * Creates a visual instance from a visual definition.
+     *
+     * ```lua
+     * Visual Create(string visualName)
+     * ```
+     */
     private fun luaCreate(lua: Lua): Int {
         val name = lua.checkString(1)
         val visual = visualManager.createVisual(name, VisualCreationContext())

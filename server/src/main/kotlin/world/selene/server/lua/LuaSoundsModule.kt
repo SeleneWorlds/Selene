@@ -15,6 +15,9 @@ import world.selene.server.dimensions.Dimension
 import world.selene.server.player.Player
 import world.selene.server.world.World
 
+/**
+ * Provides functions for playing sounds.
+ */
 class LuaSoundsModule(
     private val registries: Registries,
     private val world: World
@@ -27,6 +30,13 @@ class LuaSoundsModule(
         table.register("PlayGlobalSound", this::luaPlayGlobalSound)
     }
 
+    /**
+     * Plays a sound to a specific player.
+     *
+     * ```lua
+     * PlaySound(Player player, Sound sound, {number volume, number pitch} options)
+     * ```
+     */
     private fun luaPlaySound(lua: Lua): Int {
         val player = lua.checkUserdata<Player>(1)
         val sound = lua.checkRegistry(2, registries.sounds)
@@ -39,6 +49,13 @@ class LuaSoundsModule(
         return 0
     }
 
+    /**
+     * Plays a positional sound at a coordinate to all nearby players in the dimension.
+     *
+     * ```lua
+     * PlaySoundAt(Coordinate coordinate, Sound sound, Dimension dimension, {number volume, number pitch} options)
+     * ```
+     */
     private fun luaPlaySoundAt(lua: Lua): Int {
         val (coordinate, index) = lua.checkCoordinate(1)
         val sound = lua.checkRegistry(index + 1, registries.sounds)
@@ -56,6 +73,13 @@ class LuaSoundsModule(
         return 0
     }
 
+    /**
+     * Plays a sound to all players in a dimension.
+     *
+     * ```lua
+     * PlayGlobalSound(Sound sound, Dimension dimension, {number volume, number pitch} options)
+     * ```
+     */
     private fun luaPlayGlobalSound(lua: Lua): Int {
         val sound = lua.checkRegistry(1, registries.sounds)
         val dimension = if (lua.top >= 2) lua.checkUserdata(

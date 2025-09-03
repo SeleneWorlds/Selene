@@ -11,6 +11,9 @@ import world.selene.common.lua.checkInt
 import world.selene.common.lua.register
 import world.selene.common.util.Coordinate
 
+/**
+ * Provides functions for accessing tiles on the map.
+ */
 class LuaClientMapModule(
     private val clientMap: ClientMap,
     private val signals: ClientLuaSignals
@@ -28,6 +31,13 @@ class LuaClientMapModule(
         table.set("OnChunkChanged", mapChunkChanged)
     }
 
+    /**
+     * Gets all tiles at the specified coordinate.
+     *
+     * ```lua
+     * table(Tile) GetTilesAt(number x, number y, number z)
+     * ```
+     */
     private fun luaGetTilesAt(lua: Lua): Int {
         val x = lua.checkInt(1)
         val y = lua.checkInt(2)
@@ -39,6 +49,13 @@ class LuaClientMapModule(
         return 1
     }
 
+    /**
+     * Checks if any tiles exist at the specified coordinate.
+     *
+     * ```lua
+     * boolean HasTileAt(number x, number y, number z)
+     * ```
+     */
     private fun luaHasTileAt(lua: Lua): Int {
         val x = lua.checkInt(1)
         val y = lua.checkInt(2)

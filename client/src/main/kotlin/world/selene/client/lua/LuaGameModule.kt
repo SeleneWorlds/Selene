@@ -4,6 +4,9 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.Signal
 
+/**
+ * Provides access to game lifecycle signals.
+ */
 class LuaGameModule(private val signals: ClientLuaSignals) : LuaModule {
     override val name = "selene.game"
 

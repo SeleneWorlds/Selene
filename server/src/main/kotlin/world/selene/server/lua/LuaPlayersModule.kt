@@ -8,6 +8,9 @@ import world.selene.common.lua.register
 import world.selene.server.network.NetworkServer
 import world.selene.server.network.NetworkClientImpl
 
+/**
+ * Provides access to player management and player-related signals.
+ */
 class LuaPlayersModule(private val signals: ServerLuaSignals, private val networkServer: NetworkServer) : LuaModule {
     override val name = "selene.players"
 
@@ -39,6 +42,13 @@ class LuaPlayersModule(private val signals: ServerLuaSignals, private val networ
         table.register("GetOnlinePlayers", this::luaGetOnlinePlayers)
     }
 
+    /**
+     * Returns a list of all currently online players.
+     *
+     * ```lua
+     * table(Player) GetOnlinePlayers()
+     * ```
+     */
     private fun luaGetOnlinePlayers(lua: Lua): Int {
         val players = networkServer.clients
             .filterIsInstance<NetworkClientImpl>()

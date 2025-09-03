@@ -5,6 +5,9 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.bundles.BundleDatabase
 import java.io.File
 
+/**
+ * Provides access to bundle resources and file operations.
+ */
 class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule {
     override val name = "selene.resources"
 
@@ -22,9 +25,16 @@ class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule
             .toRegex()
     }
 
+    /**
+     * Lists files in a bundle matching a glob pattern.
+     *
+     * ```lua
+     * table(string) ListFiles(string bundle, string filter)
+     * ```
+     */
     private fun luaListFiles(lua: Lua): Int {
-        val bundle = lua.checkString(-2)
-        val filter = lua.checkString(-1)
+        val bundle = lua.checkString(1)
+        val filter = lua.checkString(2)
         val baseDir = bundleDatabase.getBundle(bundle)?.dir
         if (baseDir == null) {
             lua.newTable()
@@ -46,14 +56,20 @@ class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule
         return 1
     }
 
+    /**
+     * Loads a file from a bundle as a string.
+     * Throws an error if the file does not exist.
+     *
+     * ```lua
+     * string LoadAsString(string path)
+     * ```
+     */
     private fun luaLoadAsString(lua: Lua): Int {
         val path = lua.checkString(-1)
         val bundleName = path.substringBefore("/")
         val remainingPath = path.substringAfter("/")
         val baseDir = bundleDatabase.getBundle(bundleName)?.dir
-        if (baseDir == null) {
-            return lua.error(IllegalArgumentException("Failed to find bundle: $bundleName"))
-        }
+            ?: return lua.error(IllegalArgumentException("Failed to find bundle: $bundleName"))
 
         val file = baseDir.resolve(remainingPath)
         if (!file.exists() || !file.isFile) {
@@ -70,6 +86,13 @@ class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule
         return 1
     }
 
+    /**
+     * Checks if a file exists in a bundle.
+     *
+     * ```lua
+     * boolean FileExists(string path)
+     * ```
+     */
     private fun luaFileExists(lua: Lua): Int {
         val path = lua.checkString(-1)
         val bundleName = path.substringBefore("/")

@@ -10,6 +10,9 @@ import world.selene.common.lua.checkFloat
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.register
 
+/**
+ * Provides functions for camera control and coordinate conversion.
+ */
 class LuaCameraModule(
     private val cameraManager: CameraManager,
     private val signals: ClientLuaSignals
@@ -28,11 +31,25 @@ class LuaCameraModule(
         table.set("OnCoordinateChanged", cameraCoordinateChanged)
     }
 
+    /**
+     * Gets the current camera focus coordinate.
+     *
+     * ```lua
+     * Coordinate GetCoordinate()
+     * ```
+     */
     private fun luaGetCoordinate(lua: Lua): Int {
         lua.push(cameraManager.focusCoordinate, Lua.Conversion.NONE)
         return 1
     }
 
+    /**
+     * Sets the camera viewport dimensions.
+     *
+     * ```lua
+     * SetViewport(number x, number y, number width, number height)
+     * ```
+     */
     private fun luaSetViewport(lua: Lua): Int {
         val x = lua.checkInt(1)
         val y = lua.checkInt(2)
@@ -42,6 +59,13 @@ class LuaCameraModule(
         return 0
     }
 
+    /**
+     * Converts screen coordinates to world coordinates.
+     *
+     * ```lua
+     * number worldX, number worldY ScreenToWorld(number screenX, number screenY)
+     * ```
+     */
     private fun luaScreenToWorld(lua: Lua): Int {
         val worldPos = cameraManager.camera.unproject(Vector3(lua.checkFloat(1), lua.checkFloat(2), 0f))
         lua.push(worldPos.x)

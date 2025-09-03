@@ -2,6 +2,12 @@ package world.selene.common.lua
 
 import party.iroiro.luajava.value.LuaValue
 
+/**
+ * Provides access to a restricted set of functions from the Lua debug library.
+ * Registered as `debug` global.
+ *
+ * Only the functions `traceback` and `getinfo` are available.
+ */
 class LuaDebugModule : LuaModule {
     override val name: String = "debug"
     override val registerAsGlobal: Boolean = true

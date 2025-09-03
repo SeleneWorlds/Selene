@@ -14,6 +14,9 @@ import world.selene.server.attribute.AttributeMathOpFilter
 import world.selene.server.attribute.IntAttributeClampFilter
 import world.selene.server.attribute.IntAttributeMathOpFilter
 
+/**
+ * Provides functions for creating common attribute filters.
+ */
 class LuaAttributesModule : LuaModule {
     override val name = "selene.attributes"
 
@@ -22,6 +25,14 @@ class LuaAttributesModule : LuaModule {
         table.register("MathOpFilter", this::luaMathOpFilter)
     }
 
+    /**
+     * Creates a clamp filter that restricts attribute values between min and max bounds.
+     * Both min and max can be constant numbers or other attributes.
+     *
+     * ```lua
+     * AttributeFilter ClampFilter(Attribute|number min, Attribute|number max)
+     * ```
+     */
     private fun luaClampFilter(lua: Lua): Int {
         val min = when (lua.type(1)) {
             Lua.LuaType.NUMBER -> AttributeClampFilter.ConstantClampValue(lua.checkInt(1))
@@ -37,6 +48,17 @@ class LuaAttributesModule : LuaModule {
         return 1
     }
 
+    /**
+     * Creates a math operation filter that applies a simple mathematical operation to attribute values.
+     * The value can be a constant number or another attribute.
+     *
+     * Supported operators: +, -, *, /
+     *
+     * ```lua
+     * AttributeFilter MathOpFilter(number value, string operator)
+     * AttributeFilter MathOpFilter(Attribute value, string operator)
+     * ```
+     */
     private fun luaMathOpFilter(lua: Lua): Int {
         val value = when (lua.type(1)) {
             Lua.LuaType.NUMBER -> AttributeMathOpFilter.ConstantMathOpValue(lua.checkInt(1))

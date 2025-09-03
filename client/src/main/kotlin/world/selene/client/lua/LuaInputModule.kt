@@ -13,6 +13,9 @@ import world.selene.common.lua.getCallerInfo
 import world.selene.common.lua.register
 import world.selene.common.lua.xpCall
 
+/**
+ * Provides input handling functionality for keyboard and mouse events.
+ */
 class LuaInputModule(private val inputManager: InputManager) : LuaModule {
     override val name = "selene.input"
 
@@ -31,6 +34,14 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
         table.set("MOUSE", inputTypeMouse)
     }
 
+    /**
+     * Binds a function to be called continuously while an input is held down.
+     * The function is called every frame while the input is active.
+     *
+     * ```lua
+     * BindContinuousAction(InputType type, string input, function callback)
+     * ```
+     */
     private fun luaBindContinuousAction(lua: Lua): Int {
         val type = lua.checkEnum<InputType>(1)
         val input = lua.checkString(2)
@@ -50,6 +61,16 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
         return 0
     }
 
+    /**
+     * Binds a function to be called when an input event occurs.
+     * For type `KEYBOARD`: called on key press.
+     * For type `MOUSE`: called on click with coordinates.
+     *
+     * ```lua
+     * BindAction(KEYBOARD, string input, function callback)
+     * BindAction(MOUSE, string input, function(number screenX, number screenY) callback)
+     * ```
+     */
     private fun luaBindAction(lua: Lua): Int {
         val type = lua.checkEnum<InputType>(1)
         val input = lua.checkString(2)
@@ -86,6 +107,15 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
         return 0
     }
 
+    /**
+     * Binds a function to be called when an input is first pressed down.
+     * Triggers only once per press, not continuously.
+     *
+     * ```lua
+     * BindPressAction(KEYBOARD, string input, function callback)
+     * BindPressAction(MOUSE, string input, function(number screenX, number screenY) callback)
+     * ```
+     */
     private fun luaBindPressAction(lua: Lua): Int {
         val type = lua.checkEnum<InputType>(1)
         val input = lua.checkString(2)
@@ -122,6 +152,15 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
         return 0
     }
 
+    /**
+     * Binds a function to be called when an input is released.
+     * Triggers when the key/button is let go.
+     *
+     * ```lua
+     * BindReleaseAction(KEYBOARD, string input, function callback)
+     * BindReleaseAction(MOUSE, string input, function(number screenX, number screenY) callback)
+     * ```
+     */
     private fun luaBindReleaseAction(lua: Lua): Int {
         val type = lua.checkEnum<InputType>(1)
         val input = lua.checkString(2)
@@ -158,18 +197,39 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
         return 0
     }
 
+    /**
+     * Checks if a keyboard key is currently pressed.
+     *
+     * ```lua
+     * boolean IsKeyPressed(string key)
+     * ```
+     */
     private fun luaIsKeyPressed(lua: Lua): Int {
         val key = lua.checkString(1)
         lua.push(inputManager.isKeyPressed(key))
         return 1
     }
 
+    /**
+     * Checks if a mouse button is currently pressed.
+     *
+     * ```lua
+     * boolean IsMousePressed(string button)
+     * ```
+     */
     private fun luaIsMousePressed(lua: Lua): Int {
         val button = lua.checkString(1)
         lua.push(inputManager.isMousePressed(button))
         return 1
     }
 
+    /**
+     * Returns the current mouse position in screen coordinates.
+     *
+     * ```lua
+     * number, number GetMousePosition()
+     * ```
+     */
     private fun luaGetMousePosition(lua: Lua): Int {
         lua.push(Gdx.input.x)
         lua.push(Gdx.input.y)

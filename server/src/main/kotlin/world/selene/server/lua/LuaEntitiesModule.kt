@@ -10,6 +10,9 @@ import world.selene.common.lua.register
 import world.selene.server.data.Registries
 import world.selene.server.entities.EntityManager
 
+/**
+ * Provides access to entities and the ability to create new ones.
+ */
 class LuaEntitiesModule(private val entityManager: EntityManager, private val registries: Registries, private val signals: ServerLuaSignals) : LuaModule {
     override val name = "selene.entities"
 
@@ -31,6 +34,15 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val re
         table.set("SteppedOffTile", entitySteppedOffTile)
     }
 
+    /**
+     * Creates a new entity from an entity definition.
+     * The entity will be saved and synchronized with clients.
+     *
+     * ```lua
+     * Entity Create(string entityDef)
+     * Entity Create(EntityDefinition entityDef)
+     * ```
+     */
     private fun luaCreate(lua: Lua): Int {
         val entityDefinition = lua.checkRegistry(1, registries.entities)
         val entity = entityManager.createEntity(entityDefinition)
@@ -38,6 +50,15 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val re
         return 1
     }
 
+    /**
+     * Creates a new transient entity from an entity definition.
+     * Transient entities are not assigned a network id - spawning them is fire-and-forget.
+     *
+     * ```lua
+     * Entity CreateTransient(string entityDef)
+     * Entity CreateTransient(EntityDefinition entityDef)
+     * ```
+     */
     private fun luaCreateTransient(lua: Lua): Int {
         val entityDefinition = lua.checkRegistry(1, registries.entities)
         val entity = entityManager.createTransientEntity(entityDefinition)
@@ -45,6 +66,14 @@ class LuaEntitiesModule(private val entityManager: EntityManager, private val re
         return 1
     }
 
+    /**
+     * Retrieves an entity by its network ID.
+     * Returns the entity if found, otherwise returns nil.
+     *
+     * ```lua
+     * Entity|nil GetByNetworkId(number networkId)
+     * ```
+     */
     private fun luaGetByNetworkId(lua: Lua): Int {
         val networkId = lua.checkInt(1)
         val entity = entityManager.getEntityByNetworkId(networkId)

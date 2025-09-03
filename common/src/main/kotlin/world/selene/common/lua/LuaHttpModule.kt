@@ -9,6 +9,9 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.util.Disposable
 
+/**
+ * Provides HTTP functionality for making web requests.
+ */
 class LuaHttpModule(
     private val httpClient: HttpClient
 ) : LuaModule, Disposable {
@@ -18,6 +21,15 @@ class LuaHttpModule(
         table.register("Post", this::luaPost)
     }
 
+    /**
+     * Sends an HTTP POST request to the specified URL with optional body and headers.
+     * Returns a response table containing status code, body text, and success flag.
+     *
+     * ```lua
+     * {boolean success, number status, string body} Post(string url, string|table body)
+     * {boolean success, number status, string body} Post(string url, string|table body, table headers)
+     * ```
+     */
     private fun luaPost(lua: Lua): Int {
         val url = lua.checkString(1)
         val body = if (lua.isString(2)) {

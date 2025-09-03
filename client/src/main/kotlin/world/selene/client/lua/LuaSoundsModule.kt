@@ -12,6 +12,9 @@ import world.selene.common.lua.getFieldFloat
 import world.selene.common.lua.register
 import world.selene.common.lua.throwError
 
+/**
+ * Provides functions for playing local sounds.
+ */
 class LuaSoundsModule(
     private val registries: Registries,
     private val soundManager: SoundManager
@@ -24,6 +27,13 @@ class LuaSoundsModule(
         table.register("StopAllSounds", this::luaStopAllSounds)
     }
 
+    /**
+     * Plays a sound with optional volume and pitch settings.
+     *
+     * ```lua
+     * PlaySound(Sound sound, {number volume, number pitch} options)
+     * ```
+     */
     private fun luaPlaySound(lua: Lua): Int {
         val sound = lua.checkRegistry(1, registries.sounds)
         if (lua.top >= 2) lua.checkType(2, Lua.LuaType.TABLE)
@@ -35,12 +45,26 @@ class LuaSoundsModule(
         return 0
     }
 
+    /**
+     * Stops all instances of a specific sound.
+     *
+     * ```lua
+     * StopSound(Sound sound)
+     * ```
+     */
     private fun luaStopSound(lua: Lua): Int {
         val sound = lua.checkRegistry(1, registries.sounds)
         soundManager.stopSound(sound)
         return 0
     }
 
+    /**
+     * Stops all currently playing sounds.
+     *
+     * ```lua
+     * StopAllSounds()
+     * ```
+     */
     private fun luaStopAllSounds(lua: Lua): Int {
         soundManager.stopAllSounds()
         return 0

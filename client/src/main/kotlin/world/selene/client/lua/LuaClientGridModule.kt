@@ -7,6 +7,9 @@ import world.selene.common.lua.LuaGridModule
 import world.selene.common.lua.checkFloat
 import world.selene.common.lua.register
 
+/**
+ * Provides access to grid system for defining and managing directions, and conversion of screen to grid coordinates.
+ */
 class LuaClientGridModule(private val grid: ClientGrid) : LuaGridModule(grid) {
     override val name = "selene.grid"
 
@@ -15,6 +18,13 @@ class LuaClientGridModule(private val grid: ClientGrid) : LuaGridModule(grid) {
         table.register("ScreenToCoordinate", this::luaScreenToCoordinate)
     }
 
+    /**
+     * Converts screen coordinates to grid coordinates.
+     *
+     * ```lua
+     * Coordinate ScreenToCoordinate(number screenX, number screenY)
+     * ```
+     */
     private fun luaScreenToCoordinate(lua: Lua): Int {
         val x = lua.checkFloat(1)
         val y = lua.checkFloat(2)

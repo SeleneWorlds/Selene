@@ -14,6 +14,9 @@ import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.checkString
 import world.selene.common.lua.register
 
+/**
+ * Provides texture creation and manipulation functionality.
+ */
 class LuaTexturesModule : LuaModule {
     override val name = "selene.textures"
 
@@ -99,6 +102,17 @@ class LuaTexturesModule : LuaModule {
         table.register("Create", this::luaCreateTexture)
     }
 
+    /**
+     * Creates a new editable texture with the specified dimensions and format.
+     * Returns a `LuaTexture` object with pixel manipulation methods.
+     *
+     * Supported formats: "RGBA8888" (default), "RGB888", "RGBA4444", "RGB565", "Alpha"
+     *
+     * ```lua
+     * LuaTexture Create(number width, number height)
+     * LuaTexture Create(number width, number height, string format)
+     * ```
+     */
     private fun luaCreateTexture(lua: Lua): Int {
         val width = lua.checkInt(1)
         val height = lua.checkInt(2)

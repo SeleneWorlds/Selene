@@ -14,6 +14,9 @@ import world.selene.common.lua.getFieldString
 import world.selene.common.lua.register
 import world.selene.common.util.Coordinate
 
+/**
+ * Provides functions for accessing and creating local entities.
+ */
 class LuaEntitiesModule(
     private val entityPool: EntityPool,
     private val registries: Registries,
@@ -27,6 +30,13 @@ class LuaEntitiesModule(
         table.register("FindEntitiesAt", this::luaFindEntitiesAt)
     }
 
+    /**
+     * Creates a new entity from an entity definition.
+     *
+     * ```lua
+     * Entity Create(EntityDefinition entityDefinition)
+     * ```
+     */
     private fun luaCreate(lua: Lua): Int {
         val entityDefinition = lua.checkRegistry(1, registries.entities)
         val entity = entityPool.obtain()
@@ -35,6 +45,13 @@ class LuaEntitiesModule(
         return 1
     }
 
+    /**
+     * Gets all entities at the specified coordinate.
+     *
+     * ```lua
+     * table(Entity) GetEntitiesAt(Coordinate coordinate)
+     * ```
+     */
     private fun luaGetEntitiesAt(lua: Lua): Int {
         val coordinate = lua.checkUserdata(1, Coordinate::class)
         val entities = clientMap.getEntitiesAt(coordinate)
@@ -42,6 +59,13 @@ class LuaEntitiesModule(
         return 1
     }
 
+    /**
+     * Finds entities at a coordinate matching specified criteria.
+     *
+     * ```lua
+     * table(Entity) FindEntitiesAt(Coordinate coordinate, {string tag} criteria)
+     * ```
+     */
     private fun luaFindEntitiesAt(lua: Lua): Int {
         val coordinate = lua.checkUserdata(1, Coordinate::class)
         lua.checkType(2, Lua.LuaType.TABLE)

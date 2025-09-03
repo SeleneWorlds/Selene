@@ -3,6 +3,10 @@ package world.selene.common.lua
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 
+/**
+ * Provides functionality similar to the Lua package library, mainly the `require` function for accessing other scripts.
+ * Registered as `package` global.
+ */
 class LuaPackageModule : LuaModule {
     override val name: String = "package"
 
@@ -41,6 +45,14 @@ class LuaPackageModule : LuaModule {
 
     override fun register(table: LuaValue) = Unit
 
+    /**
+     * Loads a module by name. Throws an error if the module cannot be found or failed to load.
+     * As with Lua's standard `require` function, this will only load the module once and then cache it for future use.
+     *
+     * ```lua
+     * any require(string moduleName)
+     * ```
+     */
     private fun luaRequire(lua: Lua): Int {
         val moduleName = lua.checkString(1)
         lua.push(packageLoaded)

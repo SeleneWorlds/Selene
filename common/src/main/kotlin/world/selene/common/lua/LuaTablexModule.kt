@@ -3,6 +3,10 @@ package world.selene.common.lua
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 
+/**
+ * Provides extended table manipulation functions beyond standard Lua table operations.
+ * Registered as `tablex` global.
+ */
 class LuaTablexModule : LuaModule {
     override val name: String = "tablex"
     override val registerAsGlobal: Boolean = true
@@ -13,12 +17,30 @@ class LuaTablexModule : LuaModule {
         table.register("tostring", this::luaToString)
     }
 
+    /**
+     * Creates a managed table.
+     * Managed tables are observable, read-writable key-value maps.
+     * They are no longer considered a `table` and cannot be used in `table`-specific functions.
+     *
+     * ```lua
+     * ManagedTable managed()
+     * ManagedTable managed(table data)
+     * ```
+     */
     private fun luaManaged(lua: Lua): Int {
         val data = lua.toAnyMap(1) as MutableMap?
         lua.push(ManagedLuaTable(data ?: mutableMapOf()), Lua.Conversion.NONE)
         return 1
     }
 
+    /**
+     * Finds the key of the first occurrence of a value in a table.
+     * Returns the key if found, otherwise returns nil.
+     *
+     * ```lua
+     * any|nil find(table tbl, any value)
+     * ```
+     */
     private fun luaFind(lua: Lua): Int {
         lua.checkType(1, Lua.LuaType.TABLE)
         lua.top = 2
@@ -46,6 +68,14 @@ class LuaTablexModule : LuaModule {
         return 1
     }
 
+    /**
+     * Converts a table to a string representation for debugging.
+     * Handles nested tables and various data types.
+     *
+     * ```lua
+     * string tostring(table|ManagedTable tbl)
+     * ```
+     */
     private fun luaToString(lua: Lua): Int {
         if (lua.isNil(1)) {
             lua.push("nil")

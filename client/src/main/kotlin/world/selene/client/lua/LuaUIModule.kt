@@ -41,6 +41,9 @@ import world.selene.client.ui.UI
 import world.selene.client.ui.Visual2DDrawable
 import world.selene.common.lua.*
 
+/**
+ * Provides functions for loading, skinning and manipulating UIs.
+ */
 class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFileResolver) : LuaModule {
     override val name = "selene.ui.lml"
 
@@ -500,6 +503,14 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         table.set("Root", bundlesRoot)
     }
 
+    /**
+     * Adds an input processor for handling keyboard events to the UI.
+     * The processor table can contain KeyUp, KeyDown, and KeyTyped functions.
+     *
+     * ```lua
+     * AddInputProcessor({function(InputEvent event, number keyCode) KeyUp, function(InputEvent event, number keyCode) KeyDown, function(InputEvent event, number char) KeyTyped}} processor)
+     * ```
+     */
     private fun luaAddInputProcessor(lua: Lua): Int {
         lua.checkType(1, Lua.LuaType.TABLE)
 
@@ -558,12 +569,26 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         return 0
     }
 
+    /**
+     * Sets keyboard focus to the specified actor, or clears focus if nil.
+     *
+     * ```lua
+     * SetFocus(Actor|nil actor)
+     * ```
+     */
     private fun luaSetFocus(lua: Lua): Int {
         val actor = if (lua.isUserdata(1)) lua.checkUserdata<Actor>(1) else null
         ui.stage.keyboardFocus = actor
         return 0
     }
 
+    /**
+     * Gets the currently focused actor, or nil if no actor has focus.
+     *
+     * ```lua
+     * Actor|nil GetFocus()
+     * ```
+     */
     private fun luaGetFocus(lua: Lua): Int {
         val actor = ui.stage.keyboardFocus
         if (actor != null) {
@@ -574,6 +599,13 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         return 1
     }
 
+    /**
+     * Adds actors to the root UI container. Accepts a single actor or table of actors.
+     *
+     * ```lua
+     * AddToRoot(Actor|table(Actor) actors)
+     * ```
+     */
     private fun luaAddToRoot(lua: Lua): Int {
         if (lua.isTable(1)) {
             val actors = lua.toAnyMap(1)?.values ?: emptyList()
@@ -589,6 +621,15 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         return 0
     }
 
+    /**
+     * Loads a UI from an XML file with optional actions and configuration.
+     * Returns an array of root actors and a table of actors by name.
+     * Throws an error if the XML file is not found.
+     *
+     * ```lua
+     * table(Actor) actors, table(string, Actor) actorsByName LoadUI(string xmlFilePath, {string i18nBundle, Skin skin, table(function(Actor)) actions} config)
+     * ```
+     */
     private fun luaLoadUI(lua: Lua): Int {
         val xmlFilePath = lua.checkString(1)
         if (lua.top >= 2) {
@@ -666,6 +707,14 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         }
     }
 
+    /**
+     * Loads a skin from a JSON file.
+     * Throws an error if the skin file is not found.
+     *
+     * ```lua
+     * Skin LoadSkin(string skinPath)
+     * ```
+     */
     private fun luaLoadSkin(lua: Lua): Int {
         val skinPath = lua.checkString(1)
 
@@ -683,6 +732,13 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         }
     }
 
+    /**
+     * Creates a new empty skin with default font and styles.
+     *
+     * ```lua
+     * Skin CreateSkin()
+     * ```
+     */
     private fun luaCreateSkin(lua: Lua): Int {
         val font = BitmapFont()
         val skin = Skin().apply {
@@ -694,6 +750,13 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         return 1
     }
 
+    /**
+     * Creates a container actor with optional child and styling.
+     *
+     * ```lua
+     * Container CreateContainer(Skin skin, {Actor child, string background, number width, number height} config)
+     * ```
+     */
     private fun luaCreateContainer(lua: Lua): Int {
         val skin = lua.checkUserdata(1, Skin::class)
         if (lua.top > 1) {
@@ -715,23 +778,27 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         return 1
     }
 
+    /**
+     * Creates a label actor with text and styling.
+     * Throws an error if the label style is not found in the skin.
+     *
+     * ```lua
+     * Label CreateLabel(Skin skin, {string style, string text, boolean wrap} config)
+     * ```
+     */
     private fun luaCreateLabel(lua: Lua): Int {
         val skin = lua.checkUserdata(1, Skin::class)
         if (lua.top > 1) {
             lua.checkType(2, Lua.LuaType.TABLE)
         }
 
-        try {
-            val style = lua.getFieldString(2, "style") ?: "default"
-            val labelStyle = skin.get(style, Label.LabelStyle::class.java)
-            val text = lua.getFieldString(2, "text") ?: ""
-            val label = Label(text, labelStyle)
-            label.wrap = lua.getFieldBoolean(2, "wrap") ?: false
-            lua.push(label, Lua.Conversion.NONE)
-            return 1
-        } catch (e: Exception) {
-            return lua.error(RuntimeException("Failed to create label: ${e.message}", e))
-        }
+        val style = lua.getFieldString(2, "style") ?: "default"
+        val labelStyle = skin.get(style, Label.LabelStyle::class.java)
+        val text = lua.getFieldString(2, "text") ?: ""
+        val label = Label(text, labelStyle)
+        label.wrap = lua.getFieldBoolean(2, "wrap") ?: false
+        lua.push(label, Lua.Conversion.NONE)
+        return 1
     }
 
     private fun resolveFont(skin: Skin, fontName: String): BitmapFont {
@@ -780,6 +847,15 @@ class LuaUIModule(private val ui: UI, private val bundleFileResolver: BundleFile
         }
     }
 
+    /**
+     * Creates image button styles from configuration table.
+     * Returns both ImageButtonStyle and VisImageButtonStyle.
+     *
+     * ```lua
+     * ImageButtonStyle, VisImageButtonStyle CreateImageButtonStyle(table config)
+     * ImageButtonStyle, VisImageButtonStyle CreateImageButtonStyle(table config, Skin skin)
+     * ```
+     */
     private fun luaCreateImageButtonStyle(lua: Lua): Int {
         val skin = lua.toUserdata<Skin>(2)
         val styles = createImageButtonStyle(lua, 1, skin)

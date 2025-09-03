@@ -7,6 +7,9 @@ import world.selene.common.lua.register
 import world.selene.server.data.Registries
 import world.selene.server.maps.MapTree
 
+/**
+ * Provides access to server-side map creation and management.
+ */
 class LuaServerMapModule(private val registries: Registries) : LuaModule {
     override val name = "selene.map"
 
@@ -14,6 +17,13 @@ class LuaServerMapModule(private val registries: Registries) : LuaModule {
         table.register("Create", this::luaCreate)
     }
 
+    /**
+     * Creates a new empty map tree for storing map layers.
+     *
+     * ```lua
+     * MapTree Create()
+     * ```
+     */
     private fun luaCreate(lua: Lua): Int {
         val mapTree = MapTree(registries)
         lua.push(mapTree, Lua.Conversion.NONE)

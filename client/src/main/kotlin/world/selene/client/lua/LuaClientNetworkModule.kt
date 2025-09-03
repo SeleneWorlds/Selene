@@ -13,6 +13,9 @@ import world.selene.common.lua.register
 import world.selene.common.lua.toAnyMap
 import world.selene.common.network.packet.CustomPayloadPacket
 
+/**
+ * Provides networking functions for sending data to server and handling custom payloads.
+ */
 class LuaClientNetworkModule(
     private val networkClient: NetworkClient,
     private val objectMapper: ObjectMapper,
@@ -25,6 +28,13 @@ class LuaClientNetworkModule(
         table.register("SendToServer", this::luaSendToServer)
     }
 
+    /**
+     * Registers a handler for incoming custom payloads from the server.
+     *
+     * ```lua
+     * HandlePayload(string payloadId, function(table payload) callback)
+     * ```
+     */
     private fun luaHandlePayload(lua: Lua): Int {
         val payloadId = lua.checkString(1)
         val callback = lua.checkFunction(2)
@@ -33,6 +43,13 @@ class LuaClientNetworkModule(
         return 0
     }
 
+    /**
+     * Sends a custom payload to the server.
+     *
+     * ```lua
+     * SendToServer(string payloadId, table payload)
+     * ```
+     */
     private fun luaSendToServer(lua: Lua): Int {
         val payloadId = lua.checkString(1)
         val payload = lua.toAnyMap(2)

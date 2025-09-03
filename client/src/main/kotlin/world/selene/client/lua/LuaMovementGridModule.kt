@@ -8,6 +8,9 @@ import world.selene.common.lua.LuaModule
 import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.register
 
+/**
+ * Provides access to grid-based movement controls.
+ */
 class LuaMovementGridModule(private val gridMovement: GridMovement) : LuaModule {
     override val name = "selene.movement.grid"
 
@@ -16,12 +19,26 @@ class LuaMovementGridModule(private val gridMovement: GridMovement) : LuaModule 
         table.register("SetFacing", this::luaSetFacing)
     }
 
+    /**
+     * Sets the movement direction for grid-based movement.
+     *
+     * ```lua
+     * SetMotion(Direction direction)
+     * ```
+     */
     private fun luaSetMotion(lua: Lua): Int {
         val direction = lua.checkUserdata(1, Grid.Direction::class)
         gridMovement.moveDirection = direction
         return 0
     }
 
+    /**
+     * Sets the facing direction for grid-based movement.
+     *
+     * ```lua
+     * SetFacing(Direction direction)
+     * ```
+     */
     private fun luaSetFacing(lua: Lua): Int {
         val direction = lua.checkUserdata(1, Grid.Direction::class)
         gridMovement.facingDirection = direction
