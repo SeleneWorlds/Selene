@@ -15,9 +15,7 @@ open class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaM
     private val mutableProperties = mutableMapOf<String, KMutableProperty<*>>()
     private val callables = mutableMapOf<String, KFunction<*>>()
     private val getters = mutableMapOf<String, KFunction<*>>()
-    private val inlineGetters = mutableMapOf<String, (Lua) -> Int>()
     private val setters = mutableMapOf<String, KFunction<*>>()
-    private val inlineSetters = mutableMapOf<String, (Lua) -> Int>()
 
     init {
         body()
@@ -32,58 +30,36 @@ open class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaM
     fun readOnly(property: KProperty<*>, alias: String? = null) {
         val key = alias ?: capitalize(property.name)
         getters.remove(key)
-        inlineGetters.remove(key)
         properties[key] = property
         property.isAccessible = true
     }
 
     fun getter(function: KFunction<*>, alias: String? = null) {
         require(!function.isSuspend) { "Suspend functions are not supported" }
-        require(function.parameters.size in 1..2) { "Getter '${function.name}' has invalid number of parameters: ${function.parameters.size}" }
-        require(clazz.isSubclassOf(function.parameters[0].type.jvmErasure)) { "Getter '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
-        if (function.parameters.size == 2) {
-            require(function.parameters[1].type.classifier == Lua::class) { "Getter '${function.name}' has invalid parameter type: ${function.parameters[1].type}" }
-            require(function.returnType.classifier == Int::class) { "Getter '${function.name}' has invalid return type: ${function.returnType}" }
-        }
-        val key = alias ?: capitalize(function.name.removePrefix("get"))
+        require(function.parameters.size == 1) { "Method '${function.name}' has invalid number of parameters: ${function.parameters.size}" }
+        require(function.parameters[0].type.classifier == Lua::class) { "Method '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
+        require(function.returnType.classifier == Int::class) { "Method '${function.name}' has invalid return type: ${function.returnType}" }
+        val key = alias ?: capitalize(function.name.removePrefix("luaGet").removePrefix("get"))
         properties.remove(key)
-        inlineGetters.remove(key)
         getters[key] = function
         function.isAccessible = true
     }
 
     fun setter(function: KFunction<*>, alias: String? = null) {
         require(!function.isSuspend) { "Suspend functions are not supported" }
-        require(function.parameters.size == 2) { "Setter '${function.name}' has invalid number of parameters: ${function.parameters.size}" }
-        require(clazz.isSubclassOf(function.parameters[0].type.jvmErasure)) { "Setter '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
-        if (function.parameters[1].type.classifier == Lua::class) {
-            require(function.returnType.classifier == Int::class) { "Setter '${function.name}' has invalid return type: ${function.returnType}" }
-        }
-        val key = alias ?: capitalize(function.name.removePrefix("set"))
+        require(function.parameters.size == 1) { "Method '${function.name}' has invalid number of parameters: ${function.parameters.size}" }
+        require(function.parameters[0].type.classifier == Lua::class) { "Method '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
+        require(function.returnType.classifier == Int::class) { "Method '${function.name}' has invalid return type: ${function.returnType}" }
+        val key = alias ?: capitalize(function.name.removePrefix("luaSet").removePrefix("set"))
         mutableProperties.remove(key)
-        inlineSetters.remove(key)
         setters[key] = function
         function.isAccessible = true
-    }
-
-    fun getter(key: String, function: (Lua) -> Int) {
-        properties.remove(key)
-        getters.remove(key)
-        inlineGetters[key] = function
-    }
-
-    fun setter(key: String, function: (Lua) -> Int) {
-        mutableProperties.remove(key)
-        setters.remove(key)
-        inlineSetters[key] = function
     }
 
     fun writable(property: KMutableProperty<*>, alias: String? = null) {
         val key = alias ?: capitalize(property.name)
         getters.remove(key)
-        inlineGetters.remove(key)
         setters.remove(key)
-        inlineSetters.remove(key)
         mutableProperties[key] = property
         properties[key] = property
         property.isAccessible = true
@@ -117,23 +93,7 @@ open class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaM
         }
 
         getters[key]?.let { getter ->
-            return when (getter.parameters.size) {
-                1 -> {
-                    val value = getter.call(self)
-                    lua.push(value, Lua.Conversion.FULL)
-                    1
-                }
-
-                2 -> {
-                    return getter.call(self, lua) as Int
-                }
-
-                else -> return@let lua.error(IllegalStateException("Getter '$key' has invalid number of parameters: ${getter.parameters.size}"))
-            }
-        }
-
-        inlineGetters[key]?.let { getter ->
-            return getter(lua)
+            return getter.call(lua) as Int
         }
 
         lua.pushNil()
@@ -166,23 +126,7 @@ open class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaM
         }
 
         setters[key]?.let { setter ->
-            if (setter.parameters[1].type.classifier == Lua::class) {
-                return setter.call(self, lua) as Int
-            } else {
-                val value = when (setter.parameters[1].type.classifier) {
-                    Boolean::class -> lua.checkBoolean(3)
-                    Int::class -> lua.checkInt(3)
-                    String::class -> lua.checkString(3)
-                    Float::class -> lua.checkFloat(3)
-                    else -> lua.toAny(3)
-                }
-                setter.call(self, value)
-                return 0
-            }
-        }
-
-        inlineSetters[key]?.let { setter ->
-            return setter(lua)
+            return setter.call(lua) as Int
         }
 
         properties[key]?.let { _ ->
@@ -222,14 +166,8 @@ open class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaM
             for (entry in source.getters) {
                 getter(entry.value)
             }
-            for (entry in source.inlineGetters) {
-                getter(entry.key, entry.value)
-            }
             for (entry in source.setters) {
                 setter(entry.value)
-            }
-            for (entry in source.inlineSetters) {
-                setter(entry.key, entry.value)
             }
         }.apply(body)
     }
@@ -238,6 +176,5 @@ open class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaM
         return properties.containsKey(key)
                 || callables.containsKey(key)
                 || getters.containsKey(key)
-                || inlineGetters.containsKey(key)
     }
 }

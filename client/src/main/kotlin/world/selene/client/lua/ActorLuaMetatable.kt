@@ -13,50 +13,65 @@ import com.kotcrab.vis.ui.widget.LinkLabel
 import com.kotcrab.vis.ui.widget.VisTextField
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.checkFloat
 import world.selene.common.lua.checkString
 import world.selene.common.lua.checkUserdata
 
 object ActorLuaMetatable {
     val luaMeta = LuaMappedMetatable(Actor::class) {
-        getter(Actor::getName)
-        getter(Actor::getParent)
-        getter(Actor::getWidth)
-        getter(Actor::getHeight)
-        setter(Actor::setWidth)
-        setter(Actor::setHeight)
+        getter(::luaGetName)
+        getter(::luaGetParent)
+        getter(::luaGetWidth)
+        getter(::luaGetHeight)
+        setter(::luaSetWidth)
+        setter(::luaSetHeight)
+        getter(::luaGetMinWidth)
+        getter(::luaGetMinHeight)
+        getter(::luaGetPreferredWidth)
+        getter(::luaGetPreferredHeight)
+        getter(::luaGetMaxWidth)
+        getter(::luaGetMaxHeight)
         callable(::luaInvalidate)
         callable(::luaSetStyle)
         callable(::luaFocus)
-        getter("MinWidth") {
-            val actor = it.checkSelf()
-            it.push((actor as? Layout)?.minWidth ?: 0f)
-            1
-        }
-        getter("MinHeight") {
-            val actor = it.checkSelf()
-            it.push((actor as? Layout)?.minHeight ?: 0f)
-            1
-        }
-        getter("PreferredWidth") {
-            val actor = it.checkSelf()
-            it.push((actor as? Layout)?.prefWidth ?: 0f)
-            1
-        }
-        getter("PreferredHeight") {
-            val actor = it.checkSelf()
-            it.push((actor as? Layout)?.prefHeight ?: 0f)
-            1
-        }
-        getter("MaxWidth") {
-            val actor = it.checkSelf()
-            it.push((actor as? Layout)?.maxWidth ?: 0f)
-            1
-        }
-        getter("MaxHeight") {
-            val actor = it.checkSelf()
-            it.push((actor as? Layout)?.maxHeight ?: 0f)
-            1
-        }
+    }
+
+    private fun luaGetName(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        lua.push(actor.name)
+        return 1
+    }
+
+    private fun luaGetParent(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        lua.push(actor.parent, Lua.Conversion.NONE)
+        return 1
+    }
+
+    private fun luaGetWidth(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        lua.push(actor.width)
+        return 1
+    }
+
+    private fun luaGetHeight(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        lua.push(actor.height)
+        return 1
+    }
+
+    private fun luaSetWidth(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        val width = lua.checkFloat(3)
+        actor.width = width
+        return 0
+    }
+
+    private fun luaSetHeight(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        val height = lua.checkFloat(3)
+        actor.height = height
+        return 0
     }
 
     private fun luaInvalidate(lua: Lua): Int {
@@ -113,5 +128,41 @@ object ActorLuaMetatable {
         val actor = lua.checkUserdata<Actor>(1)
         actor.stage.keyboardFocus = actor
         return 0
+    }
+
+    private fun luaGetMinWidth(it: Lua): Int {
+        val actor = it.checkUserdata<Actor>(1)
+        it.push((actor as? Layout)?.minWidth ?: 0f)
+        return 1
+    }
+    
+    private fun luaGetMinHeight(it: Lua): Int {
+        val actor = it.checkUserdata<Actor>(1)
+        it.push((actor as? Layout)?.minHeight ?: 0f)
+        return 1
+    }
+    
+    private fun luaGetPreferredWidth(it: Lua): Int {
+        val actor = it.checkUserdata<Actor>(1)
+        it.push((actor as? Layout)?.prefWidth ?: 0f)
+        return 1
+    }
+    
+    private fun luaGetPreferredHeight(it: Lua): Int {
+        val actor = it.checkUserdata<Actor>(1)
+        it.push((actor as? Layout)?.prefHeight ?: 0f)
+        return 1
+    }
+    
+    private fun luaGetMaxWidth(it: Lua): Int {
+        val actor = it.checkUserdata<Actor>(1)
+        it.push((actor as? Layout)?.maxWidth ?: 0f)
+        return 1
+    }
+    
+    private fun luaGetMaxHeight(it: Lua): Int {
+        val actor = it.checkUserdata<Actor>(1)
+        it.push((actor as? Layout)?.maxHeight ?: 0f)
+        return 1
     }
 }

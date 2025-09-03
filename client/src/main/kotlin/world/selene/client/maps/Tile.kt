@@ -15,6 +15,7 @@ import world.selene.common.data.TileDefinition
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.checkUserdata
 import world.selene.common.util.Coordinate
 
 class Tile(private val grid: ClientGrid, private val visualManager: VisualManager, private val pool: TilePool) :
@@ -94,6 +95,13 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     }
 
     companion object {
+
+        private fun luaGetName(lua: Lua): Int {
+            val tile = lua.checkUserdata<Tile>(1)
+            lua.push(tile.tileDefinition.name)
+            return 1
+        }
+
         val luaMeta = LuaMappedMetatable(Tile::class) {
             readOnly(Tile::coordinate)
             readOnly(Tile::tileDefinition, "Definition")
@@ -101,11 +109,7 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
             readOnly(Tile::x)
             readOnly(Tile::y)
             readOnly(Tile::z)
-            getter("Name") { lua ->
-                val tile = lua.checkSelf()
-                lua.push(tile.tileDefinition.name)
-                1
-            }
+            getter(::luaGetName)
         }
     }
 }
