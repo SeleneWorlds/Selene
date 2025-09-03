@@ -97,7 +97,7 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
         if (function.parameters.size == 2) {
             require(function.parameters[1].type.classifier == Lua::class) { "Method '${function.name}' has invalid parameter type: ${function.parameters[1].type}" }
         }
-        val key = capitalize(function.name)
+        val key = capitalize(function.name.removePrefix("lua"))
         inlineCallables.remove(key)
         callables[key] = function
         function.isAccessible = true
@@ -113,28 +113,36 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
         val key = lua.checkString(2)
 
         callables[key]?.let { method ->
-            lua.push { innerLua ->
-                val result = when (method.parameters.size) {
-                    1 -> method.call(self)
-                    2 -> method.call(self, innerLua)
-                    else -> throw IllegalStateException("Method '$key' has invalid number of parameters: ${method.parameters.size}")
-                }
-
-                when (result) {
-                    is Int -> result
-                    is Unit -> 0
-                    else -> {
-                        innerLua.push(result, Lua.Conversion.FULL)
-                        1
+            lua.push { lua ->
+                try {
+                    val result = when (method.parameters.size) {
+                        1 -> method.call(self)
+                        2 -> method.call(self, lua)
+                        else -> return@push lua.error(IllegalStateException("Method '$key' has invalid number of parameters: ${method.parameters.size}"))
                     }
+
+                    when (result) {
+                        is Int -> result
+                        is Unit -> 0
+                        else -> {
+                            lua.push(result, Lua.Conversion.FULL)
+                            1
+                        }
+                    }
+                } catch (e: Exception) {
+                    return@push lua.error(e)
                 }
             }
             return 1
         }
 
         inlineCallables[key]?.let { method ->
-            lua.push { innerLua ->
-                method(innerLua)
+            lua.push { lua ->
+                try {
+                    method(lua)
+                } catch (e: Exception) {
+                    lua.error(e)
+                }
             }
             return 1
         }
@@ -157,7 +165,7 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
                     return getter.call(self, lua) as Int
                 }
 
-                else -> throw IllegalStateException("Getter '$key' has invalid number of parameters: ${getter.parameters.size}")
+                else -> return@let lua.error(IllegalStateException("Getter '$key' has invalid number of parameters: ${getter.parameters.size}"))
             }
         }
 
@@ -184,9 +192,11 @@ class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaMapped
             try {
                 property.setter.call(self, value)
             } catch (e: IllegalArgumentException) {
-                throw IllegalArgumentException(
-                    "Invalid value for property '$key' on ${luaTypeName()}: $value (${value?.javaClass})",
-                    e
+                return lua.error(
+                    IllegalArgumentException(
+                        "Invalid value for property '$key' on ${luaTypeName()}: $value (${value?.javaClass})",
+                        e
+                    )
                 )
             }
             return 0

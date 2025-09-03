@@ -343,16 +343,25 @@ fun Lua.xpCallWithErrorHandler(nArgs: Int, nResults: Int, errorHandler: Int, tra
     } else {
         message = "no error message available"
     }
-    val e = LuaException(error, message
-        .replace(Regex("\\[string \"(.*?)\"]"), "[$1]")
-        .replace("\t[C]: in ?\n", "")
-        .replace("[C]", "[Selene]"))
-    val javaError = getJavaError()
-    if (javaError != null) {
-        e.initCause(javaError)
+    val e = LuaException(
+        error, message
+            .replace(Regex("\\[string \"(.*?)\"]"), "[$1]")
+            .replace("\t[C]: in ?\n", "")
+            .replace("[C]", "[Selene]")
+    )
+    val javaCause = getJavaCause()
+    if (javaCause != null) {
+        e.initCause(javaCause)
         error(null as Throwable?)
+        pushNil().also { setGlobal(JAVA_CAUSE) }
     }
     throw e
+}
+
+const val JAVA_CAUSE = "__jcause__"
+
+private fun Lua.getJavaCause(): Throwable? {
+    return getGlobal(JAVA_CAUSE).let { toJavaObject(-1) }.also { pop(1) } as? Throwable
 }
 
 fun handleError(lua: Lua): Int {
@@ -363,6 +372,9 @@ fun handleError(lua: Lua): Int {
     val traceback = lua.toString(-1)
     lua.pop(1)
     lua.push("$message\n$traceback")
+    // LuaNatives are resetting the global throwable because the error handler completes successfully lol
+    lua.getGlobal(Lua.GLOBAL_THROWABLE)
+    lua.setGlobal(JAVA_CAUSE)
     return 1
 }
 
