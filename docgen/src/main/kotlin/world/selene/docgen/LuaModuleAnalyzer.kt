@@ -1,7 +1,5 @@
 package world.selene.docgen
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
@@ -20,16 +18,16 @@ data class LuaModuleInfo(
     val className: String,
     val filePath: String,
     val moduleName: String,
-    val side: String,
     val global: String?,
     val description: String?,
-    val functions: List<Function>,
-    val fields: List<Field>
+    val functions: Map<String, Function>,
+    val fields: Map<String, Field>
 )
 
 data class Function(
     val name: String,
-    val description: String? = null
+    val description: String? = null,
+    val signatures: List<LuaSignature> = emptyList()
 )
 
 data class Field(
@@ -45,55 +43,44 @@ class LuaModuleAnalyzer {
         CompilerConfiguration(),
         EnvironmentConfigFiles.JVM_CONFIG_FILES
     )
+    private val signatureParser = LuaSignatureParser()
 
-    fun analyzeProject(): List<LuaModuleInfo> {
-        val moduleInfos = mutableListOf<LuaModuleInfo>()
-        val projectDirs = listOf("common", "server", "client")
-
-        for (projectDir in projectDirs) {
-            val srcPath = Paths.get(projectDir, "src", "main", "kotlin")
-            if (Files.exists(srcPath)) {
-                Files.walk(srcPath)
-                    .filter { Files.isRegularFile(it) && it.toString().endsWith(".kt") }
-                    .forEach { kotlinFile ->
-                        moduleInfos.addAll(analyzeKotlinFile(kotlinFile.toFile()))
-                    }
-            }
+    fun analyzeProject(baseDir: File): Map<String, LuaModuleInfo> {
+        val moduleInfos = mutableMapOf<String, LuaModuleInfo>()
+        val srcPath = Paths.get(baseDir.absolutePath, "src", "main", "kotlin")
+        if (Files.exists(srcPath)) {
+            Files.walk(srcPath)
+                .filter { Files.isRegularFile(it) && it.toString().endsWith(".kt") }
+                .forEach { kotlinFile ->
+                    moduleInfos.putAll(analyzeKotlinFile(baseDir, kotlinFile.toFile()))
+                }
         }
-
         return moduleInfos
     }
 
-    private fun analyzeKotlinFile(file: File): List<LuaModuleInfo> {
+    private fun analyzeKotlinFile(baseDir: File, file: File): Map<String, LuaModuleInfo> {
         val content = file.readText()
         val virtualFile = LightVirtualFile(file.name, KotlinFileType.INSTANCE, content)
         val psiFile = PsiManager.getInstance(environment.project)
-            .findFile(virtualFile) as? KtFile ?: return emptyList()
+            .findFile(virtualFile) as? KtFile ?: return emptyMap()
 
         val luaModuleClasses = psiFile.collectDescendantsOfType<KtClassOrObject>().filter { ktClass: KtClassOrObject ->
             ktClass.getSuperTypeList()?.entries?.any { superType ->
                 superType.text == "LuaModule"
             } == true
         }
-        return luaModuleClasses.map { extractLuaModuleInfo(it, file) }
+        return luaModuleClasses.map { extractLuaModuleInfo(baseDir, it, file) }.associateBy { it.moduleName }
     }
 
-    private fun extractLuaModuleInfo(clazz: KtClassOrObject, file: File): LuaModuleInfo {
+    private fun extractLuaModuleInfo(baseDir: File, clazz: KtClassOrObject, file: File): LuaModuleInfo {
         val className = clazz.name ?: throw IllegalArgumentException("Class name is null")
-        val relativePath = file.relativeTo(File(".")).path
-
-        val side = when {
-            relativePath.startsWith("common/") -> "common"
-            relativePath.startsWith("server/") -> "server"
-            relativePath.startsWith("client/") -> "client"
-            else -> "unknown"
-        }
+        val relativePath = file.relativeTo(baseDir).path
 
         val methods = clazz.collectDescendantsOfType<KtNamedFunction>()
             .filter { it.name != null }
             .associateBy { it.name!! }
         val properties = clazz.collectDescendantsOfType<KtProperty>()
-            .filter { it.name != null }
+            .filter { it.name != null && it.isMember }
             .associateBy { it.name!! }
         val moduleName = properties["name"]?.initializer?.text?.removeSurrounding("\"")
             ?: throw IllegalArgumentException("Module name is null")
@@ -112,7 +99,6 @@ class LuaModuleAnalyzer {
             className = className,
             filePath = relativePath,
             moduleName = moduleName,
-            side = side,
             global = if (registerAsGlobal == true) moduleName else null,
             description = classDescription,
             functions = functions,
@@ -124,8 +110,8 @@ class LuaModuleAnalyzer {
         clazz: KtClassOrObject,
         registrations: List<List<KtValueArgument>>,
         methods: Map<String, KtNamedFunction>
-    ): List<Function> {
-        val result = mutableListOf<Function>()
+    ): Map<String, Function> {
+        val result = mutableMapOf<String, Function>()
         for (args in registrations) {
             if (args.size != 2) continue
             val name = args[0].getArgumentExpression()?.text?.removeSurrounding("\"")
@@ -134,7 +120,9 @@ class LuaModuleAnalyzer {
                 val method = methods[value]
                     ?: throw IllegalArgumentException("Method '$value' not found in class ${clazz.name}")
                 val description = parseDocs(method.docComment)
-                result.add(Function(name, description))
+                val signatures = signatureParser.extractSignatures(description)
+                val cleanedDescription = removeSignaturesBlock(description)
+                result[name] = Function(name, cleanedDescription, signatures)
             }
         }
         return result
@@ -144,8 +132,8 @@ class LuaModuleAnalyzer {
         clazz: KtClassOrObject,
         registrations: List<List<KtValueArgument>>,
         properties: Map<String, KtProperty>
-    ): List<Field> {
-        val result = mutableListOf<Field>()
+    ): Map<String, Field> {
+        val result = mutableMapOf<String, Field>()
         for (args in registrations) {
             val name = args[0].getArgumentExpression()?.text?.removeSurrounding("\"")
             val value = args[1].getArgumentExpression()?.text
@@ -155,7 +143,7 @@ class LuaModuleAnalyzer {
                 val type = property.typeReference?.text
                     ?: throw IllegalArgumentException("Property '$value' is missing explicit type annotation")
                 val description = parseDocs(property.docComment)
-                result.add(Field(type, name, description))
+                result[name] = Field(type, name, description)
             }
         }
         return result
@@ -176,28 +164,16 @@ class LuaModuleAnalyzer {
         }
     }
 
+    private fun removeSignaturesBlock(description: String?): String? {
+        if (description == null) return null
+        
+        val signatureBlockPattern = Regex("```signatures\\s*\\n(.*?)\\n```", RegexOption.DOT_MATCHES_ALL)
+        val cleanedDescription = description.replace(signatureBlockPattern, "").trim()
+        
+        return cleanedDescription.ifEmpty { null }
+    }
+
     fun close() {
         Disposer.dispose(disposable)
-    }
-}
-
-fun main() {
-    val analyzer = LuaModuleAnalyzer()
-
-    try {
-        val moduleInfos = analyzer.analyzeProject()
-
-        val mapper = ObjectMapper().registerKotlinModule()
-        val jsonOutput = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(moduleInfos)
-
-        val outputFile = File("lua-modules.json")
-        outputFile.writeText(jsonOutput)
-
-        println("\nAnalysis complete!")
-        println("Found ${moduleInfos.size} LuaModule implementations")
-        println("Output written to: ${outputFile.absolutePath}")
-
-    } finally {
-        analyzer.close()
     }
 }
