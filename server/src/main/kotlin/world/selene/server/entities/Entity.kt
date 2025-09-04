@@ -193,7 +193,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
          */
         private fun luaGetName(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
-            lua.push(entity.name, Lua.Conversion.NONE)
+            lua.push(entity.name)
             return 1
         }
 
