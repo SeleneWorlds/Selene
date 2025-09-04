@@ -27,7 +27,7 @@ class TransientTile(
 
     companion object {
         /**
-         * Gets the definition of this tile.
+         * Registry definition of this tile.
          *
          * ```property
          * Definition: TileDefinition
@@ -40,7 +40,7 @@ class TransientTile(
         }
 
         /**
-         * Gets the name of this tile.
+         * Unique name of the registry definition of this tile.
          *
          * ```property
          * Name: string
@@ -53,7 +53,7 @@ class TransientTile(
         }
 
         /**
-         * Gets the dimension that this tile belongs to.
+         * Dimension this tile is located in.
          *
          * ```property
          * Dimension: Dimension
@@ -66,7 +66,7 @@ class TransientTile(
         }
 
         /**
-         * Gets the coordinate of this tile.
+         * Coordinate this tile is located at.
          *
          * ```property
          * Coordinate: Coordinate
@@ -79,7 +79,7 @@ class TransientTile(
         }
 
         /**
-         * Gets the X coordinate of this tile.
+         * X coordinate in the tile grid.
          *
          * ```property
          * X: number
@@ -92,7 +92,7 @@ class TransientTile(
         }
 
         /**
-         * Gets the Y coordinate of this tile.
+         * Y coordinate in the tile grid.
          *
          * ```property
          * Y: number
@@ -105,7 +105,7 @@ class TransientTile(
         }
 
         /**
-         * Gets the Z coordinate of this tile.
+         * Z coordinate in the tile grid.
          *
          * ```property
          * Z: number

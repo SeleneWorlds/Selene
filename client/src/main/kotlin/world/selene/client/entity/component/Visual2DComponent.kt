@@ -44,7 +44,7 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
 
     companion object {
         /**
-         * Gets the visual of this component.
+         * Visual rendered by this component.
          *
          * ```property
          * Visual: Visual2D
@@ -57,7 +57,7 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
         }
 
         /**
-         * Gets the red component of the color of this component.
+         * Red tint applied to the visual (0.0 - 1.0).
          *
          * ```property
          * Red: number
@@ -70,8 +70,6 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
         }
 
         /**
-         * Sets the red component of the color of this component.
-         *
          * ```property
          * Red: number
          * ```
@@ -83,7 +81,7 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
         }
 
         /**
-         * Gets the green component of the color of this component.
+         * Green tint applied to the visual (0.0 - 1.0).
          *
          * ```property
          * Green: number
@@ -96,8 +94,6 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
         }
 
         /**
-         * Sets the green component of the color of this component.
-         *
          * ```property
          * Green: number
          * ```
@@ -109,7 +105,7 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
         }
 
         /**
-         * Gets the blue component of the color of this component.
+         * Blue tint applied to the visual (0.0 - 1.0).
          *
          * ```property
          * Blue: number
@@ -122,8 +118,6 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
         }
 
         /**
-         * Sets the blue component of the color of this component.
-         *
          * ```property
          * Blue: number
          * ```
@@ -135,7 +129,7 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
         }
 
         /**
-         * Gets the alpha component of the color of this component.
+         * Opacity applied to the visual (0.0 - 1.0).
          *
          * ```property
          * Alpha: number
@@ -148,8 +142,6 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
         }
 
         /**
-         * Sets the alpha component of the color of this component.
-         *
          * ```property
          * Alpha: number
          * ```

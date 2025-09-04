@@ -20,7 +20,7 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
 
     companion object {
         /**
-         * Gets the width of the texture.
+         * Width of the texture.
          *
          * ```property
          * Width: number
@@ -33,7 +33,7 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
         }
 
         /**
-         * Gets the height of the texture.
+         * Height of the texture.
          *
          * ```property
          * Height: number
@@ -66,7 +66,7 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
         }
 
         /**
-         * Gets the color of a pixel at the specified coordinates.
+         * Returns the color of a pixel at the specified coordinates.
          * Returns RGBA values as separate numbers.
          *
          * ```signatures

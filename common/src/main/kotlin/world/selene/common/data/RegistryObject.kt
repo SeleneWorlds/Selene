@@ -19,10 +19,10 @@ interface RegistryObject<T : Any> : LuaMetatableProvider {
 
     companion object {
         /**
-         * Gets the ID of this registry object.
+         * Numeric ID (if available), specific to this server installation.
          *
          * ```property
-         * Id: number
+         * Id: number|nil
          * ```
          */
         private fun luaGetId(lua: Lua): Int {
@@ -32,7 +32,7 @@ interface RegistryObject<T : Any> : LuaMetatableProvider {
         }
 
         /**
-         * Gets the name of this registry object.
+         * Unique name of this registry object.
          *
          * ```property
          * Name: string

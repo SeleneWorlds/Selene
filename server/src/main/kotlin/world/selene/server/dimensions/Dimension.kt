@@ -67,7 +67,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
 
     companion object {
         /**
-         * Gets the map tree for this dimension.
+         * Map layer tree for this dimension.
          *
          * ```property
          * MapTree: MapTree
@@ -80,8 +80,6 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
         }
 
         /**
-         * Sets the map tree for this dimension.
-         *
          * ```property
          * MapTree: MapTree
          * ```

@@ -96,11 +96,11 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
 
     companion object {
         /**
-         * Gets the coordinate of this tile.
+         * Coordinate this tile is located at.
          *
-* ```property
-* Coordinate: Coordinate
-* ```
+         * ```property
+         * Coordinate: Coordinate
+         * ```
          */
         private fun luaGetCoordinate(lua: Lua): Int {
             val tile = lua.checkUserdata<Tile>(1)
@@ -109,11 +109,11 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
         }
 
         /**
-         * Gets the definition of this tile.
+         * Registry definition of this tile.
          *
-* ```property
-* Definition: TileDefinition
-* ```
+         * ```property
+         * Definition: TileDefinition
+         * ```
          */
         private fun luaGetDefinition(lua: Lua): Int {
             val tile = lua.checkUserdata<Tile>(1)
@@ -122,11 +122,11 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
         }
 
         /**
-         * Gets the visual of this tile.
+         * Visual used to render this tile.
          *
-* ```property
-* Visual: Visual
-* ```
+         * ```property
+         * Visual: Visual
+         * ```
          */
         private fun luaGetVisual(lua: Lua): Int {
             val tile = lua.checkUserdata<Tile>(1)
@@ -135,11 +135,11 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
         }
 
         /**
-         * Gets the x coordinate of this tile.
+         * X coordinate of this tile in the grid.
          *
-* ```property
-* X: number
-* ```
+         * ```property
+         * X: number
+         * ```
          */
         private fun luaGetX(lua: Lua): Int {
             val tile = lua.checkUserdata<Tile>(1)
@@ -148,11 +148,11 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
         }
 
         /**
-         * Gets the y coordinate of this tile.
+         * Y coordinate of this tile in the grid.
          *
-* ```property
-* Y: number
-* ```
+         * ```property
+         * Y: number
+         * ```
          */
         private fun luaGetY(lua: Lua): Int {
             val tile = lua.checkUserdata<Tile>(1)
@@ -161,11 +161,11 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
         }
 
         /**
-         * Gets the z coordinate of this tile.
+         * Z coordinate of this tile in the grid.
          *
-* ```property
-* Z: number
-* ```
+         * ```property
+         * Z: number
+         * ```
          */
         private fun luaGetZ(lua: Lua): Int {
             val tile = lua.checkUserdata<Tile>(1)
@@ -174,11 +174,11 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
         }
 
         /**
-         * Gets the name of this tile from its definition.
-         * 
-* ```property
-* Name: string
-* ```
+         * Unique name of the registry definition of this tile.
+         *
+         * ```property
+         * Name: string
+         * ```
          */
         private fun luaGetName(lua: Lua): Int {
             val tile = lua.checkUserdata<Tile>(1)

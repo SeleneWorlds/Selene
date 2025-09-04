@@ -285,7 +285,7 @@ class Entity(
 
     companion object {
         /**
-         * Gets the entity's coordinate.
+         * Coordinate this entity is located at.
          *
          * ```property
          * Coordinate: Coordinate

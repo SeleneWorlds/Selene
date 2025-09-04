@@ -43,7 +43,7 @@ class CustomRegistryObject(val registry: CustomRegistry, val name: String, val e
 
     companion object {
         /**
-         * Gets the name of this custom registry object.
+         * Unique name of this custom registry object.
          *
          * ```property
          * Name: string

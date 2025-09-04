@@ -97,7 +97,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
 
     companion object {
         /**
-         * Gets the custom data of this player.
+         * Managed table for storing data on this player.
          *
          * ```property
          * CustomData: ManagedLuaTable
@@ -110,7 +110,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
         }
 
         /**
-         * Gets the idle time of this player.
+         * Seconds since the server last received input from this player.
          *
          * ```property
          * IdleTime: number
@@ -123,7 +123,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
         }
 
         /**
-         * Gets the user ID of this player.
+         * Unique identifier for this player.
          *
          * ```property
          * UserId: string
@@ -136,7 +136,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
         }
 
         /**
-         * Gets the locale string of this player.
+         * Locale tag of this player, e.g. `"en_US"`.
          *
          * ```property
          * LocaleString: string
@@ -149,7 +149,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
         }
 
         /**
-         * Gets the language string of this player.
+         * Language tag of this player, e.g. `"en"`.
          *
          * ```property
          * LanguageString: string
@@ -162,7 +162,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
         }
 
         /**
-         * Gets the entity that this player is currently controlling.
+         * Entity controlled by this player or `nil`.
          *
          * ```property
          * ControlledEntity: Entity|nil
@@ -175,8 +175,6 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
         }
 
         /**
-         * Sets the entity that this player is currently controlling.
-         *
          * ```property
          * ControlledEntity: Entity
          * ```
@@ -188,7 +186,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
         }
 
         /**
-         * Gets the entity that this player is currently following.
+         * Entity backing this player's vision or `nil`.
          *
          * ```property
          * CameraEntity: Entity|nil
@@ -201,8 +199,6 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
         }
 
         /**
-         * Sets the entity that this player is currently following.
-         *
          * ```property
          * CameraEntity: Entity
          * ```

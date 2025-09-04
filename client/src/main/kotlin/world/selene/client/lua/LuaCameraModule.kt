@@ -32,7 +32,7 @@ class LuaCameraModule(
     }
 
     /**
-     * Gets the current camera focus coordinate.
+     * Returns the current target coordinate of the camera.
      *
      * ```signatures
      * GetCoordinate() -> Coordinate
@@ -44,8 +44,6 @@ class LuaCameraModule(
     }
 
     /**
-     * Sets the camera viewport dimensions.
-     *
      * ```signatures
      * SetViewport(x: number, y: number, width: number, height: number)
      * ```

@@ -51,7 +51,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
 
     companion object {
         /**
-         * Gets the visual of this component.
+         * Visual rendered by this component.
          *
          * ```property
          * Visual: IsoVisual
@@ -64,7 +64,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         }
 
         /**
-         * Gets the red color of this component.
+         * Red tint applied to the visual (0.0 - 1.0).
          *
          * ```property
          * Red: number
@@ -77,8 +77,6 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         }
 
         /**
-         * Sets the red color of this component.
-         *
          * ```property
          * Red: number
          * ```
@@ -90,7 +88,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         }
 
         /**
-         * Gets the green color of this component.
+         * Green tint applied to the visual (0.0 - 1.0).
          *
          * ```property
          * Green: number
@@ -103,8 +101,6 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         }
 
         /**
-         * Sets the green color of this component.
-         *
          * ```property
          * Green: number
          * ```
@@ -116,7 +112,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         }
 
         /**
-         * Gets the blue color of this component.
+         * Alpha tint applied to the visual (0.0 - 1.0).
          *
          * ```property
          * Blue: number
@@ -129,8 +125,6 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         }
 
         /**
-         * Sets the blue color of this component.
-         *
          * ```property
          * Blue: number
          * ```
@@ -142,7 +136,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         }
 
         /**
-         * Gets the alpha color of this component.
+         * Opacity applied to the visual (0.0 - 1.0).
          *
          * ```property
          * Alpha: number
@@ -155,8 +149,6 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         }
 
         /**
-         * Sets the alpha color of this component.
-         *
          * ```property
          * Alpha: number
          * ```

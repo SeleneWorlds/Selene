@@ -37,7 +37,7 @@ object ActorLuaMetatable {
     }
 
     /**
-     * Gets the name of the actor. May be `nil`.
+     * Name of this actor, if set ("id" in LML).
      * 
      * ```property
      * Name: string|nil
@@ -50,7 +50,7 @@ object ActorLuaMetatable {
     }
 
     /**
-     * Gets the parent actor of this actor or `nil`.
+     * Parent actor or `nil` if it has no parent.
      * 
      * ```property
      * Parent: Actor|nil
@@ -63,7 +63,7 @@ object ActorLuaMetatable {
     }
 
     /**
-     * Gets the width of the actor.
+     * Effective width of this actor.
      * 
      * ```property
      * Width: number
@@ -76,7 +76,7 @@ object ActorLuaMetatable {
     }
 
     /**
-     * Gets the height of the actor.
+     * Effective height of this actor.
      * 
      * ```property
      * Height: number
@@ -89,8 +89,6 @@ object ActorLuaMetatable {
     }
 
     /**
-     * Sets the width of the actor.
-     * 
      * ```property
      * Width: number
      * ```
@@ -103,8 +101,6 @@ object ActorLuaMetatable {
     }
 
     /**
-     * Sets the height of the actor.
-     * 
      * ```property
      * Height: number
      * ```
@@ -132,8 +128,7 @@ object ActorLuaMetatable {
 
     /**
      * Sets the style of the actor using a skin and style name.
-     * Supports various actor types including TextField, Label, Button, etc.
-     * 
+     *
      * ```signatures
      * SetStyle(skin: Skin, styleName: string)
      * ```
@@ -183,9 +178,8 @@ object ActorLuaMetatable {
     }
 
     /**
-     * Sets keyboard focus to this actor.
-     * Makes this actor receive keyboard input events.
-     * 
+     * Grants keyboard focus to this actor.
+     *
      * ```signatures
      * Focus()
      * ```
@@ -197,7 +191,7 @@ object ActorLuaMetatable {
     }
 
     /**
-     * Gets the minimum width of the actor if it implements Layout.
+     * Minimum width of the actor, if applicable.
      * 
      * ```property
      * MinWidth: number
@@ -210,7 +204,7 @@ object ActorLuaMetatable {
     }
     
     /**
-     * Gets the minimum height of the actor if it implements Layout.
+     * Minimum height of the actor, if applicable.
      * 
      * ```property
      * MinHeight: number
@@ -223,7 +217,7 @@ object ActorLuaMetatable {
     }
     
     /**
-     * Gets the preferred width of the actor if it implements Layout.
+     * Preferred width of the actor, if applicable.
      * 
      * ```property
      * PreferredWidth: number
@@ -236,7 +230,7 @@ object ActorLuaMetatable {
     }
     
     /**
-     * Gets the preferred height of the actor if it implements Layout.
+     * Preferred height of the actor, if applicable.
      * 
      * ```property
      * PreferredHeight: number
@@ -249,7 +243,7 @@ object ActorLuaMetatable {
     }
     
     /**
-     * Gets the maximum width of the actor if it implements Layout.
+     * Maximum width of the actor, if applicable.
      * 
      * ```property
      * MaxWidth: number
@@ -262,7 +256,7 @@ object ActorLuaMetatable {
     }
     
     /**
-     * Gets the maximum height of the actor if it implements Layout.
+     * Maximum height of the actor, if applicable.
      * 
      * ```property
      * MaxHeight: number

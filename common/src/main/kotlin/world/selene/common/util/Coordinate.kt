@@ -31,7 +31,7 @@ data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider
         val Zero = Coordinate(0, 0, 0)
 
         /**
-         * Gets the X coordinate.
+         * X coordinate in the tile grid.
          *
          * ```property
          * X: number
@@ -44,7 +44,7 @@ data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider
         }
 
         /**
-         * Gets the Y coordinate.
+         * Y coordinate in the tile grid.
          *
          * ```property
          * Y: number
@@ -57,7 +57,7 @@ data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider
         }
 
         /**
-         * Gets the Z coordinate.
+         * Z coordinate in the tile grid.
          *
          * ```property
          * Z: number

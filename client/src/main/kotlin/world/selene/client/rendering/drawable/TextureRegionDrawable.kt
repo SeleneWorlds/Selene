@@ -53,7 +53,7 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
 
     companion object {
         /**
-         * Gets the texture region of the drawable.
+         * Texture region rendered by this drawable.
          *
          * ```property
          * TextureRegion: TextureRegion

@@ -146,7 +146,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
     companion object {
         /**
-         * Gets the network ID of this entity.
+         * Temporary but unique network ID of this entity.
          *
          * ```property
          * NetworkId: number
@@ -159,7 +159,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Gets the custom data of this entity.
+         * Managed table for storing data on this entity.
          *
          * ```property
          * CustomData: ManagedLuaTable
@@ -172,7 +172,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Gets the entity definition of this entity.
+         * Registry definition of this entity.
          *
          * ```property
          * EntityDefinition: EntityDefinition
@@ -185,7 +185,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Gets the name of this entity.
+         * Name of this entity. Not necessarily unique.
          *
          * ```property
          * Name: string
@@ -198,8 +198,6 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Sets the name of this entity.
-         *
          * ```property
          * Name: string
          * ```
@@ -212,7 +210,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Gets the coordinate of this entity.
+         * Coordinate this entity is located at.
          *
          * ```property
          * Coordinate: Coordinate
@@ -225,7 +223,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Gets the facing of this entity.
+         * Direction this entity is facing.
          *
          * ```property
          * Facing: Direction
@@ -238,7 +236,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Gets the dimension of this entity.
+         * Dimension this entity is located in.
          *
          * ```property
          * Dimension: Dimension
@@ -251,10 +249,10 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Gets the map of this entity.
+         * Map layer tree this entity is located on, derived from its dimension.
          *
          * ```property
-         * Map: Map
+         * Map: MapTree
          * ```
          */
         private fun luaGetMap(lua: Lua): Int {
@@ -264,7 +262,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Gets the collision viewer of this entity.
+         * Viewer based on this entity's collision flags.
          *
          * ```property
          * CollisionViewer: CollisionViewer
@@ -277,7 +275,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Gets the vision viewer of this entity.
+         * Viewer based on this entity's vision flags.
          *
          * ```property
          * VisionViewer: VisionViewer
@@ -290,7 +288,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Gets a reference to this entity for storage and later retrieval.
+         * Creates a safe reference to this entity that can be stored in CustomData.
          *
          * ```signatures
          * Ref() -> LuaReference

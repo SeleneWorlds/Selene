@@ -77,7 +77,7 @@ class LuaReference<TID : Any, TObject : Any>(
 
     companion object {
         /**
-         * Gets the ID of this reference.
+         * Identifier backing this reference.
          *
          * ```property
          * Id: any

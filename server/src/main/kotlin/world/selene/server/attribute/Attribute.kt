@@ -67,7 +67,7 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
 
     companion object {
         /**
-         * Gets the name of this attribute.
+         * Name of this attribute.
          *
          * ```property
          * Name: string
@@ -80,7 +80,7 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
         }
 
         /**
-         * Gets the value of this attribute.
+         * Raw base value of this attribute, without modifiers applied.
          *
          * ```property
          * Value: any
@@ -93,8 +93,6 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
         }
 
         /**
-         * Sets the value of this attribute.
-         *
          * ```property
          * Value: any
          * ```
@@ -106,7 +104,7 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
         }
 
         /**
-         * Gets the effective value of this attribute.
+         * Effective value of this attribute, with modifiers applied.
          *
          * ```property
          * EffectiveValue: any
@@ -119,7 +117,7 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
         }
 
         /**
-         * Gets the owner of this attribute.
+         * Owner of this attribute, generally an `Entity`.
          *
          * ```property
          * Owner: any

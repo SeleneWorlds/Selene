@@ -70,7 +70,7 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
 
     companion object {
         /**
-         * Gets the current frame of the animation.
+         * Current frame index of the animation.
          *
          * ```property
          * CurrentFrame: number
@@ -83,7 +83,7 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
         }
 
         /**
-         * Gets the elapsed time of the animation.
+         * Time elapsed since the last frame in seconds.
          *
          * ```property
          * ElapsedTime: number
@@ -96,7 +96,7 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
         }
 
         /**
-         * Gets the duration of the animation.
+         * Duration of the full animation in seconds.
          *
          * ```property
          * Duration: number
@@ -109,7 +109,7 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
         }
 
         /**
-         * Gets the signal that is emitted when the animation is completed.
+         * Emitted when the animation completes.
          *
          * ```property
          * AnimationCompleted: Signal

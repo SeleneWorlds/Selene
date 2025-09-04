@@ -145,7 +145,7 @@ class LuaUIModule(
     }
 
     /**
-     * Gets the currently focused actor, or nil if no actor has focus.
+     * Returns the actor with keyboard focus, or `nil` if there is none.
      *
      * ```signatures
      * GetFocus() -> Actor|nil

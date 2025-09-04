@@ -46,7 +46,7 @@ class DynamicDrawableIsoVisual(
 
     companion object {
         /**
-         * Gets the drawable of the visual.
+         * Drawable rendered by this visual (this frame).
          *
          * ```property
          * Drawable: Drawable|nil

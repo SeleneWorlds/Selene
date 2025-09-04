@@ -43,7 +43,7 @@ class DrawableIsoVisual(
 
     companion object {
         /**
-         * Gets the drawable of the visual.
+         * Drawable rendered by this visual.
          *
          * ```property
          * Drawable: Drawable
@@ -56,7 +56,7 @@ class DrawableIsoVisual(
         }
 
         /**
-         * Gets the definition of the visual.
+         * Registry definition of the visual.
          *
          * ```property
          * Definition: VisualDefinition
