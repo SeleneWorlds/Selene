@@ -1,18 +1,8 @@
 package world.selene.docgen
 
-import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
-import org.jetbrains.kotlin.com.intellij.openapi.util.Disposer
-import org.jetbrains.kotlin.com.intellij.psi.PsiManager
-import org.jetbrains.kotlin.com.intellij.testFramework.LightVirtualFile
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.Paths
 
 data class LuaModuleInfo(
     val className: String,
@@ -36,35 +26,15 @@ data class Field(
     val description: String? = null
 )
 
-class LuaModuleAnalyzer {
-    private val disposable = Disposer.newDisposable()
-    private val environment = KotlinCoreEnvironment.createForProduction(
-        disposable,
-        CompilerConfiguration(),
-        EnvironmentConfigFiles.JVM_CONFIG_FILES
-    )
-    private val signatureParser = LuaSignatureParser()
+class LuaModuleAnalyzer : BaseLuaAnalyzer() {
 
     fun analyzeProject(baseDir: File): Map<String, LuaModuleInfo> {
-        val moduleInfos = mutableMapOf<String, LuaModuleInfo>()
-        val srcPath = Paths.get(baseDir.absolutePath, "src", "main", "kotlin")
-        if (Files.exists(srcPath)) {
-            Files.walk(srcPath)
-                .filter { Files.isRegularFile(it) && it.toString().endsWith(".kt") }
-                .forEach { kotlinFile ->
-                    moduleInfos.putAll(analyzeKotlinFile(baseDir, kotlinFile.toFile()))
-                }
-        }
-        return moduleInfos
+        return analyzeProjectStructure(baseDir, ::analyzeKotlinFile)
     }
 
     private fun analyzeKotlinFile(baseDir: File, file: File): Map<String, LuaModuleInfo> {
-        val content = file.readText()
-        val virtualFile = LightVirtualFile(file.name, KotlinFileType.INSTANCE, content)
-        val psiFile = PsiManager.getInstance(environment.project)
-            .findFile(virtualFile) as? KtFile ?: return emptyMap()
-
-        val luaModuleClasses = psiFile.collectDescendantsOfType<KtClassOrObject>().filter { ktClass: KtClassOrObject ->
+        val psiFile = parseKotlinFile(file) ?: return emptyMap()
+        val luaModuleClasses = psiFile.collectDescendantsOfType<KtClassOrObject>().filter { ktClass ->
             ktClass.getSuperTypeList()?.entries?.any { superType ->
                 superType.text == "LuaModule"
             } == true
@@ -76,9 +46,7 @@ class LuaModuleAnalyzer {
         val className = clazz.name ?: throw IllegalArgumentException("Class name is null")
         val relativePath = file.relativeTo(baseDir).path
 
-        val methods = clazz.collectDescendantsOfType<KtNamedFunction>()
-            .filter { it.name != null }
-            .associateBy { it.name!! }
+        val methods = buildFunctionLookup(clazz)
         val properties = clazz.collectDescendantsOfType<KtProperty>()
             .filter { it.name != null && it.isMember }
             .associateBy { it.name!! }
@@ -119,10 +87,10 @@ class LuaModuleAnalyzer {
             if (name != null && value != null) {
                 val method = methods[value]
                     ?: throw IllegalArgumentException("Method '$value' not found in class ${clazz.name}")
-                val description = parseDocs(method.docComment)
-                val signatures = signatureParser.extractSignatures(description)
-                val cleanedDescription = removeSignaturesBlock(description)
-                result[name] = Function(name, cleanedDescription, signatures)
+                val documentation = parseDocs(method.docComment)
+                val signatures = extractSignatures(documentation)
+                val description = removeDocumentationBlocks(documentation, "signatures")
+                result[name] = Function(name, description, signatures)
             }
         }
         return result
@@ -149,31 +117,4 @@ class LuaModuleAnalyzer {
         return result
     }
 
-    private fun parseDocs(docComment: KDoc?): String? {
-        return docComment?.let { comment ->
-            val text = comment.text
-                .removePrefix("/**")
-                .removeSuffix("*/")
-                .lines()
-                .joinToString("\n") { line ->
-                    line.trim().removePrefix("*").trim()
-                }
-                .trim()
-
-            text.ifEmpty { null }
-        }
-    }
-
-    private fun removeSignaturesBlock(description: String?): String? {
-        if (description == null) return null
-        
-        val signatureBlockPattern = Regex("```signatures\\s*\\n(.*?)\\n```", RegexOption.DOT_MATCHES_ALL)
-        val cleanedDescription = description.replace(signatureBlockPattern, "").trim()
-        
-        return cleanedDescription.ifEmpty { null }
-    }
-
-    fun close() {
-        Disposer.dispose(disposable)
-    }
 }
