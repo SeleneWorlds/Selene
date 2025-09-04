@@ -3,7 +3,7 @@ package world.selene.server.entities
 import party.iroiro.luajava.Lua
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.data.EntityDefinition
-import world.selene.common.grid.Grid
+import world.selene.common.grid.Direction
 import world.selene.common.lua.ClosureTrace
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
@@ -40,7 +40,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     lateinit var entityDefinition: EntityDefinition
     var name = "John Selene"
     var coordinate = Coordinate(0, 0, 0)
-    var facing: Grid.Direction? = null
+    var facing: Direction? = null
     var dimension: Dimension? = null
     val map get() = dimension?.mapTree
     val customData = ManagedLuaTable()
@@ -90,7 +90,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         return components
     }
 
-    fun turnTo(facing: Grid.Direction) {
+    fun turnTo(facing: Direction) {
         this.facing = facing
         val dimension = dimension ?: return
         dimension.syncManager.entityTurned(this, facing)
@@ -146,8 +146,152 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
     companion object {
         /**
+         * Gets the network ID of this entity.
+         *
+         * ```property
+         * NetworkId: number
+         * ```
+         */
+        private fun luaGetNetworkId(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.networkId)
+            return 1
+        }
+
+        /**
+         * Gets the custom data of this entity.
+         *
+         * ```property
+         * CustomData: ManagedLuaTable
+         * ```
+         */
+        private fun luaGetCustomData(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.customData, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the entity definition of this entity.
+         *
+         * ```property
+         * EntityDefinition: EntityDefinition
+         * ```
+         */
+        private fun luaGetEntityDefinition(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.entityDefinition, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the name of this entity.
+         *
+         * ```property
+         * Name: string
+         * ```
+         */
+        private fun luaGetName(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.name, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Sets the name of this entity.
+         *
+         * ```property
+         * Name: string
+         * ```
+         */
+        private fun luaSetName(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            val name = lua.checkString(3)
+            entity.name = name
+            return 0
+        }
+
+        /**
+         * Gets the coordinate of this entity.
+         *
+         * ```property
+         * Coordinate: Coordinate
+         * ```
+         */
+        private fun luaGetCoordinate(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.coordinate, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the facing of this entity.
+         *
+         * ```property
+         * Facing: Direction
+         * ```
+         */
+        private fun luaGetFacing(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.facing, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the dimension of this entity.
+         *
+         * ```property
+         * Dimension: Dimension
+         * ```
+         */
+        private fun luaGetDimension(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.dimension, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the map of this entity.
+         *
+         * ```property
+         * Map: Map
+         * ```
+         */
+        private fun luaGetMap(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.map, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the collision viewer of this entity.
+         *
+         * ```property
+         * CollisionViewer: CollisionViewer
+         * ```
+         */
+        private fun luaGetCollisionViewer(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.collisionViewer, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the vision viewer of this entity.
+         *
+         * ```property
+         * VisionViewer: VisionViewer
+         * ```
+         */
+        private fun luaGetVisionViewer(lua: Lua): Int {
+            val entity = lua.checkUserdata<Entity>(1)
+            lua.push(entity.visionViewer, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
          * Gets a reference to this entity for storage and later retrieval.
-         * 
+         *
          * ```signatures
          * Ref() -> LuaReference
          * ```
@@ -160,7 +304,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Sets the entity's coordinate and teleports it to the new position.
-         * 
+         *
          * ```signatures
          * SetCoordinate(coordinate: Coordinate)
          * ```
@@ -175,7 +319,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Spawns the entity in a dimension, making it visible to players.
-         * 
+         *
          * ```signatures
          * Spawn()
          * Spawn(dimension: Dimension)
@@ -191,7 +335,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Despawns the entity, removing it from its dimension.
-         * 
+         *
          * ```signatures
          * Despawn()
          * ```
@@ -204,7 +348,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Permanently removes the entity from the world.
-         * 
+         *
          * ```signatures
          * Remove()
          * ```
@@ -217,7 +361,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Sets the entity's facing direction.
-         * 
+         *
          * ```signatures
          * SetFacing(direction: Direction)
          * ```
@@ -233,7 +377,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         /**
          * Moves the entity one step in the specified direction.
          * Returns true if the move was successful, false if blocked.
-         * 
+         *
          * ```signatures
          * Move(direction: Direction) -> boolean
          * ```
@@ -248,7 +392,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Sets whether the entity can see objects with a specific vision tag.
-         * 
+         *
          * ```signatures
          * SetVision(enabled: boolean)
          * SetVision(enabled: boolean, tag: string)
@@ -268,7 +412,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Checks if the entity has vision for a specific tag.
-         * 
+         *
          * ```signatures
          * HasVision() -> boolean
          * HasVision(tag: string) -> boolean
@@ -283,7 +427,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Grants the entity vision for a specific tag.
-         * 
+         *
          * ```signatures
          * GrantVision()
          * GrantVision(tag: string)
@@ -298,7 +442,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Revokes the entity's vision for a specific tag.
-         * 
+         *
          * ```signatures
          * RevokeVision()
          * RevokeVision(tag: string)
@@ -313,7 +457,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Sets whether the entity is visible to objects with a specific vision tag.
-         * 
+         *
          * ```signatures
          * SetVisibility(enabled: boolean)
          * SetVisibility(enabled: boolean, tag: string)
@@ -333,7 +477,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Checks if the entity is visible for a specific tag.
-         * 
+         *
          * ```signatures
          * IsVisible() -> boolean
          * IsVisible(tag: string) -> boolean
@@ -348,7 +492,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Checks if the entity is invisible for a specific tag.
-         * 
+         *
          * ```signatures
          * IsInvisible() -> boolean
          * IsInvisible(tag: string) -> boolean
@@ -363,7 +507,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Makes the entity visible for a specific tag.
-         * 
+         *
          * ```signatures
          * MakeVisible()
          * MakeVisible(tag: string)
@@ -378,7 +522,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Makes the entity invisible for a specific tag.
-         * 
+         *
          * ```signatures
          * MakeInvisible()
          * MakeInvisible(tag: string)
@@ -393,7 +537,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Checks if the entity has collision enabled for a specific tag.
-         * 
+         *
          * ```signatures
          * HasCollisions() -> boolean
          * HasCollisions(tag: string) -> boolean
@@ -408,7 +552,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Sets whether the entity has collision for a specific tag.
-         * 
+         *
          * ```signatures
          * SetCollisions(enabled: boolean)
          * SetCollisions(enabled: boolean, tag: string)
@@ -428,7 +572,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Enables collision for the entity with a specific tag.
-         * 
+         *
          * ```signatures
          * EnableCollisions()
          * EnableCollisions(tag: string)
@@ -443,7 +587,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Disables collision for the entity with a specific tag.
-         * 
+         *
          * ```signatures
          * DisableCollisions()
          * DisableCollisions(tag: string)
@@ -458,7 +602,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Adds a dynamic component that is resolved per-player using a callback function.
-         * 
+         *
          * ```signatures
          * AddDynamicComponent(name: string, callback: function)
          * ```
@@ -484,7 +628,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Gets all players that are currently controlling this entity.
-         * 
+         *
          * ```signatures
          * GetControllingPlayers() -> table[Player]
          * ```
@@ -497,7 +641,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Gets an attribute by name from this entity.
-         * 
+         *
          * ```signatures
          * GetAttribute(name: string) -> Attribute|nil
          * ```
@@ -512,7 +656,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Creates a new attribute on this entity with an initial value.
-         * 
+         *
          * ```signatures
          * CreateAttribute(name: string, initialValue: any) -> Attribute
          * ```
@@ -529,7 +673,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Checks if the entity has a specific tag in its definition.
-         * 
+         *
          * ```signatures
          * HasTag(tag: string) -> boolean
          * ```
@@ -543,7 +687,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
 
         /**
          * Plays an animation on this entity for all watching players.
-         * 
+         *
          * ```signatures
          * PlayAnimation(animationName: string)
          * ```
@@ -556,16 +700,17 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         val luaMeta = LuaMappedMetatable(Entity::class) {
-            readOnly(Entity::networkId)
-            readOnly(Entity::customData)
-            readOnly(Entity::entityDefinition)
-            writable(Entity::name)
-            readOnly(Entity::coordinate)
-            readOnly(Entity::facing)
-            readOnly(Entity::dimension)
-            readOnly(Entity::map)
-            readOnly(Entity::collisionViewer, "Collision")
-            readOnly(Entity::visionViewer, "Vision")
+            getter(::luaGetNetworkId)
+            getter(::luaGetCustomData)
+            getter(::luaGetEntityDefinition)
+            getter(::luaGetName)
+            setter(::luaSetName)
+            getter(::luaGetCoordinate)
+            getter(::luaGetFacing)
+            getter(::luaGetDimension)
+            getter(::luaGetMap)
+            getter(::luaGetCollisionViewer, "Collision")
+            getter(::luaGetVisionViewer, "Vision")
             callable(::luaSpawn)
             callable(::luaDespawn)
             callable(::luaRemove)

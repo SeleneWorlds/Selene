@@ -67,8 +67,34 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
 
     companion object {
         /**
+         * Gets the map tree for this dimension.
+         *
+         * ```property
+         * MapTree: MapTree
+         * ```
+         */
+        private fun luaGetMap(lua: Lua): Int {
+            val dimension = lua.checkUserdata<Dimension>(1)
+            lua.push(dimension.mapTree, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Sets the map tree for this dimension.
+         *
+         * ```property
+         * MapTree: MapTree
+         * ```
+         */
+        private fun luaSetMap(lua: Lua): Int {
+            val dimension = lua.checkUserdata<Dimension>(1)
+            dimension.mapTree = lua.checkUserdata<MapTree>(3)
+            return 0
+        }
+
+        /**
          * Checks if a specific tile exists at the given coordinate.
-         * 
+         *
          * ```signatures
          * HasTile(coordinate: Coordinate, tileDef: TileDefinition) -> boolean
          * HasTile(coordinate: Coordinate, tileDef: TileDefinition, viewer: Viewer) -> boolean
@@ -91,7 +117,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
 
         /**
          * Places a tile at the specified coordinate and returns a TransientTile reference.
-         * 
+         *
          * ```signatures
          * PlaceTile(coordinate: Coordinate, tileDef: TileDefinition) -> TransientTile
          * PlaceTile(coordinate: Coordinate, tileDef: TileDefinition, layerName: string) -> TransientTile
@@ -109,7 +135,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
 
         /**
          * Adds annotation data to a tile at the specified coordinate.
-         * 
+         *
          * ```signatures
          * AnnotateTile(coordinate: Coordinate, key: string, data: table)
          * AnnotateTile(coordinate: Coordinate, key: string, data: table, layerName: string)
@@ -127,7 +153,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
 
         /**
          * Gets all tiles at the specified coordinate as TransientTile objects.
-         * 
+         *
          * ```signatures
          * GetTilesAt(coordinate: Coordinate) -> table[TransientTile]
          * GetTilesAt(coordinate: Coordinate, viewer: Viewer) -> table[TransientTile]
@@ -158,7 +184,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
 
         /**
          * Gets annotation data for a tile at the specified coordinate.
-         * 
+         *
          * ```signatures
          * GetAnnotationAt(coordinate: Coordinate, key: string) -> table|nil
          * GetAnnotationAt(coordinate: Coordinate, key: string, viewer: Viewer) -> table|nil
@@ -176,7 +202,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
 
         /**
          * Checks if there is a collision at the specified coordinate for the given viewer.
-         * 
+         *
          * ```signatures
          * HasCollisionAt(coordinate: Coordinate) -> boolean
          * HasCollisionAt(coordinate: Coordinate, viewer: Viewer) -> boolean
@@ -192,7 +218,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
 
         /**
          * Gets all entities at the specified coordinate.
-         * 
+         *
          * ```signatures
          * GetEntitiesAt(coordinate: Coordinate) -> table[Entity]
          * ```
@@ -206,7 +232,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
 
         /**
          * Gets all entities within the specified range of a coordinate.
-         * 
+         *
          * ```signatures
          * GetEntitiesInRange(coordinate: Coordinate, range: number) -> table[Entity]
          * ```
@@ -220,7 +246,8 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
         }
 
         val luaMeta = LuaMappedMetatable(Dimension::class) {
-            writable(Dimension::mapTree, "Map")
+            getter(::luaGetMap)
+            setter(::luaSetMap)
             callable(::luaHasTile)
             callable(::luaPlaceTile)
             callable(::luaAnnotateTile)

@@ -27,8 +27,99 @@ class TransientTile(
 
     companion object {
         /**
+         * Gets the definition of this tile.
+         *
+         * ```property
+         * Definition: TileDefinition
+         * ```
+         */
+        private fun luaGetDefinition(lua: Lua): Int {
+            val entity = lua.checkUserdata<TransientTile>(1)
+            lua.push(entity.definition, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the name of this tile.
+         *
+         * ```property
+         * Name: string
+         * ```
+         */
+        private fun luaGetName(lua: Lua): Int {
+            val entity = lua.checkUserdata<TransientTile>(1)
+            lua.push(entity.name)
+            return 1
+        }
+
+        /**
+         * Gets the dimension that this tile belongs to.
+         *
+         * ```property
+         * Dimension: Dimension
+         * ```
+         */
+        private fun luaGetDimension(lua: Lua): Int {
+            val entity = lua.checkUserdata<TransientTile>(1)
+            lua.push(entity.dimension, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the coordinate of this tile.
+         *
+         * ```property
+         * Coordinate: Coordinate
+         * ```
+         */
+        private fun luaGetCoordinate(lua: Lua): Int {
+            val entity = lua.checkUserdata<TransientTile>(1)
+            lua.push(entity.coordinate, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the X coordinate of this tile.
+         *
+         * ```property
+         * X: number
+         * ```
+         */
+        private fun luaGetX(lua: Lua): Int {
+            val entity = lua.checkUserdata<TransientTile>(1)
+            lua.push(entity.coordinate.x)
+            return 1
+        }
+
+        /**
+         * Gets the Y coordinate of this tile.
+         *
+         * ```property
+         * Y: number
+         * ```
+         */
+        private fun luaGetY(lua: Lua): Int {
+            val entity = lua.checkUserdata<TransientTile>(1)
+            lua.push(entity.coordinate.y)
+            return 1
+        }
+
+        /**
+         * Gets the Z coordinate of this tile.
+         *
+         * ```property
+         * Z: number
+         * ```
+         */
+        private fun luaGetZ(lua: Lua): Int {
+            val entity = lua.checkUserdata<TransientTile>(1)
+            lua.push(entity.coordinate.z)
+            return 1
+        }
+
+        /**
          * Gets metadata value for a specific key from this tile's definition.
-         * 
+         *
          * ```signatures
          * GetMetadata(key: string) -> string|nil
          * ```
@@ -43,7 +134,7 @@ class TransientTile(
 
         /**
          * Checks if this tile has a specific tag in its definition.
-         * 
+         *
          * ```signatures
          * HasTag(tag: string) -> boolean
          * ```
@@ -57,7 +148,7 @@ class TransientTile(
 
         /**
          * Swaps this tile for another tile definition at the same coordinate.
-         * 
+         *
          * ```signatures
          * Swap(newTileDef: TileDefinition) -> TransientTile
          * Swap(newTileDef: TileDefinition, layerName: string) -> TransientTile
@@ -73,13 +164,13 @@ class TransientTile(
         }
 
         val luaMeta = LuaMappedMetatable(TransientTile::class) {
-            readOnly(TransientTile::definition)
-            readOnly(TransientTile::name)
-            readOnly(TransientTile::dimension)
-            readOnly(TransientTile::coordinate)
-            readOnly(TransientTile::x)
-            readOnly(TransientTile::y)
-            readOnly(TransientTile::z)
+            getter(::luaGetDefinition)
+            getter(::luaGetName)
+            getter(::luaGetDimension)
+            getter(::luaGetCoordinate)
+            getter(::luaGetX)
+            getter(::luaGetY)
+            getter(::luaGetZ)
             callable(::luaGetMetadata)
             callable(::luaHasTag)
             callable(::luaSwap)

@@ -2,9 +2,9 @@ package world.selene.client.rendering.visual2d.iso
 
 import party.iroiro.luajava.Lua
 import world.selene.client.rendering.visual2d.Visual2D
-import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.checkUserdata
 
 interface IsoVisual : Visual2D, LuaMetatableProvider {
     val sortLayerOffset: Int
@@ -15,8 +15,21 @@ interface IsoVisual : Visual2D, LuaMetatableProvider {
     }
 
     companion object {
+        /**
+         * Gets the surface height of the visual.
+         *
+         * ```property
+         * SurfaceHeight: number
+         * ```
+         */
+        private fun luaGetSurfaceHeight(lua: Lua): Int {
+            val self = lua.checkUserdata<IsoVisual>(1)
+            lua.push(self.surfaceHeight)
+            return 1
+        }
+
         val luaMeta = Visual2D.luaMeta.extend(IsoVisual::class) {
-            readOnly(IsoVisual::surfaceHeight)
+            getter(::luaGetSurfaceHeight)
         }
     }
 }

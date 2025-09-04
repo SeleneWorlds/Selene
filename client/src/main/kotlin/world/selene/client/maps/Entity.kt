@@ -285,8 +285,21 @@ class Entity(
 
     companion object {
         /**
+         * Gets the entity's coordinate.
+         *
+         * ```property
+         * Coordinate: Coordinate
+         * ```
+         */
+        private fun luaGetCoordinate(lua: Lua): Int {
+            val self = lua.checkUserdata<Entity>(1)
+            lua.push(self.coordinate, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
          * Spawns the entity on the client map, making it visible.
-         * 
+         *
          * ```signatures
          * Spawn()
          * ```
@@ -299,7 +312,7 @@ class Entity(
 
         /**
          * Despawns the entity from the client map, making it invisible.
-         * 
+         *
          * ```signatures
          * Despawn()
          * ```
@@ -312,7 +325,7 @@ class Entity(
 
         /**
          * Sets the entity's coordinate and updates its position on the client.
-         * 
+         *
          * ```signatures
          * SetCoordinate(coordinate: Coordinate)
          * ```
@@ -326,7 +339,7 @@ class Entity(
 
         /**
          * Adds a component to the entity with the given configuration.
-         * 
+         *
          * ```signatures
          * AddComponent(name: string, componentData: table)
          * ```
@@ -343,7 +356,7 @@ class Entity(
 
         /**
          * Gets a component by name from the entity.
-         * 
+         *
          * ```signatures
          * GetComponent(name: string) -> EntityComponent|nil
          * ```
@@ -357,7 +370,7 @@ class Entity(
         }
 
         val luaMeta = LuaMappedMetatable(Entity::class) {
-            readOnly(Entity::coordinate)
+            getter(::luaGetCoordinate)
             callable(::luaSpawn)
             callable(::luaDespawn)
             callable(::luaSetCoordinate)

@@ -3,11 +3,6 @@ package world.selene.common.grid
 import world.selene.common.util.Coordinate
 
 open class Grid {
-    data class Direction(val name: String, val vector: Coordinate, val angle: Float = 0f) {
-        companion object {
-            val None = Direction("none", Coordinate(0, 0, 0), 0f)
-        }
-    }
 
     val directions = mutableMapOf<String, Direction>()
 

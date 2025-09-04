@@ -6,6 +6,7 @@ import party.iroiro.luajava.Lua
 import world.selene.client.data.AnimatorVisualDefinition
 import world.selene.client.rendering.drawable.Drawable
 import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.checkUserdata
 
 class DynamicDrawableIsoVisual(
     private val visualDef: AnimatorVisualDefinition,
@@ -44,8 +45,21 @@ class DynamicDrawableIsoVisual(
     }
 
     companion object {
+        /**
+         * Gets the drawable of the visual.
+         *
+         * ```property
+         * Drawable: Drawable|nil
+         * ```
+         */
+        private fun luaGetDrawable(lua: Lua): Int {
+            val self = lua.checkUserdata<DynamicDrawableIsoVisual>(1)
+            lua.push(self.drawable, Lua.Conversion.NONE)
+            return 1
+        }
+
         val luaMeta = IsoVisual.luaMeta.extend(DynamicDrawableIsoVisual::class) {
-            readOnly(DynamicDrawableIsoVisual::drawable)
+            getter(::luaGetDrawable)
         }
     }
 }

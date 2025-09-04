@@ -6,6 +6,7 @@ import party.iroiro.luajava.Lua
 import world.selene.client.data.VisualDefinition
 import world.selene.client.rendering.drawable.Drawable
 import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.checkUserdata
 
 class DrawableIsoVisual(
     private val visualDefinition: VisualDefinition,
@@ -41,9 +42,35 @@ class DrawableIsoVisual(
     }
 
     companion object {
+        /**
+         * Gets the drawable of the visual.
+         *
+         * ```property
+         * Drawable: Drawable
+         * ```
+         */
+        private fun luaGetDrawable(lua: Lua): Int {
+            val self = lua.checkUserdata<DrawableIsoVisual>(1)
+            lua.push(self.drawable, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the definition of the visual.
+         *
+         * ```property
+         * Definition: VisualDefinition
+         * ```
+         */
+        private fun luaGetDefinition(lua: Lua): Int {
+            val self = lua.checkUserdata<DrawableIsoVisual>(1)
+            lua.push(self.visualDefinition, Lua.Conversion.NONE)
+            return 1
+        }
+
         val luaMeta = IsoVisual.luaMeta.extend(DrawableIsoVisual::class) {
-            readOnly(DrawableIsoVisual::drawable)
-            readOnly(DrawableIsoVisual::visualDefinition, "Definition")
+            getter(::luaGetDrawable)
+            getter(::luaGetDefinition)
         }
     }
 }

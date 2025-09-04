@@ -52,7 +52,26 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
     }
 
     companion object {
+        /**
+         * Gets the texture region of the drawable.
+         *
+         * ```property
+         * TextureRegion: TextureRegion
+         * ```
+         */
+        private fun luaGetTextureRegion(lua: Lua): Int {
+            val self = lua.checkUserdata<TextureRegionDrawable>(1)
+            lua.push(self.textureRegion, Lua.Conversion.NONE)
+            return 1
+        }
 
+        /**
+         * Gets a new drawable without any offset.
+         *
+         * ```signatures
+         * WithoutOffset() -> TextureRegionDrawable
+         * ```
+         */
         private fun luaWithoutOffset(lua: Lua): Int {
             val self = lua.checkUserdata<TextureRegionDrawable>(1)
             lua.push(self.withoutOffset(), Lua.Conversion.NONE)
@@ -60,7 +79,7 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
         }
 
         val luaMeta = Drawable.luaMeta.extend(TextureRegionDrawable::class) {
-            readOnly(TextureRegionDrawable::textureRegion)
+            getter(::luaGetTextureRegion)
             callable(::luaWithoutOffset)
         }
     }

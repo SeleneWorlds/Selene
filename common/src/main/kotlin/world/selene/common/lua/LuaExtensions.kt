@@ -9,6 +9,7 @@ import party.iroiro.luajava.LuaException.LuaError
 import party.iroiro.luajava.value.LuaFunction
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.data.Registry
+import world.selene.common.grid.Direction
 import world.selene.common.grid.Grid
 import world.selene.common.util.Coordinate
 import java.util.*
@@ -176,17 +177,17 @@ fun Lua.checkType(index: Int, expectedType: Lua.LuaType) {
     }
 }
 
-fun Lua.checkDirection(index: Int, grid: Grid): Grid.Direction {
+fun Lua.checkDirection(index: Int, grid: Grid): Direction {
     return if (type(index) == Lua.LuaType.STRING) {
         grid.getDirectionByName(toString(index)!!) ?: throwTypeError(
             index,
-            Grid.Direction::class,
+            Direction::class,
             Lua.LuaType.STRING
         )
     } else if (type(index) == Lua.LuaType.USERDATA) {
-        checkUserdata(index, Grid.Direction::class)
+        checkUserdata(index, Direction::class)
     } else {
-        throwTypeError(index, Grid.Direction::class, type(index))
+        throwTypeError(index, Direction::class, type(index))
     }
 }
 

@@ -2,7 +2,7 @@ package world.selene.client.controls
 
 import world.selene.client.maps.Entity
 import world.selene.client.network.NetworkClient
-import world.selene.common.grid.Grid
+import world.selene.common.grid.Direction
 import world.selene.common.network.packet.RequestFacingPacket
 import world.selene.common.network.packet.RequestMovePacket
 
@@ -10,8 +10,8 @@ class GridMovement(
     private val playerController: PlayerController,
     private val networkClient: NetworkClient
 ) {
-    var moveDirection: Grid.Direction? = null
-    var facingDirection: Grid.Direction? = null
+    var moveDirection: Direction? = null
+    var facingDirection: Direction? = null
     var requestedStep: Boolean = false
 
     fun update(delta: Float) {

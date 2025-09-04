@@ -69,6 +69,65 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
     }
 
     companion object {
+        /**
+         * Gets the current frame of the animation.
+         *
+         * ```property
+         * CurrentFrame: number
+         * ```
+         */
+        private fun luaGetCurrentFrame(lua: Lua): Int {
+            val self = lua.checkUserdata<AnimatedDrawable>(1)
+            lua.push(self.currentFrame)
+            return 1
+        }
+
+        /**
+         * Gets the elapsed time of the animation.
+         *
+         * ```property
+         * ElapsedTime: number
+         * ```
+         */
+        private fun luaGetElapsedTime(lua: Lua): Int {
+            val self = lua.checkUserdata<AnimatedDrawable>(1)
+            lua.push(self.elapsedTime)
+            return 1
+        }
+
+        /**
+         * Gets the duration of the animation.
+         *
+         * ```property
+         * Duration: number
+         * ```
+         */
+        private fun luaGetDuration(lua: Lua): Int {
+            val self = lua.checkUserdata<AnimatedDrawable>(1)
+            lua.push(self.duration)
+            return 1
+        }
+
+        /**
+         * Gets the signal that is emitted when the animation is completed.
+         *
+         * ```property
+         * AnimationCompleted: Signal
+         * ```
+         */
+        private fun luaGetAnimationCompleted(lua: Lua): Int {
+            val self = lua.checkUserdata<AnimatedDrawable>(1)
+            lua.push(self.animationCompleted, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets a new animated drawable without any offset.
+         *
+         * ```signatures
+         * WithoutOffset() -> AnimatedDrawable
+         * ```
+         */
         private fun luaWithoutOffset(lua: Lua): Int {
             val self = lua.checkUserdata<AnimatedDrawable>(1)
             lua.push(self.withoutOffset(), Lua.Conversion.NONE)
@@ -76,10 +135,10 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
         }
 
         val luaMeta = Drawable.luaMeta.extend(AnimatedDrawable::class) {
-            readOnly(AnimatedDrawable::currentFrame)
-            readOnly(AnimatedDrawable::elapsedTime)
-            readOnly(AnimatedDrawable::duration)
-            readOnly(AnimatedDrawable::animationCompleted)
+            getter(::luaGetCurrentFrame)
+            getter(::luaGetElapsedTime)
+            getter(::luaGetDuration)
+            getter(::luaGetAnimationCompleted)
             callable(::luaWithoutOffset)
         }
     }

@@ -31,9 +31,48 @@ data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider
         val Zero = Coordinate(0, 0, 0)
 
         /**
+         * Gets the X coordinate.
+         *
+         * ```property
+         * X: number
+         * ```
+         */
+        private fun luaGetX(lua: Lua): Int {
+            val coordinate = lua.checkUserdata<Coordinate>(1)
+            lua.push(coordinate.x)
+            return 1
+        }
+
+        /**
+         * Gets the Y coordinate.
+         *
+         * ```property
+         * Y: number
+         * ```
+         */
+        private fun luaGetY(lua: Lua): Int {
+            val coordinate = lua.checkUserdata<Coordinate>(1)
+            lua.push(coordinate.y)
+            return 1
+        }
+
+        /**
+         * Gets the Z coordinate.
+         *
+         * ```property
+         * Z: number
+         * ```
+         */
+        private fun luaGetZ(lua: Lua): Int {
+            val coordinate = lua.checkUserdata<Coordinate>(1)
+            lua.push(coordinate.z)
+            return 1
+        }
+
+        /**
          * Calculates the horizontal distance to another coordinate.
          * Uses 2D Euclidean distance (ignoring Z coordinate).
-         * 
+         *
          * ```signatures
          * GetHorizontalDistanceTo(other: Coordinate) -> number
          * ```
@@ -46,12 +85,12 @@ data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider
         }
 
         val luaMeta = LuaMappedMetatable(Coordinate::class) {
-            readOnly(Coordinate::x)
-            readOnly(Coordinate::y)
-            readOnly(Coordinate::z)
-            readOnly(Coordinate::x, "x")
-            readOnly(Coordinate::y, "y")
-            readOnly(Coordinate::z, "z")
+            getter(::luaGetX)
+            getter(::luaGetY)
+            getter(::luaGetZ)
+            getter(::luaGetX, "x")
+            getter(::luaGetY, "y")
+            getter(::luaGetZ, "z")
             callable(::luaGetHorizontalDistanceTo)
         }
     }

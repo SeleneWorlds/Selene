@@ -39,8 +39,8 @@ object ActorLuaMetatable {
     /**
      * Gets the name of the actor. May be `nil`.
      * 
-     * ```getter
-     * Name -> string|nil
+     * ```property
+     * Name: string|nil
      * ```
      */
     private fun luaGetName(lua: Lua): Int {
@@ -52,8 +52,8 @@ object ActorLuaMetatable {
     /**
      * Gets the parent actor of this actor or `nil`.
      * 
-     * ```getter
-     * Parent -> Actor|nil
+     * ```property
+     * Parent: Actor|nil
      * ```
      */
     private fun luaGetParent(lua: Lua): Int {
@@ -65,8 +65,8 @@ object ActorLuaMetatable {
     /**
      * Gets the width of the actor.
      * 
-     * ```getter
-     * Width -> number
+     * ```property
+     * Width: number
      * ```
      */
     private fun luaGetWidth(lua: Lua): Int {
@@ -78,8 +78,8 @@ object ActorLuaMetatable {
     /**
      * Gets the height of the actor.
      * 
-     * ```getter
-     * Height -> number
+     * ```property
+     * Height: number
      * ```
      */
     private fun luaGetHeight(lua: Lua): Int {
@@ -91,8 +91,8 @@ object ActorLuaMetatable {
     /**
      * Sets the width of the actor.
      * 
-     * ```setter
-     * Width(width: number)
+     * ```property
+     * Width: number
      * ```
      */
     private fun luaSetWidth(lua: Lua): Int {
@@ -105,8 +105,8 @@ object ActorLuaMetatable {
     /**
      * Sets the height of the actor.
      * 
-     * ```setter
-     * Height(height: number)
+     * ```property
+     * Height: number
      * ```
      */
     private fun luaSetHeight(lua: Lua): Int {
@@ -199,8 +199,8 @@ object ActorLuaMetatable {
     /**
      * Gets the minimum width of the actor if it implements Layout.
      * 
-     * ```getter
-     * MinWidth -> number
+     * ```property
+     * MinWidth: number
      * ```
      */
     private fun luaGetMinWidth(it: Lua): Int {
@@ -212,8 +212,8 @@ object ActorLuaMetatable {
     /**
      * Gets the minimum height of the actor if it implements Layout.
      * 
-     * ```getter
-     * MinHeight -> number
+     * ```property
+     * MinHeight: number
      * ```
      */
     private fun luaGetMinHeight(it: Lua): Int {
@@ -225,8 +225,8 @@ object ActorLuaMetatable {
     /**
      * Gets the preferred width of the actor if it implements Layout.
      * 
-     * ```setter
-     * PreferredWidth(number: number)
+     * ```property
+     * PreferredWidth: number
      * ```
      */
     private fun luaGetPreferredWidth(it: Lua): Int {
@@ -238,8 +238,8 @@ object ActorLuaMetatable {
     /**
      * Gets the preferred height of the actor if it implements Layout.
      * 
-     * ```getter
-     * PreferredHeight -> number
+     * ```property
+     * PreferredHeight: number
      * ```
      */
     private fun luaGetPreferredHeight(it: Lua): Int {
@@ -251,8 +251,8 @@ object ActorLuaMetatable {
     /**
      * Gets the maximum width of the actor if it implements Layout.
      * 
-     * ```getter
-     * MaxWidth -> number
+     * ```property
+     * MaxWidth: number
      * ```
      */
     private fun luaGetMaxWidth(it: Lua): Int {
@@ -264,8 +264,8 @@ object ActorLuaMetatable {
     /**
      * Gets the maximum height of the actor if it implements Layout.
      * 
-     * ```getter
-     * MaxHeight -> number
+     * ```property
+     * MaxHeight: number
      * ```
      */
     private fun luaGetMaxHeight(it: Lua): Int {

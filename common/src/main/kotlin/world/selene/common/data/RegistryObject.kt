@@ -19,8 +19,34 @@ interface RegistryObject<T : Any> : LuaMetatableProvider {
 
     companion object {
         /**
+         * Gets the ID of this registry object.
+         *
+         * ```property
+         * Id: number
+         * ```
+         */
+        private fun luaGetId(lua: Lua): Int {
+            val registryObject = lua.checkUserdata<RegistryObject<*>>(1)
+            lua.push(registryObject.id)
+            return 1
+        }
+
+        /**
+         * Gets the name of this registry object.
+         *
+         * ```property
+         * Name: string
+         * ```
+         */
+        private fun luaGetName(lua: Lua): Int {
+            val registryObject = lua.checkUserdata<RegistryObject<*>>(1)
+            lua.push(registryObject.name)
+            return 1
+        }
+
+        /**
          * Gets metadata value for the specified key from this registry object.
-         * 
+         *
          * ```signatures
          * GetMetadata(key: string) -> any|nil
          * ```
@@ -35,7 +61,7 @@ interface RegistryObject<T : Any> : LuaMetatableProvider {
 
         /**
          * Checks if this registry object has the specified tag.
-         * 
+         *
          * ```signatures
          * HasTag(tag: string) -> boolean
          * ```
@@ -48,8 +74,8 @@ interface RegistryObject<T : Any> : LuaMetatableProvider {
         }
 
         val luaMeta = LuaMappedMetatable(RegistryObject::class) {
-            readOnly(RegistryObject<*>::id)
-            readOnly(RegistryObject<*>::name)
+            getter(::luaGetId)
+            getter(::luaGetName)
             callable(::luaGetMetadata)
             callable(::luaHasTag)
         }

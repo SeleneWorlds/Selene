@@ -20,7 +20,8 @@ import world.selene.common.lua.LuaReference
 import world.selene.common.lua.checkString
 import world.selene.common.lua.checkUserdata
 
-class CustomRegistryObject(val registry: CustomRegistry, val name: String, val element: JsonNode) : LuaMetatableProvider,
+class CustomRegistryObject(val registry: CustomRegistry, val name: String, val element: JsonNode) :
+    LuaMetatableProvider,
     LuaReferencable<String, CustomRegistryObject> {
     val luaReference = LuaReference(CustomRegistryObject::class, name, registry, this)
 
@@ -42,8 +43,21 @@ class CustomRegistryObject(val registry: CustomRegistry, val name: String, val e
 
     companion object {
         /**
+         * Gets the name of this custom registry object.
+         *
+         * ```property
+         * Name: string
+         * ```
+         */
+        private fun luaGetName(lua: Lua): Int {
+            val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
+            lua.push(registryObject.name)
+            return 1
+        }
+
+        /**
          * Gets metadata value for the specified key from this custom registry object.
-         * 
+         *
          * ```signatures
          * GetMetadata(key: string) -> any|nil
          * ```
@@ -58,7 +72,7 @@ class CustomRegistryObject(val registry: CustomRegistry, val name: String, val e
 
         /**
          * Gets a field value from this custom registry object's JSON element.
-         * 
+         *
          * ```signatures
          * GetField(key: string) -> any|nil
          * ```
@@ -81,7 +95,7 @@ class CustomRegistryObject(val registry: CustomRegistry, val name: String, val e
         }
 
         val luaMeta = LuaMappedMetatable(CustomRegistryObject::class) {
-            readOnly(CustomRegistryObject::name)
+            getter(::luaGetName)
             callable(::luaGetMetadata)
             callable(::luaGetField)
         }

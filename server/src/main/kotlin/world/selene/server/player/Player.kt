@@ -97,8 +97,125 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
 
     companion object {
         /**
+         * Gets the custom data of this player.
+         *
+         * ```property
+         * CustomData: ManagedLuaTable
+         * ```
+         */
+        private fun luaGetCustomData(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            lua.push(player.customData, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the idle time of this player.
+         *
+         * ```property
+         * IdleTime: number
+         * ```
+         */
+        private fun luaGetIdleTime(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            lua.push(player.idleTime)
+            return 1
+        }
+
+        /**
+         * Gets the user ID of this player.
+         *
+         * ```property
+         * UserId: string
+         * ```
+         */
+        private fun luaGetUserId(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            lua.push(player.userId, Lua.Conversion.FULL)
+            return 1
+        }
+
+        /**
+         * Gets the locale string of this player.
+         *
+         * ```property
+         * LocaleString: string
+         * ```
+         */
+        private fun luaGetLocaleString(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            lua.push(player.localeString)
+            return 1
+        }
+
+        /**
+         * Gets the language string of this player.
+         *
+         * ```property
+         * LanguageString: string
+         * ```
+         */
+        private fun luaGetLanguageString(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            lua.push(player.languageString)
+            return 1
+        }
+
+        /**
+         * Gets the entity that this player is currently controlling.
+         *
+         * ```property
+         * ControlledEntity: Entity|nil
+         * ```
+         */
+        private fun luaGetControlledEntity(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            lua.push(player.controlledEntity, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Sets the entity that this player is currently controlling.
+         *
+         * ```property
+         * ControlledEntity: Entity
+         * ```
+         */
+        private fun luaSetControlledEntity(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            player.controlledEntity = lua.checkUserdata<Entity>(3)
+            return 0
+        }
+
+        /**
+         * Gets the entity that this player is currently following.
+         *
+         * ```property
+         * CameraEntity: Entity|nil
+         * ```
+         */
+        private fun luaGetCameraEntity(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            lua.push(player.cameraEntity, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Sets the entity that this player is currently following.
+         *
+         * ```property
+         * CameraEntity: Entity
+         * ```
+         */
+        private fun luaSetCameraEntity(lua: Lua): Int {
+            val player = lua.checkUserdata<Player>(1)
+            player.cameraEntity = lua.checkUserdata<Entity>(3)
+            return 0
+        }
+
+        /**
          * Sets the camera to follow the player's controlled entity.
-         * 
+         *
          * ```signatures
          * SetCameraToFollowControlledEntity()
          * ```
@@ -111,7 +228,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
 
         /**
          * Sets the camera to follow the player's camera target entity.
-         * 
+         *
          * ```signatures
          * SetCameraToFollowTarget()
          * ```
@@ -124,7 +241,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
 
         /**
          * Sets the camera to focus on a specific coordinate in a dimension.
-         * 
+         *
          * ```signatures
          * SetCameraToCoordinate(dimension: Dimension, x: number, y: number, z: number)
          * ```
@@ -151,13 +268,15 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
         }
 
         val luaMeta = LuaMappedMetatable(Player::class) {
-            readOnly(Player::customData)
-            readOnly(Player::idleTime)
-            readOnly(Player::userId)
-            readOnly(Player::localeString, "Locale")
-            readOnly(Player::languageString, "Language")
-            writable(Player::controlledEntity)
-            writable(Player::cameraEntity)
+            getter(::luaGetCustomData)
+            getter(::luaGetIdleTime)
+            getter(::luaGetUserId)
+            getter(::luaGetLocaleString, "Locale")
+            getter(::luaGetLanguageString, "Language")
+            getter(::luaGetControlledEntity)
+            setter(::luaSetControlledEntity)
+            getter(::luaGetCameraEntity)
+            setter(::luaSetCameraEntity)
             callable(::luaSetCameraToFollowControlledEntity)
             callable(::luaSetCameraToFollowTarget)
             callable(::luaSetCameraToCoordinate)

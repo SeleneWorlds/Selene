@@ -95,13 +95,90 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     }
 
     companion object {
+        /**
+         * Gets the coordinate of this tile.
+         *
+* ```property
+* Coordinate: Coordinate
+* ```
+         */
+        private fun luaGetCoordinate(lua: Lua): Int {
+            val tile = lua.checkUserdata<Tile>(1)
+            lua.push(tile.coordinate, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the definition of this tile.
+         *
+* ```property
+* Definition: TileDefinition
+* ```
+         */
+        private fun luaGetDefinition(lua: Lua): Int {
+            val tile = lua.checkUserdata<Tile>(1)
+            lua.push(tile.tileDefinition, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the visual of this tile.
+         *
+* ```property
+* Visual: Visual
+* ```
+         */
+        private fun luaGetVisual(lua: Lua): Int {
+            val tile = lua.checkUserdata<Tile>(1)
+            lua.push(tile.visual, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Gets the x coordinate of this tile.
+         *
+* ```property
+* X: number
+* ```
+         */
+        private fun luaGetX(lua: Lua): Int {
+            val tile = lua.checkUserdata<Tile>(1)
+            lua.push(tile.x)
+            return 1
+        }
+
+        /**
+         * Gets the y coordinate of this tile.
+         *
+* ```property
+* Y: number
+* ```
+         */
+        private fun luaGetY(lua: Lua): Int {
+            val tile = lua.checkUserdata<Tile>(1)
+            lua.push(tile.y)
+            return 1
+        }
+
+        /**
+         * Gets the z coordinate of this tile.
+         *
+* ```property
+* Z: number
+* ```
+         */
+        private fun luaGetZ(lua: Lua): Int {
+            val tile = lua.checkUserdata<Tile>(1)
+            lua.push(tile.z)
+            return 1
+        }
 
         /**
          * Gets the name of this tile from its definition.
          * 
-         * ```getter
-         * Name -> string
-         * ```
+* ```property
+* Name: string
+* ```
          */
         private fun luaGetName(lua: Lua): Int {
             val tile = lua.checkUserdata<Tile>(1)
@@ -110,12 +187,12 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
         }
 
         val luaMeta = LuaMappedMetatable(Tile::class) {
-            readOnly(Tile::coordinate)
-            readOnly(Tile::tileDefinition, "Definition")
-            readOnly(Tile::visual)
-            readOnly(Tile::x)
-            readOnly(Tile::y)
-            readOnly(Tile::z)
+            getter(::luaGetCoordinate)
+            getter(::luaGetDefinition)
+            getter(::luaGetVisual)
+            getter(::luaGetX)
+            getter(::luaGetY)
+            getter(::luaGetZ)
             getter(::luaGetName)
         }
     }

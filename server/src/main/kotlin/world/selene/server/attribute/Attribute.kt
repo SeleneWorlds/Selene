@@ -8,10 +8,12 @@ import world.selene.common.lua.checkString
 import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.getCallerInfo
 import world.selene.common.lua.throwTypeError
+import world.selene.common.lua.toAny
 import world.selene.common.observable.Observable
 import world.selene.common.observable.Observer
 
-class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : LuaMetatableProvider, Observable<Attribute<*>> {
+class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : LuaMetatableProvider,
+    Observable<Attribute<*>> {
     val observers = mutableListOf<Observer<Attribute<*>>>()
     val constraints = mutableListOf<AttributeFilter<T>>()
     val constraintsByName = mutableMapOf<String, AttributeFilter<T>>()
@@ -64,6 +66,79 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
     }
 
     companion object {
+        /**
+         * Gets the name of this attribute.
+         *
+         * ```property
+         * Name: string
+         * ```
+         */
+        private fun luaGetName(lua: Lua): Int {
+            val attribute = lua.checkUserdata<Attribute<Any?>>(1)
+            lua.push(attribute.name)
+            return 1
+        }
+
+        /**
+         * Gets the value of this attribute.
+         *
+         * ```property
+         * Value: any
+         * ```
+         */
+        private fun luaGetValue(lua: Lua): Int {
+            val attribute = lua.checkUserdata<Attribute<Any?>>(1)
+            lua.push(attribute.value, Lua.Conversion.FULL)
+            return 1
+        }
+
+        /**
+         * Sets the value of this attribute.
+         *
+         * ```property
+         * Value: any
+         * ```
+         */
+        private fun luaSetValue(lua: Lua): Int {
+            val attribute = lua.checkUserdata<Attribute<Any?>>(1)
+            attribute.value = lua.toAny(3)
+            return 0
+        }
+
+        /**
+         * Gets the effective value of this attribute.
+         *
+         * ```property
+         * EffectiveValue: any
+         * ```
+         */
+        private fun luaGetEffectiveValue(lua: Lua): Int {
+            val attribute = lua.checkUserdata<Attribute<Any?>>(1)
+            lua.push(attribute.effectiveValue, Lua.Conversion.FULL)
+            return 1
+        }
+
+        /**
+         * Gets the owner of this attribute.
+         *
+         * ```property
+         * Owner: any
+         * ```
+         */
+        private fun luaGetOwner(lua: Lua): Int {
+            val attribute = lua.checkUserdata<Attribute<Any?>>(1)
+            lua.push(attribute.owner, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Adds a constraint to this attribute.
+         *
+         * ```signatures
+         * AddConstraint(name: string, filter: AttributeFilter)
+         * AddConstraint(name: string, filter: function(attribute: Attribute, value: any) -> any)
+         * ```
+         */
         private fun luaAddConstraint(lua: Lua): Int {
             val attribute = lua.checkUserdata<Attribute<Any?>>(1)
             val name = lua.checkString(2)
@@ -78,12 +153,27 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
             return 1
         }
 
+        /**
+         * Removes a constraint from this attribute.
+         *
+         * ```signatures
+         * RemoveConstraint(name: string)
+         * ```
+         */
         private fun luaRemoveConstraint(lua: Lua): Int {
             val attribute = lua.checkUserdata<Attribute<Any?>>(1)
             attribute.removeConstraint(lua.checkString(2))
             return 0
         }
 
+        /**
+         * Adds a modifier to this attribute.
+         *
+         * ```signatures
+         * AddModifier(name: string, filter: AttributeFilter)
+         * AddModifier(name: string, filter: function(attribute: Attribute, value: any) -> any)
+         * ```
+         */
         private fun luaAddModifier(lua: Lua): Int {
             val attribute = lua.checkUserdata<Attribute<Any?>>(1)
             val registrationSite = lua.getCallerInfo()
@@ -98,12 +188,26 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
             return 1
         }
 
+        /**
+         * Removes a modifier from this attribute.
+         *
+         * ```signatures
+         * RemoveModifier(name: string)
+         * ```
+         */
         private fun luaRemoveModifier(lua: Lua): Int {
             val attribute = lua.checkUserdata<Attribute<Any?>>(1)
             attribute.removeModifier(lua.checkString(2))
             return 0
         }
 
+        /**
+         * Refreshes this attribute.
+         *
+         * ```signatures
+         * Refresh()
+         * ```
+         */
         private fun luaRefresh(lua: Lua): Int {
             val attribute = lua.checkUserdata<Attribute<Any?>>(1)
             attribute.notifyObservers(attribute)
@@ -111,10 +215,11 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
         }
 
         val luaMeta = Observable.luaMeta.extend(Attribute::class) {
-            readOnly(Attribute<*>::name)
-            writable(Attribute<*>::value)
-            readOnly(Attribute<*>::effectiveValue)
-            readOnly(Attribute<*>::owner)
+            getter(::luaGetName)
+            getter(::luaGetValue)
+            setter(::luaSetValue)
+            getter(::luaGetEffectiveValue)
+            getter(::luaGetOwner)
             callable(::luaAddConstraint)
             callable(::luaRemoveConstraint)
             callable(::luaAddModifier)

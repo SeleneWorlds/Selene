@@ -20,8 +20,34 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
 
     companion object {
         /**
+         * Gets the width of the texture.
+         *
+         * ```property
+         * Width: number
+         * ```
+         */
+        private fun luaGetWidth(lua: Lua): Int {
+            val self = lua.checkUserdata<LuaTexture>(1)
+            lua.push(self.width)
+            return 1
+        }
+
+        /**
+         * Gets the height of the texture.
+         *
+         * ```property
+         * Height: number
+         * ```
+         */
+        private fun luaGetHeight(lua: Lua): Int {
+            val self = lua.checkUserdata<LuaTexture>(1)
+            lua.push(self.height)
+            return 1
+        }
+
+        /**
          * Sets the color of a pixel at the specified coordinates.
-         * 
+         *
          * ```signatures
          * SetPixel(x: number, y: number, color: Color)
          * SetPixel(x: number, y: number, color: table{r: number|nil, g: number|nil, b: number|nil, a: number|nil})
@@ -42,7 +68,7 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
         /**
          * Gets the color of a pixel at the specified coordinates.
          * Returns RGBA values as separate numbers.
-         * 
+         *
          * ```signatures
          * GetPixel(x: number, y: number) -> red: number, green: number, blue: number, alpha: number
          * ```
@@ -62,7 +88,7 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
 
         /**
          * Fills the entire texture with the specified color.
-         * 
+         *
          * ```signatures
          * Fill(color: Color)
          * Fill(color: table{r: number|nil, g: number|nil, b: number|nil, a: number|nil})
@@ -80,7 +106,7 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
 
         /**
          * Copies pixels from another texture to this texture.
-         * 
+         *
          * ```signatures
          * CopyFrom(sourceTexture: LuaTexture, srcX: number, srcY: number, srcWidth: number, srcHeight: number, dstX: number, dstY: number)
          * ```
@@ -111,7 +137,7 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
         /**
          * Updates the GPU texture with the current pixmap data.
          * Call this after making pixel modifications to see changes.
-         * 
+         *
          * ```signatures
          * Update()
          * ```
@@ -125,7 +151,7 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
         /**
          * Disposes the texture and pixmap, freeing GPU and system memory.
          * The texture becomes unusable after calling this.
-         * 
+         *
          * ```signatures
          * Dispose()
          * ```
@@ -138,8 +164,8 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
         }
 
         val luaMeta = LuaMappedMetatable(LuaTexture::class) {
-            readOnly(LuaTexture::width)
-            readOnly(LuaTexture::height)
+            getter(::luaGetWidth)
+            getter(::luaGetHeight)
             callable(::luaSetPixel)
             callable(::luaGetPixel)
             callable(::luaFill)

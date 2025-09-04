@@ -1,6 +1,6 @@
 package world.selene.server.sync
 
-import world.selene.common.grid.Grid
+import world.selene.common.grid.Direction
 import world.selene.common.network.Packet
 import world.selene.common.network.packet.MoveEntityPacket
 import world.selene.common.network.packet.TurnEntityPacket
@@ -34,7 +34,7 @@ class DimensionSyncManager {
         updateEntityWatches(entity)
     }
 
-    fun entityTurned(entity: Entity, direction: Grid.Direction) {
+    fun entityTurned(entity: Entity, direction: Direction) {
         sendToAllWatching(entity.networkId, TurnEntityPacket(entity.networkId, direction.angle))
     }
 

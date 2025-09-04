@@ -77,8 +77,21 @@ class LuaReference<TID : Any, TObject : Any>(
 
     companion object {
         /**
+         * Gets the ID of this reference.
+         *
+         * ```property
+         * Id: any
+         * ```
+         */
+        private fun luaGetId(lua: Lua): Int {
+            val ref = lua.checkUserdata<LuaReference<Any, Any>>(1)
+            lua.push(ref.id, Lua.Conversion.FULL)
+            return 1
+        }
+
+        /**
          * Resolves and returns the referenced object.
-         * 
+         *
          * ```signatures
          * Get() -> any|nil
          * ```
@@ -90,7 +103,7 @@ class LuaReference<TID : Any, TObject : Any>(
         }
 
         val luaMeta = LuaMappedMetatable(LuaReference::class) {
-            readOnly(LuaReference<*, *>::id)
+            getter(::luaGetId)
             callable(::luaGet)
         }
     }
