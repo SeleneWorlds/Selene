@@ -5,6 +5,10 @@ plugins {
 }
 
 dependencies {
+    implementation(project(":common"))
+    implementation(project(":server"))
+    implementation(project(":client"))
+
     // Kotlin Compiler Frontend
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.21")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.21")
@@ -12,6 +16,8 @@ dependencies {
     // JSON Serialization
     implementation("com.fasterxml.jackson.core:jackson-databind:2.19.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
+    implementation("com.kjetland:mbknor-jackson-jsonschema_2.13:1.0.39")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 }
 

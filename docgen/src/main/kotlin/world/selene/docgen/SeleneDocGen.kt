@@ -2,6 +2,14 @@ package world.selene.docgen
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.kjetland.jackson.jsonSchema.JsonSchemaGenerator
+import world.selene.client.data.AudioDefinition
+import world.selene.client.data.VisualDefinition
+import world.selene.common.data.ComponentDefinition
+import world.selene.common.data.EntityDefinition
+import world.selene.common.data.SoundDefinition
+import world.selene.common.data.TileDefinition
+import world.selene.common.data.TransitionDefinition
 import java.io.File
 
 enum class Side {
@@ -14,6 +22,7 @@ fun main(args: Array<String>) {
     val baseDir = args.getOrNull(0) ?: "."
     val moduleAnalyzer = LuaModuleAnalyzer()
     val classAnalyzer = LuaClassAnalyzer()
+    val objectMapper = ObjectMapper().registerKotlinModule()
 
     try {
         val modulesBySide = mapOf(
@@ -33,8 +42,8 @@ fun main(args: Array<String>) {
             modulesDir.mkdirs()
         }
 
-        val mapper = ObjectMapper().registerKotlinModule()
-        
+        val mapper = objectMapper
+
         modulesBySide.forEach { (side, modules) ->
             val sideDir = File(modulesDir, side.name.lowercase())
             if (!sideDir.exists()) {
@@ -69,4 +78,39 @@ fun main(args: Array<String>) {
         moduleAnalyzer.close()
         classAnalyzer.close()
     }
+
+    val dataDir = File("data")
+    if (!dataDir.exists()) {
+        dataDir.mkdirs()
+    }
+
+    val schemaGenerator = JsonSchemaGenerator(objectMapper)
+    objectMapper.writeValue(
+        File(dataDir, "transitions.json"),
+        schemaGenerator.generateJsonSchema(TransitionDefinition::class.java)
+    )
+    objectMapper.writeValue(
+        File(dataDir, "audio.json"),
+        schemaGenerator.generateJsonSchema(AudioDefinition::class.java)
+    )
+    objectMapper.writeValue(
+        File(dataDir, "visuals.json"),
+        schemaGenerator.generateJsonSchema(VisualDefinition::class.java)
+    )
+    objectMapper.writeValue(
+        File(dataDir, "tiles.json"),
+        schemaGenerator.generateJsonSchema(TileDefinition::class.java)
+    )
+    objectMapper.writeValue(
+        File(dataDir, "components.json"),
+        schemaGenerator.generateJsonSchema(ComponentDefinition::class.java)
+    )
+    objectMapper.writeValue(
+        File(dataDir, "sounds.json"),
+        schemaGenerator.generateJsonSchema(SoundDefinition::class.java)
+    )
+    objectMapper.writeValue(
+        File(dataDir, "entities.json"),
+        schemaGenerator.generateJsonSchema(EntityDefinition::class.java)
+    )
 }
