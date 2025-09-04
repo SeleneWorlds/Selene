@@ -66,6 +66,14 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
     }
 
     companion object {
+        /**
+         * Checks if a specific tile exists at the given coordinate.
+         * 
+         * ```signatures
+         * HasTile(coordinate: Coordinate, tileDef: TileDefinition) -> boolean
+         * HasTile(coordinate: Coordinate, tileDef: TileDefinition, viewer: Viewer) -> boolean
+         * ```
+         */
         private fun luaHasTile(lua: Lua): Int {
             val dimension = lua.checkUserdata<Dimension>(1)
             val (coordinate, index) = lua.checkCoordinate(2)
@@ -81,6 +89,14 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             return 1
         }
 
+        /**
+         * Places a tile at the specified coordinate and returns a TransientTile reference.
+         * 
+         * ```signatures
+         * PlaceTile(coordinate: Coordinate, tileDef: TileDefinition) -> TransientTile
+         * PlaceTile(coordinate: Coordinate, tileDef: TileDefinition, layerName: string) -> TransientTile
+         * ```
+         */
         private fun luaPlaceTile(lua: Lua): Int {
             val dimension = lua.checkUserdata<Dimension>(1)
             val (coordinate, index) = lua.checkCoordinate(2)
@@ -91,6 +107,14 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             return 1
         }
 
+        /**
+         * Adds annotation data to a tile at the specified coordinate.
+         * 
+         * ```signatures
+         * AnnotateTile(coordinate: Coordinate, key: string, data: table)
+         * AnnotateTile(coordinate: Coordinate, key: string, data: table, layerName: string)
+         * ```
+         */
         private fun luaAnnotateTile(lua: Lua): Int {
             val dimension = lua.checkUserdata<Dimension>(1)
             val (coordinate, index) = lua.checkCoordinate(2)
@@ -101,6 +125,14 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             return 0
         }
 
+        /**
+         * Gets all tiles at the specified coordinate as TransientTile objects.
+         * 
+         * ```signatures
+         * GetTilesAt(coordinate: Coordinate) -> table[TransientTile]
+         * GetTilesAt(coordinate: Coordinate, viewer: Viewer) -> table[TransientTile]
+         * ```
+         */
         private fun luaGetTilesAt(lua: Lua): Int {
             val dimension = lua.checkUserdata<Dimension>(1)
             val (coordinate, index) = lua.checkCoordinate(2)
@@ -124,6 +156,14 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             return 1
         }
 
+        /**
+         * Gets annotation data for a tile at the specified coordinate.
+         * 
+         * ```signatures
+         * GetAnnotationAt(coordinate: Coordinate, key: string) -> table|nil
+         * GetAnnotationAt(coordinate: Coordinate, key: string, viewer: Viewer) -> table|nil
+         * ```
+         */
         private fun luaGetAnnotationAt(lua: Lua): Int {
             val dimension = lua.checkUserdata<Dimension>(1)
             val (coordinate, index) = lua.checkCoordinate(2)
@@ -134,6 +174,14 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             return 1
         }
 
+        /**
+         * Checks if there is a collision at the specified coordinate for the given viewer.
+         * 
+         * ```signatures
+         * HasCollisionAt(coordinate: Coordinate) -> boolean
+         * HasCollisionAt(coordinate: Coordinate, viewer: Viewer) -> boolean
+         * ```
+         */
         private fun luaHasCollisionAt(lua: Lua): Int {
             val dimension = lua.checkUserdata<Dimension>(1)
             val (coordinate, index) = lua.checkCoordinate(2)
@@ -142,6 +190,13 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             return 1
         }
 
+        /**
+         * Gets all entities at the specified coordinate.
+         * 
+         * ```signatures
+         * GetEntitiesAt(coordinate: Coordinate) -> table[Entity]
+         * ```
+         */
         private fun luaGetEntitiesAt(lua: Lua): Int {
             val dimension = lua.checkUserdata<Dimension>(1)
             val (coordinate, _) = lua.checkCoordinate(2)
@@ -149,6 +204,13 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             return 1
         }
 
+        /**
+         * Gets all entities within the specified range of a coordinate.
+         * 
+         * ```signatures
+         * GetEntitiesInRange(coordinate: Coordinate, range: number) -> table[Entity]
+         * ```
+         */
         private fun luaGetEntitiesInRange(lua: Lua): Int {
             val dimension = lua.checkUserdata<Dimension>(1)
             val (coordinate, index) = lua.checkCoordinate(2)

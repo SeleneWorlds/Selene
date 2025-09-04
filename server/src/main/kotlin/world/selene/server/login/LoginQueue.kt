@@ -22,18 +22,39 @@ data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var
     }
 
     companion object {
+        /**
+         * Sends a notification message to the user in the login queue.
+         * 
+         * ```signatures
+         * Notify(message: string)
+         * ```
+         */
         private fun luaNotify(lua: Lua): Int {
             val entry = lua.checkUserdata<LoginQueueEntry>(1)
             entry.message = lua.checkString(2)
             return 0
         }
 
+        /**
+         * Accepts the user's login request, allowing them to join the server.
+         * 
+         * ```signatures
+         * Accept()
+         * ```
+         */
         private fun luaAccept(lua: Lua): Int {
             val entry = lua.checkUserdata<LoginQueueEntry>(1)
             entry.status = LoginQueueStatus.Accepted
             return 0
         }
 
+        /**
+         * Rejects the user's login request with a reason message.
+         * 
+         * ```signatures
+         * Reject(message: string)
+         * ```
+         */
         private fun luaReject(lua: Lua): Int {
             val entry = lua.checkUserdata<LoginQueueEntry>(1)
             entry.status = LoginQueueStatus.Rejected

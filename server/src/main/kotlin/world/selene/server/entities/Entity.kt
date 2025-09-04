@@ -145,12 +145,26 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     }
 
     companion object {
+        /**
+         * Gets a reference to this entity for storage and later retrieval.
+         * 
+         * ```signatures
+         * Ref() -> LuaReference
+         * ```
+         */
         private fun luaRef(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             lua.push(entity.luaReference(), Lua.Conversion.NONE)
             return 1
         }
 
+        /**
+         * Sets the entity's coordinate and teleports it to the new position.
+         * 
+         * ```signatures
+         * SetCoordinate(coordinate: Coordinate)
+         * ```
+         */
         private fun luaSetCoordinate(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val (coordinate, _) = lua.checkCoordinate(2)
@@ -159,6 +173,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Spawns the entity in a dimension, making it visible to players.
+         * 
+         * ```signatures
+         * Spawn()
+         * Spawn(dimension: Dimension)
+         * ```
+         */
         private fun luaSpawn(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val dimension = lua.toUserdata<Dimension>(2) ?: entity.world.dimensionManager.getOrCreateDimension(0)
@@ -167,18 +189,39 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Despawns the entity, removing it from its dimension.
+         * 
+         * ```signatures
+         * Despawn()
+         * ```
+         */
         private fun luaDespawn(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             entity.despawn()
             return 0
         }
 
+        /**
+         * Permanently removes the entity from the world.
+         * 
+         * ```signatures
+         * Remove()
+         * ```
+         */
         private fun luaRemove(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             entity.remove()
             return 0
         }
 
+        /**
+         * Sets the entity's facing direction.
+         * 
+         * ```signatures
+         * SetFacing(direction: Direction)
+         * ```
+         */
         private fun luaSetFacing(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val direction = lua.checkDirection(2, entity.world.grid)
@@ -187,6 +230,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Moves the entity one step in the specified direction.
+         * Returns true if the move was successful, false if blocked.
+         * 
+         * ```signatures
+         * Move(direction: Direction) -> boolean
+         * ```
+         */
         private fun luaMove(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val direction = lua.checkDirection(2, entity.world.grid)
@@ -195,6 +246,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 1
         }
 
+        /**
+         * Sets whether the entity can see objects with a specific vision tag.
+         * 
+         * ```signatures
+         * SetVision(enabled: boolean)
+         * SetVision(enabled: boolean, tag: string)
+         * ```
+         */
         private fun luaSetVision(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val enabled = lua.checkBoolean(2)
@@ -207,6 +266,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Checks if the entity has vision for a specific tag.
+         * 
+         * ```signatures
+         * HasVision() -> boolean
+         * HasVision(tag: string) -> boolean
+         * ```
+         */
         private fun luaHasVision(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
@@ -214,6 +281,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 1
         }
 
+        /**
+         * Grants the entity vision for a specific tag.
+         * 
+         * ```signatures
+         * GrantVision()
+         * GrantVision(tag: string)
+         * ```
+         */
         private fun luaGrantVision(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
@@ -221,6 +296,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Revokes the entity's vision for a specific tag.
+         * 
+         * ```signatures
+         * RevokeVision()
+         * RevokeVision(tag: string)
+         * ```
+         */
         private fun luaRevokeVision(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
@@ -228,6 +311,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Sets whether the entity is visible to objects with a specific vision tag.
+         * 
+         * ```signatures
+         * SetVisibility(enabled: boolean)
+         * SetVisibility(enabled: boolean, tag: string)
+         * ```
+         */
         private fun luaSetVisibility(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val enabled = lua.checkBoolean(2)
@@ -240,6 +331,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Checks if the entity is visible for a specific tag.
+         * 
+         * ```signatures
+         * IsVisible() -> boolean
+         * IsVisible(tag: string) -> boolean
+         * ```
+         */
         private fun luaIsVisible(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
@@ -247,6 +346,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 1
         }
 
+        /**
+         * Checks if the entity is invisible for a specific tag.
+         * 
+         * ```signatures
+         * IsInvisible() -> boolean
+         * IsInvisible(tag: string) -> boolean
+         * ```
+         */
         private fun luaIsInvisible(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
@@ -254,6 +361,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 1
         }
 
+        /**
+         * Makes the entity visible for a specific tag.
+         * 
+         * ```signatures
+         * MakeVisible()
+         * MakeVisible(tag: string)
+         * ```
+         */
         private fun luaMakeVisible(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
@@ -261,6 +376,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Makes the entity invisible for a specific tag.
+         * 
+         * ```signatures
+         * MakeInvisible()
+         * MakeInvisible(tag: string)
+         * ```
+         */
         private fun luaMakeInvisible(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
@@ -268,6 +391,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Checks if the entity has collision enabled for a specific tag.
+         * 
+         * ```signatures
+         * HasCollisions() -> boolean
+         * HasCollisions(tag: string) -> boolean
+         * ```
+         */
         private fun luaHasCollisions(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
@@ -275,6 +406,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 1
         }
 
+        /**
+         * Sets whether the entity has collision for a specific tag.
+         * 
+         * ```signatures
+         * SetCollisions(enabled: boolean)
+         * SetCollisions(enabled: boolean, tag: string)
+         * ```
+         */
         private fun luaSetCollisions(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val enabled = lua.checkBoolean(2)
@@ -287,6 +426,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Enables collision for the entity with a specific tag.
+         * 
+         * ```signatures
+         * EnableCollisions()
+         * EnableCollisions(tag: string)
+         * ```
+         */
         private fun luaEnableCollisions(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
@@ -294,6 +441,14 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Disables collision for the entity with a specific tag.
+         * 
+         * ```signatures
+         * DisableCollisions()
+         * DisableCollisions(tag: string)
+         * ```
+         */
         private fun luaDisableCollisions(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
@@ -301,6 +456,13 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Adds a dynamic component that is resolved per-player using a callback function.
+         * 
+         * ```signatures
+         * AddDynamicComponent(name: string, callback: function)
+         * ```
+         */
         private fun luaAddDynamicComponent(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val name = lua.checkString(2)
@@ -320,12 +482,26 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 0
         }
 
+        /**
+         * Gets all players that are currently controlling this entity.
+         * 
+         * ```signatures
+         * GetControllingPlayers() -> table[Player]
+         * ```
+         */
         private fun luaGetControllingPlayers(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             lua.push(entity.getControllingPlayers(), Lua.Conversion.FULL)
             return 1
         }
 
+        /**
+         * Gets an attribute by name from this entity.
+         * 
+         * ```signatures
+         * GetAttribute(name: string) -> Attribute|nil
+         * ```
+         */
         private fun luaGetAttribute(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val name = lua.checkString(2)
@@ -334,6 +510,13 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 1
         }
 
+        /**
+         * Creates a new attribute on this entity with an initial value.
+         * 
+         * ```signatures
+         * CreateAttribute(name: string, initialValue: any) -> Attribute
+         * ```
+         */
         private fun luaCreateAttribute(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val name = lua.checkString(2)
@@ -344,6 +527,13 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 1
         }
 
+        /**
+         * Checks if the entity has a specific tag in its definition.
+         * 
+         * ```signatures
+         * HasTag(tag: string) -> boolean
+         * ```
+         */
         private fun luaHasTag(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val tag = lua.checkString(2)
@@ -351,6 +541,13 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
             return 1
         }
 
+        /**
+         * Plays an animation on this entity for all watching players.
+         * 
+         * ```signatures
+         * PlayAnimation(animationName: string)
+         * ```
+         */
         private fun luaPlayAnimation(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
             val animationName = lua.checkString(2)

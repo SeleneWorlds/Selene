@@ -36,30 +36,65 @@ object ActorLuaMetatable {
         callable(::luaFocus)
     }
 
+    /**
+     * Gets the name of the actor. May be `nil`.
+     * 
+     * ```getter
+     * Name -> string|nil
+     * ```
+     */
     private fun luaGetName(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
         lua.push(actor.name)
         return 1
     }
 
+    /**
+     * Gets the parent actor of this actor or `nil`.
+     * 
+     * ```getter
+     * Parent -> Actor|nil
+     * ```
+     */
     private fun luaGetParent(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
         lua.push(actor.parent, Lua.Conversion.NONE)
         return 1
     }
 
+    /**
+     * Gets the width of the actor.
+     * 
+     * ```getter
+     * Width -> number
+     * ```
+     */
     private fun luaGetWidth(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
         lua.push(actor.width)
         return 1
     }
 
+    /**
+     * Gets the height of the actor.
+     * 
+     * ```getter
+     * Height -> number
+     * ```
+     */
     private fun luaGetHeight(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
         lua.push(actor.height)
         return 1
     }
 
+    /**
+     * Sets the width of the actor.
+     * 
+     * ```setter
+     * Width(width: number)
+     * ```
+     */
     private fun luaSetWidth(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
         val width = lua.checkFloat(3)
@@ -67,6 +102,13 @@ object ActorLuaMetatable {
         return 0
     }
 
+    /**
+     * Sets the height of the actor.
+     * 
+     * ```setter
+     * Height(height: number)
+     * ```
+     */
     private fun luaSetHeight(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
         val height = lua.checkFloat(3)
@@ -74,12 +116,28 @@ object ActorLuaMetatable {
         return 0
     }
 
+    /**
+     * Invalidates the actor's layout if it implements Layout interface.
+     * Forces the actor to recalculate its layout on the next frame.
+     * 
+     * ```signatures
+     * Invalidate()
+     * ```
+     */
     private fun luaInvalidate(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
         if (actor is Layout) actor.invalidate()
         return 0
     }
 
+    /**
+     * Sets the style of the actor using a skin and style name.
+     * Supports various actor types including TextField, Label, Button, etc.
+     * 
+     * ```signatures
+     * SetStyle(skin: Skin, styleName: string)
+     * ```
+     */
     private fun luaSetStyle(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
         val skin = lua.checkUserdata<Skin>(2)
@@ -124,42 +182,92 @@ object ActorLuaMetatable {
         return 0
     }
 
+    /**
+     * Sets keyboard focus to this actor.
+     * Makes this actor receive keyboard input events.
+     * 
+     * ```signatures
+     * Focus()
+     * ```
+     */
     private fun luaFocus(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
         actor.stage.keyboardFocus = actor
         return 0
     }
 
+    /**
+     * Gets the minimum width of the actor if it implements Layout.
+     * 
+     * ```getter
+     * MinWidth -> number
+     * ```
+     */
     private fun luaGetMinWidth(it: Lua): Int {
         val actor = it.checkUserdata<Actor>(1)
         it.push((actor as? Layout)?.minWidth ?: 0f)
         return 1
     }
     
+    /**
+     * Gets the minimum height of the actor if it implements Layout.
+     * 
+     * ```getter
+     * MinHeight -> number
+     * ```
+     */
     private fun luaGetMinHeight(it: Lua): Int {
         val actor = it.checkUserdata<Actor>(1)
         it.push((actor as? Layout)?.minHeight ?: 0f)
         return 1
     }
     
+    /**
+     * Gets the preferred width of the actor if it implements Layout.
+     * 
+     * ```setter
+     * PreferredWidth(number: number)
+     * ```
+     */
     private fun luaGetPreferredWidth(it: Lua): Int {
         val actor = it.checkUserdata<Actor>(1)
         it.push((actor as? Layout)?.prefWidth ?: 0f)
         return 1
     }
     
+    /**
+     * Gets the preferred height of the actor if it implements Layout.
+     * 
+     * ```getter
+     * PreferredHeight -> number
+     * ```
+     */
     private fun luaGetPreferredHeight(it: Lua): Int {
         val actor = it.checkUserdata<Actor>(1)
         it.push((actor as? Layout)?.prefHeight ?: 0f)
         return 1
     }
     
+    /**
+     * Gets the maximum width of the actor if it implements Layout.
+     * 
+     * ```getter
+     * MaxWidth -> number
+     * ```
+     */
     private fun luaGetMaxWidth(it: Lua): Int {
         val actor = it.checkUserdata<Actor>(1)
         it.push((actor as? Layout)?.maxWidth ?: 0f)
         return 1
     }
     
+    /**
+     * Gets the maximum height of the actor if it implements Layout.
+     * 
+     * ```getter
+     * MaxHeight -> number
+     * ```
+     */
     private fun luaGetMaxHeight(it: Lua): Int {
         val actor = it.checkUserdata<Actor>(1)
         it.push((actor as? Layout)?.maxHeight ?: 0f)

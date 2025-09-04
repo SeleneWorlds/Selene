@@ -41,6 +41,13 @@ class CustomRegistryObject(val registry: CustomRegistry, val name: String, val e
     }
 
     companion object {
+        /**
+         * Gets metadata value for the specified key from this custom registry object.
+         * 
+         * ```signatures
+         * GetMetadata(key: string) -> any|nil
+         * ```
+         */
         private fun luaGetMetadata(lua: Lua): Int {
             val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
             val key = lua.checkString(2)
@@ -49,6 +56,13 @@ class CustomRegistryObject(val registry: CustomRegistry, val name: String, val e
             return 1
         }
 
+        /**
+         * Gets a field value from this custom registry object's JSON element.
+         * 
+         * ```signatures
+         * GetField(key: string) -> any|nil
+         * ```
+         */
         private fun luaGetField(lua: Lua): Int {
             val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
             val key = lua.checkString(2)

@@ -284,18 +284,39 @@ class Entity(
     }
 
     companion object {
+        /**
+         * Spawns the entity on the client map, making it visible.
+         * 
+         * ```signatures
+         * Spawn()
+         * ```
+         */
         private fun luaSpawn(lua: Lua): Int {
             val self = lua.checkUserdata<Entity>(1)
             self.spawn()
             return 0
         }
 
+        /**
+         * Despawns the entity from the client map, making it invisible.
+         * 
+         * ```signatures
+         * Despawn()
+         * ```
+         */
         private fun luaDespawn(lua: Lua): Int {
             val self = lua.checkUserdata<Entity>(1)
             self.despawn()
             return 0
         }
 
+        /**
+         * Sets the entity's coordinate and updates its position on the client.
+         * 
+         * ```signatures
+         * SetCoordinate(coordinate: Coordinate)
+         * ```
+         */
         private fun luaSetCoordinate(lua: Lua): Int {
             val self = lua.checkUserdata<Entity>(1)
             val (coordinate, _) = lua.checkCoordinate(2)
@@ -303,6 +324,13 @@ class Entity(
             return 0
         }
 
+        /**
+         * Adds a component to the entity with the given configuration.
+         * 
+         * ```signatures
+         * AddComponent(name: string, componentData: table)
+         * ```
+         */
         private fun luaAddComponent(lua: Lua): Int {
             val self = lua.checkUserdata<Entity>(1)
             val componentName = lua.checkString(2)
@@ -313,6 +341,13 @@ class Entity(
             return 0
         }
 
+        /**
+         * Gets a component by name from the entity.
+         * 
+         * ```signatures
+         * GetComponent(name: string) -> EntityComponent|nil
+         * ```
+         */
         private fun luaGetComponent(lua: Lua): Int {
             val self = lua.checkUserdata<Entity>(1)
             val componentName = lua.checkString(2)

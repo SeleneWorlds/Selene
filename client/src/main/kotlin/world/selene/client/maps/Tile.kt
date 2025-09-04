@@ -96,6 +96,13 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
 
     companion object {
 
+        /**
+         * Gets the name of this tile from its definition.
+         * 
+         * ```getter
+         * Name -> string
+         * ```
+         */
         private fun luaGetName(lua: Lua): Int {
             val tile = lua.checkUserdata<Tile>(1)
             lua.push(tile.tileDefinition.name)

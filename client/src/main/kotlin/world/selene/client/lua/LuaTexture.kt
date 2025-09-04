@@ -19,6 +19,16 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
     }
 
     companion object {
+        /**
+         * Sets the color of a pixel at the specified coordinates.
+         * 
+         * ```signatures
+         * SetPixel(x: number, y: number, color: Color)
+         * SetPixel(x: number, y: number, color: table{r: number|nil, g: number|nil, b: number|nil, a: number|nil})
+         * SetPixel(x: number, y: number, color: table{red: number|nil, green: number|nil, blue: number|nil, alpha: number|nil})
+         * SetPixel(x: number, y: number, hexColor: string)
+         * ```
+         */
         private fun luaSetPixel(lua: Lua): Int {
             val self = lua.checkUserdata<LuaTexture>(1)
             val x = lua.checkInt(2)
@@ -29,6 +39,14 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
             return 0
         }
 
+        /**
+         * Gets the color of a pixel at the specified coordinates.
+         * Returns RGBA values as separate numbers.
+         * 
+         * ```signatures
+         * GetPixel(x: number, y: number) -> red: number, green: number, blue: number, alpha: number
+         * ```
+         */
         private fun luaGetPixel(lua: Lua): Int {
             val self = lua.checkUserdata<LuaTexture>(1)
             val x = lua.checkInt(2)
@@ -42,6 +60,16 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
             return 4
         }
 
+        /**
+         * Fills the entire texture with the specified color.
+         * 
+         * ```signatures
+         * Fill(color: Color)
+         * Fill(color: table{r: number|nil, g: number|nil, b: number|nil, a: number|nil})
+         * Fill(color: table{red: number|nil, green: number|nil, blue: number|nil, alpha: number|nil})
+         * Fill(hexColor: string)
+         * ```
+         */
         private fun luaFill(lua: Lua): Int {
             val self = lua.checkUserdata<LuaTexture>(1)
             val (color, _) = lua.checkColor(2)
@@ -50,6 +78,13 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
             return 0
         }
 
+        /**
+         * Copies pixels from another texture to this texture.
+         * 
+         * ```signatures
+         * CopyFrom(sourceTexture: LuaTexture, srcX: number, srcY: number, srcWidth: number, srcHeight: number, dstX: number, dstY: number)
+         * ```
+         */
         private fun luaCopyFrom(lua: Lua): Int {
             val self = lua.checkUserdata<LuaTexture>(1)
             val sourceTexture = lua.checkUserdata<LuaTexture>(2)
@@ -73,12 +108,28 @@ data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
             return 0
         }
 
+        /**
+         * Updates the GPU texture with the current pixmap data.
+         * Call this after making pixel modifications to see changes.
+         * 
+         * ```signatures
+         * Update()
+         * ```
+         */
         private fun luaUpdate(lua: Lua): Int {
             val self = lua.checkUserdata<LuaTexture>(1)
             self.texture.draw(self.pixmap, 0, 0)
             return 0
         }
 
+        /**
+         * Disposes the texture and pixmap, freeing GPU and system memory.
+         * The texture becomes unusable after calling this.
+         * 
+         * ```signatures
+         * Dispose()
+         * ```
+         */
         private fun luaDispose(lua: Lua): Int {
             val self = lua.checkUserdata<LuaTexture>(1)
             self.texture.dispose()

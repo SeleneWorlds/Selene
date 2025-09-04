@@ -30,6 +30,14 @@ data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider
     companion object {
         val Zero = Coordinate(0, 0, 0)
 
+        /**
+         * Calculates the horizontal distance to another coordinate.
+         * Uses 2D Euclidean distance (ignoring Z coordinate).
+         * 
+         * ```signatures
+         * GetHorizontalDistanceTo(other: Coordinate) -> number
+         * ```
+         */
         private fun luaGetHorizontalDistanceTo(lua: Lua): Int {
             val self = lua.checkUserdata<Coordinate>(1)
             val (other, _) = lua.checkCoordinate(2)

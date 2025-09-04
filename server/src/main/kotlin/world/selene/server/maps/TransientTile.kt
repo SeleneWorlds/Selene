@@ -26,6 +26,13 @@ class TransientTile(
     }
 
     companion object {
+        /**
+         * Gets metadata value for a specific key from this tile's definition.
+         * 
+         * ```signatures
+         * GetMetadata(key: string) -> string|nil
+         * ```
+         */
         private fun luaGetMetadata(lua: Lua): Int {
             val tile = lua.checkUserdata<TransientTile>(1)
             val key = lua.checkString(2)
@@ -34,6 +41,13 @@ class TransientTile(
             return 1
         }
 
+        /**
+         * Checks if this tile has a specific tag in its definition.
+         * 
+         * ```signatures
+         * HasTag(tag: string) -> boolean
+         * ```
+         */
         private fun luaHasTag(lua: Lua): Int {
             val tile = lua.checkUserdata<TransientTile>(1)
             val tag = lua.checkString(2)
@@ -41,6 +55,14 @@ class TransientTile(
             return 1
         }
 
+        /**
+         * Swaps this tile for another tile definition at the same coordinate.
+         * 
+         * ```signatures
+         * Swap(newTileDef: TileDefinition) -> TransientTile
+         * Swap(newTileDef: TileDefinition, layerName: string) -> TransientTile
+         * ```
+         */
         private fun luaSwap(lua: Lua): Int {
             val tile = lua.checkUserdata<TransientTile>(1)
             val newTileDef = lua.checkRegistry(2, tile.definition.registry)

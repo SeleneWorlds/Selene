@@ -96,24 +96,54 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
     }
 
     companion object {
+        /**
+         * Sets the camera to follow the player's controlled entity.
+         * 
+         * ```signatures
+         * SetCameraToFollowControlledEntity()
+         * ```
+         */
         private fun luaSetCameraToFollowControlledEntity(lua: Lua): Int {
             val player = lua.checkUserdata<Player>(1)
             player.setCameraToFollowControlledEntity()
             return 0
         }
 
+        /**
+         * Sets the camera to follow the player's camera target entity.
+         * 
+         * ```signatures
+         * SetCameraToFollowTarget()
+         * ```
+         */
         private fun luaSetCameraToFollowTarget(lua: Lua): Int {
             val player = lua.checkUserdata<Player>(1)
             player.setCameraToFollowTarget()
             return 0
         }
 
+        /**
+         * Sets the camera to focus on a specific coordinate in a dimension.
+         * 
+         * ```signatures
+         * SetCameraToCoordinate(dimension: Dimension, x: number, y: number, z: number)
+         * ```
+         */
         private fun luaSetCameraToCoordinate(lua: Lua): Int {
             val player = lua.checkUserdata<Player>(1)
             player.setCameraToCoordinate(lua)
             return 0
         }
 
+        /**
+         * Gets a safe reference to this player that provides access to a player without the risk of memory leaks.
+         * Player references are backed by the player id. If a player rejoins under a new session, the reference will
+         * update to point to their new Player object.
+         *
+         * ```signatures
+         * Ref() -> LuaReference
+         * ```
+         */
         private fun luaRef(lua: Lua): Int {
             val player = lua.checkUserdata<Player>(1)
             lua.push(player.luaReference(), Lua.Conversion.NONE)

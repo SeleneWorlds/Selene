@@ -37,6 +37,14 @@ class Signal(private val name: String) : LuaMetatableProvider {
 
     companion object {
 
+        /**
+         * Connects a callback function to this signal.
+         * The callback will be invoked whenever the signal is emitted.
+         * 
+         * ```signatures
+         * Connect(callback: function)
+         * ```
+         */
         private fun luaConnect(lua: Lua): Int {
             val signal = lua.checkUserdata<Signal>(1)
             val callback = lua.checkFunction(2)

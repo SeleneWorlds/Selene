@@ -15,6 +15,13 @@ object TextFieldClickListenerLuaMetatable {
         callable(::luaKeyTyped)
     }
 
+    /**
+     * Handles key down events for text field click listeners.
+     * 
+     * ```signatures
+     * KeyDown(event: InputEvent, keyCode: number) -> boolean
+     * ```
+     */
     private fun luaKeyDown(lua: Lua): Int {
         val listener = lua.checkUserdata<ClickListener>(1)
         val event = lua.checkUserdata<InputEvent>(2)
@@ -23,6 +30,13 @@ object TextFieldClickListenerLuaMetatable {
         return 1
     }
 
+    /**
+     * Handles key up events for text field click listeners.
+     * 
+     * ```signatures
+     * KeyUp(event: InputEvent, keyCode: number) -> boolean
+     * ```
+     */
     private fun luaKeyUp(lua: Lua): Int {
         val listener = lua.checkUserdata<ClickListener>(1)
         val event = lua.checkUserdata<InputEvent>(2)
@@ -31,6 +45,13 @@ object TextFieldClickListenerLuaMetatable {
         return 1
     }
 
+    /**
+     * Handles key typed events for text field click listeners.
+     * 
+     * ```signatures
+     * KeyTyped(event: InputEvent, char: number) -> boolean
+     * ```
+     */
     private fun luaKeyTyped(lua: Lua): Int {
         val listener = lua.checkUserdata<ClickListener>(1)
         val event = lua.checkUserdata<InputEvent>(2)

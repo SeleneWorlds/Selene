@@ -76,6 +76,13 @@ class LuaReference<TID : Any, TObject : Any>(
     }
 
     companion object {
+        /**
+         * Resolves and returns the referenced object.
+         * 
+         * ```signatures
+         * Get() -> any|nil
+         * ```
+         */
         private fun luaGet(lua: Lua): Int {
             val ref = lua.checkUserdata<LuaReference<Any, Any>>(1)
             lua.push(ref.resolve(), Lua.Conversion.NONE)

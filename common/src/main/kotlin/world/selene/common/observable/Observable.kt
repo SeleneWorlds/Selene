@@ -14,6 +14,15 @@ interface Observable<T> {
     fun notifyObservers(data: T)
 
     companion object {
+        /**
+         * Subscribes an observer to this observable.
+         * Can accept either a function or an Observer object.
+         * 
+         * ```signatures
+         * Subscribe(observer: function(data: any)) -> Observer
+         * Subscribe(observer: Observer) -> Observer
+         * ```
+         */
         private fun luaSubscribe(lua: Lua): Int {
             val observable = lua.checkUserdata<Observable<Any>>(1)
             val registrationSite = lua.getCallerInfo()
@@ -27,6 +36,13 @@ interface Observable<T> {
             return 1
         }
 
+        /**
+         * Unsubscribes an observer from this observable.
+         * 
+         * ```signatures
+         * Unsubscribe(observer: Observer)
+         * ```
+         */
         private fun luaUnsubscribe(lua: Lua): Int {
             val observable = lua.checkUserdata<Observable<Any>>(1)
             val observer = lua.checkUserdata<Observer<Any>>(2)
@@ -34,6 +50,14 @@ interface Observable<T> {
             return 0
         }
 
+        /**
+         * Notifies all observers with the given data.
+         * 
+         * ```signatures
+         * NotifyObservers()
+         * NotifyObservers(data: any)
+         * ```
+         */
         private fun luaNotifyObservers(lua: Lua): Int {
             val observable = lua.checkUserdata<Observable<Any>>(1)
             val data = lua.toAny(2) ?: observable

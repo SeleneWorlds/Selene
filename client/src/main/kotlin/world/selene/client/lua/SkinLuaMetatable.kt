@@ -32,6 +32,15 @@ class SkinLuaMetatable(
         callable(::luaAddProgressBarStyle)
     }
 
+    /**
+     * Adds a texture to the skin by name and path or LuaTexture object.
+     * Throws error if texture file is not found.
+     * 
+     * ```signatures
+     * AddTexture(name: string, texturePath: string)
+     * AddTexture(name: string, texture: LuaTexture)
+     * ```
+     */
     private fun luaAddTexture(lua: Lua): Int {
         val skin = lua.checkUserdata<Skin>(1)
         val name = lua.checkString(2)
@@ -53,6 +62,14 @@ class SkinLuaMetatable(
         return 0
     }
 
+    /**
+     * Adds a button style to the skin.
+     * Style properties are drawable paths that will be resolved using the skin.
+     * 
+     * ```signatures
+     * AddButtonStyle(name: string, config: table{up: string, down: string, checked: string, over: string})
+     * ```
+     */
     private fun luaAddButtonStyle(lua: Lua): Int {
         val skin = lua.checkUserdata<Skin>(1)
         val styleName = lua.checkString(2)
@@ -76,6 +93,14 @@ class SkinLuaMetatable(
         return 0
     }
 
+    /**
+     * Adds a label style to the skin.
+     * Font colors can be hex strings or color names. Background is optional.
+     * 
+     * ```signatures
+     * AddLabelStyle(name: string, config: table{font: string, fontColor: string, background: string})
+     * ```
+     */
     private fun luaAddLabelStyle(lua: Lua): Int {
         val skin = lua.checkUserdata<Skin>(1)
         val styleName = lua.checkString(2)
@@ -95,6 +120,14 @@ class SkinLuaMetatable(
         return 0
     }
 
+    /**
+     * Adds an image button style to the skin.
+     * Supports both button states (up, down, over) and image states (imageUp, imageDown, etc.).
+     * 
+     * ```signatures
+     * AddImageButtonStyle(name: string, config: table{up: string, down: string, over: string, imageUp: string, imageDown: string, imageOver: string})
+     * ```
+     */
     private fun luaAddImageButtonStyle(lua: Lua): Int {
         val skin = lua.checkUserdata<Skin>(1)
         val styleName = lua.checkString(2)
@@ -105,6 +138,14 @@ class SkinLuaMetatable(
         return 0
     }
 
+    /**
+     * Adds a text field style to the skin.
+     * Creates both regular TextField and VisTextField styles. Supports focused and disabled states.
+     * 
+     * ```signatures
+     * AddTextFieldStyle(name: string, config: table{font: string, fontColor: string, cursor: string, selection: string, background: string, focusedFontColor: string, disabledFontColor: string, focusedBackground: string, disabledBackground: string, messageFont: string, messageFontColor: string})
+     * ```
+     */
     private fun luaAddTextFieldStyle(lua: Lua): Int {
         val skin = lua.checkUserdata<Skin>(1)
         val styleName = lua.checkString(2)
@@ -168,6 +209,14 @@ class SkinLuaMetatable(
         return 0
     }
 
+    /**
+     * Adds a scroll pane style to the skin.
+     * All drawable properties are optional and will be resolved using the skin.
+     * 
+     * ```signatures
+     * AddScrollPaneStyle(name: string, config: table{background: string, hScroll: string, hScrollKnob: string, vScroll: string, vScrollKnob: string, corner: string})
+     * ```
+     */
     private fun luaAddScrollPaneStyle(lua: Lua): Int {
         val skin = lua.checkUserdata<Skin>(1)
         val styleName = lua.checkString(2)
@@ -197,6 +246,14 @@ class SkinLuaMetatable(
         return 0
     }
 
+    /**
+     * Adds a progress bar style to the skin.
+     * Supports both normal and disabled states for all drawable properties.
+     * 
+     * ```signatures
+     * AddProgressBarStyle(name: string, config: table{background: string, knob: string, knobBefore: string, knobAfter: string, disabledBackground: string, disabledKnob: string, disabledKnobBefore: string, disabledKnobAfter: string})
+     * ```
+     */
     private fun luaAddProgressBarStyle(lua: Lua): Int {
         val skin = lua.checkUserdata<Skin>(1)
         val styleName = lua.checkString(2)
