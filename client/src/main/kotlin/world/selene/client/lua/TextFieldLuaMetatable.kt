@@ -26,7 +26,7 @@ object TextFieldLuaMetatable {
 
     private fun luaSetText(lua: Lua): Int {
         val textField = lua.checkUserdata<TextField>(1)
-        val text = lua.checkString(2)
+        val text = lua.checkString(3)
         textField.setText(text)
         return 0
     }
