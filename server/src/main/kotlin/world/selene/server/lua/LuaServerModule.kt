@@ -2,7 +2,7 @@ package world.selene.server.lua
 
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaModule
-import world.selene.common.lua.ManagedLuaTable
+import world.selene.common.lua.ObservableMap
 import world.selene.common.lua.Signal
 import world.selene.server.data.ServerCustomData
 
@@ -25,7 +25,7 @@ class LuaServerModule(
      */
     private val serverReloaded: Signal = signals.serverReloaded
 
-    private val customData: ManagedLuaTable = serverCustomData.customData
+    private val customData: ObservableMap = serverCustomData.customData
 
     override fun register(table: LuaValue) {
         table.set("ServerStarted", serverStarted)

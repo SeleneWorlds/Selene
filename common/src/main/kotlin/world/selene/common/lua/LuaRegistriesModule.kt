@@ -26,7 +26,7 @@ class LuaRegistriesModule(private val registryProvider: RegistryProvider) : LuaM
      * FindAll("visuals") -> table[VisualDefinition]
      * FindAll("tiles") -> table[TileDefinition]
      * FindAll("components") -> table[ComponentDefinition]
-     * FindAll("sounds") -> table[SoundsDefinition]
+     * FindAll("sounds") -> table[SoundDefinition]
      * FindAll("entities") -> table[EntityDefinition]
      * ```
      */
@@ -50,7 +50,7 @@ class LuaRegistriesModule(private val registryProvider: RegistryProvider) : LuaM
      * FindByMetadata("visuals", key: string, value: any) -> VisualDefinition|nil
      * FindByMetadata("tiles", key: string, value: any) -> TileDefinition|nil
      * FindByMetadata("components", key: string, value: any) -> ComponentDefinition|nil
-     * FindByMetadata("sounds", key: string, value: any) -> SoundsDefinition|nil
+     * FindByMetadata("sounds", key: string, value: any) -> SoundDefinition|nil
      * FindByMetadata("entities", key: string, value: any) -> EntityDefinition|nil
      * ```
      */
@@ -83,7 +83,7 @@ class LuaRegistriesModule(private val registryProvider: RegistryProvider) : LuaM
      * FindByName("visuals", name: string) -> VisualDefinition|nil
      * FindByName("tiles", name: string) -> TileDefinition|nil
      * FindByName("components", name: string) -> ComponentDefinition|nil
-     * FindByName("sounds", name: string) -> SoundsDefinition|nil
+     * FindByName("sounds", name: string) -> SoundDefinition|nil
      * FindByName("entities", name: string) -> EntityDefinition|nil
      * ```
      */

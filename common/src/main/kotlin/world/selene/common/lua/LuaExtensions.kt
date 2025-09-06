@@ -242,18 +242,6 @@ fun Lua.toAny(index: Int): Any? {
     }
 }
 
-fun Lua.toManagedTable(index: Int): ManagedLuaTable? {
-    return when (type(index)) {
-        Lua.LuaType.TABLE -> {
-            return ManagedLuaTable(toAnyMap(index) as MutableMap)
-        }
-
-        Lua.LuaType.USERDATA -> return toUserdata(index, ManagedLuaTable::class)
-
-        else -> null
-    }
-}
-
 fun Lua.toAnyMap(index: Int): Map<Any, Any>? {
     if (isTable(index)) {
         val map = mutableMapOf<Any, Any>()
@@ -267,7 +255,7 @@ fun Lua.toAnyMap(index: Int): Map<Any, Any>? {
         }
         return map
     } else if (isUserdata(index)) {
-        return toUserdata(index, ManagedLuaTable::class)?.map
+        return toUserdata(index, ObservableMap::class)?.map
     }
 
     return null

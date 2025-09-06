@@ -1,7 +1,7 @@
 package world.selene.server.data
 
-import world.selene.common.lua.ManagedLuaTable
+import world.selene.common.lua.ObservableMap
 
 class ServerCustomData {
-    val customData: ManagedLuaTable = ManagedLuaTable()
+    val customData: ObservableMap = ObservableMap()
 }

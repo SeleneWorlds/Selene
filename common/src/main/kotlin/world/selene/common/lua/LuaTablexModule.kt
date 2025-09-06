@@ -12,24 +12,24 @@ class LuaTablexModule : LuaModule {
     override val registerAsGlobal: Boolean = true
 
     override fun register(table: LuaValue) {
-        table.register("managed", this::luaManaged)
+        table.register("observable", this::luaObservable)
         table.register("find", this::luaFind)
         table.register("tostring", this::luaToString)
     }
 
     /**
-     * Creates a managed table.
-     * Managed tables are observable, read-writable key-value maps.
+     * Creates an observable map.
+     * Observable maps consist of read-writable key-value pairs.
      * They are no longer considered a `table` and cannot be used in `table`-specific functions.
      *
      * ```signatures
-     * managed() -> ManagedTable
-     * managed(data: table) -> ManagedTable
+     * observable() -> ObservableMap
+     * observable(data: table) -> ObservableMap
      * ```
      */
-    private fun luaManaged(lua: Lua): Int {
+    private fun luaObservable(lua: Lua): Int {
         val data = lua.toAnyMap(1) as MutableMap?
-        lua.push(ManagedLuaTable(data ?: mutableMapOf()), Lua.Conversion.NONE)
+        lua.push(ObservableMap(data ?: mutableMapOf()), Lua.Conversion.NONE)
         return 1
     }
 
@@ -73,7 +73,7 @@ class LuaTablexModule : LuaModule {
      * Handles nested tables and various data types.
      *
      * ```signatures
-     * tostring(tbl: table|ManagedTable) -> string
+     * tostring(tbl: table|ObservableMap) -> string
      * ```
      */
     private fun luaToString(lua: Lua): Int {
@@ -111,7 +111,7 @@ class LuaTablexModule : LuaModule {
             }
 
             Lua.LuaType.USERDATA -> {
-                lua.push(lua.checkUserdata(1, ManagedLuaTable::class).toString())
+                lua.push(lua.checkUserdata(1, ObservableMap::class).toString())
             }
 
             else -> lua.throwTypeError(1, Lua.LuaType.TABLE)

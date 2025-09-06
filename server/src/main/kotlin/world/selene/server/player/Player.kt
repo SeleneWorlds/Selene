@@ -6,11 +6,9 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.LuaReferencable
 import world.selene.common.lua.LuaReference
-import world.selene.common.lua.ManagedLuaTable
+import world.selene.common.lua.ObservableMap
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.checkString
-import world.selene.common.lua.toAny
 import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.network.packet.SetCameraFollowEntityPacket
 import world.selene.common.network.packet.SetCameraPositionPacket
@@ -35,7 +33,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
     var locale: Locale = Locale.ENGLISH
     val localeString get() = locale.toString()
     val languageString: String get() = locale.language
-    val customData = ManagedLuaTable()
+    val customData = ObservableMap()
 
     override fun luaReference(): LuaReference<String, Player> {
         return LuaReference(Player::class, userId!!, playerManager)
@@ -97,10 +95,10 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
 
     companion object {
         /**
-         * Managed table for storing data on this player.
+         * Observable map for storing data on this player.
          *
          * ```property
-         * CustomData: ManagedLuaTable
+         * CustomData: ObservableMap
          * ```
          */
         private fun luaGetCustomData(lua: Lua): Int {

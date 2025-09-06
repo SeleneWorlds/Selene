@@ -10,7 +10,7 @@ import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.LuaReferencable
 import world.selene.common.lua.LuaReference
-import world.selene.common.lua.ManagedLuaTable
+import world.selene.common.lua.ObservableMap
 import world.selene.common.lua.checkBoolean
 import world.selene.common.lua.checkCoordinate
 import world.selene.common.lua.checkDirection
@@ -43,7 +43,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
     var facing: Direction? = null
     var dimension: Dimension? = null
     val map get() = dimension?.mapTree
-    val customData = ManagedLuaTable()
+    val customData = ObservableMap()
     val attributes = mutableMapOf<String, Attribute<*>>()
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
 
@@ -159,10 +159,10 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         }
 
         /**
-         * Managed table for storing data on this entity.
+         * Observable map for storing data on this entity.
          *
          * ```property
-         * CustomData: ManagedLuaTable
+         * CustomData: ObservableMap
          * ```
          */
         private fun luaGetCustomData(lua: Lua): Int {

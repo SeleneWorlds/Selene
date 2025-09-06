@@ -5,19 +5,19 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.observable.Observable
 import world.selene.common.observable.Observer
 
-class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatable, Observable<ManagedLuaTable> {
+class ObservableMap(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatable, Observable<ObservableMap> {
 
-    private var observers: MutableList<Observer<ManagedLuaTable>>? = null
+    private var observers: MutableList<Observer<ObservableMap>>? = null
 
-    override fun subscribe(observer: Observer<ManagedLuaTable>) {
+    override fun subscribe(observer: Observer<ObservableMap>) {
         observers?.add(observer) ?: mutableListOf(observer).let { observers = it }
     }
 
-    override fun unsubscribe(observer: Observer<ManagedLuaTable>) {
+    override fun unsubscribe(observer: Observer<ObservableMap>) {
         observers?.remove(observer)
     }
 
-    override fun notifyObservers(data: ManagedLuaTable) {
+    override fun notifyObservers(data: ObservableMap) {
         observers?.forEach { it.notifyObserver(data) }
     }
 
@@ -34,9 +34,10 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         if (value != null) {
             if (value !is LuaValue && value is Map<*, *>) {
                 @Suppress("UNCHECKED_CAST")
-                lua.push(ManagedLuaTable(value as MutableMap<Any, Any>), Lua.Conversion.NONE)
+                lua.push(ObservableMap(value as MutableMap<Any, Any>), Lua.Conversion.NONE)
             } else if (value !is LuaValue && value is Collection<*>) {
-                lua.throwError("Cannot directly access a table field of a managed table. Use Lookup(\"${key}\") instead to create a local copy.")
+                // TODO would be nice if we had an ObservableList counterpart for this
+                lua.throwError("Cannot directly access a table field of an observed map. Use Lookup(\"${key}\") instead to create a local copy.")
             } else if (value is LuaReference<*, *>) {
                 lua.push(value.resolve(), Lua.Conversion.NONE)
             } else {
@@ -68,8 +69,8 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         return map.toString()
     }
 
-    fun deepCopy(): ManagedLuaTable {
-        return ManagedLuaTable(deepCopyMap(map))
+    fun deepCopy(): ObservableMap {
+        return ObservableMap(deepCopyMap(map))
     }
 
     private fun deepCopyMap(original: MutableMap<Any, Any>): MutableMap<Any, Any> {
@@ -82,7 +83,7 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
 
     private fun deepCopyValue(value: Any): Any {
         return when (value) {
-            is ManagedLuaTable -> value.deepCopy()
+            is ObservableMap -> value.deepCopy()
             is MutableMap<*, *> -> {
                 @Suppress("UNCHECKED_CAST")
                 deepCopyMap(value as MutableMap<Any, Any>)
@@ -116,13 +117,13 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         private fun getMapValue(container: Any?, key: Any): Any? {
             return when (container) {
                 is Map<*, *> -> container[key]
-                is ManagedLuaTable -> container.map[key]
+                is ObservableMap -> container.map[key]
                 else -> null
             }
         }
 
         private fun luaPairs(lua: Lua): Int {
-            val managedLuaTable = lua.checkUserdata<ManagedLuaTable>(1)
+            val observableMap = lua.checkUserdata<ObservableMap>(1)
             lua.push { lua ->
                 val iterator = lua.checkUserdata<Iterator<Map.Entry<*, *>>>(1)
                 if (iterator.hasNext()) {
@@ -132,7 +133,7 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                     when (value) {
                         is MutableMap<*, *> -> {
                             @Suppress("UNCHECKED_CAST")
-                            lua.push(ManagedLuaTable(value as MutableMap<Any, Any>), Lua.Conversion.NONE)
+                            lua.push(ObservableMap(value as MutableMap<Any, Any>), Lua.Conversion.NONE)
                         }
 
                         is LuaReference<*, *> -> {
@@ -148,20 +149,20 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                     0
                 }
             }
-            lua.push(managedLuaTable.map.iterator(), Lua.Conversion.NONE)
+            lua.push(observableMap.map.iterator(), Lua.Conversion.NONE)
             lua.pushNil()
             return 3
         }
 
         private fun luaToTable(lua: Lua): Int {
-            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
-            lua.push(managedTable.map, Lua.Conversion.FULL)
+            val observableMap = lua.checkUserdata<ObservableMap>(1)
+            lua.push(observableMap.map, Lua.Conversion.FULL)
             return 1
         }
 
         private fun luaRawLookup(lua: Lua): Int {
-            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
-            var result: Any? = managedTable.map
+            val observableMap = lua.checkUserdata<ObservableMap>(1)
+            var result: Any? = observableMap.map
             for (index in 2..lua.top) {
                 val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
                 result = getMapValue(result, key)
@@ -174,15 +175,15 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         }
 
         private fun luaLookup(lua: Lua): Int {
-            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
-            var result: Any? = managedTable.map
+            val observableMap = lua.checkUserdata<ObservableMap>(1)
+            var result: Any? = observableMap.map
             for (index in 2..lua.top) {
                 val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
                 result = getMapValue(result, key) ?: return lua.pushNil().let { 1 }
             }
             if (result !is LuaValue && result is Map<*, *>) {
                 @Suppress("UNCHECKED_CAST")
-                lua.push(ManagedLuaTable(result as MutableMap<Any, Any>), Lua.Conversion.NONE)
+                lua.push(ObservableMap(result as MutableMap<Any, Any>), Lua.Conversion.NONE)
             } else if (result is LuaReference<*, *>) {
                 lua.push(result.resolve(), Lua.Conversion.NONE)
             } else {
@@ -192,14 +193,14 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         }
 
         private fun luaSetNested(lua: Lua): Int {
-            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
-            var container: Any? = managedTable.map
+            val observableMap = lua.checkUserdata<ObservableMap>(1)
+            var container: Any? = observableMap.map
 
             for (index in 2..lua.top - 2) {
                 val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
                 val next = getMapValue(container, key)
                     ?: lua.throwError("Cannot set field, key [$key] does not exist")
-                if (next !is Map<*, *> && next !is ManagedLuaTable) {
+                if (next !is Map<*, *> && next !is ObservableMap) {
                     lua.throwError("Cannot set field, key [$key] is not a table")
                 }
                 container = next
@@ -218,7 +219,7 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
                     }
                 }
 
-                is ManagedLuaTable -> {
+                is ObservableMap -> {
                     if (value != null) {
                         container.map[key] = value
                     } else {
@@ -230,19 +231,19 @@ class ManagedLuaTable(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetat
         }
 
         private fun luaDeepCopy(lua: Lua): Int {
-            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
-            lua.push(managedTable.deepCopy(), Lua.Conversion.NONE)
+            val observableMap = lua.checkUserdata<ObservableMap>(1)
+            lua.push(observableMap.deepCopy(), Lua.Conversion.NONE)
             return 1
         }
 
         private fun luaHasKey(lua: Lua): Int {
-            val managedTable = lua.checkUserdata<ManagedLuaTable>(1)
+            val observableMap = lua.checkUserdata<ObservableMap>(1)
             val key = lua.toAny(2) ?: lua.throwTypeError(2, Lua.LuaType.STRING)
-            lua.push(managedTable.map.containsKey(key))
+            lua.push(observableMap.map.containsKey(key))
             return 1
         }
 
-        val luaMeta = Observable.luaMeta.extend(ManagedLuaTable::class) {
+        val luaMeta = Observable.luaMeta.extend(ObservableMap::class) {
             callable(:: luaPairs)
             callable(::luaToTable)
             callable(::luaRawLookup)
