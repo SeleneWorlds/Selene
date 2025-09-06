@@ -3,7 +3,7 @@ local bit32 = {}
 local function trim(x) return (x & 0xffffffff) end
 local function norm(x) return trim(math.tointeger(x) or 0) end
 
-local rshift -- forward decl (used by lshift)
+local rshift -- forward declaration (used by lshift)
 local function lshift(x, d)
   x = norm(x); d = math.tointeger(d) or 0
   if d <= -32 or d >= 32 then return 0 end

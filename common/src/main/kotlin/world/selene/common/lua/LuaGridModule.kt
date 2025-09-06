@@ -8,6 +8,7 @@ import world.selene.common.util.Coordinate
 /**
  * Define and lookup directions.
  */
+@Suppress("SameReturnValue")
 open class LuaGridModule(private val grid: Grid) : LuaModule {
     override val name = "selene.grid"
 

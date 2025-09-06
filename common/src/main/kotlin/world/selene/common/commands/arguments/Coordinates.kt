@@ -59,11 +59,11 @@ class WorldCoordinates(val x: CommandCoordinate, val y: CommandCoordinate, val z
 
         fun parseWorldCoordinates(reader: StringReader): Either<Throwable, WorldCoordinates> = runBlocking {
             either {
-                val x = CommandCoordinate.Companion.parseCoordinate(reader).bind()
+                val x = CommandCoordinate.parseCoordinate(reader).bind()
                 reader.expectOr(' ', Companion::ERROR_INCOMPLETE).bind()
-                val y = CommandCoordinate.Companion.parseCoordinate(reader).bind()
+                val y = CommandCoordinate.parseCoordinate(reader).bind()
                 reader.expectOr(' ', Companion::ERROR_INCOMPLETE).bind()
-                val z = CommandCoordinate.Companion.parseCoordinate(reader).bind()
+                val z = CommandCoordinate.parseCoordinate(reader).bind()
                 WorldCoordinates(x, y, z)
             }
         }

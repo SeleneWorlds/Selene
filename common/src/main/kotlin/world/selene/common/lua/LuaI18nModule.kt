@@ -7,6 +7,7 @@ import world.selene.common.i18n.Messages
 /**
  * Localize messages.
  */
+@Suppress("SameReturnValue")
 class LuaI18nModule(private val messages: Messages) : LuaModule {
     override val name = "selene.i18n"
 

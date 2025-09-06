@@ -27,6 +27,7 @@ fun StringReader.expectOr(char: Char, supplier: () -> SimpleCommandExceptionType
     }
 }
 
+@Suppress("unused")
 fun StringReader.expectOrThrow(char: Char, supplier: () -> SimpleCommandExceptionType) {
     if (!canRead() || peek() != char) {
         throw supplier().createWithContext(this)

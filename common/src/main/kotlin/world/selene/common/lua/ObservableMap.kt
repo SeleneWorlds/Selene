@@ -113,6 +113,7 @@ class ObservableMap(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatab
         }
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         private fun getMapValue(container: Any?, key: Any): Any? {
             return when (container) {

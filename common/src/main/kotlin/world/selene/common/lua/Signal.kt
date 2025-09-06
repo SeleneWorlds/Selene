@@ -35,6 +35,7 @@ class Signal(private val name: String) : LuaMetatableProvider {
         return luaMeta
     }
 
+    @Suppress("SameReturnValue")
     companion object {
 
         /**

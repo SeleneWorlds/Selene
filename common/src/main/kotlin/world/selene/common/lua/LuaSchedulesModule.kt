@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Schedule functions for timeouts, intervals, and periodic signals.
  */
+@Suppress("SameReturnValue")
 class LuaSchedulesModule(
     private val logger: Logger,
     private val mainThreadDispatcher: MainThreadDispatcher

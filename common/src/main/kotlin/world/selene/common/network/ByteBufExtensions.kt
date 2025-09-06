@@ -4,11 +4,13 @@ import io.netty.buffer.ByteBuf
 import world.selene.common.util.Coordinate
 import java.util.*
 
+@Suppress("unused")
 fun ByteBuf.writeUniqueId(uuid: UUID) {
     writeLong(uuid.mostSignificantBits)
     writeLong(uuid.leastSignificantBits)
 }
 
+@Suppress("unused")
 fun ByteBuf.readUniqueId(): UUID {
     val mostSignificantBits = readLong()
     val leastSignificantBits = readLong()

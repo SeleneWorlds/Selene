@@ -1,3 +1,4 @@
+@file:Suppress("RedundantSuppression")
 package world.selene.common.commands.arguments
 
 import arrow.core.Either
@@ -6,9 +7,9 @@ import world.selene.common.commands.CommandSource
 import world.selene.common.commands.remains
 import world.selene.common.commands.skipIf
 
-class CommandCoordinate(val relative: Boolean, val value: Int) {
+class CommandCoordinate(@Suppress("unused") val relative: Boolean, val value: Int) {
 
-    fun getValue(source: CommandSource): Int {
+    fun getValue(@Suppress("unused") source: CommandSource): Int {
         return value // TODO support relative coordinates using ~ prefix
     }
 

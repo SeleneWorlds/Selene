@@ -8,6 +8,7 @@ interface Observable<T> {
     fun unsubscribe(observer: Observer<T>)
     fun notifyObservers(data: T)
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Subscribes an observer to this observable.

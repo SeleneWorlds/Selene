@@ -12,6 +12,7 @@ import world.selene.common.util.Disposable
 /**
  * Make HTTP web requests.
  */
+@Suppress("SameReturnValue")
 class LuaHttpModule(
     private val httpClient: HttpClient
 ) : LuaModule, Disposable {

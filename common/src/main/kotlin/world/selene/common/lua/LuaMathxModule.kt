@@ -7,6 +7,7 @@ import party.iroiro.luajava.value.LuaValue
  * Extended mathematical functions beyond standard Lua math library.
  * Registered as global "mathx" table.
  */
+@Suppress("SameReturnValue")
 class LuaMathxModule : LuaModule {
     override val name: String = "mathx"
     override val registerAsGlobal: Boolean = true

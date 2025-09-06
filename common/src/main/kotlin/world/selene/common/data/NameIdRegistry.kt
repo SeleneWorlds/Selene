@@ -9,6 +9,7 @@ open class NameIdRegistry {
 
     fun getId(scope: String, name: String): Int? = mappings[scope, name]
 
+    @Suppress("unused")
     fun getName(scope: String, id: Int): String? = reverseMappings[scope, id]
 
     fun clear(scope: String) {

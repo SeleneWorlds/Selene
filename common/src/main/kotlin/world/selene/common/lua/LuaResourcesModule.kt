@@ -8,6 +8,7 @@ import java.io.File
 /**
  * Lookup bundle resource files.
  */
+@Suppress("SameReturnValue")
 class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule {
     override val name = "selene.resources"
 

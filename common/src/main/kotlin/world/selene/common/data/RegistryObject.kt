@@ -19,6 +19,7 @@ interface RegistryObject<T : Any> : LuaMetatableProvider {
         return luaMeta
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Numeric ID (if available), specific to this server installation.

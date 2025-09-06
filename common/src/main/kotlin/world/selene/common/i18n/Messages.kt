@@ -2,14 +2,12 @@ package world.selene.common.i18n
 
 import org.slf4j.Logger
 import world.selene.common.bundles.BundleDatabase
-import world.selene.common.bundles.BundleLoader
 import world.selene.common.bundles.LocatedBundle
 import java.io.File
 import java.util.*
 
 class Messages(
     private val bundleDatabase: BundleDatabase,
-    private val bundleLoader: BundleLoader,
     private val logger: Logger
 ) {
     private val messagesByLocale = mutableMapOf<Locale, Properties>()

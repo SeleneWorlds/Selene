@@ -27,6 +27,7 @@ class CustomRegistryObject(val registry: CustomRegistry, val name: String, val e
         return "CustomRegistryObject(${registry.name}, $name, $element)"
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Unique name of this custom registry object.

@@ -56,4 +56,34 @@ data class MapChunkPacket(
             }
         }
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as MapChunkPacket
+
+        if (x != other.x) return false
+        if (y != other.y) return false
+        if (z != other.z) return false
+        if (width != other.width) return false
+        if (height != other.height) return false
+        if (padding != other.padding) return false
+        if (!baseTiles.contentEquals(other.baseTiles)) return false
+        if (additionalTiles != other.additionalTiles) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = x
+        result = 31 * result + y
+        result = 31 * result + z
+        result = 31 * result + width
+        result = 31 * result + height
+        result = 31 * result + padding
+        result = 31 * result + baseTiles.contentHashCode()
+        result = 31 * result + additionalTiles.hashCode()
+        return result
+    }
 }

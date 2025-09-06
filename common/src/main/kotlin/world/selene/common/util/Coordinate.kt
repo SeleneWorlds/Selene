@@ -23,6 +23,7 @@ data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider
         return luaMeta
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         val Zero = Coordinate(0, 0, 0)
 

@@ -8,7 +8,7 @@ class LuaReference<TID : Any, TObject : Any>(
     private val clazz: KClass<TObject>,
     private val id: TID,
     private val resolver: LuaReferenceResolver<TID, TObject>,
-    var initialObject: TObject? = null
+    initialObject: TObject? = null
 ) : LuaMetatable {
 
     private var cachedObject: WeakReference<TObject>? = null
@@ -75,6 +75,7 @@ class LuaReference<TID : Any, TObject : Any>(
         return "Ref(${clazz.simpleName}, $id)"
     }
 
+    @Suppress("SameReturnValue", "unused")
     companion object {
         /**
          * Identifier backing this reference.

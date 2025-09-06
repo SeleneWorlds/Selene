@@ -7,6 +7,7 @@ import party.iroiro.luajava.value.LuaValue
  * Extended table manipulation functions beyond standard Lua table operations.
  * Registered as `tablex` global.
  */
+@Suppress("SameReturnValue")
 class LuaTablexModule : LuaModule {
     override val name: String = "tablex"
     override val registerAsGlobal: Boolean = true
