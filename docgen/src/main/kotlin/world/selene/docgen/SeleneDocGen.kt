@@ -96,31 +96,31 @@ fun main(args: Array<String>) {
 
     val schemaGenerator = JsonSchemaGenerator(objectMapper)
     objectMapper.writeValue(
-        File(commonDataDir, "transitions.json"),
+        File(commonDataDir, "TransitionDefinition.json"),
         schemaGenerator.generateJsonSchema(TransitionDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(clientDataDir, "audio.json"),
+        File(clientDataDir, "AudioDefinition.json"),
         schemaGenerator.generateJsonSchema(AudioDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(clientDataDir, "visuals.json"),
+        File(clientDataDir, "VisualDefinition.json"),
         schemaGenerator.generateJsonSchema(VisualDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(commonDataDir, "tiles.json"),
+        File(commonDataDir, "TileDefinition.json"),
         schemaGenerator.generateJsonSchema(TileDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(commonDataDir, "components.json"),
+        File(commonDataDir, "ComponentDefinition.json"),
         schemaGenerator.generateJsonSchema(ComponentDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(commonDataDir, "sounds.json"),
+        File(commonDataDir, "SoundDefinition.json"),
         schemaGenerator.generateJsonSchema(SoundDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(commonDataDir, "entities.json"),
+        File(commonDataDir, "EntityDefinition.json"),
         schemaGenerator.generateJsonSchema(EntityDefinition::class.java)
     )
 }

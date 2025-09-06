@@ -27,6 +27,9 @@ sealed class LuaType {
     data class Function(val parameters: List<LuaParameter>, val returnTypes: List<LuaType>) : LuaType() {
         val type = "function"
     }
+    data class Literal(val value: String) : LuaType() {
+        val type = "literal"
+    }
 
     override fun toString(): String = when (this) {
         is Simple -> name
@@ -47,6 +50,7 @@ sealed class LuaType {
             val returnStr = if (returnTypes.isNotEmpty()) returnTypes.joinToString(", ") else "void"
             "function($paramStr) -> $returnStr"
         }
+        is Literal -> value
     }
 }
 
@@ -54,6 +58,8 @@ class LuaSignatureParser {
 
     private enum class TokenType {
         IDENTIFIER,
+        STRING_LITERAL, // "string" or 'string'
+        NUMBER_LITERAL, // 123 or 123.45
         PIPE,           // |
         COMMA,          // ,
         LPAREN,         // (
@@ -88,19 +94,26 @@ class LuaSignatureParser {
         skipWhitespace()
         if (isAtEnd()) throw IllegalArgumentException("Invalid property string: $propertyString")
 
-        // Parse property name
+        // Parse property name (can be identifier, string literal, or number literal)
         val nameToken = currentToken()
-        if (nameToken?.type != TokenType.IDENTIFIER) throw IllegalArgumentException("Invalid property string: $propertyString")
-        val propertyName = nameToken.value
+        if (nameToken?.type !in listOf(TokenType.IDENTIFIER, TokenType.STRING_LITERAL, TokenType.NUMBER_LITERAL)) {
+            throw IllegalArgumentException("Invalid property string: $propertyString")
+        }
+        val propertyName = nameToken!!.value
+        val isLiteral = nameToken.type in listOf(TokenType.STRING_LITERAL, TokenType.NUMBER_LITERAL)
         advance()
         skipWhitespace()
 
-        // Expect colon
-        if (currentToken()?.type != TokenType.COLON) throw IllegalArgumentException("Invalid property string: $propertyString")
-        advance()
-        skipWhitespace()
-
-        val propertyType = parseType()
+        val propertyType = if (isLiteral) {
+            // For literals, there's no colon or type notation - the literal IS the type
+            LuaType.Literal(propertyName)
+        } else {
+            // For regular identifiers, expect colon and type
+            if (currentToken()?.type != TokenType.COLON) throw IllegalArgumentException("Invalid property string: $propertyString")
+            advance()
+            skipWhitespace()
+            parseType()
+        }
         return LuaParameter(propertyType, propertyName)
     }
 
@@ -200,6 +213,22 @@ class LuaSignatureParser {
                     i++
                 }
 
+                '"', '\'' -> {
+                    // Parse string literal
+                    val quote = char
+                    val start = i
+                    i++ // Skip opening quote
+                    while (i < input.length && input[i] != quote) {
+                        if (input[i] == '\\' && i + 1 < input.length) {
+                            i += 2 // Skip escaped character
+                        } else {
+                            i++
+                        }
+                    }
+                    if (i < input.length) i++ // Skip closing quote
+                    tokens.add(Token(TokenType.STRING_LITERAL, input.substring(start, i), start))
+                }
+
                 '-' -> {
                     if (i + 1 < input.length && input[i + 1] == '>') {
                         tokens.add(Token(TokenType.ARROW, "->", i))
@@ -210,7 +239,15 @@ class LuaSignatureParser {
                 }
 
                 else -> {
-                    if (char.isLetterOrDigit() || char == '_' || char == '.') {
+                    if (char.isDigit() || (char == '-' && i + 1 < input.length && input[i + 1].isDigit())) {
+                        // Parse number literal
+                        val start = i
+                        if (char == '-') i++ // Skip negative sign
+                        while (i < input.length && (input[i].isDigit() || input[i] == '.')) {
+                            i++
+                        }
+                        tokens.add(Token(TokenType.NUMBER_LITERAL, input.substring(start, i), start))
+                    } else if (char.isLetterOrDigit() || char == '_' || char == '.') {
                         val start = i
                         while (i < input.length && (input[i].isLetterOrDigit() || input[i] == '_' || input[i] == '.')) {
                             i++
@@ -432,23 +469,29 @@ class LuaSignatureParser {
     private fun parseParameter(): LuaParameter {
         skipWhitespace()
 
-        // Parse colon notation: name: type
+        // Parse parameter name (can be identifier, string literal, or number literal)
         val firstToken = currentToken()
-        if (firstToken?.type != TokenType.IDENTIFIER) {
+        if (firstToken?.type !in listOf(TokenType.IDENTIFIER, TokenType.STRING_LITERAL, TokenType.NUMBER_LITERAL)) {
             throw IllegalArgumentException("Expected parameter name, got: ${firstToken?.value}")
         }
 
-        val name = firstToken.value
+        val name = firstToken!!.value
+        val isLiteral = firstToken.type in listOf(TokenType.STRING_LITERAL, TokenType.NUMBER_LITERAL)
         advance() // Skip name
         skipWhitespace()
 
-        if (currentToken()?.type != TokenType.COLON) {
-            throw IllegalArgumentException("Expected ':' after parameter name '$name'")
+        val type = if (isLiteral) {
+            // For literals, there's no colon or type notation - the literal IS the type
+            LuaType.Literal(name)
+        } else {
+            // For regular identifiers, expect colon and type
+            if (currentToken()?.type != TokenType.COLON) {
+                throw IllegalArgumentException("Expected ':' after parameter name '$name'")
+            }
+            advance() // Skip colon
+            skipWhitespace()
+            parseType()
         }
-
-        advance() // Skip colon
-        skipWhitespace()
-        val type = parseType()
 
         return LuaParameter(type, name)
     }
