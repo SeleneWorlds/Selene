@@ -3,7 +3,6 @@ package world.selene.server.player
 import com.fasterxml.jackson.databind.ObjectMapper
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaReferenceResolver
-import world.selene.server.data.Registries
 import world.selene.server.dimensions.DimensionManager
 import world.selene.server.entities.EntityManager
 import world.selene.server.lua.ServerLuaSignals
@@ -16,7 +15,6 @@ class PlayerManager(
     private val dimensionManager: DimensionManager,
     private val chunkViewManager: ChunkViewManager,
     private val objectMapper: ObjectMapper,
-    private val registries: Registries,
     private val entityManager: EntityManager,
     private val luaSignals: ServerLuaSignals
 ) : LuaReferenceResolver<String, Player> {
@@ -42,7 +40,7 @@ class PlayerManager(
     }
 
     fun createSyncManager(player: Player): PlayerSyncManager {
-        return PlayerSyncManager(chunkViewManager, objectMapper, player, registries, entityManager)
+        return PlayerSyncManager(chunkViewManager, objectMapper, player, entityManager)
     }
 
     override fun luaDereference(id: String): Player? {
