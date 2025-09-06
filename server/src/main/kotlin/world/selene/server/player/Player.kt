@@ -8,11 +8,16 @@ import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.util.Coordinate
 import world.selene.server.cameras.Camera
 import world.selene.server.dimensions.Dimension
+import world.selene.server.dimensions.DimensionManager
 import world.selene.server.entities.Entity
 import world.selene.server.network.NetworkClient
 import java.util.*
 
-class Player(private val playerManager: PlayerManager, val client: NetworkClient) : LuaMetatableProvider,
+class Player(
+    private val dimensionManager: DimensionManager,
+    private val playerManager: PlayerManager,
+    val client: NetworkClient
+) : LuaMetatableProvider,
     LuaReferencable<String, Player> {
 
     enum class ConnectionState {
@@ -70,14 +75,9 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
         client.send(SetCameraFollowEntityPacket(cameraEntity?.networkId ?: -1))
     }
 
-    fun setCameraToCoordinate(lua: Lua): Int {
-        val dimension = lua.checkUserdata<Dimension>(1)
-        val x = lua.checkInt(2)
-        val y = lua.checkInt(3)
-        val z = lua.checkInt(4)
-        camera.focusCoordinate(dimension, Coordinate(x, y, z))
+    fun setCameraToCoordinate(dimension: Dimension, coordinate: Coordinate) {
+        camera.focusCoordinate(dimension, coordinate)
         client.send(SetCameraPositionPacket(camera.coordinate))
-        return 0
     }
 
     val idleTime get() = ((System.currentTimeMillis() - lastInputTime) / 1000L).toInt()
@@ -86,6 +86,7 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
         return luaMeta
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Observable map for storing data on this player.
@@ -230,12 +231,16 @@ class Player(private val playerManager: PlayerManager, val client: NetworkClient
          * Sets the camera to focus on a specific coordinate in a dimension.
          *
          * ```signatures
-         * SetCameraToCoordinate(dimension: Dimension, x: number, y: number, z: number)
+         * SetCameraToCoordinate(coordinate: Coordinate, dimension: Dimension|nil)
+         * SetCameraToCoordinate(x: number, y: number, z: number, dimension: Dimension|nil)
          * ```
          */
         private fun luaSetCameraToCoordinate(lua: Lua): Int {
             val player = lua.checkUserdata<Player>(1)
-            player.setCameraToCoordinate(lua)
+            val (coordinate, index) = lua.checkCoordinate(2)
+            val dimension = lua.toUserdata<Dimension>(index + 1)
+                ?: player.camera.dimension ?: player.dimensionManager.getOrCreateDimension(0)
+            player.setCameraToCoordinate(dimension, coordinate)
             return 0
         }
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaReferenceResolver
 import world.selene.server.data.Registries
+import world.selene.server.dimensions.DimensionManager
 import world.selene.server.entities.EntityManager
 import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.network.NetworkClient
@@ -12,6 +13,7 @@ import world.selene.server.sync.PlayerSyncManager
 import java.util.concurrent.ConcurrentHashMap
 
 class PlayerManager(
+    private val dimensionManager: DimensionManager,
     private val chunkViewManager: ChunkViewManager,
     private val objectMapper: ObjectMapper,
     private val registries: Registries,
@@ -22,7 +24,7 @@ class PlayerManager(
     val players: Collection<Player> get() = _players.values
 
     fun createPlayer(client: NetworkClient): Player {
-        val player = Player(this, client)
+        val player = Player(dimensionManager, this, client)
         _players[client] = player
         return player
     }

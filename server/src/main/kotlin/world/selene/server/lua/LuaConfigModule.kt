@@ -11,6 +11,7 @@ import world.selene.server.config.ScriptProperties
 /**
  * Lookup properties configured in the `script.properties` file.
  */
+@Suppress("SameReturnValue")
 class LuaConfigModule(private val scriptProperties: ScriptProperties) : LuaModule {
     override val name = "selene.config"
 

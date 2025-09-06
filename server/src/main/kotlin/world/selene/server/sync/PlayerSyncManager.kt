@@ -7,7 +7,6 @@ import world.selene.common.util.ChunkWindow
 import world.selene.common.util.Coordinate
 import world.selene.server.cameras.Camera
 import world.selene.server.cameras.CameraListener
-import world.selene.server.data.Registries
 import world.selene.server.dimensions.Dimension
 import world.selene.server.entities.Entity
 import world.selene.server.entities.EntityManager
@@ -17,7 +16,6 @@ class PlayerSyncManager(
     private val chunkViewManager: ChunkViewManager,
     private val objectMapper: ObjectMapper,
     val player: Player,
-    private val registries: Registries,
     private val entityManager: EntityManager
 ) : CameraListener {
     var initialSync = false
@@ -141,7 +139,7 @@ class PlayerSyncManager(
             player.client.send(
                 EntityPacket(
                     networkId = entity.networkId,
-                    entityId = entity.entityDefinition?.id ?: 0,
+                    entityId = entity.entityDefinition.id,
                     coordinate = entity.coordinate,
                     facing = entity.facing?.angle ?: 0f,
                     components = entity.resolveComponentsFor(player)

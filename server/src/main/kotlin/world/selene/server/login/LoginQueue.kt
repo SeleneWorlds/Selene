@@ -17,6 +17,7 @@ data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var
         return luaMeta
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Sends a notification message to the user in the login queue.

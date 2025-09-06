@@ -9,10 +9,11 @@ import world.selene.server.entities.EntityManager
 /**
  * Create or lookup entities.
  */
+@Suppress("SameReturnValue")
 class LuaEntitiesModule(
     private val entityManager: EntityManager,
     private val registries: Registries,
-    private val signals: ServerLuaSignals
+    signals: ServerLuaSignals
 ) : LuaModule {
     override val name = "selene.entities"
 

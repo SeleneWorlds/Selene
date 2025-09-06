@@ -58,6 +58,7 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : L
         return "Attribute($owner.$name = $value)"
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Name of this attribute.

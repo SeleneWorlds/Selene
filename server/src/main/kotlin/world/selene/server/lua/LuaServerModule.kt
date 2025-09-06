@@ -11,7 +11,7 @@ import world.selene.server.data.ServerCustomData
  */
 class LuaServerModule(
     signals: ServerLuaSignals,
-    private val serverCustomData: ServerCustomData
+    serverCustomData: ServerCustomData
 ) : LuaModule {
     override val name = "selene.server"
 

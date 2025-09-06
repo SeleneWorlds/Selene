@@ -20,6 +20,7 @@ class TransientTile(
         return luaMeta
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Registry definition of this tile.

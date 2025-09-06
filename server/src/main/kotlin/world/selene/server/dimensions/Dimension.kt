@@ -57,6 +57,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
         return chunkView.getAnnotationAt(coordinate, key)
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Map layer tree for this dimension.

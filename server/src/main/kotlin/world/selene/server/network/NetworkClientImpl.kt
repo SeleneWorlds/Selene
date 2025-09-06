@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 class NetworkClientImpl(
     private val server: NetworkServer,
-    private val playerManager: PlayerManager,
+    playerManager: PlayerManager,
     private val channel: SocketChannel
 ) : ChannelInboundHandlerAdapter(), ChannelFutureListener, NetworkClient {
 

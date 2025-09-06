@@ -14,7 +14,7 @@ class EntityManager : LuaReferenceResolver<Int, Entity> {
     private fun nextEntityId(): Int = nextId.getAndIncrement()
 
     fun addEntity(entity: Entity) {
-        entities.put(entity.networkId, entity)
+        entities[entity.networkId] = entity
     }
 
     fun removeEntity(entity: Entity) {

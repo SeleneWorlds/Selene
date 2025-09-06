@@ -1,5 +1,3 @@
 package world.selene.server.maps
 
-interface MapChunk {
-
-}
+interface MapChunk

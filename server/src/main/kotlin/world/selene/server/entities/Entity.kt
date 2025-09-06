@@ -128,6 +128,7 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         dimension?.syncManager?.sendToAllWatching(networkId, EntityAnimationPacket(networkId, animationName))
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Temporary but unique network ID of this entity.

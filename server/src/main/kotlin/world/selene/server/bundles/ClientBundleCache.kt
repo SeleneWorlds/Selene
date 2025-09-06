@@ -68,9 +68,9 @@ class ClientBundleCache(config: ServerConfig) {
                 exc: IOException
             ): FileVisitResult {
                 if (exc is NoSuchFileException) {
-                    return FileVisitResult.CONTINUE;
+                    return FileVisitResult.CONTINUE
                 } else if (exc is AccessDeniedException) {
-                    return FileVisitResult.CONTINUE;
+                    return FileVisitResult.CONTINUE
                 }
                 throw exc
             }

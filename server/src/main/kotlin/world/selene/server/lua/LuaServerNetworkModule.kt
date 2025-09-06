@@ -11,6 +11,7 @@ import world.selene.server.player.Player
 /**
  * Send and handle custom payloads.
  */
+@Suppress("SameReturnValue")
 class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry, private val objectMapper: ObjectMapper) :
     LuaModule {
     override val name = "selene.network"

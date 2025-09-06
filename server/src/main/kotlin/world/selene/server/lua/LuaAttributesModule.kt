@@ -8,6 +8,7 @@ import world.selene.server.attribute.*
 /**
  * Create common attribute filters.
  */
+@Suppress("SameReturnValue")
 class LuaAttributesModule : LuaModule {
     override val name = "selene.attributes"
 

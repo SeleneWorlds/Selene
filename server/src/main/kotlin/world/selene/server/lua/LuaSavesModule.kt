@@ -12,6 +12,7 @@ import java.io.File
 /**
  * Save file management for persistent data storage.
  */
+@Suppress("SameReturnValue")
 class LuaSavesModule(private val serverConfig: ServerConfig, private val saveManager: SaveManager) : LuaModule {
     override val name = "selene.saves"
 

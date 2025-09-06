@@ -259,6 +259,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         return luaMeta
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Merges another MapTree into this one, copying all tiles and annotations.

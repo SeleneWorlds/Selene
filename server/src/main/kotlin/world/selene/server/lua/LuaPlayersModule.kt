@@ -11,7 +11,8 @@ import world.selene.server.network.NetworkServer
 /**
  * Player management and player-related signals.
  */
-class LuaPlayersModule(private val signals: ServerLuaSignals, private val networkServer: NetworkServer) : LuaModule {
+@Suppress("SameReturnValue")
+class LuaPlayersModule(signals: ServerLuaSignals, private val networkServer: NetworkServer) : LuaModule {
     override val name = "selene.players"
 
     /**

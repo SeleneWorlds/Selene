@@ -9,6 +9,7 @@ import world.selene.server.dimensions.DimensionManager
 /**
  * Create or lookup dimensions.
  */
+@Suppress("SameReturnValue")
 class LuaDimensionsModule(private val dimensionManager: DimensionManager) : LuaModule {
     override val name = "selene.dimensions"
 

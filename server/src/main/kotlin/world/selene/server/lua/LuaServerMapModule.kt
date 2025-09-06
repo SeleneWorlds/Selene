@@ -10,6 +10,7 @@ import world.selene.server.maps.MapTree
 /**
  * Create new map layer trees.
  */
+@Suppress("SameReturnValue")
 class LuaServerMapModule(private val registries: Registries) : LuaModule {
     override val name = "selene.map"
 
