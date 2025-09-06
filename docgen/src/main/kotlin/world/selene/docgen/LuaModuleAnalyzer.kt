@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import java.io.File
 
 data class LuaModuleInfo(
+    val title: String,
     val className: String,
     val filePath: String,
     val moduleName: String,
@@ -64,6 +65,7 @@ class LuaModuleAnalyzer : BaseLuaAnalyzer() {
         val functions = extractFunctions(clazz, registrations["register"] ?: emptyList(), methods)
         val fields = extractFields(clazz, registrations["set"] ?: emptyList(), properties)
         return LuaModuleInfo(
+            title = moduleName,
             className = className,
             filePath = relativePath,
             moduleName = moduleName,

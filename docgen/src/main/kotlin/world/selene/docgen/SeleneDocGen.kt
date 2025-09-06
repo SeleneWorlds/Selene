@@ -12,10 +12,14 @@ import world.selene.common.data.TileDefinition
 import world.selene.common.data.TransitionDefinition
 import java.io.File
 
-enum class Side {
-    COMMON,
-    SERVER,
-    CLIENT
+enum class Side(val order: Int) {
+    COMMON(1),
+    SERVER(2),
+    CLIENT(3);
+
+    val dirName: String get() {
+        return "${order}.${name.lowercase()}"
+    }
 }
 
 fun main(args: Array<String>) {
@@ -42,16 +46,14 @@ fun main(args: Array<String>) {
             modulesDir.mkdirs()
         }
 
-        val mapper = objectMapper
-
         modulesBySide.forEach { (side, modules) ->
-            val sideDir = File(modulesDir, side.name.lowercase())
+            val sideDir = File(modulesDir, side.dirName)
             if (!sideDir.exists()) {
                 sideDir.mkdirs()
             }
 
             modules.forEach { (moduleName, moduleInfo) ->
-                val jsonOutput = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(moduleInfo)
+                val jsonOutput = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(moduleInfo)
                 val outputFile = File(sideDir, "$moduleName.json")
                 outputFile.writeText(jsonOutput)
             }
@@ -63,13 +65,13 @@ fun main(args: Array<String>) {
         }
 
         classesBySide.forEach { (side, classes) ->
-            val sideDir = File(classesDir, side.name.lowercase())
+            val sideDir = File(classesDir, side.dirName)
             if (!sideDir.exists()) {
                 sideDir.mkdirs()
             }
 
             classes.forEach { (className, classInfo) ->
-                val jsonOutput = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(classInfo)
+                val jsonOutput = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(classInfo)
                 val outputFile = File(sideDir, "$className.json")
                 outputFile.writeText(jsonOutput)
             }
@@ -83,34 +85,42 @@ fun main(args: Array<String>) {
     if (!dataDir.exists()) {
         dataDir.mkdirs()
     }
+    val commonDataDir = File(dataDir, Side.COMMON.dirName)
+    if (!commonDataDir.exists()) {
+        commonDataDir.mkdirs()
+    }
+    val clientDataDir = File(dataDir, Side.CLIENT.dirName)
+    if (!clientDataDir.exists()) {
+        clientDataDir.mkdirs()
+    }
 
     val schemaGenerator = JsonSchemaGenerator(objectMapper)
     objectMapper.writeValue(
-        File(dataDir, "transitions.json"),
+        File(commonDataDir, "transitions.json"),
         schemaGenerator.generateJsonSchema(TransitionDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(dataDir, "audio.json"),
+        File(clientDataDir, "audio.json"),
         schemaGenerator.generateJsonSchema(AudioDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(dataDir, "visuals.json"),
+        File(clientDataDir, "visuals.json"),
         schemaGenerator.generateJsonSchema(VisualDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(dataDir, "tiles.json"),
+        File(commonDataDir, "tiles.json"),
         schemaGenerator.generateJsonSchema(TileDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(dataDir, "components.json"),
+        File(commonDataDir, "components.json"),
         schemaGenerator.generateJsonSchema(ComponentDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(dataDir, "sounds.json"),
+        File(commonDataDir, "sounds.json"),
         schemaGenerator.generateJsonSchema(SoundDefinition::class.java)
     )
     objectMapper.writeValue(
-        File(dataDir, "entities.json"),
+        File(commonDataDir, "entities.json"),
         schemaGenerator.generateJsonSchema(EntityDefinition::class.java)
     )
 }
