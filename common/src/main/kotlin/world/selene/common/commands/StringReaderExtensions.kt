@@ -19,7 +19,7 @@ fun StringReader.skipIf(char: Char): Boolean {
 }
 
 fun StringReader.expectOr(char: Char, supplier: () -> SimpleCommandExceptionType): Either<Throwable, Unit> {
-    if(canRead() && peek() == char) {
+    if (canRead() && peek() == char) {
         skip()
         return Unit.right()
     } else {

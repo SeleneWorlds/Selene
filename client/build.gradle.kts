@@ -50,14 +50,16 @@ tasks.register("generateLibrariesJson") {
 
             // Skip project dependencies since they are embedded in the shadow JAR
             if (moduleVersion.group != project.group.toString()) {
-                libraries.add(mapOf(
-                    "group" to moduleVersion.group,
-                    "name" to moduleVersion.name,
-                    "version" to moduleVersion.version,
-                    "classifier" to (artifact.classifier ?: ""),
-                    "extension" to (artifact.extension ?: ""),
-                    "file" to artifact.file.name
-                ))
+                libraries.add(
+                    mapOf(
+                        "group" to moduleVersion.group,
+                        "name" to moduleVersion.name,
+                        "version" to moduleVersion.version,
+                        "classifier" to (artifact.classifier ?: ""),
+                        "extension" to (artifact.extension ?: ""),
+                        "file" to artifact.file.name
+                    )
+                )
             }
         }
 

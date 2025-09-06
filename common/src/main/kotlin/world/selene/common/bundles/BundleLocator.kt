@@ -12,18 +12,18 @@ class LocatedBundle(val manifest: BundleManifest, val dir: File) {
         val sb = StringBuilder()
         sb.append(manifest.name)
         sb.append(":")
-        
+
         val pathParts = mutableListOf<String>()
         var currentDir = file.parentFile
         while (currentDir != null && currentDir.name !in stopPaths) {
             pathParts.add(0, currentDir.name)
             currentDir = currentDir.parentFile
         }
-        
+
         for (part in pathParts) {
             sb.append(part).append("/")
         }
-        
+
         sb.append(file.name)
         var result = sb.toString()
         if (result.length >= 45) {

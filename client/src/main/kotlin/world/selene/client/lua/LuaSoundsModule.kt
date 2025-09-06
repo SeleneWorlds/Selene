@@ -4,13 +4,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.data.Registries
 import world.selene.client.sound.SoundManager
-import world.selene.common.lua.LuaModule
-import world.selene.common.lua.checkRegistry
-import world.selene.common.lua.checkString
-import world.selene.common.lua.checkType
-import world.selene.common.lua.getFieldFloat
-import world.selene.common.lua.register
-import world.selene.common.lua.throwError
+import world.selene.common.lua.*
 
 /**
  * Play or stop local sounds.
@@ -37,7 +31,7 @@ class LuaSoundsModule(
     private fun luaPlaySound(lua: Lua): Int {
         val sound = lua.checkRegistry(1, registries.sounds)
         if (lua.top >= 2) lua.checkType(2, Lua.LuaType.TABLE)
-        
+
         val volume = lua.getFieldFloat(2, "volume") ?: 1f
         val pitch = lua.getFieldFloat(2, "pitch") ?: 1f
 

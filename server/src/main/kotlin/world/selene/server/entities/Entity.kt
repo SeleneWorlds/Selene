@@ -4,34 +4,18 @@ import party.iroiro.luajava.Lua
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.data.EntityDefinition
 import world.selene.common.grid.Direction
-import world.selene.common.lua.ClosureTrace
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.LuaReferencable
-import world.selene.common.lua.LuaReference
-import world.selene.common.lua.ObservableMap
-import world.selene.common.lua.checkBoolean
-import world.selene.common.lua.checkCoordinate
-import world.selene.common.lua.checkDirection
-import world.selene.common.lua.checkString
-import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.getCallerInfo
-import world.selene.common.lua.toAny
-import world.selene.common.lua.toAnyMap
-import world.selene.common.lua.toUserdata
-import world.selene.common.lua.xpCall
+import world.selene.common.lua.*
 import world.selene.common.network.packet.EntityAnimationPacket
 import world.selene.common.util.Coordinate
 import world.selene.server.attribute.Attribute
-import world.selene.server.lua.Scripting
-import world.selene.server.world.World
 import world.selene.server.cameras.Viewer
 import world.selene.server.data.Registries
 import world.selene.server.dimensions.Dimension
+import world.selene.server.lua.Scripting
 import world.selene.server.maps.MapLayer
 import world.selene.server.objectMapper
 import world.selene.server.player.Player
+import world.selene.server.world.World
 
 class Entity(val registries: Registries, val world: World, val scripting: Scripting) : LuaMetatableProvider,
     LuaReferencable<Int, Entity> {

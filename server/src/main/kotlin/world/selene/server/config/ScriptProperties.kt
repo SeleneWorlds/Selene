@@ -1,15 +1,15 @@
 package world.selene.server.config
 
 import java.io.File
-import java.util.Properties
+import java.util.*
 
 class ScriptProperties {
     private val properties = Properties()
-    
+
     init {
         loadProperties()
     }
-    
+
     private fun loadProperties() {
         val propertiesFile = File("script.properties")
         if (propertiesFile.exists()) {
@@ -18,7 +18,7 @@ class ScriptProperties {
             }
         }
     }
-    
+
     fun getProperty(key: String): String? {
         return properties.getProperty(key)
     }

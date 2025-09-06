@@ -40,7 +40,8 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         lua.pop(1)
 
         // Remove some globals that shouldn't be used in Lua scripts
-        val bannedGlobals = setOf("dofile", "loadfile", "load", "loadstring", "setfenv", "getfenv", "collectgarbage", "module", "java")
+        val bannedGlobals =
+            setOf("dofile", "loadfile", "load", "loadstring", "setfenv", "getfenv", "collectgarbage", "module", "java")
         bannedGlobals.forEach { lua.set(it, null) }
 
         // Reset _G to make sure it doesn't leak access to anything we don't want

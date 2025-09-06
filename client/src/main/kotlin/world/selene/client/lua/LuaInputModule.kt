@@ -5,13 +5,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.input.InputManager
 import world.selene.client.input.InputType
-import world.selene.common.lua.LuaModule
-import world.selene.common.lua.LuaTrace
-import world.selene.common.lua.checkEnum
-import world.selene.common.lua.checkString
-import world.selene.common.lua.getCallerInfo
-import world.selene.common.lua.register
-import world.selene.common.lua.xpCall
+import world.selene.common.lua.*
 
 /**
  * Handle input for keyboard and mouse events.
@@ -48,7 +42,7 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
         lua.pushValue(3)
         val function = lua.get()
         val registrationSite = lua.getCallerInfo()
-        val trace = object: LuaTrace {
+        val trace = object : LuaTrace {
             override fun luaTrace(): String {
                 return "[input \"$input\"] registered in $registrationSite"
             }
@@ -77,12 +71,12 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
         lua.pushValue(3)
         val function = lua.get()
         val registrationSite = lua.getCallerInfo()
-        val trace = object: LuaTrace {
+        val trace = object : LuaTrace {
             override fun luaTrace(): String {
                 return "[input \"$input\"] registered in $registrationSite"
             }
         }
-        when(type) {
+        when (type) {
             InputType.KEYBOARD -> {
                 val keyCode = inputManager.lookupKeyboardKey(input)
                 if (keyCode == -1) {
@@ -94,6 +88,7 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
                     lua.xpCall(0, 0, trace)
                 }
             }
+
             InputType.MOUSE -> {
                 inputManager.bindMouseAction(input) { screenX, screenY ->
                     val lua = function.state()
@@ -122,12 +117,12 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
         lua.pushValue(3)
         val function = lua.get()
         val registrationSite = lua.getCallerInfo()
-        val trace = object: LuaTrace {
+        val trace = object : LuaTrace {
             override fun luaTrace(): String {
                 return "[input \"$input\"] registered in $registrationSite"
             }
         }
-        when(type) {
+        when (type) {
             InputType.KEYBOARD -> {
                 val keyCode = inputManager.lookupKeyboardKey(input)
                 if (keyCode == -1) {
@@ -139,6 +134,7 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
                     lua.xpCall(0, 0, trace)
                 }
             }
+
             InputType.MOUSE -> {
                 inputManager.bindMousePressAction(input) { screenX, screenY ->
                     val lua = function.state()
@@ -167,12 +163,12 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
         lua.pushValue(3)
         val function = lua.get()
         val registrationSite = lua.getCallerInfo()
-        val trace = object: LuaTrace {
+        val trace = object : LuaTrace {
             override fun luaTrace(): String {
                 return "[input \"$input\"] registered in $registrationSite"
             }
         }
-        when(type) {
+        when (type) {
             InputType.KEYBOARD -> {
                 val keyCode = inputManager.lookupKeyboardKey(input)
                 if (keyCode == -1) {
@@ -184,6 +180,7 @@ class LuaInputModule(private val inputManager: InputManager) : LuaModule {
                     lua.xpCall(0, 0, trace)
                 }
             }
+
             InputType.MOUSE -> {
                 inputManager.bindMouseReleaseAction(input) { screenX, screenY ->
                     val lua = function.state()

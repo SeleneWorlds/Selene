@@ -22,7 +22,7 @@ fun main(args: Array<String>) {
         .build()
         .loadConfigOrThrow<ClientConfig>("client.properties")
     val runtimeConfig = parseClientRuntimeConfig(args)
-    
+
     val appConfig = Lwjgl3ApplicationConfiguration()
     appConfig.setOpenGLEmulation(Lwjgl3ApplicationConfiguration.GLEmulation.GL30, 3, 2)
     appConfig.setBackBufferConfig(8, 8, 8, 8, 24, 0, 4)
@@ -39,7 +39,7 @@ fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {
     var port = 8147
     var token = ""
     val bundles = mutableMapOf<String, String>()
-    
+
     var i = 0
     while (i < args.size) {
         when (args[i]) {
@@ -51,15 +51,17 @@ fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {
                     throw IllegalArgumentException("Missing value for ${args[i]}")
                 }
             }
+
             "--port", "-p" -> {
                 if (i + 1 < args.size) {
-                    port = args[i + 1].toIntOrNull() 
+                    port = args[i + 1].toIntOrNull()
                         ?: throw IllegalArgumentException("Invalid port number: ${args[i + 1]}")
                     i++
                 } else {
                     throw IllegalArgumentException("Missing value for ${args[i]}")
                 }
             }
+
             "--token", "-t" -> {
                 if (i + 1 < args.size) {
                     token = args[i + 1]
@@ -68,6 +70,7 @@ fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {
                     throw IllegalArgumentException("Missing value for ${args[i]}")
                 }
             }
+
             "--bundle", "-b" -> {
                 if (i + 2 < args.size) {
                     val bundleName = args[i + 1]
@@ -78,10 +81,12 @@ fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {
                     throw IllegalArgumentException("Bundle requires both name and path: --bundle <name> <path>")
                 }
             }
+
             "--help" -> {
                 printUsage()
                 kotlin.system.exitProcess(0)
             }
+
             else -> {
                 if (args[i].startsWith("-")) {
                     throw IllegalArgumentException("Unknown argument: ${args[i]}")
@@ -91,7 +96,7 @@ fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {
         }
         i++
     }
-    
+
     return ClientRuntimeConfig(
         host = host,
         port = port,
@@ -101,7 +106,8 @@ fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {
 }
 
 fun printUsage() {
-    println("""
+    println(
+        """
         Selene Client Usage:
         
         Options:
@@ -114,5 +120,6 @@ fun printUsage() {
         Examples:
           java -jar selene-client.jar --host example.com --port 9000 --token mytoken
           java -jar selene-client.jar --bundle core /path/to/core --bundle ui /path/to/ui
-    """.trimIndent())
+    """.trimIndent()
+    )
 }

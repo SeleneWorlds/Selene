@@ -2,7 +2,7 @@ package world.selene.common.network
 
 import io.netty.buffer.ByteBuf
 import world.selene.common.util.Coordinate
-import java.util.UUID
+import java.util.*
 
 fun ByteBuf.writeUniqueId(uuid: UUID) {
     writeLong(uuid.mostSignificantBits)

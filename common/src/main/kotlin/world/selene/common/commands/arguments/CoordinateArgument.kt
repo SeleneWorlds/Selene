@@ -18,7 +18,10 @@ class CoordinateArgument : ArgumentType<Coordinates> {
         return Coordinates.parseCoordinates(reader).getOrElse { throw it }
     }
 
-    override fun <S> listSuggestions(context: CommandContext<S>, builder: SuggestionsBuilder): CompletableFuture<Suggestions> {
+    override fun <S> listSuggestions(
+        context: CommandContext<S>,
+        builder: SuggestionsBuilder
+    ): CompletableFuture<Suggestions> {
         return Option.fromNullable(context.source as? SuggestionSource)
             .map {
                 builder.suggest("0")

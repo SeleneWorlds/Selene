@@ -2,7 +2,13 @@ package world.selene.server.config
 
 import java.io.File
 
-data class ServerConfig(val port: Int, val savePath: String, val bundlesPath: String, val bundles: List<String>, val insecureMode: Boolean) {
+data class ServerConfig(
+    val port: Int,
+    val savePath: String,
+    val bundlesPath: String,
+    val bundles: List<String>,
+    val insecureMode: Boolean
+) {
     companion object {
         fun createDefault() {
             val configFile = File("server.properties")

@@ -244,7 +244,7 @@ class ObservableMap(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatab
         }
 
         val luaMeta = Observable.luaMeta.extend(ObservableMap::class) {
-            callable(:: luaPairs)
+            callable(::luaPairs)
             callable(::luaToTable)
             callable(::luaRawLookup)
             callable(::luaLookup)

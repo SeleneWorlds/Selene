@@ -8,6 +8,9 @@ fun <TSource> literal(name: String): LiteralArgumentBuilder<TSource> {
     return LiteralArgumentBuilder.literal(name)
 }
 
-fun <TSource, TArgument> argument(name: String, type: ArgumentType<TArgument>): RequiredArgumentBuilder<TSource, TArgument> {
+fun <TSource, TArgument> argument(
+    name: String,
+    type: ArgumentType<TArgument>
+): RequiredArgumentBuilder<TSource, TArgument> {
     return RequiredArgumentBuilder.argument(name, type)
 }

@@ -5,15 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.ObjectMapper
 import world.selene.common.util.Coordinate
 import world.selene.server.data.Registries
-import world.selene.server.maps.ChunkedMapLayer
-import world.selene.server.maps.DenseMapLayer
-import world.selene.server.maps.MapTree
-import world.selene.server.maps.SparseMapLayer
-import world.selene.server.maps.SparseTileAnnotation
-import world.selene.server.maps.SparseTilePlacement
-import world.selene.server.maps.SparseTileRemoval
-import world.selene.server.maps.SparseTileSwap
-import world.selene.server.maps.SparseTilesReplacement
+import world.selene.server.maps.*
 import java.io.File
 
 class MapTreeFormatJsonV1(private val registries: Registries, private val objectMapper: ObjectMapper) : MapTreeFormat {

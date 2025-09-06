@@ -2,9 +2,9 @@ package world.selene.server.sync
 
 import world.selene.common.util.ChunkWindow
 import world.selene.common.util.Coordinate
-import world.selene.server.maps.TransitionResolver
 import world.selene.server.cameras.Viewer
 import world.selene.server.dimensions.Dimension
+import world.selene.server.maps.TransitionResolver
 
 class ChunkViewManager(private val transitionResolver: TransitionResolver) {
 

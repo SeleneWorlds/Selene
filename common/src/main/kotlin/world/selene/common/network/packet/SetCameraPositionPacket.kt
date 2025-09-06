@@ -12,6 +12,7 @@ data class SetCameraPositionPacket(val coordinate: Coordinate) : Packet {
             val position = buf.readCoordinate()
             return SetCameraPositionPacket(position)
         }
+
         fun encode(buf: ByteBuf, packet: SetCameraPositionPacket) {
             buf.writeCoordinate(packet.coordinate)
         }

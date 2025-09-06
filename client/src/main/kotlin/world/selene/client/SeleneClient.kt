@@ -1,29 +1,25 @@
 package world.selene.client
 
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
-import kotlin.math.min
-import kotlin.math.pow
 import world.selene.client.config.ClientRuntimeConfig
 import world.selene.client.data.AudioRegistry
 import world.selene.client.data.VisualRegistry
-import world.selene.common.data.TileRegistry
 import world.selene.client.network.NetworkClient
 import world.selene.client.network.NetworkClientImpl
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.bundles.BundleLoader
-import world.selene.common.data.ComponentRegistry
-import world.selene.common.data.CustomRegistries
-import world.selene.common.data.EntityRegistry
-import world.selene.common.data.SoundRegistry
+import world.selene.common.data.*
 import world.selene.common.lua.LuaManager
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.PacketRegistrations
 import world.selene.common.network.packet.AuthenticatePacket
 import world.selene.common.network.packet.FinalizeJoinPacket
 import world.selene.common.network.packet.PreferencesPacket
-import java.util.Locale
+import java.util.*
+import kotlin.math.min
+import kotlin.math.pow
 
 class SeleneClient(
     private val networkClient: NetworkClient,

@@ -15,18 +15,23 @@ sealed class LuaType {
     data class Simple(val name: String) : LuaType() {
         val type = "simple"
     }
+
     data class Union(val either: List<LuaType>) : LuaType() {
         val type = "union"
     }
+
     data class Table(val elementType: LuaType? = null, val keyType: LuaType? = null) : LuaType() {
         val type = "table"
     }
+
     data class StructuredTable(val fields: Map<String, LuaType>) : LuaType() {
         val type = "structuredTable"
     }
+
     data class Function(val parameters: List<LuaParameter>, val returnTypes: List<LuaType>) : LuaType() {
         val type = "function"
     }
+
     data class Literal(val value: String) : LuaType() {
         val type = "literal"
     }
@@ -50,6 +55,7 @@ sealed class LuaType {
             val returnStr = if (returnTypes.isNotEmpty()) returnTypes.joinToString(", ") else "void"
             "function($paramStr) -> $returnStr"
         }
+
         is Literal -> value
     }
 }

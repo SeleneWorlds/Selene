@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
 import world.selene.common.data.NameIdRegistry
+import world.selene.common.data.Registry
 import world.selene.server.config.ServerConfig
 import java.io.File
-import world.selene.common.data.Registry
 
 class PersistentNameIdRegistry(
     private val objectMapper: ObjectMapper,
@@ -43,7 +43,8 @@ class PersistentNameIdRegistry(
     fun load() {
         try {
             if (!mappingsFile.exists()) return
-            val serializedMappings = objectMapper.readValue(mappingsFile, object: TypeReference<Map<String, Map<String, Int>>>() {})
+            val serializedMappings =
+                objectMapper.readValue(mappingsFile, object : TypeReference<Map<String, Map<String, Int>>>() {})
             clearAll()
             for ((scope, nameToId) in serializedMappings) {
                 for ((name, id) in nameToId) {

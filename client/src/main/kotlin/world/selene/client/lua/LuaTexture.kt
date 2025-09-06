@@ -4,11 +4,7 @@ import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.checkInt
-import world.selene.common.lua.checkUserdata
+import world.selene.common.lua.*
 
 data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatableProvider {
     val width: Int get() = texture.width

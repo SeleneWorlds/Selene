@@ -7,7 +7,7 @@ data class TransitionDefinition(
     val transitions: List<Entry> = emptyList()
 ) {
     fun findTransitionTile(mask: Int): String? {
-        return transitions.firstOrNull { it.neighbourMask == mask}?.tile
+        return transitions.firstOrNull { it.neighbourMask == mask }?.tile
     }
 
     data class Entry(val tile: String, val neighbours: List<String>) {

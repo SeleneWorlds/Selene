@@ -5,11 +5,7 @@ import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
 import world.selene.client.maps.Entity
 import world.selene.client.rendering.visual2d.Visual2D
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.checkFloat
-import world.selene.common.lua.checkUserdata
+import world.selene.common.lua.*
 
 class Visual2DComponent(val visual: Visual2D, override val positioner: ComponentPositioner) : EntityComponent,
     RenderableComponent, LuaMetatableProvider {

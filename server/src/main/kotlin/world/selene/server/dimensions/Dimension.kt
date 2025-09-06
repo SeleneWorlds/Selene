@@ -2,23 +2,15 @@ package world.selene.server.dimensions
 
 import party.iroiro.luajava.Lua
 import world.selene.common.data.TileDefinition
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.checkAnyMap
-import world.selene.common.lua.checkCoordinate
-import world.selene.common.lua.checkInt
-import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.checkRegistry
-import world.selene.common.lua.checkString
+import world.selene.common.lua.*
+import world.selene.common.util.Coordinate
 import world.selene.server.cameras.DefaultViewer
 import world.selene.server.cameras.Viewer
 import world.selene.server.data.Registries
+import world.selene.server.entities.Entity
 import world.selene.server.maps.MapTree
 import world.selene.server.maps.MapTreeListener
 import world.selene.server.maps.TransientTile
-import world.selene.common.util.Coordinate
-import world.selene.server.entities.Entity
 import world.selene.server.sync.DimensionSyncManager
 import world.selene.server.world.World
 

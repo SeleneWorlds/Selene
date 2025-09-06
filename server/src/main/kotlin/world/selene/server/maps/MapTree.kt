@@ -2,15 +2,7 @@ package world.selene.server.maps
 
 import party.iroiro.luajava.Lua
 import world.selene.common.data.TileDefinition
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.checkAnyMap
-import world.selene.common.lua.checkBoolean
-import world.selene.common.lua.checkCoordinate
-import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.checkRegistry
-import world.selene.common.lua.checkString
+import world.selene.common.lua.*
 import world.selene.common.util.Coordinate
 import world.selene.server.data.Registries
 
@@ -134,7 +126,12 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
         return result
     }
 
-    fun swapTile(coordinate: Coordinate, oldTileDef: TileDefinition, newTileDef: TileDefinition, layerName: String? = null): Boolean {
+    fun swapTile(
+        coordinate: Coordinate,
+        oldTileDef: TileDefinition,
+        newTileDef: TileDefinition,
+        layerName: String? = null
+    ): Boolean {
         val layer = getLayer(layerName ?: "default")
         val result = layer.swapTile(coordinate, oldTileDef, newTileDef)
         if (result) {
@@ -236,7 +233,11 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
                             placeTile(Coordinate(absoluteX, absoluteY, chunkCoordinate.z), tileDef)
                         }
                         chunk.annotations.cellSet().forEach {
-                            annotateTile(Coordinate(it.rowKey.x, it.rowKey.y, chunkCoordinate.z), it.columnKey, it.value)
+                            annotateTile(
+                                Coordinate(it.rowKey.x, it.rowKey.y, chunkCoordinate.z),
+                                it.columnKey,
+                                it.value
+                            )
                         }
                     }
                 }
@@ -261,7 +262,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
     companion object {
         /**
          * Merges another MapTree into this one, copying all tiles and annotations.
-         * 
+         *
          * ```signatures
          * Merge(other: MapTree)
          * ```
@@ -272,10 +273,10 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
             mapTree.merge(other)
             return 0
         }
-        
+
         /**
          * Places a tile at the specified coordinate on the given layer.
-         * 
+         *
          * ```signatures
          * PlaceTile(coordinate: Coordinate, tileDef: TileDefinition)
          * PlaceTile(coordinate: Coordinate, tileDef: TileDefinition, layerName: string)
@@ -292,7 +293,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Replaces all tiles at the specified coordinate with the given tile.
-         * 
+         *
          * ```signatures
          * ReplaceTiles(coordinate: Coordinate, tileDef: TileDefinition)
          * ReplaceTiles(coordinate: Coordinate, tileDef: TileDefinition, layerName: string)
@@ -309,7 +310,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Swaps one tile for another at the specified coordinate.
-         * 
+         *
          * ```signatures
          * SwapTile(coordinate: Coordinate, oldTileDef: TileDefinition, newTileDef: TileDefinition)
          * SwapTile(coordinate: Coordinate, oldTileDef: TileDefinition, newTileDef: TileDefinition, layerName: string)
@@ -327,7 +328,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Removes a specific tile from the specified coordinate.
-         * 
+         *
          * ```signatures
          * RemoveTile(coordinate: Coordinate, tileDef: TileDefinition)
          * RemoveTile(coordinate: Coordinate, tileDef: TileDefinition, layerName: string)
@@ -344,7 +345,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Removes all tiles at the specified coordinate.
-         * 
+         *
          * ```signatures
          * ResetTile(coordinate: Coordinate)
          * ResetTile(coordinate: Coordinate, layerName: string)
@@ -360,7 +361,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Adds annotation data to a tile at the specified coordinate.
-         * 
+         *
          * ```signatures
          * AnnotateTile(coordinate: Coordinate, key: string, data: table)
          * AnnotateTile(coordinate: Coordinate, key: string, data: table, layerName: string)
@@ -378,7 +379,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Sets the visibility of a layer for a specific vision tag.
-         * 
+         *
          * ```signatures
          * SetVisibility(layerName: string, enabled: boolean)
          * SetVisibility(layerName: string, enabled: boolean, tag: string)
@@ -400,7 +401,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Checks if a layer is visible for a specific vision tag.
-         * 
+         *
          * ```signatures
          * IsVisible(layerName: string) -> boolean
          * IsVisible(layerName: string, tag: string) -> boolean
@@ -417,7 +418,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Checks if a layer is invisible for a specific vision tag.
-         * 
+         *
          * ```signatures
          * IsInvisible(layerName: string) -> boolean
          * IsInvisible(layerName: string, tag: string) -> boolean
@@ -434,7 +435,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Makes a layer visible for a specific vision tag.
-         * 
+         *
          * ```signatures
          * MakeVisible(layerName: string)
          * MakeVisible(layerName: string, tag: string)
@@ -451,7 +452,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Makes a layer invisible for a specific vision tag.
-         * 
+         *
          * ```signatures
          * MakeInvisible(layerName: string)
          * MakeInvisible(layerName: string, tag: string)
@@ -468,7 +469,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Checks if a layer has collision enabled for a specific tag.
-         * 
+         *
          * ```signatures
          * HasCollisions(layerName: string) -> boolean
          * HasCollisions(layerName: string, tag: string) -> boolean
@@ -485,7 +486,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Sets collision state for a layer with a specific tag.
-         * 
+         *
          * ```signatures
          * SetCollisions(layerName: string, enabled: boolean)
          * SetCollisions(layerName: string, enabled: boolean, tag: string)
@@ -507,7 +508,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Enables collision for a layer with a specific tag.
-         * 
+         *
          * ```signatures
          * EnableCollisions(layerName: string)
          * EnableCollisions(layerName: string, tag: string)
@@ -524,7 +525,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
 
         /**
          * Disables collision for a layer with a specific tag.
-         * 
+         *
          * ```signatures
          * DisableCollisions(layerName: string)
          * DisableCollisions(layerName: string, tag: string)
@@ -538,7 +539,7 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
             layer.removeCollisionTag(tagName)
             return 0
         }
-        
+
         val luaMeta = LuaMappedMetatable(MapTree::class) {
             callable(::luaMerge)
             callable(::luaPlaceTile)

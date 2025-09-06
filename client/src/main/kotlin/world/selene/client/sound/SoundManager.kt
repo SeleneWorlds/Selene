@@ -41,7 +41,12 @@ class SoundManager(
         loadedSounds.values.forEach { it.stop() }
     }
 
-    private fun playSimpleSound(soundDefinition: SoundDefinition, audio: SimpleAudioDefinition, volume: Float, pitch: Float) {
+    private fun playSimpleSound(
+        soundDefinition: SoundDefinition,
+        audio: SimpleAudioDefinition,
+        volume: Float,
+        pitch: Float
+    ) {
         val sound = getOrLoadSound(audio.file)
         val instanceId = if (audio.loop) {
             sound.loop(volume, pitch, 0f)

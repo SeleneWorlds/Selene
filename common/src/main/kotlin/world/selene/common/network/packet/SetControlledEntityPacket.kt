@@ -12,6 +12,7 @@ data class SetControlledEntityPacket(val networkId: Int) : Packet {
             val networkId = buf.readInt()
             return SetControlledEntityPacket(networkId)
         }
+
         fun encode(buf: ByteBuf, packet: SetControlledEntityPacket) {
             buf.writeInt(packet.networkId)
         }

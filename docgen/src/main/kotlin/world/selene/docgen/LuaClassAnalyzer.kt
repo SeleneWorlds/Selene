@@ -105,7 +105,8 @@ class LuaClassAnalyzer : BaseLuaAnalyzer() {
                 ?: throw IllegalArgumentException("Unknown property type found for getter $methodName in ${clazz.parent}")
             val propertyName = methodName.removePrefix("luaGet")
             val description = removeDocumentationBlocks(documentation, "property")
-            properties[propertyName] = PropertyInfo(propertyName, propertyType.type, PropertyAccess.READ_ONLY, description)
+            properties[propertyName] =
+                PropertyInfo(propertyName, propertyType.type, PropertyAccess.READ_ONLY, description)
         }
         for (args in setterCalls) {
             val functionRef = args[0]!!.getArgumentExpression()

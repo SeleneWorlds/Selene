@@ -5,11 +5,11 @@ import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.utils.Pool
 import party.iroiro.luajava.Lua
 import world.selene.client.grid.ClientGrid
-import world.selene.client.rendering.visual2d.iso.IsoVisual
-import world.selene.client.scene.Renderable
 import world.selene.client.rendering.environment.Environment
 import world.selene.client.rendering.visual.VisualCreationContext
 import world.selene.client.rendering.visual.VisualManager
+import world.selene.client.rendering.visual2d.iso.IsoVisual
+import world.selene.client.scene.Renderable
 import world.selene.client.scene.Scene
 import world.selene.common.data.TileDefinition
 import world.selene.common.lua.LuaMappedMetatable

@@ -6,7 +6,13 @@ import world.selene.common.network.readCoordinate
 import world.selene.common.network.writeCoordinate
 import world.selene.common.util.Coordinate
 
-data class MoveEntityPacket(val networkId: Int, val start: Coordinate, val end: Coordinate, val facing: Float, val duration: Float) : Packet {
+data class MoveEntityPacket(
+    val networkId: Int,
+    val start: Coordinate,
+    val end: Coordinate,
+    val facing: Float,
+    val duration: Float
+) : Packet {
     companion object {
         fun decode(buf: ByteBuf): MoveEntityPacket {
             val networkId = buf.readInt()

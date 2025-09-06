@@ -12,7 +12,7 @@ dependencies {
     // Kotlin Compiler Frontend
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.21")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.21")
-    
+
     // JSON Serialization
     implementation("com.fasterxml.jackson.core:jackson-databind:2.19.0")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")

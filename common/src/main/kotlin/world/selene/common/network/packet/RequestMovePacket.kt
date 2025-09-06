@@ -6,7 +6,7 @@ import world.selene.common.network.readCoordinate
 import world.selene.common.network.writeCoordinate
 import world.selene.common.util.Coordinate
 
-data class RequestMovePacket(val coordinate: Coordinate): Packet {
+data class RequestMovePacket(val coordinate: Coordinate) : Packet {
     companion object {
         fun decode(buf: ByteBuf): RequestMovePacket {
             val coordinate = buf.readCoordinate()

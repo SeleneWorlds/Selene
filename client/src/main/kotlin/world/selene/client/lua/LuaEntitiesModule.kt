@@ -6,12 +6,7 @@ import world.selene.client.data.Registries
 import world.selene.client.maps.ClientMap
 import world.selene.client.maps.Entity
 import world.selene.client.maps.EntityPool
-import world.selene.common.lua.LuaModule
-import world.selene.common.lua.checkRegistry
-import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.checkType
-import world.selene.common.lua.getFieldString
-import world.selene.common.lua.register
+import world.selene.common.lua.*
 import world.selene.common.util.Coordinate
 
 /**

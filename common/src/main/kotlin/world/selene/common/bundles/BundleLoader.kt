@@ -8,7 +8,6 @@ import world.selene.common.lua.xpCall
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
-import kotlin.collections.iterator
 
 class BundleLoader(
     private val logger: Logger,

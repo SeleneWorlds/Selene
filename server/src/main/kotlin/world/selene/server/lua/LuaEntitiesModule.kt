@@ -2,18 +2,18 @@ package world.selene.server.lua
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.lua.LuaModule
-import world.selene.common.lua.Signal
-import world.selene.common.lua.checkInt
-import world.selene.common.lua.checkRegistry
-import world.selene.common.lua.register
+import world.selene.common.lua.*
 import world.selene.server.data.Registries
 import world.selene.server.entities.EntityManager
 
 /**
  * Create or lookup entities.
  */
-class LuaEntitiesModule(private val entityManager: EntityManager, private val registries: Registries, private val signals: ServerLuaSignals) : LuaModule {
+class LuaEntitiesModule(
+    private val entityManager: EntityManager,
+    private val registries: Registries,
+    private val signals: ServerLuaSignals
+) : LuaModule {
     override val name = "selene.entities"
 
     /**

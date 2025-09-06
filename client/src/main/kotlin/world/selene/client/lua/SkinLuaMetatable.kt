@@ -3,20 +3,11 @@ package world.selene.client.lua
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureRegion
-import com.badlogic.gdx.scenes.scene2d.ui.Button
-import com.badlogic.gdx.scenes.scene2d.ui.Label
-import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar
-import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane
-import com.badlogic.gdx.scenes.scene2d.ui.Skin
-import com.badlogic.gdx.scenes.scene2d.ui.TextField
+import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.kotcrab.vis.ui.widget.VisTextField
 import party.iroiro.luajava.Lua
 import world.selene.client.assets.BundleFileResolver
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.checkString
-import world.selene.common.lua.checkType
-import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.getFieldString
+import world.selene.common.lua.*
 
 class SkinLuaMetatable(
     private val bundleFileResolver: BundleFileResolver,
@@ -35,7 +26,7 @@ class SkinLuaMetatable(
     /**
      * Adds a texture to the skin by name and path or LuaTexture object.
      * Throws error if texture file is not found.
-     * 
+     *
      * ```signatures
      * AddTexture(name: string, texturePath: string)
      * AddTexture(name: string, texture: LuaTexture)
@@ -65,7 +56,7 @@ class SkinLuaMetatable(
     /**
      * Adds a button style to the skin.
      * Style properties are drawable paths that will be resolved using the skin.
-     * 
+     *
      * ```signatures
      * AddButtonStyle(name: string, config: table{up: string, down: string, checked: string, over: string})
      * ```
@@ -96,7 +87,7 @@ class SkinLuaMetatable(
     /**
      * Adds a label style to the skin.
      * Font colors can be hex strings or color names. Background is optional.
-     * 
+     *
      * ```signatures
      * AddLabelStyle(name: string, config: table{font: string, fontColor: string, background: string})
      * ```
@@ -123,7 +114,7 @@ class SkinLuaMetatable(
     /**
      * Adds an image button style to the skin.
      * Supports both button states (up, down, over) and image states (imageUp, imageDown, etc.).
-     * 
+     *
      * ```signatures
      * AddImageButtonStyle(name: string, config: table{up: string, down: string, over: string, imageUp: string, imageDown: string, imageOver: string})
      * ```
@@ -141,7 +132,7 @@ class SkinLuaMetatable(
     /**
      * Adds a text field style to the skin.
      * Creates both regular TextField and VisTextField styles. Supports focused and disabled states.
-     * 
+     *
      * ```signatures
      * AddTextFieldStyle(name: string, config: table{font: string, fontColor: string, cursor: string, selection: string, background: string, focusedFontColor: string, disabledFontColor: string, focusedBackground: string, disabledBackground: string, messageFont: string, messageFontColor: string})
      * ```
@@ -212,7 +203,7 @@ class SkinLuaMetatable(
     /**
      * Adds a scroll pane style to the skin.
      * All drawable properties are optional and will be resolved using the skin.
-     * 
+     *
      * ```signatures
      * AddScrollPaneStyle(name: string, config: table{background: string, hScroll: string, hScrollKnob: string, vScroll: string, vScrollKnob: string, corner: string})
      * ```
@@ -249,7 +240,7 @@ class SkinLuaMetatable(
     /**
      * Adds a progress bar style to the skin.
      * Supports both normal and disabled states for all drawable properties.
-     * 
+     *
      * ```signatures
      * AddProgressBarStyle(name: string, config: table{background: string, knob: string, knobBefore: string, knobAfter: string, disabledBackground: string, disabledKnob: string, disabledKnobBefore: string, disabledKnobAfter: string})
      * ```

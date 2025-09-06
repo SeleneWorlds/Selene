@@ -1,11 +1,7 @@
 package world.selene.server.login
 
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.checkString
-import world.selene.common.lua.checkUserdata
+import world.selene.common.lua.*
 import world.selene.server.lua.ServerLuaSignals
 
 enum class LoginQueueStatus {
@@ -24,7 +20,7 @@ data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var
     companion object {
         /**
          * Sends a notification message to the user in the login queue.
-         * 
+         *
          * ```signatures
          * Notify(message: string)
          * ```
@@ -37,7 +33,7 @@ data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var
 
         /**
          * Accepts the user's login request, allowing them to join the server.
-         * 
+         *
          * ```signatures
          * Accept()
          * ```
@@ -50,7 +46,7 @@ data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var
 
         /**
          * Rejects the user's login request with a reason message.
-         * 
+         *
          * ```signatures
          * Reject(message: string)
          * ```

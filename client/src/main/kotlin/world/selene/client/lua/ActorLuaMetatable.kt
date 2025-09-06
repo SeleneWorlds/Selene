@@ -1,13 +1,7 @@
 package world.selene.client.lua
 
 import com.badlogic.gdx.scenes.scene2d.Actor
-import com.badlogic.gdx.scenes.scene2d.ui.Label
-import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar
-import com.badlogic.gdx.scenes.scene2d.ui.SelectBox
-import com.badlogic.gdx.scenes.scene2d.ui.Skin
-import com.badlogic.gdx.scenes.scene2d.ui.Slider
-import com.badlogic.gdx.scenes.scene2d.ui.TextField
-import com.badlogic.gdx.scenes.scene2d.ui.Touchpad
+import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.badlogic.gdx.scenes.scene2d.utils.Layout
 import com.kotcrab.vis.ui.widget.LinkLabel
 import com.kotcrab.vis.ui.widget.VisTextField
@@ -38,7 +32,7 @@ object ActorLuaMetatable {
 
     /**
      * Name of this actor, if set ("id" in LML).
-     * 
+     *
      * ```property
      * Name: string|nil
      * ```
@@ -51,7 +45,7 @@ object ActorLuaMetatable {
 
     /**
      * Parent actor or `nil` if it has no parent.
-     * 
+     *
      * ```property
      * Parent: Actor|nil
      * ```
@@ -64,7 +58,7 @@ object ActorLuaMetatable {
 
     /**
      * Effective width of this actor.
-     * 
+     *
      * ```property
      * Width: number
      * ```
@@ -77,7 +71,7 @@ object ActorLuaMetatable {
 
     /**
      * Effective height of this actor.
-     * 
+     *
      * ```property
      * Height: number
      * ```
@@ -115,7 +109,7 @@ object ActorLuaMetatable {
     /**
      * Invalidates the actor's layout if it implements Layout interface.
      * Forces the actor to recalculate its layout on the next frame.
-     * 
+     *
      * ```signatures
      * Invalidate()
      * ```
@@ -192,7 +186,7 @@ object ActorLuaMetatable {
 
     /**
      * Minimum width of the actor, if applicable.
-     * 
+     *
      * ```property
      * MinWidth: number
      * ```
@@ -202,10 +196,10 @@ object ActorLuaMetatable {
         it.push((actor as? Layout)?.minWidth ?: 0f)
         return 1
     }
-    
+
     /**
      * Minimum height of the actor, if applicable.
-     * 
+     *
      * ```property
      * MinHeight: number
      * ```
@@ -215,10 +209,10 @@ object ActorLuaMetatable {
         it.push((actor as? Layout)?.minHeight ?: 0f)
         return 1
     }
-    
+
     /**
      * Preferred width of the actor, if applicable.
-     * 
+     *
      * ```property
      * PreferredWidth: number
      * ```
@@ -228,10 +222,10 @@ object ActorLuaMetatable {
         it.push((actor as? Layout)?.prefWidth ?: 0f)
         return 1
     }
-    
+
     /**
      * Preferred height of the actor, if applicable.
-     * 
+     *
      * ```property
      * PreferredHeight: number
      * ```
@@ -241,10 +235,10 @@ object ActorLuaMetatable {
         it.push((actor as? Layout)?.prefHeight ?: 0f)
         return 1
     }
-    
+
     /**
      * Maximum width of the actor, if applicable.
-     * 
+     *
      * ```property
      * MaxWidth: number
      * ```
@@ -254,10 +248,10 @@ object ActorLuaMetatable {
         it.push((actor as? Layout)?.maxWidth ?: 0f)
         return 1
     }
-    
+
     /**
      * Maximum height of the actor, if applicable.
-     * 
+     *
      * ```property
      * MaxHeight: number
      * ```

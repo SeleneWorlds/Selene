@@ -1,12 +1,7 @@
 package world.selene.common.observable
 
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.checkFunction
-import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.getCallerInfo
-import world.selene.common.lua.throwTypeError
-import world.selene.common.lua.toAny
+import world.selene.common.lua.*
 
 interface Observable<T> {
     fun subscribe(observer: Observer<T>)
@@ -17,7 +12,7 @@ interface Observable<T> {
         /**
          * Subscribes an observer to this observable.
          * Can accept either a function or an Observer object.
-         * 
+         *
          * ```signatures
          * Subscribe(observer: function(data: any)) -> Observer
          * Subscribe(observer: Observer) -> Observer
@@ -38,7 +33,7 @@ interface Observable<T> {
 
         /**
          * Unsubscribes an observer from this observable.
-         * 
+         *
          * ```signatures
          * Unsubscribe(observer: Observer)
          * ```
@@ -52,7 +47,7 @@ interface Observable<T> {
 
         /**
          * Notifies all observers with the given data.
-         * 
+         *
          * ```signatures
          * NotifyObservers()
          * NotifyObservers(data: any)

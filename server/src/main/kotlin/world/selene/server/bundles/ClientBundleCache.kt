@@ -3,8 +3,6 @@ package world.selene.server.bundles
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import world.selene.common.bundles.LocatedBundle
 import world.selene.server.config.ServerConfig
 import java.io.File
 import java.io.FileInputStream
@@ -16,7 +14,6 @@ import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.io.path.exists
 
 class ClientBundleCache(config: ServerConfig) {
     private val bundlesDir = File(config.bundlesPath)
@@ -152,14 +149,15 @@ class ClientBundleCache(config: ServerConfig) {
     }
 
     fun getZipFile(bundleDir: File): File {
-        val currentHash = getHash(bundleDir) ?: throw IllegalStateException("Could not compute hash for ${bundleDir.name}")
+        val currentHash =
+            getHash(bundleDir) ?: throw IllegalStateException("Could not compute hash for ${bundleDir.name}")
         val zipFile = File(cacheDir, "$currentHash.zip")
-        
+
         if (!zipFile.exists()) {
             cacheDir.mkdirs()
             createClientZip(bundleDir, zipFile)
         }
-        
+
         return zipFile
     }
 

@@ -7,29 +7,18 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Pool
 import com.fasterxml.jackson.databind.ObjectMapper
 import party.iroiro.luajava.Lua
-import java.util.ArrayDeque
 import world.selene.client.controls.EntityMotion
-import world.selene.client.entity.component.EntityComponent
-import world.selene.client.entity.component.EntityComponentFactory
+import world.selene.client.entity.component.*
 import world.selene.client.grid.ClientGrid
-import world.selene.client.entity.component.IsoComponent
-import world.selene.client.entity.component.RenderableComponent
-import world.selene.client.entity.component.TickableComponent
 import world.selene.client.rendering.animator.HumanoidAnimatorController
+import world.selene.client.rendering.environment.Environment
 import world.selene.client.scene.Renderable
 import world.selene.client.scene.Scene
-import world.selene.client.rendering.environment.Environment
 import world.selene.common.data.ComponentConfiguration
 import world.selene.common.data.EntityDefinition
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.checkCoordinate
-import world.selene.common.lua.checkString
-import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.toAnyMap
+import world.selene.common.lua.*
 import world.selene.common.util.Coordinate
-import kotlin.collections.forEach
+import java.util.*
 
 class Entity(
     val objectMapper: ObjectMapper,

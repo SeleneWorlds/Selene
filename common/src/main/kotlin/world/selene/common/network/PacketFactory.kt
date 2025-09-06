@@ -9,7 +9,12 @@ class PacketFactory {
     private val packetEncoders = mutableMapOf<Int, (ByteBuf, Packet) -> Unit>()
     private val packetToId = mutableMapOf<KClass<out Packet>, Int>()
 
-    fun <T : Packet> registerPacket(packetType: Int, clazz: KClass<out T>, encoder: (ByteBuf, T) -> Unit, decoder: (ByteBuf) -> T) {
+    fun <T : Packet> registerPacket(
+        packetType: Int,
+        clazz: KClass<out T>,
+        encoder: (ByteBuf, T) -> Unit,
+        decoder: (ByteBuf) -> T
+    ) {
         check(!packetDecoders.containsKey(packetType)) {
             "Could not register $clazz: packet id $packetType is already occupied by ${packetDecoders[packetType]}"
         }

@@ -6,21 +6,11 @@ import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.checkString
 import world.selene.common.util.ChunkWindow
 import world.selene.common.util.Coordinate
 import world.selene.server.cameras.Viewer
 import world.selene.server.dimensions.Dimension
-import world.selene.server.maps.DenseMapLayer
-import world.selene.server.maps.MapLayer
-import world.selene.server.maps.MapTreeLayer
-import world.selene.server.maps.SparseMapLayer
-import world.selene.server.maps.SparseTileAnnotation
-import world.selene.server.maps.SparseTilePlacement
-import world.selene.server.maps.SparseTileRemoval
-import world.selene.server.maps.SparseTileSwap
-import world.selene.server.maps.SparseTilesReplacement
+import world.selene.server.maps.*
 
 class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
 

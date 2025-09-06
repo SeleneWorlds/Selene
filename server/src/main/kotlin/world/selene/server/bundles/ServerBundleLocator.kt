@@ -8,7 +8,11 @@ import world.selene.common.bundles.LocatedBundle
 import world.selene.server.config.ServerConfig
 import java.io.File
 
-class ServerBundleLocator(private val objectMapper: ObjectMapper, private val config: ServerConfig, private val logger: Logger) : BundleLocator {
+class ServerBundleLocator(
+    private val objectMapper: ObjectMapper,
+    private val config: ServerConfig,
+    private val logger: Logger
+) : BundleLocator {
     override fun locateBundle(name: String): LocatedBundle? {
         val dir = File(config.bundlesPath, name)
         val manifestFile = File(dir, "bundle.json")

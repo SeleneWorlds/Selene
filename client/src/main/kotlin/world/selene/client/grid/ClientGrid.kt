@@ -26,6 +26,7 @@ class ClientGrid : Grid() {
 
     fun getSortLayer(coordinate: Coordinate, sortLayerOffset: Int) =
         ((coordinate.x - coordinate.y - (coordinate.z * zSortScale)) * rowSortScale) - sortLayerOffset
+
     fun getSortLayer(position: Vector3, sortLayerOffset: Int) =
         ((floor(position.x) - ceil(position.y) - (floor(position.z) * zSortScale)).toInt() * rowSortScale) - sortLayerOffset
 

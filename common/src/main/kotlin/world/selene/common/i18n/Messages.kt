@@ -68,7 +68,13 @@ class Messages(
                     props.load(content.byteInputStream())
                     messages.putAll(props)
                 } catch (e: Exception) {
-                    logger.error("Failed to load locale messages from ${bundle.manifest.name}/${i18nDir.relativeTo(bundle.dir)}/${file.name}: ${e.message}")
+                    logger.error(
+                        "Failed to load locale messages from ${bundle.manifest.name}/${
+                            i18nDir.relativeTo(
+                                bundle.dir
+                            )
+                        }/${file.name}: ${e.message}"
+                    )
                 }
             }
         }
@@ -78,7 +84,7 @@ class Messages(
 
     private fun findLocaleFiles(i18nDir: File, locale: Locale): List<File> {
         val files = mutableListOf<File>()
-        
+
         val localeTags = listOf(
             "${locale.language}_${locale.country}_${locale.variant}",
             "${locale.language}_${locale.country}",

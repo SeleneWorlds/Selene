@@ -17,7 +17,7 @@ object TextFieldClickListenerLuaMetatable {
 
     /**
      * Handles key down events for text field click listeners.
-     * 
+     *
      * ```signatures
      * KeyDown(event: InputEvent, keyCode: number) -> boolean
      * ```
@@ -32,7 +32,7 @@ object TextFieldClickListenerLuaMetatable {
 
     /**
      * Handles key up events for text field click listeners.
-     * 
+     *
      * ```signatures
      * KeyUp(event: InputEvent, keyCode: number) -> boolean
      * ```
@@ -47,7 +47,7 @@ object TextFieldClickListenerLuaMetatable {
 
     /**
      * Handles key typed events for text field click listeners.
-     * 
+     *
      * ```signatures
      * KeyTyped(event: InputEvent, char: number) -> boolean
      * ```

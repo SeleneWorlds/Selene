@@ -2,12 +2,7 @@ package world.selene.server.maps
 
 import party.iroiro.luajava.Lua
 import world.selene.common.data.TileDefinition
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.checkRegistry
-import world.selene.common.lua.checkString
-import world.selene.common.lua.checkUserdata
+import world.selene.common.lua.*
 import world.selene.common.util.Coordinate
 import world.selene.server.dimensions.Dimension
 

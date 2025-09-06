@@ -1,26 +1,6 @@
 package world.selene.common.network
 
-import world.selene.common.network.packet.AuthenticatePacket
-import world.selene.common.network.packet.SetCameraPositionPacket
-import world.selene.common.network.packet.CustomPayloadPacket
-import world.selene.common.network.packet.DisconnectPacket
-import world.selene.common.network.packet.EntityAnimationPacket
-import world.selene.common.network.packet.EntityPacket
-import world.selene.common.network.packet.FinalizeJoinPacket
-import world.selene.common.network.packet.MapChunkPacket
-import world.selene.common.network.packet.UpdateMapTilesPacket
-import world.selene.common.network.packet.MoveEntityPacket
-import world.selene.common.network.packet.NameIdMappingsPacket
-import world.selene.common.network.packet.PlaySoundPacket
-import world.selene.common.network.packet.PreferencesPacket
-import world.selene.common.network.packet.RemoveEntityPacket
-import world.selene.common.network.packet.RemoveMapChunkPacket
-import world.selene.common.network.packet.RequestFacingPacket
-import world.selene.common.network.packet.RequestMovePacket
-import world.selene.common.network.packet.SetCameraFollowEntityPacket
-import world.selene.common.network.packet.SetControlledEntityPacket
-import world.selene.common.network.packet.StopSoundPacket
-import world.selene.common.network.packet.TurnEntityPacket
+import world.selene.common.network.packet.*
 
 class PacketRegistrations(private val packetFactory: PacketFactory) {
     fun register() {

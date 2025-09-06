@@ -8,7 +8,9 @@ import org.jetbrains.kotlin.com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import java.io.File
 import java.nio.file.Files
@@ -85,33 +87,33 @@ abstract class BaseLuaAnalyzer {
 
     protected fun extractDocumentationBlocks(documentation: String?, blockType: String): List<String> {
         if (documentation == null) return emptyList()
-        
+
         val blocks = mutableListOf<String>()
         val blockPattern = Regex("```$blockType\\s*\\n(.*?)\\n```", RegexOption.DOT_MATCHES_ALL)
         blockPattern.findAll(documentation).forEach { match ->
             blocks.add(match.groupValues[1].trim())
         }
-        
+
         return blocks
     }
 
     protected fun removeDocumentationBlocks(description: String?, blockType: String): String? {
         if (description == null) return null
-        
+
         val blockPattern = Regex("```$blockType\\s*\\n(.*?)\\n```", RegexOption.DOT_MATCHES_ALL)
         val cleanedDescription = description.replace(blockPattern, "").trim()
-        
+
         return cleanedDescription.ifEmpty { null }
     }
 
     protected fun extractSignatures(documentation: String?): List<LuaSignature> {
         val signatureBlocks = extractDocumentationBlocks(documentation, "signatures")
         val signatures = mutableListOf<LuaSignature>()
-        
+
         signatureBlocks.forEach { luaCode ->
             signatures.addAll(parseSignatures(luaCode))
         }
-        
+
         return signatures
     }
 

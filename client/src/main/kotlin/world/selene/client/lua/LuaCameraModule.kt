@@ -4,11 +4,7 @@ import com.badlogic.gdx.math.Vector3
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.camera.CameraManager
-import world.selene.common.lua.LuaModule
-import world.selene.common.lua.Signal
-import world.selene.common.lua.checkFloat
-import world.selene.common.lua.checkInt
-import world.selene.common.lua.register
+import world.selene.common.lua.*
 
 /**
  * Manage the camera and convert coordinates.

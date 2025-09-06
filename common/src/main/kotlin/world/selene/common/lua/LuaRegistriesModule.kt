@@ -65,7 +65,7 @@ class LuaRegistriesModule(private val registryProvider: RegistryProvider) : LuaM
 
         val found = registry.findByMetadata(key, value)
         if (found != null) {
-            lua.push( found.second, Lua.Conversion.NONE)
+            lua.push(found.second, Lua.Conversion.NONE)
             return 1
         }
         lua.pushNil()

@@ -5,11 +5,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.kjetland.jackson.jsonSchema.JsonSchemaGenerator
 import world.selene.client.data.AudioDefinition
 import world.selene.client.data.VisualDefinition
-import world.selene.common.data.ComponentDefinition
-import world.selene.common.data.EntityDefinition
-import world.selene.common.data.SoundDefinition
-import world.selene.common.data.TileDefinition
-import world.selene.common.data.TransitionDefinition
+import world.selene.common.data.*
 import java.io.File
 
 enum class Side(val order: Int) {
@@ -17,9 +13,10 @@ enum class Side(val order: Int) {
     SERVER(2),
     CLIENT(3);
 
-    val dirName: String get() {
-        return "${order}.${name.lowercase()}"
-    }
+    val dirName: String
+        get() {
+            return "${order}.${name.lowercase()}"
+        }
 }
 
 fun main(args: Array<String>) {

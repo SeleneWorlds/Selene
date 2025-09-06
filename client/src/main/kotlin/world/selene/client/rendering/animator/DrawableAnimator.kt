@@ -7,9 +7,10 @@ class DrawableAnimator(private val controller: AnimatorController) : Animator {
 
     private val animations = mutableMapOf<String, AnimatedDrawable>()
 
-    val drawable: Drawable? get() {
-        return controller.getCurrentAnimationName().let { animations[it] }
-    }
+    val drawable: Drawable?
+        get() {
+            return controller.getCurrentAnimationName().let { animations[it] }
+        }
 
     fun addAnimation(key: String, drawable: AnimatedDrawable) {
         animations[key] = drawable

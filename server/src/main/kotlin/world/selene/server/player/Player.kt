@@ -1,23 +1,16 @@
 package world.selene.server.player
 
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.LuaReferencable
-import world.selene.common.lua.LuaReference
-import world.selene.common.lua.ObservableMap
-import world.selene.common.lua.checkInt
-import world.selene.common.lua.checkUserdata
-import world.selene.common.network.packet.SetControlledEntityPacket
+import world.selene.common.lua.*
 import world.selene.common.network.packet.SetCameraFollowEntityPacket
 import world.selene.common.network.packet.SetCameraPositionPacket
+import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.util.Coordinate
 import world.selene.server.cameras.Camera
 import world.selene.server.dimensions.Dimension
 import world.selene.server.entities.Entity
 import world.selene.server.network.NetworkClient
-import java.util.Locale
+import java.util.*
 
 class Player(private val playerManager: PlayerManager, val client: NetworkClient) : LuaMetatableProvider,
     LuaReferencable<String, Player> {

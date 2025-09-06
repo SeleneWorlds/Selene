@@ -1,24 +1,10 @@
 package world.selene.common.data
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.BooleanNode
-import com.fasterxml.jackson.databind.node.DoubleNode
-import com.fasterxml.jackson.databind.node.FloatNode
-import com.fasterxml.jackson.databind.node.IntNode
-import com.fasterxml.jackson.databind.node.LongNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.ShortNode
-import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.databind.node.*
 import com.fasterxml.jackson.module.kotlin.treeToValue
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.LuaReferencable
-import world.selene.common.lua.LuaReference
-import world.selene.common.lua.checkString
-import world.selene.common.lua.checkUserdata
+import world.selene.common.lua.*
 
 class CustomRegistryObject(val registry: CustomRegistry, val name: String, val element: JsonNode) :
     LuaMetatableProvider,

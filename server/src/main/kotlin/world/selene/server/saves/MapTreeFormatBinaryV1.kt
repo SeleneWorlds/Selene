@@ -2,15 +2,7 @@ package world.selene.server.saves
 
 import world.selene.common.util.Coordinate
 import world.selene.server.data.Registries
-import world.selene.server.maps.ChunkedMapLayer
-import world.selene.server.maps.DenseMapLayer
-import world.selene.server.maps.MapTree
-import world.selene.server.maps.SparseMapLayer
-import world.selene.server.maps.SparseTileAnnotation
-import world.selene.server.maps.SparseTilePlacement
-import world.selene.server.maps.SparseTileRemoval
-import world.selene.server.maps.SparseTileSwap
-import world.selene.server.maps.SparseTilesReplacement
+import world.selene.server.maps.*
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer

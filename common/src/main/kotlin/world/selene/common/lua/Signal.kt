@@ -40,7 +40,7 @@ class Signal(private val name: String) : LuaMetatableProvider {
         /**
          * Connects a callback function to this signal.
          * The callback will be invoked whenever the signal is emitted.
-         * 
+         *
          * ```signatures
          * Connect(callback: function)
          * ```

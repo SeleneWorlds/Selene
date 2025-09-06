@@ -5,8 +5,8 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.Signal
 import world.selene.common.lua.register
-import world.selene.server.network.NetworkServer
 import world.selene.server.network.NetworkClientImpl
+import world.selene.server.network.NetworkServer
 
 /**
  * Player management and player-related signals.

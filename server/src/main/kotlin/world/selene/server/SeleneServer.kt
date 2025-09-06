@@ -7,22 +7,17 @@ import org.koin.mp.KoinPlatform.getKoin
 import org.slf4j.Logger
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.bundles.BundleLoader
-import world.selene.common.data.ComponentRegistry
-import world.selene.common.data.CustomRegistries
+import world.selene.common.data.*
 import world.selene.common.lua.LuaManager
 import world.selene.common.network.PacketRegistrations
-import world.selene.server.config.ServerConfig
-import world.selene.common.data.EntityRegistry
-import world.selene.common.data.SoundRegistry
-import world.selene.common.data.TileRegistry
-import world.selene.common.data.TransitionRegistry
+import world.selene.common.threading.MainThreadDispatcher
+import world.selene.common.util.Disposable
 import world.selene.server.bundles.ClientBundleCache
+import world.selene.server.config.ServerConfig
 import world.selene.server.data.PersistentNameIdRegistry
 import world.selene.server.http.HttpServer
 import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.network.NetworkServer
-import world.selene.common.threading.MainThreadDispatcher
-import world.selene.common.util.Disposable
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
@@ -45,7 +40,7 @@ class SeleneServer(
     private val config: ServerConfig,
     private val logger: Logger,
     private val mainThreadDispatcher: MainThreadDispatcher
-)  {
+) {
 
     private val running = AtomicBoolean(true)
 

@@ -26,7 +26,7 @@ class InputMask() : WidgetGroup() {
                 invalidate()
             }
         }
-    
+
     var actor: Actor? = null
         set(value) {
             if (value == this) throw IllegalArgumentException("actor cannot be the InputMask.")
@@ -90,7 +90,7 @@ class InputMask() : WidgetGroup() {
                 if (!textureData.isPrepared) {
                     textureData.prepare()
                 }
-                
+
                 val newPixmap = textureData.consumePixmap()
                 cachedPixmap = newPixmap
                 cachedTextureData = textureData

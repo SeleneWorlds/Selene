@@ -2,17 +2,8 @@ package world.selene.server.lua
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.lua.LuaModule
-import world.selene.common.lua.checkInt
-import world.selene.common.lua.checkString
-import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.register
-import world.selene.common.lua.throwTypeError
-import world.selene.server.attribute.Attribute
-import world.selene.server.attribute.AttributeClampFilter
-import world.selene.server.attribute.AttributeMathOpFilter
-import world.selene.server.attribute.IntAttributeClampFilter
-import world.selene.server.attribute.IntAttributeMathOpFilter
+import world.selene.common.lua.*
+import world.selene.server.attribute.*
 
 /**
  * Create common attribute filters.

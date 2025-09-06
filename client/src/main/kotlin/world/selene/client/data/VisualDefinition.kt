@@ -1,9 +1,9 @@
 package world.selene.client.data
 
 import com.badlogic.gdx.utils.Align
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
 import world.selene.common.data.RegistryObject

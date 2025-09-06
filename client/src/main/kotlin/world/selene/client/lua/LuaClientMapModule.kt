@@ -3,8 +3,6 @@ package world.selene.client.lua
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.maps.ClientMap
-import world.selene.client.maps.Tile
-import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.Signal
 import world.selene.common.lua.checkInt

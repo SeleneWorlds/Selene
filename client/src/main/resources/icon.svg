@@ -1,15 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" xmlns:bx="https://boxy-svg.com">
+<svg xmlns:bx="https://boxy-svg.com" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
     <rect style="stroke: rgb(0, 0, 0);" x="0" y="0" width="512" height="512" rx="105" ry="105"></rect>
     <g transform="translate(256, 256) rotate(25) translate(-256, -256)">
-        <path d="M 20 238 H 490 V 278 H 20 V 238 Z" style="fill: rgb(255, 255, 255); transform-origin: 254.695px 256.541px 0px;"></path>
-        <path d="M 101.851 77.476 L 434.191 409.816 L 405.907 438.101 L 73.567 105.76 L 101.851 77.476 Z" style="fill: rgb(255, 255, 255); transform-origin: 254.695px 256.541px 0px;"></path>
-        <path d="M 433.76 103.697 L 101.42 436.037 L 73.136 407.753 L 405.476 75.413 L 433.76 103.697 Z" style="fill: rgb(255, 255, 255); stroke-width: 1px; transform-origin: 254.695px 256.541px 0px;"></path>
-        <path d="M 273.236 21.845 L 273.236 491.845 L 233.236 491.845 L 233.236 21.845 L 273.236 21.845 Z" style="fill: rgb(255, 255, 255); stroke-width: 1px; transform-origin: 254.695px 256.541px 0px;"></path>
+        <path d="M 20 238 H 490 V 278 H 20 V 238 Z"
+              style="fill: rgb(255, 255, 255); transform-origin: 254.695px 256.541px 0px;"></path>
+        <path d="M 101.851 77.476 L 434.191 409.816 L 405.907 438.101 L 73.567 105.76 L 101.851 77.476 Z"
+              style="fill: rgb(255, 255, 255); transform-origin: 254.695px 256.541px 0px;"></path>
+        <path d="M 433.76 103.697 L 101.42 436.037 L 73.136 407.753 L 405.476 75.413 L 433.76 103.697 Z"
+              style="fill: rgb(255, 255, 255); stroke-width: 1px; transform-origin: 254.695px 256.541px 0px;"></path>
+        <path d="M 273.236 21.845 L 273.236 491.845 L 233.236 491.845 L 233.236 21.845 L 273.236 21.845 Z"
+              style="fill: rgb(255, 255, 255); stroke-width: 1px; transform-origin: 254.695px 256.541px 0px;"></path>
     </g>
     <g transform="translate(256, 256) rotate(45) translate(-256, -256)">
-        <path d="M 422 256 A 166 166 0 1 0 256 422 A 166 166 0 1 0 90 256 A 166 166 0 1 0 256 90 A 166 166 0 1 0 422 256 Z" style="stroke-width: 50px; stroke: rgb(255, 255, 255);"></path>
-        <path d="M 256.75 -27 L 335 258 L 178.5 258 L 256.75 -27 Z" bx:shape="triangle 178.5 -27 156.5 285 0.5 0 1@d318c01c" style="fill-rule: nonzero; fill: rgb(255, 255, 255); stroke: rgb(0, 0, 0); stroke-width: 16px; stroke-linecap: round; stroke-linejoin: round;"></path>
-        <path d="M 256.75 -542.69 L 335 -257.69 L 178.5 -257.69 L 256.75 -542.69 Z" bx:shape="triangle 178.5 -542.69 156.5 285 0.5 0 1@f32775c5" style="fill-rule: nonzero; fill: rgb(255, 255, 255); stroke: rgb(0, 0, 0); stroke-width: 16px; stroke-linecap: round; stroke-linejoin: round;" transform="matrix(1, 0, 0, -1, 0, 0)"></path>
-        <path style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0); stroke-width: 16px;" d="M 256.69 3.494 L 256.75 512.12"></path>
+        <path d="M 422 256 A 166 166 0 1 0 256 422 A 166 166 0 1 0 90 256 A 166 166 0 1 0 256 90 A 166 166 0 1 0 422 256 Z"
+              style="stroke-width: 50px; stroke: rgb(255, 255, 255);"></path>
+        <path d="M 256.75 -27 L 335 258 L 178.5 258 L 256.75 -27 Z"
+              bx:shape="triangle 178.5 -27 156.5 285 0.5 0 1@d318c01c"
+              style="fill-rule: nonzero; fill: rgb(255, 255, 255); stroke: rgb(0, 0, 0); stroke-width: 16px; stroke-linecap: round; stroke-linejoin: round;"></path>
+        <path d="M 256.75 -542.69 L 335 -257.69 L 178.5 -257.69 L 256.75 -542.69 Z"
+              bx:shape="triangle 178.5 -542.69 156.5 285 0.5 0 1@f32775c5"
+              style="fill-rule: nonzero; fill: rgb(255, 255, 255); stroke: rgb(0, 0, 0); stroke-width: 16px; stroke-linecap: round; stroke-linejoin: round;"
+              transform="matrix(1, 0, 0, -1, 0, 0)"></path>
+        <path style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0); stroke-width: 16px;"
+              d="M 256.69 3.494 L 256.75 512.12"></path>
     </g>
 </svg>

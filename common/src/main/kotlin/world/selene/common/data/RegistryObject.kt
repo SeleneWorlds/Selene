@@ -2,17 +2,15 @@ package world.selene.common.data
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.checkString
-import world.selene.common.lua.checkUserdata
+import world.selene.common.lua.*
 
 interface RegistryObject<T : Any> : LuaMetatableProvider {
     @get:JsonIgnore
     val name: String
+
     @get:JsonIgnore
     val registry: Registry<T>
+
     @get:JsonIgnore
     val id: Int
     fun initializeFromRegistry(registry: Registry<T>, name: String, id: Int)

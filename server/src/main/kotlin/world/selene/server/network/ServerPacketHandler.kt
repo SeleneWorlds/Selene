@@ -11,18 +11,11 @@ import world.selene.common.lua.LuaPayloadRegistry
 import world.selene.common.lua.xpCall
 import world.selene.common.network.Packet
 import world.selene.common.network.PacketHandler
-import world.selene.common.network.packet.AuthenticatePacket
-import world.selene.common.network.packet.CustomPayloadPacket
-import world.selene.common.network.packet.FinalizeJoinPacket
-import world.selene.common.network.packet.MoveEntityPacket
-import world.selene.common.network.packet.NameIdMappingsPacket
-import world.selene.common.network.packet.PreferencesPacket
-import world.selene.common.network.packet.RequestFacingPacket
-import world.selene.common.network.packet.RequestMovePacket
+import world.selene.common.network.packet.*
 import world.selene.server.login.SessionAuthentication
 import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.player.Player
-import java.util.Locale
+import java.util.*
 
 class ServerPacketHandler(
     private val logger: Logger,
