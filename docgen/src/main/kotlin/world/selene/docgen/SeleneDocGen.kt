@@ -41,7 +41,7 @@ fun main(args: Array<String>) {
             Side.SERVER to classAnalyzer.analyzeProject(File(baseDir, "server"))
         )
 
-        val modulesDir = File("modules")
+        val modulesDir = File("1.modules")
         if (!modulesDir.exists()) {
             modulesDir.mkdirs()
         }
@@ -59,7 +59,7 @@ fun main(args: Array<String>) {
             }
         }
 
-        val classesDir = File("classes")
+        val classesDir = File("3.classes")
         if (!classesDir.exists()) {
             classesDir.mkdirs()
         }
@@ -81,7 +81,7 @@ fun main(args: Array<String>) {
         classAnalyzer.close()
     }
 
-    val dataDir = File("data")
+    val dataDir = File("2.data")
     if (!dataDir.exists()) {
         dataDir.mkdirs()
     }
