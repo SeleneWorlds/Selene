@@ -12,11 +12,21 @@ data class LuaParameter(
 )
 
 sealed class LuaType {
-    data class Simple(val name: String) : LuaType()
-    data class Union(val either: List<LuaType>) : LuaType()
-    data class Table(val elementType: LuaType? = null, val keyType: LuaType? = null) : LuaType()
-    data class StructuredTable(val fields: Map<String, LuaType>) : LuaType()
-    data class Function(val parameters: List<LuaParameter>, val returnTypes: List<LuaType>) : LuaType()
+    data class Simple(val name: String) : LuaType() {
+        val type = "simple"
+    }
+    data class Union(val either: List<LuaType>) : LuaType() {
+        val type = "union"
+    }
+    data class Table(val elementType: LuaType? = null, val keyType: LuaType? = null) : LuaType() {
+        val type = "table"
+    }
+    data class StructuredTable(val fields: Map<String, LuaType>) : LuaType() {
+        val type = "structuredTable"
+    }
+    data class Function(val parameters: List<LuaParameter>, val returnTypes: List<LuaType>) : LuaType() {
+        val type = "function"
+    }
 
     override fun toString(): String = when (this) {
         is Simple -> name
