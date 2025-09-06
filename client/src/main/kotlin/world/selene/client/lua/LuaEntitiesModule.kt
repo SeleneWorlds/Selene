@@ -49,7 +49,7 @@ class LuaEntitiesModule(
      * ```
      */
     private fun luaGetEntitiesAt(lua: Lua): Int {
-        val coordinate = lua.checkUserdata(1, Coordinate::class)
+        val (coordinate) = lua.checkCoordinate(1)
         val entities = clientMap.getEntitiesAt(coordinate)
         lua.push(entities, Lua.Conversion.FULL)
         return 1
@@ -63,9 +63,9 @@ class LuaEntitiesModule(
      * ```
      */
     private fun luaFindEntitiesAt(lua: Lua): Int {
-        val coordinate = lua.checkUserdata(1, Coordinate::class)
-        lua.checkType(2, Lua.LuaType.TABLE)
-        val tag = lua.getFieldString(2, "tag")
+        val (coordinate, index) = lua.checkCoordinate(1)
+        lua.checkType(index + 1, Lua.LuaType.TABLE)
+        val tag = lua.getFieldString(index + 1, "tag")
 
         val entities = clientMap.getEntitiesAt(coordinate)
         val result = mutableListOf<Entity>()

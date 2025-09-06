@@ -4,6 +4,11 @@ import party.iroiro.luajava.Lua
 import world.selene.common.lua.*
 import kotlin.math.sqrt
 
+/**
+ * Location in the tile grid.
+ *
+ * Can also be passed as three x, y, and z arguments or a table with x, y, and z fields.
+ */
 data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider {
     fun horizontalDistanceTo(other: Coordinate): Int {
         val dx = (x - other.x).toFloat()

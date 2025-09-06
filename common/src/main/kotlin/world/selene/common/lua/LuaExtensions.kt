@@ -198,7 +198,7 @@ fun Lua.checkCoordinate(index: Int): Pair<Coordinate, Int> {
         val z = getFieldInt(index, "z") ?: 0
         return Pair(Coordinate(x, y, z), index)
     } else if (type(index) == LuaType.USERDATA) {
-        return Pair(checkUserdata(index, Coordinate::class), index)
+        return Pair(checkUserdata<Coordinate>(index), index)
     } else {
         return Pair(Coordinate(checkInt(index), checkInt(index + 1), checkInt(index + 2)), index + 2)
     }

@@ -232,7 +232,6 @@ class Player(
          *
          * ```signatures
          * SetCameraToCoordinate(coordinate: Coordinate, dimension: Dimension|nil)
-         * SetCameraToCoordinate(x: number, y: number, z: number, dimension: Dimension|nil)
          * ```
          */
         private fun luaSetCameraToCoordinate(lua: Lua): Int {
