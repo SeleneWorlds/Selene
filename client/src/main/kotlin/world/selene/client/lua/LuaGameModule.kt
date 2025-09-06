@@ -7,7 +7,7 @@ import world.selene.common.lua.Signal
 /**
  * Game lifecycle signals.
  */
-class LuaGameModule(private val signals: ClientLuaSignals) : LuaModule {
+class LuaGameModule(signals: ClientLuaSignals) : LuaModule {
     override val name = "selene.game"
 
     /**

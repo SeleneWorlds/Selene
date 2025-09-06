@@ -12,9 +12,10 @@ import world.selene.common.util.Coordinate
 /**
  * Lookup tiles on the map.
  */
+@Suppress("SameReturnValue")
 class LuaClientMapModule(
     private val clientMap: ClientMap,
-    private val signals: ClientLuaSignals
+    signals: ClientLuaSignals
 ) : LuaModule {
     override val name = "selene.map"
 

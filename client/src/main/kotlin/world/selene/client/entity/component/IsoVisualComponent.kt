@@ -45,6 +45,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         return "IsoVisualComponent(visual=$visual)"
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Visual rendered by this component.

@@ -14,7 +14,7 @@ class GridMovement(
     var facingDirection: Direction? = null
     var requestedStep: Boolean = false
 
-    fun update(delta: Float) {
+    fun update() {
         val entity = playerController.controlledEntity
         moveDirection?.let { moveDirection ->
             if (entity != null && canRequestNextMove(entity)) {

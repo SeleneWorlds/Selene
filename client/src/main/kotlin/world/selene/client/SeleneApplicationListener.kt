@@ -12,15 +12,12 @@ import com.badlogic.gdx.utils.ScreenUtils
 import org.koin.mp.KoinPlatform.getKoin
 import world.selene.client.camera.CameraManager
 import world.selene.client.controls.GridMovement
-import world.selene.client.controls.PlayerController
 import world.selene.client.input.InputManager
 import world.selene.client.lua.ClientLuaSignals
-import world.selene.client.maps.ClientMap
 import world.selene.client.network.NetworkClient
 import world.selene.client.rendering.DebugRenderer
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.rendering.drawable.DrawableManager
-import world.selene.client.rendering.visual.VisualManager
 import world.selene.client.ui.UI
 import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.util.Disposable
@@ -28,13 +25,10 @@ import world.selene.common.util.Disposable
 class SeleneApplicationListener(
     private val client: SeleneClient,
     private val networkClient: NetworkClient,
-    private val visualManager: VisualManager,
     private val cameraManager: CameraManager,
     private val inputMultiplexer: InputMultiplexer,
     private val inputManager: InputManager,
     private val ui: UI,
-    private val clientMap: ClientMap,
-    private val playerController: PlayerController,
     private val drawableManager: DrawableManager,
     private val gridMovement: GridMovement,
     private val sceneRenderer: SceneRenderer,
@@ -72,9 +66,9 @@ class SeleneApplicationListener(
         networkClient.processWork()
 
         val delta = Gdx.graphics.deltaTime
-        inputManager.update(delta)
-        gridMovement.update(delta)
-        cameraManager.update(delta)
+        inputManager.update()
+        gridMovement.update()
+        cameraManager.update()
         drawableManager.update(delta)
 
         ScreenUtils.clear(0f, 0f, 0f, 0f)

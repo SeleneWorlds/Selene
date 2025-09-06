@@ -10,6 +10,7 @@ import world.selene.common.lua.register
 /**
  * Defining and looking up directions.
  */
+@Suppress("SameReturnValue")
 class LuaClientGridModule(private val grid: ClientGrid) : LuaGridModule(grid) {
     override val name = "selene.grid"
 

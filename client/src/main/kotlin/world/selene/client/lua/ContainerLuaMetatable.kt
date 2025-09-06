@@ -6,6 +6,7 @@ import party.iroiro.luajava.Lua
 import world.selene.common.lua.checkFloat
 import world.selene.common.lua.checkUserdata
 
+@Suppress("SameReturnValue")
 object ContainerLuaMetatable {
     val luaMeta = GroupLuaMetatable.luaMeta.extend(Container::class) {
         setter(::luaSetMinWidth)

@@ -9,9 +9,10 @@ import world.selene.common.lua.*
 /**
  * Manage the camera and convert coordinates.
  */
+@Suppress("SameReturnValue")
 class LuaCameraModule(
     private val cameraManager: CameraManager,
-    private val signals: ClientLuaSignals
+    signals: ClientLuaSignals
 ) : LuaModule {
     override val name = "selene.camera"
 

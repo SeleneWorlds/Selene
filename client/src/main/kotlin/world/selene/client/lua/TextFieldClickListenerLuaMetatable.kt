@@ -8,6 +8,7 @@ import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.checkInt
 import world.selene.common.lua.checkUserdata
 
+@Suppress("SameReturnValue")
 object TextFieldClickListenerLuaMetatable {
     val luaMeta = LuaMappedMetatable(TextField.TextFieldClickListener::class) {
         callable(::luaKeyDown)

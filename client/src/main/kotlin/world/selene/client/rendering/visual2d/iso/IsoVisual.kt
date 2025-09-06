@@ -14,6 +14,7 @@ interface IsoVisual : Visual2D, LuaMetatableProvider {
         return luaMeta
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Surface height of the visual, i.e. the offset applied to other visuals on top of it.

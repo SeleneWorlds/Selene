@@ -44,6 +44,7 @@ class DynamicDrawableIsoVisual(
         return "DynamicDrawableIsoVisual(visual=${visualDef.name})"
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Drawable rendered by this visual (this frame).

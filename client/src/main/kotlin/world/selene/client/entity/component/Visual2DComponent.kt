@@ -38,6 +38,7 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
         return "Visual2DComponent(visual=${visual})"
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Visual rendered by this component.

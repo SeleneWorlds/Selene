@@ -1,3 +1,4 @@
+@file:Suppress("unused")
 package world.selene.client.data
 
 import com.badlogic.gdx.utils.Align

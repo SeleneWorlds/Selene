@@ -10,6 +10,7 @@ import world.selene.common.lua.*
 /**
  * Handle input for keyboard and mouse events.
  */
+@Suppress("SameReturnValue")
 class LuaInputModule(private val inputManager: InputManager) : LuaModule {
     override val name = "selene.input"
 

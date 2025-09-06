@@ -9,6 +9,7 @@ import party.iroiro.luajava.Lua
 import world.selene.client.assets.BundleFileResolver
 import world.selene.common.lua.*
 
+@Suppress("SameReturnValue")
 class SkinLuaMetatable(
     private val bundleFileResolver: BundleFileResolver,
     private val luaSkinUtils: LuaSkinUtils

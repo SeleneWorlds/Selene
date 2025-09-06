@@ -11,6 +11,7 @@ import world.selene.common.lua.register
 /**
  * Create visuals from visual definitions.
  */
+@Suppress("SameReturnValue")
 class LuaVisualsModule(private val visualManager: VisualManager) : LuaModule {
     override val name = "selene.visuals"
 

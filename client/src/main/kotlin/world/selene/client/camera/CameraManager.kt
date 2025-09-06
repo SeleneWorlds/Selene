@@ -33,7 +33,7 @@ class CameraManager(
     private var focusedEntityNetworkId: Int = -1
     val focusedEntity get() = map.getEntityByNetworkId(focusedEntityNetworkId)
 
-    fun update(delta: Float) {
+    fun update() {
         if (focusedEntityNetworkId != -1) {
             focusedEntity?.let { entity ->
                 val entityScreenX = grid.getScreenX(entity.position)
@@ -55,6 +55,7 @@ class CameraManager(
     }
 
     fun setViewport(x: Int, y: Int, width: Int, height: Int) {
+        // TODO x and y are currently not respected, viewport always starts at 0,0
         viewportWidth = width
         viewportHeight = height
         viewportOffsetX = (Gdx.graphics.width - width) / 2

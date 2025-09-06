@@ -12,6 +12,7 @@ import world.selene.common.lua.register
 /**
  * Create and manipulate textures.
  */
+@Suppress("SameReturnValue")
 class LuaTexturesModule : LuaModule {
     override val name = "selene.textures"
 

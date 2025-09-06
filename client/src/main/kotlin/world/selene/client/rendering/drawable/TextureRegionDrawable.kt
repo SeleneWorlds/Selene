@@ -51,6 +51,7 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
         return TextureRegionDrawable(textureRegion, 0f, 0f)
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Texture region rendered by this drawable.

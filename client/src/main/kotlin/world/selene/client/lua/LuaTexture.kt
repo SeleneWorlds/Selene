@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.Texture
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.*
 
+@Suppress("SameReturnValue")
 data class LuaTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatableProvider {
     val width: Int get() = texture.width
     val height: Int get() = texture.height

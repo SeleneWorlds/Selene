@@ -12,6 +12,7 @@ import world.selene.common.util.Coordinate
 /**
  * Create and lookup entities.
  */
+@Suppress("SameReturnValue")
 class LuaEntitiesModule(
     private val entityPool: EntityPool,
     private val registries: Registries,

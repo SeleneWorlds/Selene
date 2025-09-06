@@ -46,11 +46,6 @@ class InputMask() : WidgetGroup() {
         isTransform = false
     }
 
-    constructor(actor: Actor? = null, mask: Drawable? = null) : this() {
-        this.actor = actor
-        this.mask = mask
-    }
-
     override fun hit(x: Float, y: Float, touchable: Boolean): Actor? {
         // If no mask is set, behave like normal
         val maskDrawable = mask ?: return super.hit(x, y, touchable)

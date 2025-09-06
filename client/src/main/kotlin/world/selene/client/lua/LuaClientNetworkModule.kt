@@ -10,6 +10,7 @@ import world.selene.common.network.packet.CustomPayloadPacket
 /**
  * Send and handle custom payloads.
  */
+@Suppress("SameReturnValue")
 class LuaClientNetworkModule(
     private val networkClient: NetworkClient,
     private val objectMapper: ObjectMapper,

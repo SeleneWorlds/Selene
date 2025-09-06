@@ -272,6 +272,7 @@ class Entity(
         this.facing = facing
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Coordinate this entity is located at.

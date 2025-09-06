@@ -20,6 +20,7 @@ class DebugRenderer {
         shapeRenderer = ShapeRenderer()
     }
 
+    @Suppress("unused")
     fun drawRectangle(rectangle: Rectangle, color: Color = Color.RED, lifeTime: Float = 0f) {
         rectangles.add(DebugRectangle(rectangle, color, lifeTime))
     }

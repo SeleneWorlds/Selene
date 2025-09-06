@@ -15,8 +15,7 @@ class ClientBundleLocator(
 ) :
     BundleLocator {
     override fun locateBundle(name: String): LocatedBundle? {
-        val bundlePath = config.bundles[name]
-        if (bundlePath == null) return null
+        val bundlePath = config.bundles[name] ?: return null
         val dir = File(bundlePath)
         val manifestFile = File(dir, "bundle.json")
         if (!manifestFile.exists()) return null

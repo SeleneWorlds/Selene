@@ -20,6 +20,7 @@ import world.selene.common.lua.*
 /**
  * Load, skin and manipulate UIs.
  */
+@Suppress("SameReturnValue")
 class LuaUIModule(
     private val ui: UI,
     private val bundleFileResolver: BundleFileResolver,

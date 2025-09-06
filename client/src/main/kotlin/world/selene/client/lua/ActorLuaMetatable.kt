@@ -2,6 +2,7 @@ package world.selene.client.lua
 
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.ui.*
+import com.badlogic.gdx.scenes.scene2d.ui.List
 import com.badlogic.gdx.scenes.scene2d.utils.Layout
 import com.kotcrab.vis.ui.widget.LinkLabel
 import com.kotcrab.vis.ui.widget.VisTextField
@@ -11,6 +12,7 @@ import world.selene.common.lua.checkFloat
 import world.selene.common.lua.checkString
 import world.selene.common.lua.checkUserdata
 
+@Suppress("SameReturnValue")
 object ActorLuaMetatable {
     val luaMeta = LuaMappedMetatable(Actor::class) {
         getter(::luaGetName)
@@ -160,8 +162,8 @@ object ActorLuaMetatable {
                 actor.style = skin.get(style, TextField.TextFieldStyle::class.java)
             }
 
-            is com.badlogic.gdx.scenes.scene2d.ui.List<*> -> {
-                actor.style = skin.get(style, com.badlogic.gdx.scenes.scene2d.ui.List.ListStyle::class.java)
+            is List<*> -> {
+                actor.style = skin.get(style, List.ListStyle::class.java)
             }
 
             is Touchpad -> {

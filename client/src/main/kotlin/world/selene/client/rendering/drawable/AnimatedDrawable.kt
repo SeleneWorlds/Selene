@@ -68,6 +68,7 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
         }, duration)
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Current frame index of the animation.

@@ -86,7 +86,7 @@ class InputManager : InputProcessor {
         }
     }
 
-    fun update(delta: Float) {
+    fun update() {
         for ((keyCode, action) in keyboardActions) {
             if (Gdx.input.isKeyJustPressed(keyCode)) {
                 action()

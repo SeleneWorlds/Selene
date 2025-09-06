@@ -71,7 +71,7 @@ class LuaSkinUtils(private val bundleFileResolver: BundleFileResolver) {
         lua: Lua,
         tableIndex: Int,
         skin: Skin? = null
-    ): kotlin.collections.List<Button.ButtonStyle> {
+    ): List<Button.ButtonStyle> {
         lua.checkType(tableIndex, Lua.LuaType.TABLE)
 
         val up = lua.getFieldString(tableIndex, "up")?.let {

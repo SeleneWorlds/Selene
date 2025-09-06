@@ -11,6 +11,7 @@ import world.selene.common.lua.register
 /**
  * Grid-based movement controls.
  */
+@Suppress("SameReturnValue")
 class LuaMovementGridModule(private val gridMovement: GridMovement) : LuaModule {
     override val name = "selene.movement.grid"
 

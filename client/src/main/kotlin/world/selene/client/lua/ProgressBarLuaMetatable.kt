@@ -5,6 +5,7 @@ import party.iroiro.luajava.Lua
 import world.selene.common.lua.checkFloat
 import world.selene.common.lua.checkUserdata
 
+@Suppress("SameReturnValue")
 object ProgressBarLuaMetatable {
     val luaMeta = ActorLuaMetatable.luaMeta.extend(ProgressBar::class) {
         getter(::luaGetValue)

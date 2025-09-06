@@ -1,3 +1,4 @@
+@file:Suppress("SameReturnValue", "unused", "RedundantSuppression")
 package world.selene.client.lua
 
 import party.iroiro.luajava.Lua

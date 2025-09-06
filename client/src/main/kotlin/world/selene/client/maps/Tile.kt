@@ -94,6 +94,7 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
         pool.free(this)
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Coordinate this tile is located at.

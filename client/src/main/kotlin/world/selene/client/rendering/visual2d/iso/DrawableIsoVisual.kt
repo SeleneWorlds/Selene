@@ -41,6 +41,7 @@ class DrawableIsoVisual(
         return "DrawableIsoVisual(visual=${visualDefinition.name})"
     }
 
+    @Suppress("SameReturnValue")
     companion object {
         /**
          * Drawable rendered by this visual.

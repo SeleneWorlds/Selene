@@ -118,7 +118,7 @@ fun printUsage() {
           --help                    Show this help message
           
         Examples:
-          java -jar selene-client.jar --host example.com --port 9000 --token mytoken
+          java -jar selene-client.jar --host example.com --port 9000 --token eyJhb...
           java -jar selene-client.jar --bundle core /path/to/core --bundle ui /path/to/ui
     """.trimIndent()
     )

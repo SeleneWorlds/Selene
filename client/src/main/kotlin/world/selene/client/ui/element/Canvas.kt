@@ -29,10 +29,6 @@ class Canvas() : WidgetGroup() {
         touchable = Touchable.childrenOnly
     }
 
-    constructor(vararg actors: Actor) : this() {
-        actors.forEach { addActor(it) }
-    }
-
     override fun invalidate() {
         super.invalidate()
         sizeInvalid = true

@@ -45,7 +45,7 @@ class UI {
     }
 
     fun resize(width: Int, height: Int) {
-        //stage.viewport.update(width, height, true)
+        stage.viewport.update(width, height, true)
     }
 
     fun dispose() {
