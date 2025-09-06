@@ -15,7 +15,7 @@ import world.selene.common.lua.register
 import world.selene.common.util.Coordinate
 
 /**
- * Provides functions for accessing and creating local entities.
+ * Create and lookup entities.
  */
 class LuaEntitiesModule(
     private val entityPool: EntityPool,

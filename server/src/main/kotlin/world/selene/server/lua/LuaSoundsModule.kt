@@ -16,7 +16,7 @@ import world.selene.server.player.Player
 import world.selene.server.world.World
 
 /**
- * Provides functions for playing sounds.
+ * Play local, positional or global sounds.
  */
 class LuaSoundsModule(
     private val registries: Registries,

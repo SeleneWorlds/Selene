@@ -4,7 +4,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 
 /**
- * Provides functionality similar to the Lua package library, mainly the `require` function for accessing other scripts.
+ * Access other bundles and lua modules.
  * Registered as `package` global.
  */
 class LuaPackageModule : LuaModule {

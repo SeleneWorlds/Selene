@@ -5,7 +5,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.data.RegistryProvider
 
 /**
- * Provides access to game registries.
+ * Lookup entries in game registries.
  */
 class LuaRegistriesModule(private val registryProvider: RegistryProvider) : LuaModule {
     override val name = "selene.registries"

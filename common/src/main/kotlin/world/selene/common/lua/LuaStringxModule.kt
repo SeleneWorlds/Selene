@@ -4,7 +4,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 
 /**
- * Provides extended string manipulation functions beyond standard Lua string library.
+ * Extended string manipulation functions beyond standard Lua string library.
  * Registered as `stringx` global.
  */
 class LuaStringxModule : LuaModule {

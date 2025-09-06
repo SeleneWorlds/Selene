@@ -9,7 +9,7 @@ import world.selene.server.network.NetworkServer
 import world.selene.server.network.NetworkClientImpl
 
 /**
- * Provides access to player management and player-related signals.
+ * Player management and player-related signals.
  */
 class LuaPlayersModule(private val signals: ServerLuaSignals, private val networkServer: NetworkServer) : LuaModule {
     override val name = "selene.players"

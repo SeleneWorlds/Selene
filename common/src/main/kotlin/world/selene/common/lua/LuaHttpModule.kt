@@ -10,7 +10,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.util.Disposable
 
 /**
- * Provides HTTP functionality for making web requests.
+ * Make HTTP web requests.
  */
 class LuaHttpModule(
     private val httpClient: HttpClient

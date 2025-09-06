@@ -10,7 +10,7 @@ import world.selene.server.saves.SaveManager
 import java.io.File
 
 /**
- * Provides access to save file management for persistent data storage.
+ * Save file management for persistent data storage.
  */
 class LuaSavesModule(private val serverConfig: ServerConfig, private val saveManager: SaveManager) : LuaModule {
     override val name = "selene.saves"

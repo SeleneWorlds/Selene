@@ -14,7 +14,7 @@ import world.selene.common.lua.toAnyMap
 import world.selene.common.network.packet.CustomPayloadPacket
 
 /**
- * Provides networking functions for sending data to server and handling custom payloads.
+ * Send and handle custom payloads.
  */
 class LuaClientNetworkModule(
     private val networkClient: NetworkClient,

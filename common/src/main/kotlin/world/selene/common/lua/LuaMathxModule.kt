@@ -4,7 +4,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 
 /**
- * Provides extended mathematical functions beyond standard Lua math library.
+ * Extended mathematical functions beyond standard Lua math library.
  * Registered as global "mathx" table.
  */
 class LuaMathxModule : LuaModule {

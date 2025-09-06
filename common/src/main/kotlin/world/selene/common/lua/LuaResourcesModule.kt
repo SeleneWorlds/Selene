@@ -6,7 +6,7 @@ import world.selene.common.bundles.BundleDatabase
 import java.io.File
 
 /**
- * Provides access to bundle resources and file operations.
+ * Lookup bundle resource files.
  */
 class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule {
     override val name = "selene.resources"

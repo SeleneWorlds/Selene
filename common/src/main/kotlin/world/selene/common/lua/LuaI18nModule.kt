@@ -5,7 +5,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.i18n.Messages
 
 /**
- * Provides access to localization messages within bundles.
+ * Localize messages.
  */
 class LuaI18nModule(private val messages: Messages) : LuaModule {
     override val name = "selene.i18n"

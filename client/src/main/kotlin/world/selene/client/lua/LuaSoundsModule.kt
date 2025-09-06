@@ -13,7 +13,7 @@ import world.selene.common.lua.register
 import world.selene.common.lua.throwError
 
 /**
- * Provides functions for playing local sounds.
+ * Play or stop local sounds.
  */
 class LuaSoundsModule(
     private val registries: Registries,

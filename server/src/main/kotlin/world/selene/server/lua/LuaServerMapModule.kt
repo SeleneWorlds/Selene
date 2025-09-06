@@ -8,7 +8,7 @@ import world.selene.server.data.Registries
 import world.selene.server.maps.MapTree
 
 /**
- * Provides access to server-side map creation and management.
+ * Create new map layer trees.
  */
 class LuaServerMapModule(private val registries: Registries) : LuaModule {
     override val name = "selene.map"

@@ -9,7 +9,7 @@ import world.selene.common.lua.checkUserdata
 import world.selene.common.lua.register
 
 /**
- * Provides access to grid-based movement controls.
+ * Grid-based movement controls.
  */
 class LuaMovementGridModule(private val gridMovement: GridMovement) : LuaModule {
     override val name = "selene.movement.grid"

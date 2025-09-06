@@ -16,7 +16,7 @@ import world.selene.server.entities.Entity
 import world.selene.server.player.Player
 
 /**
- * Provides networking functions for sending data to players and handling custom payloads.
+ * Send and handle custom payloads.
  */
 class LuaServerNetworkModule(private val payloadRegistry: LuaPayloadRegistry, private val objectMapper: ObjectMapper) :
     LuaModule {

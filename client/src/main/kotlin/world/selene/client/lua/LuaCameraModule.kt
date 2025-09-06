@@ -11,7 +11,7 @@ import world.selene.common.lua.checkInt
 import world.selene.common.lua.register
 
 /**
- * Provides functions for camera control and coordinate conversion.
+ * Manage the camera and convert coordinates.
  */
 class LuaCameraModule(
     private val cameraManager: CameraManager,

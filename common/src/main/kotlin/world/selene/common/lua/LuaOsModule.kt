@@ -3,7 +3,7 @@ package world.selene.common.lua
 import party.iroiro.luajava.value.LuaValue
 
 /**
- * Provides access to a restricted set of functions from the Lua os library.
+ * Restricted set of functions from the Lua os library.
  * Registered as `os` global.
  *
  * Only the functions `date`, `time` and `clock` are available.

@@ -12,7 +12,7 @@ import world.selene.common.lua.register
 import world.selene.common.util.Coordinate
 
 /**
- * Provides functions for accessing tiles on the map.
+ * Lookup tiles on the map.
  */
 class LuaClientMapModule(
     private val clientMap: ClientMap,

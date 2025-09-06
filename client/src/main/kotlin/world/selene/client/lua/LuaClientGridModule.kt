@@ -8,7 +8,7 @@ import world.selene.common.lua.checkFloat
 import world.selene.common.lua.register
 
 /**
- * Provides access to grid system for defining and managing directions, and conversion of screen to grid coordinates.
+ * Defining and looking up directions.
  */
 class LuaClientGridModule(private val grid: ClientGrid) : LuaGridModule(grid) {
     override val name = "selene.grid"

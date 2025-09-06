@@ -6,7 +6,7 @@ import world.selene.common.grid.Grid
 import world.selene.common.util.Coordinate
 
 /**
- * Provides access to grid system for defining and managing directions.
+ * Define and lookup directions.
  */
 open class LuaGridModule(private val grid: Grid) : LuaModule {
     override val name = "selene.grid"

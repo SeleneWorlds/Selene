@@ -4,7 +4,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 
 /**
- * Provides extended table manipulation functions beyond standard Lua table operations.
+ * Extended table manipulation functions beyond standard Lua table operations.
  * Registered as `tablex` global.
  */
 class LuaTablexModule : LuaModule {

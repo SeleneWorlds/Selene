@@ -25,7 +25,7 @@ import world.selene.client.ui.UI
 import world.selene.common.lua.*
 
 /**
- * Provides functions for loading, skinning and manipulating UIs.
+ * Load, skin and manipulate UIs.
  */
 class LuaUIModule(
     private val ui: UI,

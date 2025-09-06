@@ -7,7 +7,7 @@ import world.selene.common.lua.register
 import world.selene.server.dimensions.DimensionManager
 
 /**
- * Provides access to world dimensions. Dimensions hold maps and entities and provide a way of instancing.
+ * Create or lookup dimensions.
  */
 class LuaDimensionsModule(private val dimensionManager: DimensionManager) : LuaModule {
     override val name = "selene.dimensions"

@@ -7,7 +7,7 @@ import world.selene.common.lua.Signal
 import world.selene.server.data.ServerCustomData
 
 /**
- * Provides access to server management and server-related signals.
+ * Server management and server-related signals.
  */
 class LuaServerModule(
     signals: ServerLuaSignals,

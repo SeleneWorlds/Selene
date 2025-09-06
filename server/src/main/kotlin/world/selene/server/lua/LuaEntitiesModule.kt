@@ -11,7 +11,7 @@ import world.selene.server.data.Registries
 import world.selene.server.entities.EntityManager
 
 /**
- * Provides access to entities and the ability to create new ones.
+ * Create or lookup entities.
  */
 class LuaEntitiesModule(private val entityManager: EntityManager, private val registries: Registries, private val signals: ServerLuaSignals) : LuaModule {
     override val name = "selene.entities"

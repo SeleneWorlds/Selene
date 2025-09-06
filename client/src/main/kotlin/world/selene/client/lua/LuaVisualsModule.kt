@@ -9,7 +9,7 @@ import world.selene.common.lua.checkString
 import world.selene.common.lua.register
 
 /**
- * Provides functions for creating visuals from visual definitions.
+ * Create visuals from visual definitions.
  */
 class LuaVisualsModule(private val visualManager: VisualManager) : LuaModule {
     override val name = "selene.visuals"

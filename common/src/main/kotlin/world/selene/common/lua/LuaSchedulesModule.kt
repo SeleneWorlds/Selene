@@ -13,7 +13,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 /**
- * Provides scheduling functions for timeouts, intervals, and periodic signals.
+ * Schedule functions for timeouts, intervals, and periodic signals.
  */
 class LuaSchedulesModule(
     private val logger: Logger,

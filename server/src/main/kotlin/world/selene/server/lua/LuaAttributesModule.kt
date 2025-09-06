@@ -15,7 +15,7 @@ import world.selene.server.attribute.IntAttributeClampFilter
 import world.selene.server.attribute.IntAttributeMathOpFilter
 
 /**
- * Provides functions for creating common attribute filters.
+ * Create common attribute filters.
  */
 class LuaAttributesModule : LuaModule {
     override val name = "selene.attributes"

@@ -10,7 +10,7 @@ import world.selene.common.lua.checkString
 import world.selene.common.lua.register
 
 /**
- * Provides texture creation and manipulation functionality.
+ * Create and manipulate textures.
  */
 class LuaTexturesModule : LuaModule {
     override val name = "selene.textures"

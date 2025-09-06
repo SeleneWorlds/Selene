@@ -9,7 +9,7 @@ import world.selene.common.lua.register
 import world.selene.server.config.ScriptProperties
 
 /**
- * Provides access to properties configured in the `script.properties` file.
+ * Lookup properties configured in the `script.properties` file.
  */
 class LuaConfigModule(private val scriptProperties: ScriptProperties) : LuaModule {
     override val name = "selene.config"

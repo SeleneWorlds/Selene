@@ -14,7 +14,7 @@ import world.selene.common.lua.register
 import world.selene.common.lua.xpCall
 
 /**
- * Provides input handling functionality for keyboard and mouse events.
+ * Handle input for keyboard and mouse events.
  */
 class LuaInputModule(private val inputManager: InputManager) : LuaModule {
     override val name = "selene.input"
