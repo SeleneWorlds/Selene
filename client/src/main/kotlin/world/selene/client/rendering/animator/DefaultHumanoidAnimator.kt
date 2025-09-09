@@ -27,11 +27,11 @@ class DefaultHumanoidAnimator(private val grid: Grid) {
 
             for (direction in grid.directions.values) {
                 stateMachine.addTransition(state.name, StateTransition(
-                    targetState = "walk/$direction",
+                    targetState = "walk/${direction.name}",
                     condition = { it.direction == direction && it.isInMotion() }
                 ))
                 stateMachine.addTransition(state.name, StateTransition(
-                    targetState = "stationary/$direction",
+                    targetState = "stationary/${direction.name}",
                     condition = { it.direction == direction && !it.isInMotion() }
                 ))
             }
@@ -42,14 +42,16 @@ class DefaultHumanoidAnimator(private val grid: Grid) {
 
             for (direction in grid.directions.values) {
                 stateMachine.addTransition(state.name, StateTransition(
-                    targetState = "walk/$direction",
+                    targetState = "walk/${direction.name}",
                     condition = { it.direction == direction && it.isInMotion() }
                 ))
                 stateMachine.addTransition(state.name, StateTransition(
-                    targetState = "stationary/$direction",
+                    targetState = "stationary/${direction.name}",
                     condition = { it.direction == direction && !it.isInMotion() }
                 ))
             }
         }
+
+        stateMachine.setDefaultState("stationary/south")
     }
 }

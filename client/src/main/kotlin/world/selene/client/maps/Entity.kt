@@ -280,6 +280,10 @@ class Entity(
         this.facing = facing
     }
 
+    override fun toString(): String {
+        return "Entity($networkId)"
+    }
+
     @Suppress("SameReturnValue")
     companion object {
         /**
