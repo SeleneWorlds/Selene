@@ -2,8 +2,13 @@ name: Deploy to Maven
 
 on:
   push:
-    tags:
-      - 'v*'  # Triggers on version tags like v1.0.0
+    branches: [ "main" ]
+    tags: [ 'v*.*.*' ]
+    paths:
+      - 'build.gradle.kts'
+      - 'gradle.properties'
+      - 'common/**'
+      - 'client/**'
   workflow_dispatch:  # Allows manual triggering
 
 jobs:
