@@ -2,7 +2,7 @@
   <configuration default="false" name="VBU Client" type="JetRunConfigurationType">
     <option name="MAIN_CLASS_NAME" value="world.selene.client.ClientBootstrapKt" />
     <module name="SeleneV3.client.main" />
-    <option name="PROGRAM_PARAMETERS" value="-h localhost -p 8147 -t admin -b illarion-gobaith-data ../../bundles/illarion-vbu-data -b illarion-gobaith-ui ../../bundles/illarion-gobaith-ui -b illarion-gobaith-assets ../../bundles/illarion-gobaith-assets -b illarion-vbu-assets ../../bundles/illarion-vbu-assets" />
+    <option name="PROGRAM_PARAMETERS" value="-h localhost -p 8148 -t admin -b illarion-gobaith-data ../../bundles/illarion-vbu-data -b illarion-gobaith-ui ../../bundles/illarion-gobaith-ui -b illarion-gobaith-assets ../../bundles/illarion-gobaith-assets -b illarion-vbu-assets ../../bundles/illarion-vbu-assets" />
     <shortenClasspath name="NONE" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/client/run" />
     <method v="2">
