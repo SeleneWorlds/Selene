@@ -1,6 +1,8 @@
 package world.selene.client.rendering.animator
 
+import world.selene.client.maps.Entity
+
 interface AnimatorController {
-    fun getCurrentAnimationName(): String
-    fun getCurrentAnimationSpeed(): Float
+    val currentAnimation: ConfiguredAnimation?
+    fun update(entity: Entity, delta: Float)
 }

@@ -10,7 +10,9 @@ import party.iroiro.luajava.Lua
 import world.selene.client.controls.EntityMotion
 import world.selene.client.entity.component.*
 import world.selene.client.grid.ClientGrid
-import world.selene.client.rendering.animator.HumanoidAnimatorController
+import world.selene.client.rendering.animator.AnimatorController
+import world.selene.client.rendering.animator.DefaultHumanoidAnimator
+import world.selene.client.rendering.animator.StateMachineAnimatorController
 import world.selene.client.rendering.environment.Environment
 import world.selene.client.scene.Renderable
 import world.selene.client.scene.Scene
@@ -54,7 +56,7 @@ class Entity(
     val componentsToBeRemoved = mutableSetOf<EntityComponent>()
 
     val motionQueue: ArrayDeque<EntityMotion> = ArrayDeque()
-    val animator = HumanoidAnimatorController(this)
+    var animator: AnimatorController = StateMachineAnimatorController().configure(DefaultHumanoidAnimator(grid)::configure)
 
     override var coordinate: Coordinate = Coordinate.Zero
         private set(value) {
@@ -123,6 +125,8 @@ class Entity(
             scene?.updateSorting(this)
         }
 
+        animator.update(this, delta)
+        
         processComponents {
             tickableComponents.forEach { component ->
                 component.update(this, delta)
