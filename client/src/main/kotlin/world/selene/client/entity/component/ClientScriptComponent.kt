@@ -2,6 +2,7 @@ package world.selene.client.entity.component
 
 import org.koin.mp.KoinPlatform
 import party.iroiro.luajava.Lua
+import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.maps.Entity
 import world.selene.common.lua.LuaManager
@@ -23,7 +24,11 @@ class ClientScriptComponent(val moduleName: String) : EntityComponent, TickableC
         }
         lua.getGlobal("require")
         lua.push(moduleName)
-        lua.pCall(1, 1)
+        try {
+            lua.pCall(1, 1)
+        } catch (_: LuaException) {
+            return
+        }
         if (initPending) {
             lua.getField(-1, "Initialize")
             if (lua.isFunction(-1)) {
