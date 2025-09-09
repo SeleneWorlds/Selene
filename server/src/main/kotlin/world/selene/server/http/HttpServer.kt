@@ -11,9 +11,11 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.util.encodeBase64
 import world.selene.common.bundles.BundleDatabase
 import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.config.ServerConfig
+import world.selene.server.heartbeat.ServerHeartbeat
 import world.selene.server.login.LoginQueue
 import world.selene.server.login.LoginQueueStatus
 import world.selene.server.login.SessionAuthentication
@@ -29,7 +31,8 @@ class HttpServer(
     private val clientBundleCache: ClientBundleCache,
     private val queue: LoginQueue,
     private val playerManager: PlayerManager,
-    private val sessionAuth: SessionAuthentication
+    private val sessionAuth: SessionAuthentication,
+    private val serverHeartbeat: ServerHeartbeat
 ) {
     fun start() {
         embeddedServer(Netty, port = config.managementPort) {
@@ -56,15 +59,19 @@ class HttpServer(
                 get("/") {
                     call.respond(mapOf(
                         "type" to "selene",
+                        "id" to serverHeartbeat.serverId,
+                        "name" to config.name,
                         "status" to "running",
                         "timestamp" to System.currentTimeMillis(),
                         "uptime" to System.currentTimeMillis() - startupTime,
                         "bundles" to mapOf(
-                            "loaded_count" to bundleDatabase.loadedBundles.size,
-                            "client_bundles_count" to bundleDatabase.loadedBundles.count { clientBundleCache.hasClientSide(it.dir) }
+                            "total_count" to bundleDatabase.loadedBundles.size,
+                            "client_count" to bundleDatabase.loadedBundles.count { clientBundleCache.hasClientSide(it.dir) }
                         ),
-                        "queued_players" to queue.getQueueSize(),
-                        "online_players" to playerManager.players.size
+                        "queueSize" to queue.queueSize,
+                        "maxQueueSize" to queue.maxQueueSize,
+                        "currentPlayers" to playerManager.players.size,
+                        "maxPlayers" to 100
                     ))
                 }
                 authenticate("session") {

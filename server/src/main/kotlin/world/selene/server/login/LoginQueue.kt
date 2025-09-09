@@ -105,7 +105,6 @@ class LoginQueue(
         }
     }
 
-    fun getQueueSize(): Int {
-        return entries.size
-    }
+    val queueSize get() = entries.size
+    val maxQueueSize = 100
 }

@@ -15,6 +15,7 @@ import world.selene.common.util.Disposable
 import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.config.ServerConfig
 import world.selene.server.data.PersistentNameIdRegistry
+import world.selene.server.heartbeat.ServerHeartbeat
 import world.selene.server.http.HttpServer
 import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.network.NetworkServer
@@ -26,6 +27,7 @@ val startupTime = System.currentTimeMillis()
 class SeleneServer(
     private val httpServer: HttpServer,
     private val networkServer: NetworkServer,
+    private val serverHeartbeat: ServerHeartbeat,
     packetRegistrations: PacketRegistrations,
     clientBundleCache: ClientBundleCache,
     bundleLoader: BundleLoader,
@@ -78,6 +80,7 @@ class SeleneServer(
 
         httpServer.start()
         networkServer.start(config.port)
+        serverHeartbeat.start()
 
         startConsoleThread()
         startMainEventLoop()
@@ -121,6 +124,7 @@ class SeleneServer(
 
     fun shutdown() {
         running.set(false)
+        serverHeartbeat.stop()
         networkServer.stop()
 
         getKoin().getAll<Disposable>().forEach { it.dispose() }

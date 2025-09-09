@@ -36,6 +36,7 @@ import world.selene.server.bundles.ServerBundleLocator
 import world.selene.server.collision.CollisionResolver
 import world.selene.server.config.ScriptProperties
 import world.selene.server.config.ServerConfig
+import world.selene.server.heartbeat.ServerHeartbeat
 import world.selene.server.data.PersistentNameIdRegistry
 import world.selene.server.data.Registries
 import world.selene.server.data.ServerCustomData
@@ -72,6 +73,7 @@ fun main(args: Array<String>) {
     val httpModule = module {
         singleOf(::HttpServer)
         singleOf(::SessionAuthentication)
+        singleOf(::ServerHeartbeat) { bind<Disposable>() }
         single {
             val objectMapper = get<ObjectMapper>()
             HttpClient(CIO) {

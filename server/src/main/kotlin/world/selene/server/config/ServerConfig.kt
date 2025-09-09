@@ -3,12 +3,14 @@ package world.selene.server.config
 import java.io.File
 
 data class ServerConfig(
-    val port: Int,
+    val name: String = "New Server",
+    val port: Int = 8147,
     val managementPort: Int = 8080,
-    val savePath: String,
-    val bundlesPath: String,
-    val bundles: List<String>,
-    val insecureMode: Boolean
+    val savePath: String = "save",
+    val bundlesPath: String = "bundles",
+    val bundles: List<String> = emptyList(),
+    val insecureMode: Boolean = false,
+    val heartbeatServer: String = "https://telescope.seleneworlds.com/heartbeat"
 ) {
     companion object {
         fun createDefault() {
