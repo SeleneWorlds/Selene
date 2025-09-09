@@ -10,9 +10,9 @@ data class ServerConfig(
     val bundlesPath: String = "bundles",
     val bundles: List<String> = emptyList(),
     val insecureMode: Boolean = false,
-    val insecureApi: Boolean = false,
     val public: Boolean = false,
-    val announcedIp: String = ""
+    val announcedHost: String = "",
+    val announcedApi: String = ""
 ) {
     companion object {
         fun createDefault() {
