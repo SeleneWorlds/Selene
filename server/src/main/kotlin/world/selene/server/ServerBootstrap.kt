@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.json.JsonMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
+import com.sksamuel.hoplite.fp.getOrElse
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -36,6 +37,7 @@ import world.selene.server.bundles.ServerBundleLocator
 import world.selene.server.collision.CollisionResolver
 import world.selene.server.config.ScriptProperties
 import world.selene.server.config.ServerConfig
+import world.selene.server.config.SystemConfig
 import world.selene.server.heartbeat.ServerHeartbeat
 import world.selene.server.data.PersistentNameIdRegistry
 import world.selene.server.data.Registries
@@ -161,6 +163,13 @@ fun main(args: Array<String>) {
                 .withExplicitSealedTypes()
                 .build()
                 .loadConfigOrThrow<ServerConfig>("server.properties")
+        }
+        single {
+            ConfigLoaderBuilder.default()
+                .withExplicitSealedTypes()
+                .build()
+                .loadConfig<SystemConfig>("system.properties")
+                .getOrElse { SystemConfig() }
         }
         singleOf(::ScriptProperties)
         singleOf(::MainThreadDispatcher)

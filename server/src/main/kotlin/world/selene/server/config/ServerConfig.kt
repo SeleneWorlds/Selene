@@ -10,7 +10,7 @@ data class ServerConfig(
     val bundlesPath: String = "bundles",
     val bundles: List<String> = emptyList(),
     val insecureMode: Boolean = false,
-    val heartbeatServer: String = "https://telescope.seleneworlds.com"
+    val public: Boolean = false
 ) {
     companion object {
         fun createDefault() {

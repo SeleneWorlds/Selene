@@ -4,34 +4,40 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.util.generateNonce
+import io.ktor.util.*
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import world.selene.common.util.Disposable
 import world.selene.server.config.ServerConfig
+import world.selene.server.config.SystemConfig
 import world.selene.server.player.PlayerManager
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ServerHeartbeat(
     private val config: ServerConfig,
+    private val systemConfig: SystemConfig,
     private val httpClient: HttpClient,
     private val playerManager: PlayerManager,
     private val objectMapper: ObjectMapper,
     private val logger: Logger
 ) : Disposable {
-    
+
     val serverId = UUID.randomUUID().toString()
     private val running = AtomicBoolean(false)
     private var heartbeatJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    
+
     fun start() {
-        if (config.heartbeatServer.isBlank()) {
+        if (!config.public) {
+            logger.info("Server is not public, skipping heartbeat")
+            return
+        }
+        if (systemConfig.heartbeatServer.isBlank()) {
             logger.info("No heartbeat server configured, skipping heartbeat")
             return
         }
-        
+
         if (running.compareAndSet(false, true)) {
             logger.info("Announcing server with ID: $serverId")
             heartbeatJob = scope.launch {
@@ -42,19 +48,19 @@ class ServerHeartbeat(
             }
         }
     }
-    
+
     fun stop() {
         if (running.compareAndSet(true, false)) {
             heartbeatJob?.cancel()
             heartbeatJob = null
         }
     }
-    
+
     override fun dispose() {
         stop()
         scope.cancel()
     }
-    
+
     private suspend fun sendHeartbeat() {
         val heartbeatData = HeartbeatData(
             id = serverId,
@@ -65,18 +71,18 @@ class ServerHeartbeat(
             currentPlayers = playerManager.players.size,
             maxPlayers = 100
         )
-        
+
         try {
-            val response = httpClient.post(config.heartbeatServer + "/heartbeat") {
+            val response = httpClient.post(systemConfig.heartbeatServer + "/heartbeat") {
                 contentType(ContentType.Application.Json)
                 setBody(objectMapper.writeValueAsString(heartbeatData))
             }
-            
+
             if (!response.status.isSuccess()) {
                 logger.warn("Heartbeat request failed with status: ${response.status}")
             }
         } catch (e: Exception) {
-            logger.warn("Failed to send heartbeat to ${config.heartbeatServer}: ${e.message}")
+            logger.warn("Failed to send heartbeat to ${systemConfig.heartbeatServer}: ${e.message}")
         }
     }
 
