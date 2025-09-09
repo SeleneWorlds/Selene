@@ -4,6 +4,7 @@ import java.io.File
 
 data class ServerConfig(
     val port: Int,
+    val managementPort: Int = 8080,
     val savePath: String,
     val bundlesPath: String,
     val bundles: List<String>,

@@ -13,6 +13,7 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import world.selene.common.bundles.BundleDatabase
 import world.selene.server.bundles.ClientBundleCache
+import world.selene.server.config.ServerConfig
 import world.selene.server.login.LoginQueue
 import world.selene.server.login.LoginQueueStatus
 import world.selene.server.login.SessionAuthentication
@@ -23,6 +24,7 @@ import java.net.URI
 data class SeleneUser(val userId: String)
 
 class HttpServer(
+    private val config: ServerConfig,
     private val bundleDatabase: BundleDatabase,
     private val clientBundleCache: ClientBundleCache,
     private val queue: LoginQueue,
@@ -30,7 +32,7 @@ class HttpServer(
     private val sessionAuth: SessionAuthentication
 ) {
     fun start() {
-        embeddedServer(Netty, port = 8080) {
+        embeddedServer(Netty, port = config.managementPort) {
             install(Authentication) {
                 jwt("user") {
                     verifier(JwkProviderBuilder(URI("https://id.twelveiterations.com/realms/Selene/protocol/openid-connect/certs").toURL()).build())
