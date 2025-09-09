@@ -1,5 +1,8 @@
 package world.selene.server.login
 
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
 import world.selene.server.config.ServerConfig
@@ -25,7 +28,7 @@ class SessionAuthentication(private val config: ServerConfig) {
             .sign(algorithm)
     }
 
-    fun parseToken(token: String): TokenData {
+    fun parseToken(token: String): Either<Exception, TokenData> {
         try {
             val decoded = if (config.insecureMode)
                 JWT.decode(token)
@@ -34,12 +37,12 @@ class SessionAuthentication(private val config: ServerConfig) {
                 .withAudience(audience)
                 .build()
                 .verify(token)
-            return TokenData(decoded.subject)
+            return TokenData(decoded.subject).right()
         } catch (e: Exception) {
             if (config.insecureMode) {
-                return TokenData(token)
+                return TokenData(token).right()
             }
-            throw e
+            return e.left()
         }
     }
 

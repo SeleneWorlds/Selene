@@ -31,16 +31,23 @@ class ServerPacketHandler(
     private fun handleAuthentication(context: NetworkClient, packet: Packet) {
         val player = (context as NetworkClientImpl).player
         if (packet is AuthenticatePacket) {
-            val tokenData = sessionAuthentication.parseToken(packet.token)
-            player.userId = tokenData.userId
-            for (scope in nameIdRegistry.mappings.rowKeySet()) {
-                val mappings = nameIdRegistry.mappings.row(scope)
-                mappings.entries.windowed(500, partialWindows = true).forEach { chunk ->
-                    context.send(NameIdMappingsPacket(scope, chunk))
+            sessionAuthentication.parseToken(packet.token)
+                .onRight {
+                    player.userId = it.userId
+                    for (scope in nameIdRegistry.mappings.rowKeySet()) {
+                        val mappings = nameIdRegistry.mappings.row(scope)
+                        mappings.entries.windowed(500, partialWindows = true).forEach { chunk ->
+                            context.send(NameIdMappingsPacket(scope, chunk))
+                        }
+                        context.send(NameIdMappingsPacket(scope, emptyList()))
+                    }
+                    player.connectionState = Player.ConnectionState.PENDING_JOIN
                 }
-                context.send(NameIdMappingsPacket(scope, emptyList()))
-            }
-            player.connectionState = Player.ConnectionState.PENDING_JOIN
+                .onLeft {
+                    player.connectionState = Player.ConnectionState.DISCONNECTED
+                    context.send(DisconnectPacket("Invalid authentication token"))
+                    context.disconnect()
+                }
         }
     }
 

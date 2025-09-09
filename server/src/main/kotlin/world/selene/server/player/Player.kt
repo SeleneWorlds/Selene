@@ -23,7 +23,8 @@ class Player(
     enum class ConnectionState {
         PENDING_AUTHENTICATION,
         PENDING_JOIN,
-        READY
+        READY,
+        DISCONNECTED
     }
 
     var connectionState: ConnectionState = ConnectionState.PENDING_AUTHENTICATION
