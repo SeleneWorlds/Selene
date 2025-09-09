@@ -72,8 +72,10 @@ class ServerHeartbeat(
 
     private suspend fun sendHeartbeat() {
         val now = Instant.now()
+        val publicApiUrl =
+            config.announcedApi.ifEmpty { "http://${config.announcedHost.ifEmpty { "localhost" }}:${config.apiPort}" }
         val jwtToken = JWT.create()
-            .withIssuer(config.announcedApi.ifEmpty { "http://${config.announcedHost.ifEmpty { "localhost" }}:${config.apiPort}" })
+            .withIssuer(publicApiUrl)
             .withSubject(serverId)
             .withKeyId(serverId)
             .withAudience(systemConfig.heartbeatServer + "/heartbeat")
@@ -85,7 +87,7 @@ class ServerHeartbeat(
             "name" to config.name,
             "address" to config.announcedHost,
             "port" to config.port,
-            "apiPort" to config.apiPort,
+            "apiUrl" to publicApiUrl,
             "currentPlayers" to playerManager.players.size,
             "maxPlayers" to 100
         )
