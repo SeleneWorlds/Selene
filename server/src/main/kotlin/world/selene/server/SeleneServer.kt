@@ -105,9 +105,7 @@ class SeleneServer(
                     }
                     line = reader.readLine()
                 }
-            } catch (_: EndOfFileException) {
-                running.set(false)
-            }
+            } catch (_: EndOfFileException) { }
         }
     }
 
