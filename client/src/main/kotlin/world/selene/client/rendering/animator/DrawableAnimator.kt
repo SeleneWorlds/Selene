@@ -10,6 +10,7 @@ class DrawableAnimator(private val controller: AnimatorController) : Animator {
     val drawable: Drawable?
         get() {
             return controller.getCurrentAnimationName().let { animations[it] }
+                ?.also { it.speed = controller.getCurrentAnimationSpeed() }
         }
 
     fun addAnimation(key: String, drawable: AnimatedDrawable) {

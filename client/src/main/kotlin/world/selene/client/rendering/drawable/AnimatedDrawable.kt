@@ -10,6 +10,7 @@ import world.selene.common.lua.checkUserdata
 class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawable {
     private var currentFrame = 0
     private var elapsedTime = 0f
+    var speed = 1f
 
     private val animationCompleted = Signal("AnimationCompleted")
 
@@ -23,8 +24,8 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
 
     override fun update(delta: Float) {
         if (frames.size <= 1) return
-        elapsedTime += delta
-        val frameDuration = duration
+        elapsedTime += delta * speed
+        val frameDuration = duration / frames.size
         while (elapsedTime >= frameDuration) {
             elapsedTime -= frameDuration
             currentFrame = (currentFrame + 1) % frames.size
@@ -66,6 +67,10 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
         return AnimatedDrawable(frames.map {
             if (it is TextureRegionDrawable) it.withoutOffset() else it
         }, duration)
+    }
+
+    override fun toString(): String {
+        return "AnimatedDrawable(duration=$duration, speed=$speed, currentFrameIndex=$currentFrame, currentFrame=${frames.getOrNull(currentFrame)}, elapsedTime=$elapsedTime)"
     }
 
     @Suppress("SameReturnValue")

@@ -8,7 +8,7 @@ import world.selene.client.rendering.visual2d.Visual2D
 import world.selene.common.lua.*
 
 class Visual2DComponent(val visual: Visual2D, override val positioner: ComponentPositioner) : EntityComponent,
-    RenderableComponent, LuaMetatableProvider {
+    TickableComponent, RenderableComponent, LuaMetatableProvider {
     var red = 1f
     var green = 1f
     var blue = 1f
@@ -20,6 +20,10 @@ class Visual2DComponent(val visual: Visual2D, override val positioner: Component
 
     override fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle {
         return visual.getBounds(x, y, outRect)
+    }
+
+    override fun update(entity: Entity, delta: Float) {
+        visual.update(delta)
     }
 
     override fun render(

@@ -51,6 +51,10 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
         return TextureRegionDrawable(textureRegion, 0f, 0f)
     }
 
+    override fun toString(): String {
+        return "TextureRegionDrawable(texture=${textureRegion.texture}, offsetX=$offsetX, offsetY=$offsetY)"
+    }
+
     @Suppress("SameReturnValue")
     companion object {
         /**

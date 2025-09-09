@@ -8,7 +8,7 @@ import world.selene.client.rendering.visual2d.iso.IsoVisual
 import world.selene.common.lua.*
 
 class IsoVisualComponent(val visual: IsoVisual, override val positioner: ComponentPositioner) : EntityComponent,
-    RenderableComponent, IsoComponent,
+    TickableComponent, RenderableComponent, IsoComponent,
     LuaMetatableProvider {
     var red = 1f
     var green = 1f
@@ -27,6 +27,10 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
 
     override fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle {
         return visual.getBounds(x, y, outRect)
+    }
+
+    override fun update(entity: Entity, delta: Float) {
+        visual.update(delta)
     }
 
     override fun render(

@@ -91,6 +91,10 @@ class Entity(
         }
     }
 
+    fun getMotion(): EntityMotion? {
+        return motionQueue.firstOrNull()
+    }
+
     fun isInMotion(): Boolean {
         return motionQueue.isNotEmpty()
     }
