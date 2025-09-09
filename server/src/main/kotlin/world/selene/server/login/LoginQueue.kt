@@ -104,4 +104,8 @@ class LoginQueue(
             }
         }
     }
+
+    fun getQueueSize(): Int {
+        return entries.size
+    }
 }

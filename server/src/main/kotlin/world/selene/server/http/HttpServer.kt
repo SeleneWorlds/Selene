@@ -16,6 +16,8 @@ import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.login.LoginQueue
 import world.selene.server.login.LoginQueueStatus
 import world.selene.server.login.SessionAuthentication
+import world.selene.server.player.PlayerManager
+import world.selene.server.startupTime
 import java.net.URI
 
 data class SeleneUser(val userId: String)
@@ -24,6 +26,7 @@ class HttpServer(
     private val bundleDatabase: BundleDatabase,
     private val clientBundleCache: ClientBundleCache,
     private val queue: LoginQueue,
+    private val playerManager: PlayerManager,
     private val sessionAuth: SessionAuthentication
 ) {
     fun start() {
@@ -49,7 +52,18 @@ class HttpServer(
             }
             routing {
                 get("/") {
-                    call.respond(mapOf("status" to "ok"))
+                    call.respond(mapOf(
+                        "type" to "selene",
+                        "status" to "running",
+                        "timestamp" to System.currentTimeMillis(),
+                        "uptime" to System.currentTimeMillis() - startupTime,
+                        "bundles" to mapOf(
+                            "loaded_count" to bundleDatabase.loadedBundles.size,
+                            "client_bundles_count" to bundleDatabase.loadedBundles.count { clientBundleCache.hasClientSide(it.dir) }
+                        ),
+                        "queued_players" to queue.getQueueSize(),
+                        "online_players" to playerManager.players.size
+                    ))
                 }
                 authenticate("session") {
                     get("/bundles") {

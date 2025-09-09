@@ -21,6 +21,8 @@ import world.selene.server.network.NetworkServer
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
+val startupTime = System.currentTimeMillis()
+
 class SeleneServer(
     private val httpServer: HttpServer,
     private val networkServer: NetworkServer,
