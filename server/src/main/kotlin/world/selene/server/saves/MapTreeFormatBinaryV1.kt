@@ -139,19 +139,18 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                                             ?: throw RuntimeException("Missing tile definition for id $newTileId")
                                         result.swapTile(Coordinate(x, y, z), oldTileDef, newTileDef)
                                     }
+
+                                    OP_ANNOTATION -> {
+                                        val annotationX = buffer.int
+                                        val annotationY = buffer.int
+                                        val annotationZ = buffer.int
+                                        val key = buffer.readString()
+                                        val hasData = buffer.get().toInt() == 1
+                                        val data = if (hasData) buffer.readMap() else null
+                                        result.annotateTile(Coordinate(annotationX, annotationY, annotationZ), key, data)
+                                    }
                                 }
                             }
-                        }
-
-                        // Read annotations
-                        val annotationCount = buffer.int
-                        repeat(annotationCount) {
-                            val x = buffer.int
-                            val y = buffer.int
-                            val z = buffer.int
-                            val key = buffer.readString()
-                            val data = buffer.readMap()
-                            result.annotateTile(Coordinate(x, y, z), key, data)
                         }
                     }
                 }
@@ -355,9 +354,9 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
         }
     }
 
-    private fun ByteBuffer.readAny() {
+    private fun ByteBuffer.readAny(): Any {
         val type = this.get().toInt()
-        when (type) {
+        return when (type) {
             1 -> this.int
             2 -> this.float
             3 -> this.get().toInt() == 1
