@@ -1,16 +1,21 @@
 package world.selene.server.heartbeat
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.util.*
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import world.selene.common.util.Disposable
 import world.selene.server.config.ServerConfig
 import world.selene.server.config.SystemConfig
 import world.selene.server.player.PlayerManager
+import java.security.KeyPairGenerator
+import java.security.interfaces.RSAPrivateKey
+import java.security.interfaces.RSAPublicKey
+import java.time.Duration
+import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -19,7 +24,6 @@ class ServerHeartbeat(
     private val systemConfig: SystemConfig,
     private val httpClient: HttpClient,
     private val playerManager: PlayerManager,
-    private val objectMapper: ObjectMapper,
     private val logger: Logger
 ) : Disposable {
 
@@ -27,6 +31,11 @@ class ServerHeartbeat(
     private val running = AtomicBoolean(false)
     private var heartbeatJob: Job? = null
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    private val keyPair = generateRSAKeyPair()
+    val publicKey: RSAPublicKey = keyPair.public as RSAPublicKey
+    private val privateKey: RSAPrivateKey = keyPair.private as RSAPrivateKey
+    private val jwtAlgorithm = Algorithm.RSA256(publicKey, privateKey)
 
     fun start() {
         if (!config.public) {
@@ -43,7 +52,7 @@ class ServerHeartbeat(
             heartbeatJob = scope.launch {
                 while (running.get()) {
                     sendHeartbeat()
-                    delay(HEARTBEAT_INTERVAL_MS)
+                    delay(heartbeatInterval.toMillis())
                 }
             }
         }
@@ -62,20 +71,30 @@ class ServerHeartbeat(
     }
 
     private suspend fun sendHeartbeat() {
-        val heartbeatData = HeartbeatData(
-            id = serverId,
-            port = config.port,
-            nonce = generateNonce(),
-            timestamp = System.currentTimeMillis(),
-            name = config.name,
-            currentPlayers = playerManager.players.size,
-            maxPlayers = 100
+        val now = Instant.now()
+        val jwtToken = JWT.create()
+            .withIssuer(if (config.insecureApi) "http://${config.announcedIp.ifEmpty { "localhost" }}:${config.apiPort}" else "https://${config.announcedIp.ifEmpty { "localhost" }}:${config.apiPort}")
+            .withSubject(serverId)
+            .withKeyId(serverId)
+            .withAudience(systemConfig.heartbeatServer + "/heartbeat")
+            .withIssuedAt(now)
+            .withExpiresAt(now.plus(heartbeatInterval))
+            .sign(jwtAlgorithm)
+
+        val statusBody = mapOf(
+            "name" to config.name,
+            "address" to config.announcedIp,
+            "port" to config.port,
+            "apiPort" to config.apiPort,
+            "currentPlayers" to playerManager.players.size,
+            "maxPlayers" to 100
         )
 
         try {
             val response = httpClient.post(systemConfig.heartbeatServer + "/heartbeat") {
                 contentType(ContentType.Application.Json)
-                setBody(objectMapper.writeValueAsString(heartbeatData))
+                setBody(statusBody)
+                bearerAuth(jwtToken)
             }
 
             if (!response.status.isSuccess()) {
@@ -86,17 +105,11 @@ class ServerHeartbeat(
         }
     }
 
-    data class HeartbeatData(
-        val id: String,
-        val name: String,
-        val port: Int,
-        val timestamp: Long,
-        val nonce: String,
-        val currentPlayers: Int,
-        val maxPlayers: Int
-    )
+    private fun generateRSAKeyPair() = KeyPairGenerator.getInstance("RSA").apply {
+        initialize(2048)
+    }.generateKeyPair()
 
     companion object {
-        private const val HEARTBEAT_INTERVAL_MS = 30_000L
+        private val heartbeatInterval = Duration.ofSeconds(30)
     }
 }

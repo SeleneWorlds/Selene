@@ -11,7 +11,7 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.util.encodeBase64
+import java.util.*
 import world.selene.common.bundles.BundleDatabase
 import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.config.ServerConfig
@@ -35,7 +35,7 @@ class HttpServer(
     private val serverHeartbeat: ServerHeartbeat
 ) {
     fun start() {
-        embeddedServer(Netty, port = config.managementPort) {
+        embeddedServer(Netty, port = config.apiPort) {
             install(Authentication) {
                 jwt("user") {
                     verifier(JwkProviderBuilder(URI("https://id.twelveiterations.com/realms/Selene/protocol/openid-connect/certs").toURL()).build())
@@ -72,6 +72,22 @@ class HttpServer(
                         "maxQueueSize" to queue.maxQueueSize,
                         "currentPlayers" to playerManager.players.size,
                         "maxPlayers" to 100
+                    ))
+                }
+                get("/heartbeat/jwks") {
+                    val publicKey = serverHeartbeat.publicKey
+
+                    call.respond(mapOf(
+                        "keys" to listOf(
+                            mapOf(
+                                "kty" to "RSA",
+                                "use" to "sig",
+                                "alg" to "RS256",
+                                "kid" to serverHeartbeat.serverId,
+                                "n" to Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.modulus.toByteArray()),
+                                "e" to Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.publicExponent.toByteArray())
+                            )
+                        )
                     ))
                 }
                 authenticate("session") {

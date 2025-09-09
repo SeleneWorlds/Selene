@@ -5,12 +5,14 @@ import java.io.File
 data class ServerConfig(
     val name: String = "New Server",
     val port: Int = 8147,
-    val managementPort: Int = 8080,
+    val apiPort: Int = 8080,
     val savePath: String = "save",
     val bundlesPath: String = "bundles",
     val bundles: List<String> = emptyList(),
     val insecureMode: Boolean = false,
-    val public: Boolean = false
+    val insecureApi: Boolean = false,
+    val public: Boolean = false,
+    val announcedIp: String = ""
 ) {
     companion object {
         fun createDefault() {
