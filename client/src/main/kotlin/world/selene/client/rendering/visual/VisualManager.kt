@@ -64,7 +64,7 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
                 val drawableAnimator = DrawableAnimator(animationController)
                 visualDef.animations.forEach { (animationName, frames) ->
                     val options = AnimatedDrawableOptions(
-                        duration = frames.speed ?: 0.13f
+                        duration = frames.duration ?: (1f / 30f)
                     )
                     val drawableFrames = frames.textures.map {
                         it to DrawableOptions(

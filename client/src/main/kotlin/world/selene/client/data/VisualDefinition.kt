@@ -56,7 +56,7 @@ data class VariantsVisualDefinition(
 
 data class AnimatedVisualDefinition(
     val textures: List<String>,
-    val duration: Float = 0.1f,
+    val duration: Float = 1f / 30f,
     val offsetX: Float = 0f,
     val offsetY: Float = 0f,
     val surfaceOffsetY: Float = 0f,
@@ -80,7 +80,7 @@ data class AnimatorVisualDefinition(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class AnimationFrames(
     val textures: List<String>,
-    val speed: Float? = null,
+    val duration: Float? = null,
     val offsetX: Float? = null,
     val offsetY: Float? = null,
     val flipX: Boolean = false,
