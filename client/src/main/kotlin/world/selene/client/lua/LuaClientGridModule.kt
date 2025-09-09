@@ -29,7 +29,8 @@ class LuaClientGridModule(private val grid: ClientGrid) : LuaGridModule(grid) {
     private fun luaScreenToCoordinate(lua: Lua): Int {
         val x = lua.checkFloat(1)
         val y = lua.checkFloat(2)
-        lua.push(grid.screenToCoordinate(x, y), Lua.Conversion.NONE)
+        val z = if (lua.isNumber(3)) lua.toInteger(3).toInt() else 0
+        lua.push(grid.screenToCoordinate(x, y, z), Lua.Conversion.NONE)
         return 1
     }
 }

@@ -30,10 +30,11 @@ class ClientGrid : Grid() {
     fun getSortLayer(position: Vector3, sortLayerOffset: Int) =
         ((floor(position.x) - ceil(position.y) - (floor(position.z) * zSortScale)).toInt() * rowSortScale) - sortLayerOffset
 
-    fun screenToCoordinate(x: Float, y: Float): Coordinate {
-        val isoX = (x / tileStepX + (y / tileStepY)) / 2
-        val isoY = (x / tileStepX - (y / tileStepY)) / 2
-        return Coordinate(isoX.roundToInt(), isoY.roundToInt(), 0)
+    fun screenToCoordinate(x: Float, y: Float, z: Int = 0): Coordinate {
+        val adjustedY = y - (z * tileStepZ)
+        val isoX = (x / tileStepX + (adjustedY / tileStepY)) / 2
+        val isoY = (x / tileStepX - (adjustedY / tileStepY)) / 2
+        return Coordinate(isoX.roundToInt(), isoY.roundToInt(), z)
     }
 
 }
