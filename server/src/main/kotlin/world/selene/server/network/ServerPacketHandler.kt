@@ -44,7 +44,7 @@ class ServerPacketHandler(
                     player.connectionState = Player.ConnectionState.PENDING_JOIN
                 }
                 .onLeft {
-                    logger.warn("Invalid authentication token for ${player.userId}", it)
+                    logger.warn("Invalid authentication token for ${context.address}", it)
                     player.connectionState = Player.ConnectionState.DISCONNECTED
                     context.send(DisconnectPacket("Invalid authentication token"))
                     context.disconnect()
