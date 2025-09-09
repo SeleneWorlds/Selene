@@ -126,6 +126,7 @@ class ServerPacketHandler(
             Player.ConnectionState.PENDING_AUTHENTICATION -> handleAuthentication(context, packet)
             Player.ConnectionState.PENDING_JOIN -> handleJoin(context, packet)
             Player.ConnectionState.READY -> handleGame(context, packet)
+            Player.ConnectionState.DISCONNECTED -> {}
         }
     }
 }
