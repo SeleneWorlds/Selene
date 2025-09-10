@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.InputEvent
+import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.badlogic.gdx.utils.I18NBundle
 import com.kotcrab.vis.ui.widget.Draggable
@@ -33,6 +34,7 @@ class LuaUIModule(
     private val bundlesRoot: Stack = ui.bundlesRoot
 
     override fun initialize(luaManager: LuaManager) {
+        luaManager.defineMetatable(Stage::class, StageLuaMetatable.luaMeta)
         luaManager.defineMetatable(Actor::class, ActorLuaMetatable.luaMeta)
         luaManager.defineMetatable(Group::class, GroupLuaMetatable.luaMeta)
         luaManager.defineMetatable(VerticalGroup::class, GroupLuaMetatable.luaMeta)

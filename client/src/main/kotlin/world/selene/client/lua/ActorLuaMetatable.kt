@@ -15,6 +15,7 @@ import world.selene.common.lua.checkUserdata
 @Suppress("SameReturnValue")
 object ActorLuaMetatable {
     val luaMeta = LuaMappedMetatable(Actor::class) {
+        getter(::luaGetStage)
         getter(::luaGetName)
         getter(::luaGetParent)
         getter(::luaGetWidth)
@@ -30,6 +31,19 @@ object ActorLuaMetatable {
         callable(::luaInvalidate)
         callable(::luaSetStyle)
         callable(::luaFocus)
+    }
+
+    /**
+     * Stage this actor is attached to, or `nil` if it is not attached to any stage.
+     *
+     * ```property
+     * Stage: Stage|nil
+     * ```
+     */
+    private fun luaGetStage(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        lua.push(actor.stage, Lua.Conversion.NONE)
+        return 1
     }
 
     /**
