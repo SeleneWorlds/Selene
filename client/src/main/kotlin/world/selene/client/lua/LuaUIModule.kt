@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.InputEvent
 import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.badlogic.gdx.utils.I18NBundle
+import com.kotcrab.vis.ui.widget.Draggable
 import com.kotcrab.vis.ui.widget.VisImageButton
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
@@ -56,6 +57,7 @@ class LuaUIModule(
         table.register("GetFocus", this::luaGetFocus)
         table.register("CreateImageButtonStyle", this::luaCreateImageButtonStyle)
         table.register("AddInputProcessor", this::luaAddInputProcessor)
+        table.register("CreateDragListener", this::luaCreateDragListener)
         table.set("Root", bundlesRoot)
     }
 
@@ -213,10 +215,10 @@ class LuaUIModule(
 
             // Register actions from Lua
             for ((actionName, actionFunction) in actions) {
-                parser.action(actionName, object : ParameterizedActorConsumer<Any?, Actor> {
-                    override fun consumeWithParameters(actor: Actor, vararg parameters: Any): Any? {
+                parser.action(actionName, object : ParameterizedActorConsumer<Any?, Any> {
+                    override fun consumeWithParameters(widget: Any, vararg parameters: Any): Any? {
                         lua.push(actionFunction, Lua.Conversion.NONE)
-                        lua.push(actor, Lua.Conversion.NONE)
+                        lua.push(widget, Lua.Conversion.NONE)
                         for (parameter in parameters) {
                             lua.push(parameter, Lua.Conversion.FULL)
                         }
@@ -373,6 +375,84 @@ class LuaUIModule(
             lua.push(style, Lua.Conversion.NONE)
         }
         return styles.size
+    }
+
+    /**
+     * Creates a drag listener to be attached to a Draggable element.
+     *
+     * ```signatures
+     * CreateDragListener(config: table) -> DragListener
+     * ```
+     */
+    private fun luaCreateDragListener(lua: Lua): Int {
+        lua.checkType(1, Lua.LuaType.TABLE)
+
+        val onStart = lua.getFieldFunction(1, "onStart")
+        val onDrag = lua.getFieldFunction(1, "onDrag")
+        val onEnd = lua.getFieldFunction(1, "onEnd")
+        val registrationSite = lua.getCallerInfo()
+        val dragListener = object: Draggable.DragListener {
+            override fun onStart(
+                draggable: Draggable,
+                actor: Actor,
+                stageX: Float,
+                stageY: Float
+            ): Boolean {
+                if (onStart != null) {
+                    lua.push(onStart)
+                    lua.push(draggable, Lua.Conversion.NONE)
+                    lua.push(actor, Lua.Conversion.NONE)
+                    lua.push(stageX)
+                    lua.push(stageY)
+                    lua.xpCall(4, 1, ClosureTrace {
+                        "[drag listener] created in $registrationSite"
+                    })
+                    return lua.toBoolean(-1)
+                }
+                return true
+            }
+
+            override fun onDrag(
+                draggable: Draggable,
+                actor: Actor,
+                stageX: Float,
+                stageY: Float
+            ) {
+                if (onDrag != null) {
+                    lua.push(onDrag)
+                    lua.push(draggable, Lua.Conversion.NONE)
+                    lua.push(actor, Lua.Conversion.NONE)
+                    lua.push(stageX)
+                    lua.push(stageY)
+                    lua.xpCall(4, 0, ClosureTrace {
+                        "[drag listener] created in $registrationSite"
+                    })
+                }
+            }
+
+            override fun onEnd(
+                draggable: Draggable,
+                actor: Actor,
+                stageX: Float,
+                stageY: Float
+            ): Boolean {
+                if (onEnd != null) {
+                    lua.push(onEnd)
+                    lua.push(draggable, Lua.Conversion.NONE)
+                    lua.push(actor, Lua.Conversion.NONE)
+                    lua.push(stageX)
+                    lua.push(stageY)
+                    lua.xpCall(4, 1, ClosureTrace {
+                        "[drag listener] created in $registrationSite"
+                    })
+                    return lua.toBoolean(-1)
+                }
+                return true
+            }
+        }
+
+        lua.push(dragListener, Lua.Conversion.NONE)
+        return 1
     }
 
 }
