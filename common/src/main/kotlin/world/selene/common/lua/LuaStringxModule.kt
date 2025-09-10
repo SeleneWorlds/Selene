@@ -16,8 +16,10 @@ class LuaStringxModule : LuaModule {
         table.register("trim", this::luaTrim)
         table.register("startsWith", this::luaStartsWith)
         table.register("endsWith", this::luaEndsWith)
+        table.register("removePrefix", this::luaRemovePrefix)
         table.register("removeSuffix", this::luaRemoveSuffix)
         table.register("split", this::luaSplit)
+        table.register("substringBefore", this::luaSubstringBefore)
         table.register("substringAfter", this::luaSubstringAfter)
     }
 
@@ -46,6 +48,18 @@ class LuaStringxModule : LuaModule {
     }
 
     /**
+     * Removes the specified prefix from a string if it exists.
+     *
+     * ```signatures
+     * removePrefix(str: string, prefix: string) -> string
+     * ```
+     */
+    private fun luaRemovePrefix(lua: Lua): Int {
+        lua.push(lua.checkString(1).removePrefix(lua.checkString(2)))
+        return 1
+    }
+
+    /**
      * Removes the specified suffix from a string if it exists.
      *
      * ```signatures
@@ -66,6 +80,21 @@ class LuaStringxModule : LuaModule {
      */
     private fun luaTrim(lua: Lua): Int {
         lua.push(lua.checkString(1).trim())
+        return 1
+    }
+
+    /**
+     * Returns the substring before the first occurrence of the separator.
+     *
+     * ```signatures
+     * substringBefore(str: string, separator: string) -> string
+     * ```
+     */
+    private fun luaSubstringBefore(lua: Lua): Int {
+        val str = lua.checkString(1)
+        val separator = lua.checkString(2)
+        val result = str.substringBefore(separator)
+        lua.push(result)
         return 1
     }
 
