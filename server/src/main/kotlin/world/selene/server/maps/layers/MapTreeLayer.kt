@@ -1,21 +1,22 @@
 package world.selene.server.maps.layers
 
-import com.google.common.collect.HashBasedTable
-import com.google.common.collect.Table
+import world.selene.common.grid.ChunkWindow
 import world.selene.common.tiles.TileDefinition
 import world.selene.common.grid.Coordinate
+import world.selene.server.cameras.viewer.DefaultViewer
 import world.selene.server.maps.tree.MapTree
+import world.selene.server.sync.ScopedChunkView
 
+/**
+ * TODO This should use a cached view of the map tree. It can precompute and store data by chunks.
+ */
 class MapTreeLayer(override val name: String, private val mapTree: MapTree) : MapLayer, BaseMapLayer {
     override val visibilityTags = mutableSetOf("default")
     override val collisionTags = mutableSetOf("default")
 
-    fun getBaseTile(coordinate: Coordinate): Int {
-        return 0 // TODO access mapTree for this
-    }
-
     fun getAdditionalTiles(coordinate: Coordinate): List<Int> {
-        return emptyList()  // TODO access mapTree for this
+        val view = ScopedChunkView.create(mapTree, DefaultViewer, ChunkWindow.at(coordinate, 1))
+        return view.getAdditionalTilesAt(coordinate)
     }
 
     override fun placeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean {
@@ -52,7 +53,8 @@ class MapTreeLayer(override val name: String, private val mapTree: MapTree) : Ma
     }
 
     override fun getTileId(coordinate: Coordinate): Int {
-        return 0
+        val view = ScopedChunkView.create(mapTree, DefaultViewer, ChunkWindow.at(coordinate, 1))
+        return view.getBaseTileAt(coordinate)
     }
 
     override fun addVisibilityTag(tagName: String) {
@@ -71,7 +73,8 @@ class MapTreeLayer(override val name: String, private val mapTree: MapTree) : Ma
         collisionTags.remove(tagName)
     }
 
-    fun getAnnotations(): Table<Coordinate, String, Map<*, *>> {
-        return HashBasedTable.create() // TODO access mapTree for this
+    fun getAnnotations(coordinate: Coordinate): Map<String, Map<*, *>> {
+        val view = ScopedChunkView.create(mapTree, DefaultViewer, ChunkWindow.at(coordinate, 1))
+        return view.getAnnotationsAt(coordinate)
     }
 }

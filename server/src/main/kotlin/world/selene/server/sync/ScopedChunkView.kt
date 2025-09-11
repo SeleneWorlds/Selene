@@ -3,22 +3,15 @@ package world.selene.server.sync
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBasedTable
 import party.iroiro.luajava.Lua
+import world.selene.common.grid.ChunkWindow
+import world.selene.common.grid.Coordinate
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.grid.ChunkWindow
-import world.selene.common.grid.Coordinate
 import world.selene.server.cameras.viewer.Viewer
 import world.selene.server.dimensions.Dimension
-import world.selene.server.maps.layers.DenseMapLayer
-import world.selene.server.maps.layers.MapLayer
-import world.selene.server.maps.layers.MapTreeLayer
-import world.selene.server.maps.layers.SparseMapLayer
-import world.selene.server.maps.layers.SparseTileAnnotation
-import world.selene.server.maps.layers.SparseTilePlacement
-import world.selene.server.maps.layers.SparseTileRemoval
-import world.selene.server.maps.layers.SparseTileSwap
-import world.selene.server.maps.layers.SparseTilesReplacement
+import world.selene.server.maps.layers.*
+import world.selene.server.maps.tree.MapTree
 
 class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
 
@@ -49,11 +42,11 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
                 for (y in 0 until paddedHeight) {
                     for (x in 0 until paddedWidth) {
                         val index = x + y * paddedWidth
-                        baseTiles[index] =
-                            layer.getTileId(Coordinate(window.x + x - padding, window.y + y - padding, window.z))
+                        val coordinate = Coordinate(window.x + x - padding, window.y + y - padding, window.z)
+                        baseTiles[index] = layer.getTileId(coordinate)
+                        annotations.row(coordinate).putAll(layer.getAnnotations(coordinate))
                     }
                 }
-                annotations.putAll(layer.getAnnotations())
             }
 
             is MapTreeLayer -> {
@@ -61,13 +54,13 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
                     for (x in 0 until paddedWidth) {
                         val index = x + y * paddedWidth
                         val coordinate = Coordinate(window.x + x - padding, window.y + y - padding, window.z)
-                        baseTiles[index] = layer.getBaseTile(coordinate)
+                        baseTiles[index] = layer.getTileId(coordinate)
                         layer.getAdditionalTiles(coordinate).forEach {
                             addAdditionalTile(coordinate, it)
                         }
+                        annotations.row(coordinate).putAll(layer.getAnnotations(coordinate))
                     }
                 }
-                annotations.putAll(layer.getAnnotations())
             }
 
             is SparseMapLayer -> {
@@ -135,14 +128,22 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
         return luaMeta
     }
 
+    fun getAnnotationsAt(coordinate: Coordinate): Map<String, Map<*, *>> {
+        return annotations.row(coordinate)
+    }
+
     fun getAnnotationAt(coordinate: Coordinate, key: String): Map<*, *>? {
         return annotations.get(coordinate, key)
     }
 
     companion object {
         fun create(dimension: Dimension, viewer: Viewer, window: ChunkWindow): ScopedChunkView {
+            return create(dimension.mapTree, viewer, window)
+        }
+
+        fun create(mapTree: MapTree, viewer: Viewer, window: ChunkWindow): ScopedChunkView {
             val result = ScopedChunkView(window)
-            dimension.mapTree.layers.forEach { layer ->
+            mapTree.layers.forEach { layer ->
                 if (viewer.canView(layer)) {
                     result.apply(layer)
                 }

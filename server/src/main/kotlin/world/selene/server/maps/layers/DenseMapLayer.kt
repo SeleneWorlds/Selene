@@ -154,12 +154,9 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
         collisionTags.remove(tagName)
     }
 
-    fun getAnnotations(): Table<Coordinate, String, Map<*, *>> {
-        val result = HashBasedTable.create<Coordinate, String, Map<*, *>>()
-        for (chunk in chunks.values) {
-            result.putAll(chunk.annotations)
-        }
-        return result
+    fun getAnnotations(coordinate: Coordinate): Map<String, Map<*, *>> {
+        val chunk = getChunkOrNull(coordinate) ?: return emptyMap()
+        return chunk.annotations.row(coordinate)
     }
 
     companion object {
