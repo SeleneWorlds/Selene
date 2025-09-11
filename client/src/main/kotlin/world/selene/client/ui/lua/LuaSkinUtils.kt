@@ -18,7 +18,6 @@ import world.selene.client.ui.drawable.Visual2DDrawable
 import world.selene.common.lua.util.checkType
 import world.selene.common.lua.util.getField
 import world.selene.common.lua.util.getFieldFloat
-import world.selene.common.lua.util.getFieldString
 
 class LuaSkinUtils(private val bundleFileResolver: BundleFileResolver) {
 
@@ -75,33 +74,27 @@ class LuaSkinUtils(private val bundleFileResolver: BundleFileResolver) {
     ): List<Button.ButtonStyle> {
         lua.checkType(tableIndex, Lua.LuaType.TABLE)
 
-        val up = lua.getFieldString(tableIndex, "up")?.let {
-            resolveDrawable(skin, it)
-        }
-        val down = lua.getFieldString(tableIndex, "down")?.let {
-            resolveDrawable(skin, it)
-        }
-        val checked = lua.getFieldString(tableIndex, "checked")?.let {
-            resolveDrawable(skin, it)
-        }
+        val up = lua.getFieldDrawable(tableIndex, "up", skin)
+        val down = lua.getFieldDrawable(tableIndex, "down", skin)
+        val checked = lua.getFieldDrawable(tableIndex, "checked", skin)
         val buttonStyle = Button.ButtonStyle(up, down, checked)
-        lua.getFieldString(tableIndex, "over")?.let {
-            buttonStyle.over = resolveDrawable(skin, it)
+        lua.getFieldDrawable(tableIndex, "over", skin)?.let {
+            buttonStyle.over = it
         }
-        lua.getFieldString(tableIndex, "focused")?.let {
-            buttonStyle.focused = resolveDrawable(skin, it)
+        lua.getFieldDrawable(tableIndex, "focused", skin)?.let {
+            buttonStyle.focused = it
         }
-        lua.getFieldString(tableIndex, "disabled")?.let {
-            buttonStyle.disabled = resolveDrawable(skin, it)
+        lua.getFieldDrawable(tableIndex, "disabled", skin)?.let {
+            buttonStyle.disabled = it
         }
-        lua.getFieldString(tableIndex, "checkedOver")?.let {
-            buttonStyle.checkedOver = resolveDrawable(skin, it)
+        lua.getFieldDrawable(tableIndex, "checkedOver", skin)?.let {
+            buttonStyle.checkedOver = it
         }
-        lua.getFieldString(tableIndex, "checkedDown")?.let {
-            buttonStyle.checkedDown = resolveDrawable(skin, it)
+        lua.getFieldDrawable(tableIndex, "checkedDown", skin)?.let {
+            buttonStyle.checkedDown = it
         }
-        lua.getFieldString(tableIndex, "checkedFocused")?.let {
-            buttonStyle.checkedFocused = resolveDrawable(skin, it)
+        lua.getFieldDrawable(tableIndex, "checkedFocused", skin)?.let {
+            buttonStyle.checkedFocused = it
         }
         lua.getFieldFloat(tableIndex, "checkedOffsetX")?.let {
             buttonStyle.checkedOffsetX = it
@@ -131,20 +124,56 @@ class LuaSkinUtils(private val bundleFileResolver: BundleFileResolver) {
     ): List<Button.ButtonStyle> {
         lua.checkType(tableIndex, Lua.LuaType.TABLE)
 
-        val up = lua.getFieldString(tableIndex, "up")?.let {
-            resolveDrawable(skin, it)
+        val up = lua.getFieldDrawable(tableIndex, "up", skin)
+        val down = lua.getFieldDrawable(tableIndex, "down", skin)
+        val checked = lua.getFieldDrawable(tableIndex, "checked", skin)
+        val imageUp = lua.getFieldDrawable(tableIndex, "imageUp", skin)
+        val imageDown = lua.getFieldDrawable(tableIndex, "imageDown", skin)
+        val imageChecked = lua.getFieldDrawable(tableIndex, "imageChecked", skin)
+        val imageButtonStyle = ImageButton.ImageButtonStyle(up, down, checked, imageUp, imageDown, imageChecked)
+        val visImageButtonStyle = VisImageButton.VisImageButtonStyle(
+            up, down, checked, imageUp, imageDown, imageChecked
+        )
+
+        lua.getFieldDrawable(tableIndex, "over", skin)?.let {
+            imageButtonStyle.over = it
+            visImageButtonStyle.over = it
         }
-        val down = lua.getFieldString(tableIndex, "down")?.let {
-            resolveDrawable(skin, it)
+
+        lua.getFieldDrawable(tableIndex, "checkedOver", skin)?.let {
+            imageButtonStyle.checkedOver = it
+            visImageButtonStyle.checkedOver = it
         }
-        val checked = lua.getFieldString(tableIndex, "checked")?.let {
-            resolveDrawable(skin, it)
+
+        lua.getFieldDrawable(tableIndex, "disabled", skin)?.let {
+            imageButtonStyle.disabled = it
+            visImageButtonStyle.disabled = it
         }
-        val imageUp = lua.getField(tableIndex, "imageUp") { type ->
+
+        lua.getFieldDrawable(tableIndex, "imageOver", skin)?.let {
+            imageButtonStyle.imageOver = it
+            visImageButtonStyle.imageOver = it
+        }
+
+        lua.getFieldDrawable(tableIndex, "imageCheckedOver", skin)?.let {
+            imageButtonStyle.imageCheckedOver = it
+            visImageButtonStyle.imageCheckedOver = it
+        }
+
+        lua.getFieldDrawable(tableIndex, "imageDisabled", skin)?.let {
+            imageButtonStyle.imageDisabled = it
+            visImageButtonStyle.imageDisabled = it
+        }
+
+        return listOf(imageButtonStyle, visImageButtonStyle)
+    }
+
+    fun Lua.getFieldDrawable(tableIndex: Int, fieldName: String, skin: Skin?): Drawable? {
+        return getField(tableIndex, fieldName) { type ->
             when (type) {
-                Lua.LuaType.STRING -> resolveDrawable(skin, lua.toString(-1)!!)
+                Lua.LuaType.STRING -> resolveDrawable(skin, toString(-1)!!)
                 Lua.LuaType.USERDATA -> {
-                    when (val value = lua.toJavaObject(-1)) {
+                    when (val value = toJavaObject(-1)) {
                         is Visual2D -> Visual2DDrawable(value)
                         is world.selene.client.rendering.drawable.Drawable -> DrawableDrawable(value)
                         else -> null
@@ -154,52 +183,5 @@ class LuaSkinUtils(private val bundleFileResolver: BundleFileResolver) {
                 else -> null
             }
         }
-        val imageDown = lua.getFieldString(tableIndex, "imageDown")?.let {
-            resolveDrawable(skin, it)
-        }
-        val imageChecked = lua.getFieldString(tableIndex, "imageChecked")?.let {
-            resolveDrawable(skin, it)
-        }
-        val imageButtonStyle = ImageButton.ImageButtonStyle(up, down, checked, imageUp, imageDown, imageChecked)
-        val visImageButtonStyle =
-            VisImageButton.VisImageButtonStyle(up, down, checked, imageUp, imageDown, imageChecked)
-
-        lua.getFieldString(tableIndex, "over")?.let {
-            val drawable = resolveDrawable(skin, it)
-            imageButtonStyle.over = drawable
-            visImageButtonStyle.over = drawable
-        }
-
-        lua.getFieldString(tableIndex, "checkedOver")?.let {
-            val drawable = resolveDrawable(skin, it)
-            imageButtonStyle.checkedOver = drawable
-            visImageButtonStyle.checkedOver = drawable
-        }
-
-        lua.getFieldString(tableIndex, "disabled")?.let {
-            val drawable = resolveDrawable(skin, it)
-            imageButtonStyle.disabled = drawable
-            visImageButtonStyle.disabled = drawable
-        }
-
-        lua.getFieldString(tableIndex, "imageOver")?.let {
-            val drawable = resolveDrawable(skin, it)
-            imageButtonStyle.imageOver = drawable
-            visImageButtonStyle.imageOver = drawable
-        }
-
-        lua.getFieldString(tableIndex, "imageCheckedOver")?.let {
-            val drawable = resolveDrawable(skin, it)
-            imageButtonStyle.imageCheckedOver = drawable
-            visImageButtonStyle.imageCheckedOver = drawable
-        }
-
-        lua.getFieldString(tableIndex, "imageDisabled")?.let {
-            val drawable = resolveDrawable(skin, it)
-            imageButtonStyle.imageDisabled = drawable
-            visImageButtonStyle.imageDisabled = drawable
-        }
-
-        return listOf(imageButtonStyle, visImageButtonStyle)
     }
 }
