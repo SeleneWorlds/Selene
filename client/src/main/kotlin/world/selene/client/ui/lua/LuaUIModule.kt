@@ -74,6 +74,7 @@ class LuaUIModule(
         table.register("SetFocus", this::luaSetFocus)
         table.register("GetFocus", this::luaGetFocus)
         table.register("CreateImageButtonStyle", this::luaCreateImageButtonStyle)
+        table.register("CreateButtonStyle", this::luaCreateButtonStyle)
         table.register("AddInputProcessor", this::luaAddInputProcessor)
         table.register("CreateDragListener", this::luaCreateDragListener)
         table.set("Root", bundlesRoot)
@@ -375,6 +376,23 @@ class LuaUIModule(
         label.wrap = lua.getFieldBoolean(2, "wrap") ?: false
         lua.push(label, Lua.Conversion.NONE)
         return 1
+    }
+
+    /**
+     * Creates a button style from configuration table.
+     *
+     * ```signatures
+     * CreateButtonStyle(config: {up: string, down: string, checked: string, over: string, focused: string, disabled: string, checkedOver: string, checkedDown: string, checkedFocused: string, checkedOffsetX: number, checkedOffsetY: number, pressedOffsetX: number, pressedOffsetY: number, unpressedOffsetX: number, unpressedOffsetY: number}) -> ImageButtonStyle
+     * CreateButtonStyle(config: {up: string, down: string, checked: string, over: string, focused: string, disabled: string, checkedOver: string, checkedDown: string, checkedFocused: string, checkedOffsetX: number, checkedOffsetY: number, pressedOffsetX: number, pressedOffsetY: number, unpressedOffsetX: number, unpressedOffsetY: number}, skin: Skin) -> ImageButtonStyle
+     * ```
+     */
+    private fun luaCreateButtonStyle(lua: Lua): Int {
+        val skin = lua.toUserdata<Skin>(2)
+        val styles = luaSkinUtils.createButtonStyle(lua, 1, skin)
+        for (style in styles) {
+            lua.push(style, Lua.Conversion.NONE)
+        }
+        return styles.size
     }
 
     /**

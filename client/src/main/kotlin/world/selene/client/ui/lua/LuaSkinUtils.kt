@@ -17,6 +17,7 @@ import world.selene.client.ui.drawable.DrawableDrawable
 import world.selene.client.ui.drawable.Visual2DDrawable
 import world.selene.common.lua.util.checkType
 import world.selene.common.lua.util.getField
+import world.selene.common.lua.util.getFieldFloat
 import world.selene.common.lua.util.getFieldString
 
 class LuaSkinUtils(private val bundleFileResolver: BundleFileResolver) {
@@ -65,6 +66,62 @@ class LuaSkinUtils(private val bundleFileResolver: BundleFileResolver) {
                     ?: throw IllegalArgumentException("Color not found in skin: $colorString")
             }
         }
+    }
+
+    fun createButtonStyle(
+        lua: Lua,
+        tableIndex: Int,
+        skin: Skin? = null
+    ): List<Button.ButtonStyle> {
+        lua.checkType(tableIndex, Lua.LuaType.TABLE)
+
+        val up = lua.getFieldString(tableIndex, "up")?.let {
+            resolveDrawable(skin, it)
+        }
+        val down = lua.getFieldString(tableIndex, "down")?.let {
+            resolveDrawable(skin, it)
+        }
+        val checked = lua.getFieldString(tableIndex, "checked")?.let {
+            resolveDrawable(skin, it)
+        }
+        val buttonStyle = Button.ButtonStyle(up, down, checked)
+        lua.getFieldString(tableIndex, "over")?.let {
+            buttonStyle.over = resolveDrawable(skin, it)
+        }
+        lua.getFieldString(tableIndex, "focused")?.let {
+            buttonStyle.focused = resolveDrawable(skin, it)
+        }
+        lua.getFieldString(tableIndex, "disabled")?.let {
+            buttonStyle.disabled = resolveDrawable(skin, it)
+        }
+        lua.getFieldString(tableIndex, "checkedOver")?.let {
+            buttonStyle.checkedOver = resolveDrawable(skin, it)
+        }
+        lua.getFieldString(tableIndex, "checkedDown")?.let {
+            buttonStyle.checkedDown = resolveDrawable(skin, it)
+        }
+        lua.getFieldString(tableIndex, "checkedFocused")?.let {
+            buttonStyle.checkedFocused = resolveDrawable(skin, it)
+        }
+        lua.getFieldFloat(tableIndex, "checkedOffsetX")?.let {
+            buttonStyle.checkedOffsetX = it
+        }
+        lua.getFieldFloat(tableIndex, "checkedOffsetY")?.let {
+            buttonStyle.checkedOffsetY = it
+        }
+        lua.getFieldFloat(tableIndex, "pressedOffsetX")?.let {
+            buttonStyle.pressedOffsetX = it
+        }
+        lua.getFieldFloat(tableIndex, "pressedOffsetY")?.let {
+            buttonStyle.pressedOffsetY = it
+        }
+        lua.getFieldFloat(tableIndex, "unpressedOffsetX")?.let {
+            buttonStyle.unpressedOffsetX = it
+        }
+        lua.getFieldFloat(tableIndex, "unpressedOffsetY")?.let {
+            buttonStyle.unpressedOffsetY = it
+        }
+        return listOf(buttonStyle)
     }
 
     fun createImageButtonStyle(

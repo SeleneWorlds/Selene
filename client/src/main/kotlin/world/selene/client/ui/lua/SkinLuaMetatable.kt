@@ -8,7 +8,7 @@ import com.kotcrab.vis.ui.widget.VisTextField
 import party.iroiro.luajava.Lua
 import world.selene.client.bundles.BundleFileResolver
 import world.selene.client.rendering.lua.LuaTexture
-import world.selene.common.lua.*
+import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkType
 import world.selene.common.lua.util.checkUserdata
@@ -64,29 +64,16 @@ class SkinLuaMetatable(
      * Style properties are drawable paths that will be resolved using the skin.
      *
      * ```signatures
-     * AddButtonStyle(name: string, config: table{up: string, down: string, checked: string, over: string})
+     * AddButtonStyle(name: string, config: table{up: string, down: string, checked: string, over: string, focused: string, disabled: string, checkedOver: string, checkedDown: string, checkedFocused: string, checkedOffsetX: number, checkedOffsetY: number, pressedOffsetX: number, pressedOffsetY: number, unpressedOffsetX: number, unpressedOffsetY: number})
      * ```
      */
     private fun luaAddButtonStyle(lua: Lua): Int {
         val skin = lua.checkUserdata<Skin>(1)
         val styleName = lua.checkString(2)
-        lua.checkType(3, Lua.LuaType.TABLE)
-
-        val up = lua.getFieldString(3, "up")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
+        val styles = luaSkinUtils.createButtonStyle(lua, 3, skin)
+        for (style in styles) {
+            skin.add(styleName, style)
         }
-        val down = lua.getFieldString(3, "down")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
-        }
-        val checked = lua.getFieldString(3, "checked")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
-        }
-        val buttonStyle = Button.ButtonStyle(up, down, checked)
-        lua.getFieldString(3, "over")?.let {
-            buttonStyle.over = luaSkinUtils.resolveDrawable(skin, it)
-        }
-        // TODO many more fields here to support
-        skin.add(styleName, buttonStyle)
         return 0
     }
 
