@@ -61,10 +61,9 @@ class SkinLuaMetatable(
 
     /**
      * Adds a button style to the skin.
-     * Style properties are drawable paths that will be resolved using the skin.
      *
      * ```signatures
-     * AddButtonStyle(name: string, config: table{up: string, down: string, checked: string, over: string, focused: string, disabled: string, checkedOver: string, checkedDown: string, checkedFocused: string, checkedOffsetX: number, checkedOffsetY: number, pressedOffsetX: number, pressedOffsetY: number, unpressedOffsetX: number, unpressedOffsetY: number})
+     * AddButtonStyle(name: string, config: table{up: string|Visual2D|Drawable, down: string|Visual2D|Drawable, checked: string|Visual2D|Drawable, over: string|Visual2D|Drawable, focused: string|Visual2D|Drawable, disabled: string|Visual2D|Drawable, checkedOver: string|Visual2D|Drawable, checkedDown: string|Visual2D|Drawable, checkedFocused: string|Visual2D|Drawable, checkedOffsetX: number, checkedOffsetY: number, pressedOffsetX: number, pressedOffsetY: number, unpressedOffsetX: number, unpressedOffsetY: number})
      * ```
      */
     private fun luaAddButtonStyle(lua: Lua): Int {
@@ -106,10 +105,9 @@ class SkinLuaMetatable(
 
     /**
      * Adds an image button style to the skin.
-     * Supports both button states (up, down, over) and image states (imageUp, imageDown, etc.).
      *
      * ```signatures
-     * AddImageButtonStyle(name: string, config: table{up: string, down: string, over: string, imageUp: string, imageDown: string, imageOver: string})
+     * AddImageButtonStyle(name: string, config: table{up: string|Visual2D|Drawable, down: string|Visual2D|Drawable, over: string|Visual2D|Drawable, imageUp: string|Visual2D|Drawable, imageDown: string|Visual2D|Drawable, imageOver: string|Visual2D|Drawable})
      * ```
      */
     private fun luaAddImageButtonStyle(lua: Lua): Int {

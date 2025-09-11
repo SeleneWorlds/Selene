@@ -382,8 +382,8 @@ class LuaUIModule(
      * Creates a button style from configuration table.
      *
      * ```signatures
-     * CreateButtonStyle(config: {up: string, down: string, checked: string, over: string, focused: string, disabled: string, checkedOver: string, checkedDown: string, checkedFocused: string, checkedOffsetX: number, checkedOffsetY: number, pressedOffsetX: number, pressedOffsetY: number, unpressedOffsetX: number, unpressedOffsetY: number}) -> ImageButtonStyle
-     * CreateButtonStyle(config: {up: string, down: string, checked: string, over: string, focused: string, disabled: string, checkedOver: string, checkedDown: string, checkedFocused: string, checkedOffsetX: number, checkedOffsetY: number, pressedOffsetX: number, pressedOffsetY: number, unpressedOffsetX: number, unpressedOffsetY: number}, skin: Skin) -> ImageButtonStyle
+     * CreateButtonStyle(config: {up: string|Visual2D|Drawable, down: string|Visual2D|Drawable, checked: string|Visual2D|Drawable, over: string|Visual2D|Drawable, focused: string|Visual2D|Drawable, disabled: string|Visual2D|Drawable, checkedOver: string|Visual2D|Drawable, checkedDown: string|Visual2D|Drawable, checkedFocused: string|Visual2D|Drawable, checkedOffsetX: number, checkedOffsetY: number, pressedOffsetX: number, pressedOffsetY: number, unpressedOffsetX: number, unpressedOffsetY: number}) -> ButtonStyle
+     * CreateButtonStyle(config: {up: string|Visual2D|Drawable, down: string|Visual2D|Drawable, checked: string|Visual2D|Drawable, over: string|Visual2D|Drawable, focused: string|Visual2D|Drawable, disabled: string|Visual2D|Drawable, checkedOver: string|Visual2D|Drawable, checkedDown: string|Visual2D|Drawable, checkedFocused: string|Visual2D|Drawable, checkedOffsetX: number, checkedOffsetY: number, pressedOffsetX: number, pressedOffsetY: number, unpressedOffsetX: number, unpressedOffsetY: number}, skin: Skin) -> ButtonStyle
      * ```
      */
     private fun luaCreateButtonStyle(lua: Lua): Int {
@@ -400,8 +400,8 @@ class LuaUIModule(
      * Returns both ImageButtonStyle and VisImageButtonStyle.
      *
      * ```signatures
-     * CreateImageButtonStyle(config: table) -> ImageButtonStyle, VisImageButtonStyle
-     * CreateImageButtonStyle(config: table, skin: Skin) -> ImageButtonStyle, VisImageButtonStyle
+     * CreateImageButtonStyle(config: table{up: string|Visual2D|Drawable, down: string|Visual2D|Drawable, over: string|Visual2D|Drawable, imageUp: string|Visual2D|Drawable, imageDown: string|Visual2D|Drawable, imageOver: string|Visual2D|Drawable}) -> ImageButtonStyle, VisImageButtonStyle
+     * CreateImageButtonStyle(config: table{up: string|Visual2D|Drawable, down: string|Visual2D|Drawable, over: string|Visual2D|Drawable, imageUp: string|Visual2D|Drawable, imageDown: string|Visual2D|Drawable, imageOver: string|Visual2D|Drawable}, skin: Skin) -> ImageButtonStyle, VisImageButtonStyle
      * ```
      */
     private fun luaCreateImageButtonStyle(lua: Lua): Int {
