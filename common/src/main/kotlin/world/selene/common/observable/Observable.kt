@@ -2,6 +2,11 @@ package world.selene.common.observable
 
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.*
+import world.selene.common.lua.util.checkFunction
+import world.selene.common.lua.util.checkUserdata
+import world.selene.common.lua.util.getCallerInfo
+import world.selene.common.lua.util.throwTypeError
+import world.selene.common.lua.util.toAny
 
 interface Observable<T> {
     fun subscribe(observer: Observer<T>)

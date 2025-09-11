@@ -1,6 +1,6 @@
 package world.selene.server.cameras
 
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 import world.selene.server.dimensions.Dimension
 
 interface CameraListener {

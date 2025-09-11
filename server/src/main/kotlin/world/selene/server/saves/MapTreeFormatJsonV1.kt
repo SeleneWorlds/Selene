@@ -3,9 +3,17 @@ package world.selene.server.saves
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.ObjectMapper
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 import world.selene.server.data.Registries
-import world.selene.server.maps.*
+import world.selene.server.maps.layers.ChunkedMapLayer
+import world.selene.server.maps.layers.DenseMapLayer
+import world.selene.server.maps.layers.SparseMapLayer
+import world.selene.server.maps.layers.SparseTileAnnotation
+import world.selene.server.maps.layers.SparseTilePlacement
+import world.selene.server.maps.layers.SparseTileRemoval
+import world.selene.server.maps.layers.SparseTileSwap
+import world.selene.server.maps.layers.SparseTilesReplacement
+import world.selene.server.maps.tree.MapTree
 import java.io.File
 
 class MapTreeFormatJsonV1(private val registries: Registries, private val objectMapper: ObjectMapper) : MapTreeFormat {

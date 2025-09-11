@@ -5,7 +5,7 @@ import com.badlogic.gdx.math.MathUtils
 import com.badlogic.gdx.math.Rectangle
 import world.selene.client.camera.CameraManager
 import world.selene.client.grid.ClientGrid
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 
 class Environment(val cameraManager: CameraManager, val grid: ClientGrid) {
 

@@ -1,6 +1,6 @@
 package world.selene.server.commands
 
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 
 interface CommandSource {
     val name: String

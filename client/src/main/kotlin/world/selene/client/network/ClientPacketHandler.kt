@@ -8,12 +8,12 @@ import world.selene.client.controls.GridMovement
 import world.selene.client.controls.PlayerController
 import world.selene.client.data.Registries
 import world.selene.client.maps.ClientMap
-import world.selene.client.sound.SoundManager
-import world.selene.common.data.ComponentConfiguration
-import world.selene.common.data.NameIdRegistry
+import world.selene.client.sounds.SoundManager
+import world.selene.common.entities.ComponentConfiguration
+import world.selene.common.data.mappings.NameIdRegistry
 import world.selene.common.lua.LuaManager
-import world.selene.common.lua.LuaPayloadRegistry
-import world.selene.common.lua.xpCall
+import world.selene.common.network.LuaPayloadRegistry
+import world.selene.common.lua.util.xpCall
 import world.selene.common.network.Packet
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.packet.*

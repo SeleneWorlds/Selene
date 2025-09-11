@@ -1,6 +1,6 @@
 package world.selene.client.controls
 
-import world.selene.client.maps.Entity
+import world.selene.client.entity.Entity
 import world.selene.client.network.NetworkClient
 import world.selene.common.grid.Direction
 import world.selene.common.network.packet.RequestFacingPacket

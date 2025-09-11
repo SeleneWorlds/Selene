@@ -2,13 +2,13 @@ package world.selene.common.bundles
 
 class BundleDatabase {
     // All loaded bundles, with preserved order
-    val loadedBundles = mutableListOf<LocatedBundle>()
+    val loadedBundles = mutableListOf<Bundle>()
 
-    fun addBundle(bundle: LocatedBundle) {
+    fun addBundle(bundle: Bundle) {
         loadedBundles.add(bundle)
     }
 
-    fun getBundle(bundle: String): LocatedBundle? {
+    fun getBundle(bundle: String): Bundle? {
         return loadedBundles.find { it.manifest.name == bundle }
     }
 }

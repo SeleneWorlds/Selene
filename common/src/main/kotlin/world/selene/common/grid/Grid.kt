@@ -1,7 +1,5 @@
 package world.selene.common.grid
 
-import world.selene.common.util.Coordinate
-
 open class Grid {
 
     val directions = mutableMapOf<String, Direction>()

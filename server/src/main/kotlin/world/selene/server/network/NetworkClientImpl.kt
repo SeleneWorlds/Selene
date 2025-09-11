@@ -7,7 +7,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.socket.SocketChannel
 import io.netty.util.AttributeKey
 import world.selene.common.network.Packet
-import world.selene.server.player.PlayerManager
+import world.selene.server.players.PlayerManager
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentLinkedQueue
 

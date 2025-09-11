@@ -9,7 +9,7 @@ import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import world.selene.common.commands.CommandSource
 import world.selene.common.commands.suggestions.SuggestionSource
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 import java.util.concurrent.CompletableFuture
 
 class CoordinateArgument : ArgumentType<Coordinates> {

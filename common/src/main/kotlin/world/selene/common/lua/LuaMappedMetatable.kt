@@ -1,6 +1,8 @@
 package world.selene.common.lua
 
 import party.iroiro.luajava.Lua
+import world.selene.common.lua.util.checkString
+import world.selene.common.lua.util.checkUserdata
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.jvm.isAccessible

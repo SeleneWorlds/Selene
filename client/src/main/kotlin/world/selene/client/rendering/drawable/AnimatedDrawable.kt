@@ -5,7 +5,7 @@ import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.Signal
-import world.selene.common.lua.checkUserdata
+import world.selene.common.lua.util.checkUserdata
 
 class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawable {
     private var currentFrame = 0

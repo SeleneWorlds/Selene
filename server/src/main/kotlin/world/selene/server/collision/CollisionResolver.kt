@@ -1,7 +1,7 @@
 package world.selene.server.collision
 
-import world.selene.common.util.Coordinate
-import world.selene.server.cameras.Viewer
+import world.selene.common.grid.Coordinate
+import world.selene.server.cameras.viewer.Viewer
 import world.selene.server.data.Registries
 import world.selene.server.dimensions.Dimension
 import world.selene.server.sync.ChunkViewManager

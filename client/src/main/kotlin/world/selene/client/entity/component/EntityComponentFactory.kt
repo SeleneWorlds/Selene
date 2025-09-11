@@ -1,13 +1,16 @@
 package world.selene.client.entity.component
 
-import world.selene.client.maps.Entity
+import world.selene.client.entity.component.rendering.ComponentPositioner
+import world.selene.client.entity.component.rendering.IsoVisualComponent
+import world.selene.client.entity.component.rendering.Visual2DComponent
+import world.selene.client.entity.Entity
 import world.selene.client.rendering.visual.VisualCreationContext
 import world.selene.client.rendering.visual.VisualManager
 import world.selene.client.rendering.visual2d.Visual2D
 import world.selene.client.rendering.visual2d.iso.IsoVisual
-import world.selene.common.data.ClientScriptComponentConfiguration
-import world.selene.common.data.ComponentConfiguration
-import world.selene.common.data.VisualComponentConfiguration
+import world.selene.common.entities.ClientScriptComponentConfiguration
+import world.selene.common.entities.ComponentConfiguration
+import world.selene.common.entities.VisualComponentConfiguration
 
 class EntityComponentFactory(private val visualManager: VisualManager) {
     fun create(entity: Entity, configuration: ComponentConfiguration): EntityComponent? {

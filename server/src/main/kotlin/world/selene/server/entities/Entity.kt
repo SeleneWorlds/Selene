@@ -1,23 +1,34 @@
 package world.selene.server.entities
 
 import party.iroiro.luajava.Lua
-import world.selene.common.data.ComponentConfiguration
-import world.selene.common.data.EntityDefinition
+import world.selene.common.entities.ComponentConfiguration
+import world.selene.common.entities.EntityDefinition
 import world.selene.common.grid.Direction
 import world.selene.common.lua.*
+import world.selene.common.lua.util.checkBoolean
+import world.selene.common.lua.util.checkCoordinate
+import world.selene.common.lua.util.checkDirection
+import world.selene.common.lua.util.checkString
+import world.selene.common.lua.util.checkUserdata
+import world.selene.common.lua.util.getCallerInfo
+import world.selene.common.lua.util.toAny
+import world.selene.common.lua.util.toAnyMap
+import world.selene.common.lua.util.toUserdata
+import world.selene.common.lua.util.xpCall
 import world.selene.common.network.packet.EntityAnimationPacket
-import world.selene.common.util.Coordinate
-import world.selene.server.attribute.Attribute
-import world.selene.server.cameras.Viewer
+import world.selene.common.observable.ObservableMap
+import world.selene.common.grid.Coordinate
+import world.selene.server.attributes.Attribute
+import world.selene.server.cameras.viewer.Viewer
 import world.selene.server.data.Registries
 import world.selene.server.dimensions.Dimension
-import world.selene.server.lua.Scripting
-import world.selene.server.maps.MapLayer
+import world.selene.server.lua.ServerLuaSignals
+import world.selene.server.maps.layers.MapLayer
 import world.selene.server.objectMapper
-import world.selene.server.player.Player
+import world.selene.server.players.Player
 import world.selene.server.world.World
 
-class Entity(val registries: Registries, val world: World, val scripting: Scripting) : LuaMetatableProvider,
+class Entity(val registries: Registries, val world: World, val signals: ServerLuaSignals) : LuaMetatableProvider,
     LuaReferencable<Int, Entity> {
     val impassable: Boolean = true
     var networkId: Int = -1
@@ -89,12 +100,12 @@ class Entity(val registries: Registries, val world: World, val scripting: Script
         val prevCoordinate = this.coordinate
         this.coordinate = coordinate
         dimension.syncManager.entityMoved(this, prevCoordinate, coordinate, 0.2f)
-        scripting.signals.entitySteppedOffTile.emit {
+        signals.entitySteppedOffTile.emit {
             it.push(this, Lua.Conversion.NONE)
             it.push(prevCoordinate, Lua.Conversion.NONE)
             2
         }
-        scripting.signals.entitySteppedOnTile.emit {
+        signals.entitySteppedOnTile.emit {
             it.push(this, Lua.Conversion.NONE)
             it.push(coordinate, Lua.Conversion.NONE)
             2

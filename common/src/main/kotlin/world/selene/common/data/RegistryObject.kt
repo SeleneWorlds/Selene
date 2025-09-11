@@ -3,6 +3,8 @@ package world.selene.common.data
 import com.fasterxml.jackson.annotation.JsonIgnore
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.*
+import world.selene.common.lua.util.checkString
+import world.selene.common.lua.util.checkUserdata
 
 interface RegistryObject<T : Any> : LuaMetatableProvider {
     @get:JsonIgnore

@@ -1,6 +1,6 @@
 package world.selene.client.rendering.animator
 
-import world.selene.client.maps.Entity
+import world.selene.client.entity.Entity
 
 interface AnimatorController {
     val currentAnimation: ConfiguredAnimation?

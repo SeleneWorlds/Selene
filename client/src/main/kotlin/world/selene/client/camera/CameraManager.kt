@@ -7,7 +7,7 @@ import party.iroiro.luajava.Lua
 import world.selene.client.grid.ClientGrid
 import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.maps.ClientMap
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 
 class CameraManager(
     private val map: ClientMap,

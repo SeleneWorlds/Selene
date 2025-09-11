@@ -1,9 +1,11 @@
 package world.selene.server.cameras
 
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
+import world.selene.server.cameras.viewer.DefaultViewer
+import world.selene.server.cameras.viewer.Viewer
 import world.selene.server.dimensions.Dimension
 import world.selene.server.entities.Entity
-import world.selene.server.maps.MapLayer
+import world.selene.server.maps.layers.MapLayer
 
 class Camera : Viewer {
     var dimension: Dimension? = null

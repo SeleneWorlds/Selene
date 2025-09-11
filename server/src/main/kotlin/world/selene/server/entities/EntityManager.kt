@@ -1,9 +1,9 @@
 package world.selene.server.entities
 
 import org.koin.mp.KoinPlatform.getKoin
-import world.selene.common.data.EntityDefinition
+import world.selene.common.entities.EntityDefinition
 import world.selene.common.lua.LuaReferenceResolver
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 import world.selene.server.dimensions.Dimension
 import java.util.concurrent.atomic.AtomicInteger
 

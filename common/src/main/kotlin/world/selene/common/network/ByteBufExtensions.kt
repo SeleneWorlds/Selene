@@ -1,7 +1,7 @@
 package world.selene.common.network
 
 import io.netty.buffer.ByteBuf
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 import java.util.*
 
 @Suppress("unused")

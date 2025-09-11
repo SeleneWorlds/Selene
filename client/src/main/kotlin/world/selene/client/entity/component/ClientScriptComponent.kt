@@ -3,11 +3,11 @@ package world.selene.client.entity.component
 import org.koin.mp.KoinPlatform
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
-import world.selene.client.maps.Entity
+import world.selene.client.entity.Entity
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaTrace
-import world.selene.common.lua.ObservableMap
-import world.selene.common.lua.xpCall
+import world.selene.common.observable.ObservableMap
+import world.selene.common.lua.util.xpCall
 
 class ClientScriptComponent(val moduleName: String) : EntityComponent, TickableComponent,
     LuaTrace {

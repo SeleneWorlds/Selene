@@ -4,7 +4,7 @@ import world.selene.common.grid.Direction
 import world.selene.common.network.Packet
 import world.selene.common.network.packet.MoveEntityPacket
 import world.selene.common.network.packet.TurnEntityPacket
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 import world.selene.server.entities.Entity
 
 class DimensionSyncManager {

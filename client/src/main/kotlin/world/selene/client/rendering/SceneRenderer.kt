@@ -3,7 +3,7 @@ package world.selene.client.rendering
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.g2d.Batch
 import world.selene.client.rendering.environment.Environment
-import world.selene.client.scene.Scene
+import world.selene.client.rendering.scene.Scene
 
 class SceneRenderer(private val scene: Scene, private val environment: Environment) {
 

@@ -19,7 +19,7 @@ import world.selene.server.heartbeat.ServerHeartbeat
 import world.selene.server.login.LoginQueue
 import world.selene.server.login.LoginQueueStatus
 import world.selene.server.login.SessionAuthentication
-import world.selene.server.player.PlayerManager
+import world.selene.server.players.PlayerManager
 import world.selene.server.startupTime
 import java.net.URI
 

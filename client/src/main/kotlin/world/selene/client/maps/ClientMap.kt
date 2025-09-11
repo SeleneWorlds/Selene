@@ -5,10 +5,14 @@ import com.google.common.collect.Multimap
 import org.slf4j.Logger
 import party.iroiro.luajava.Lua
 import world.selene.client.data.Registries
+import world.selene.client.entity.Entity
+import world.selene.client.entity.EntityPool
 import world.selene.client.lua.ClientLuaSignals
-import world.selene.client.scene.Scene
-import world.selene.common.data.ComponentConfiguration
-import world.selene.common.util.Coordinate
+import world.selene.client.rendering.scene.Scene
+import world.selene.client.tiles.Tile
+import world.selene.client.tiles.TilePool
+import world.selene.common.entities.ComponentConfiguration
+import world.selene.common.grid.Coordinate
 
 class ClientMap(
     private val logger: Logger,

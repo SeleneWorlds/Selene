@@ -2,6 +2,8 @@ package world.selene.server.login
 
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.*
+import world.selene.common.lua.util.checkString
+import world.selene.common.lua.util.checkUserdata
 import world.selene.server.lua.ServerLuaSignals
 
 enum class LoginQueueStatus {

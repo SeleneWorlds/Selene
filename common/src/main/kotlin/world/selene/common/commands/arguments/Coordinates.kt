@@ -8,7 +8,7 @@ import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import kotlinx.coroutines.runBlocking
 import world.selene.common.commands.CommandSource
 import world.selene.common.commands.expectOr
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 
 interface Coordinates {
     companion object {

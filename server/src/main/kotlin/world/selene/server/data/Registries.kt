@@ -1,6 +1,12 @@
 package world.selene.server.data
 
 import world.selene.common.data.*
+import world.selene.common.data.custom.CustomRegistries
+import world.selene.common.entities.EntityRegistry
+import world.selene.common.entities.component.ComponentRegistry
+import world.selene.common.sounds.SoundRegistry
+import world.selene.common.tiles.TileRegistry
+import world.selene.common.tiles.transitions.TransitionRegistry
 
 class Registries(
     val tiles: TileRegistry,

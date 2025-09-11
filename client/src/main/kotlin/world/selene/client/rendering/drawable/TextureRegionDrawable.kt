@@ -5,7 +5,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.checkUserdata
+import world.selene.common.lua.util.checkUserdata
 
 class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float, val offsetY: Float) : Drawable {
     override fun update(delta: Float) = Unit

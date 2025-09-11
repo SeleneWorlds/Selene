@@ -5,7 +5,7 @@ import io.netty.buffer.ByteBuf
 import world.selene.common.network.Packet
 import world.selene.common.network.readRelativeCoordinate
 import world.selene.common.network.writeRelativeCoordinate
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 
 data class MapChunkPacket(
     val x: Int,

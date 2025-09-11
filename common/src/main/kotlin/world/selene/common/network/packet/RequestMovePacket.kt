@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf
 import world.selene.common.network.Packet
 import world.selene.common.network.readCoordinate
 import world.selene.common.network.writeCoordinate
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 
 data class RequestMovePacket(val coordinate: Coordinate) : Packet {
     companion object {

@@ -2,7 +2,7 @@ package world.selene.server.lua
 
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaModule
-import world.selene.common.lua.ObservableMap
+import world.selene.common.observable.ObservableMap
 import world.selene.common.lua.Signal
 import world.selene.server.data.ServerCustomData
 

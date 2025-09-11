@@ -1,6 +1,8 @@
 package world.selene.common.lua
 
 import party.iroiro.luajava.Lua
+import world.selene.common.lua.util.checkString
+import world.selene.common.lua.util.checkUserdata
 import java.lang.ref.WeakReference
 import kotlin.reflect.KClass
 

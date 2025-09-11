@@ -4,6 +4,11 @@ import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.lua.util.CallerInfo
+import world.selene.common.lua.util.checkFunction
+import world.selene.common.lua.util.checkUserdata
+import world.selene.common.lua.util.getCallerInfo
+import world.selene.common.lua.util.xpCall
 
 class Signal(private val name: String) : LuaMetatableProvider {
     data class SignalHandler(val name: String, val callback: LuaValue, val registrationSite: CallerInfo) : LuaTrace {

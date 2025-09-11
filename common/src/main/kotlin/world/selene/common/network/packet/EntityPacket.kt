@@ -2,7 +2,7 @@ package world.selene.common.network.packet
 
 import io.netty.buffer.ByteBuf
 import world.selene.common.network.*
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 
 data class EntityPacket(
     val networkId: Int,

@@ -3,8 +3,8 @@ package world.selene.common.bundles
 import org.slf4j.Logger
 import world.selene.common.lua.ClosureTrace
 import world.selene.common.lua.LuaManager
-import world.selene.common.lua.LuaPackageModule
-import world.selene.common.lua.xpCall
+import world.selene.common.lua.libraries.LuaPackageModule
+import world.selene.common.lua.util.xpCall
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
@@ -17,8 +17,8 @@ class BundleLoader(
     private val bundleLocator: BundleLocator
 ) {
 
-    fun loadBundles(bundles: Set<String>): List<LocatedBundle> {
-        val bundleManifests = mutableMapOf<String, LocatedBundle>()
+    fun loadBundles(bundles: Set<String>): List<Bundle> {
+        val bundleManifests = mutableMapOf<String, Bundle>()
         val dependencyGraph = mutableMapOf<String, List<String>>()
         val missingBundles = mutableSetOf<String>()
 
@@ -141,7 +141,7 @@ class BundleLoader(
         return sortedBundles.mapNotNull { bundleManifests[it] }
     }
 
-    fun loadBundleEntrypoints(bundles: List<LocatedBundle>, entrypointFilters: List<String>) {
+    fun loadBundleEntrypoints(bundles: List<Bundle>, entrypointFilters: List<String>) {
         for (bundle in bundles) {
             val manifest = bundle.manifest
             val bundleDir = bundle.dir

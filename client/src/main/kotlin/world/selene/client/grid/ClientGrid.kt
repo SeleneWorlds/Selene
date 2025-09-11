@@ -2,7 +2,7 @@ package world.selene.client.grid
 
 import com.badlogic.gdx.math.Vector3
 import world.selene.common.grid.Grid
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.Coordinate
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt

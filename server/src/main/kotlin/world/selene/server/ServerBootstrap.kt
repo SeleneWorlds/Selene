@@ -23,42 +23,70 @@ import org.slf4j.LoggerFactory
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.bundles.BundleLoader
 import world.selene.common.bundles.BundleLocator
+import world.selene.common.bundles.LuaResourcesModule
 import world.selene.common.data.*
+import world.selene.common.data.custom.CustomRegistries
+import world.selene.common.data.mappings.NameIdRegistry
+import world.selene.common.entities.EntityRegistry
+import world.selene.common.entities.component.ComponentRegistry
 import world.selene.common.grid.Grid
+import world.selene.common.grid.LuaGridModule
+import world.selene.common.i18n.LuaI18nModule
 import world.selene.common.i18n.Messages
+import world.selene.common.jobs.LuaSchedulesModule
 import world.selene.common.lua.*
+import world.selene.common.lua.libraries.LuaDebugModule
+import world.selene.common.lua.libraries.LuaMathxModule
+import world.selene.common.lua.libraries.LuaOsModule
+import world.selene.common.lua.libraries.LuaPackageModule
+import world.selene.common.lua.libraries.LuaStringxModule
+import world.selene.common.lua.libraries.LuaTablexModule
+import world.selene.common.network.LuaHttpModule
+import world.selene.common.network.LuaPayloadRegistry
 import world.selene.common.network.PacketFactory
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.PacketRegistrations
+import world.selene.common.sounds.SoundRegistry
 import world.selene.common.threading.MainThreadDispatcher
+import world.selene.common.tiles.TileRegistry
+import world.selene.common.tiles.transitions.TransitionRegistry
 import world.selene.common.util.Disposable
+import world.selene.server.attributes.LuaAttributesModule
 import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.bundles.ServerBundleLocator
 import world.selene.server.collision.CollisionResolver
+import world.selene.server.config.LuaConfigModule
 import world.selene.server.config.ScriptProperties
 import world.selene.server.config.ServerConfig
 import world.selene.server.config.SystemConfig
 import world.selene.server.heartbeat.ServerHeartbeat
-import world.selene.server.data.PersistentNameIdRegistry
+import world.selene.server.data.mappings.PersistentNameIdRegistry
 import world.selene.server.data.Registries
 import world.selene.server.data.ServerCustomData
 import world.selene.server.dimensions.Dimension
 import world.selene.server.dimensions.DimensionManager
+import world.selene.server.dimensions.LuaDimensionsModule
 import world.selene.server.entities.Entity
 import world.selene.server.entities.EntityManager
+import world.selene.server.entities.LuaEntitiesModule
 import world.selene.server.http.HttpServer
 import world.selene.server.login.LoginQueue
 import world.selene.server.login.SessionAuthentication
 import world.selene.server.lua.*
-import world.selene.server.maps.TransitionResolver
+import world.selene.server.maps.LuaServerMapModule
+import world.selene.server.tiles.transitions.TransitionResolver
+import world.selene.server.network.LuaServerNetworkModule
 import world.selene.server.network.NetworkServer
 import world.selene.server.network.NetworkServerImpl
 import world.selene.server.network.ServerPacketHandler
-import world.selene.server.player.PlayerManager
+import world.selene.server.players.LuaPlayersModule
+import world.selene.server.players.PlayerManager
+import world.selene.server.saves.LuaSavesModule
 import world.selene.server.saves.MapTreeFormat
 import world.selene.server.saves.MapTreeFormatBinaryV1
 import world.selene.server.saves.MapTreeFormatJsonV1
 import world.selene.server.saves.SaveManager
+import world.selene.server.sounds.LuaSoundsModule
 import world.selene.server.sync.ChunkViewManager
 import world.selene.server.world.World
 
@@ -116,7 +144,6 @@ fun main(args: Array<String>) {
         singleOf(::LuaConfigModule) { bind<LuaModule>() }
         singleOf(::LuaI18nModule) { bind<LuaModule>() }
         singleOf(::LuaAttributesModule) { bind<LuaModule>() }
-        singleOf(::Scripting)
     }
     val bundleModule = module {
         singleOf(::BundleLoader)

@@ -10,7 +10,7 @@ import org.slf4j.Logger
 import world.selene.common.util.Disposable
 import world.selene.server.config.ServerConfig
 import world.selene.server.config.SystemConfig
-import world.selene.server.player.PlayerManager
+import world.selene.server.players.PlayerManager
 import java.security.KeyPairGenerator
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey

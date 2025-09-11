@@ -3,9 +3,9 @@ package world.selene.client.lua
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.Colors
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.checkFloat
-import world.selene.common.lua.checkUserdata
-import world.selene.common.lua.getFieldFloat
+import world.selene.common.lua.util.checkFloat
+import world.selene.common.lua.util.checkUserdata
+import world.selene.common.lua.util.getFieldFloat
 
 fun Lua.checkColor(index: Int): Pair<Color, Int> {
     return when (type(index)) {

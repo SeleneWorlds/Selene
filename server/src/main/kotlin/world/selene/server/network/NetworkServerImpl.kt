@@ -13,7 +13,7 @@ import world.selene.common.network.PacketDecoder
 import world.selene.common.network.PacketEncoder
 import world.selene.common.network.PacketFactory
 import world.selene.common.network.PacketHandler
-import world.selene.server.player.PlayerManager
+import world.selene.server.players.PlayerManager
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @ChannelHandler.Sharable

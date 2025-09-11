@@ -1,6 +1,6 @@
 package world.selene.server.saves
 
-import world.selene.server.maps.MapTree
+import world.selene.server.maps.tree.MapTree
 import java.io.File
 
 interface MapTreeFormat {

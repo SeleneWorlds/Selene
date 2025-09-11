@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
 import world.selene.common.bundles.BundleLocator
 import world.selene.common.bundles.BundleManifest
-import world.selene.common.bundles.LocatedBundle
+import world.selene.common.bundles.Bundle
 import world.selene.server.config.ServerConfig
 import java.io.File
 
@@ -13,7 +13,7 @@ class ServerBundleLocator(
     private val config: ServerConfig,
     private val logger: Logger
 ) : BundleLocator {
-    override fun locateBundle(name: String): LocatedBundle? {
+    override fun locateBundle(name: String): Bundle? {
         val dir = File(config.bundlesPath, name)
         val manifestFile = File(dir, "bundle.json")
         if (!manifestFile.exists()) return null
@@ -23,6 +23,6 @@ class ServerBundleLocator(
             logger.error("Failed to read bundle manifest", e)
             return null
         }
-        return LocatedBundle(manifest, dir)
+        return Bundle(manifest, dir)
     }
 }

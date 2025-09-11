@@ -1,6 +1,8 @@
 package world.selene.common.lua
 
 import party.iroiro.luajava.Lua
+import world.selene.common.lua.util.throwError
+import world.selene.common.lua.util.toAny
 
 interface LuaMetatable {
     fun luaCall(lua: Lua): Int = lua.throwError("attempt to call a ${luaTypeName()} value")

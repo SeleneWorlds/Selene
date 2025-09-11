@@ -1,6 +1,6 @@
 package world.selene.client.rendering.animator
 
-import world.selene.client.maps.Entity
+import world.selene.client.entity.Entity
 import world.selene.common.grid.Direction
 import world.selene.common.grid.Grid
 import world.selene.common.statemachine.State

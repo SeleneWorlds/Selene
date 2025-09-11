@@ -5,9 +5,9 @@ import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.lua.CallerInfo
+import world.selene.common.lua.util.CallerInfo
 import world.selene.common.lua.LuaTrace
-import world.selene.common.lua.xpCall
+import world.selene.common.lua.util.xpCall
 
 class LuaObserver<T>(val callback: LuaValue, val registrationSite: CallerInfo) : Observer<T>, LuaTrace {
     private val logger: Logger = LoggerFactory.getLogger(LuaObserver::class.java)

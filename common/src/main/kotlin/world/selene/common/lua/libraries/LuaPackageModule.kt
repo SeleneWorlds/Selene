@@ -1,0 +1,100 @@
+package world.selene.common.lua.libraries
+
+import party.iroiro.luajava.Lua
+import party.iroiro.luajava.value.LuaValue
+import world.selene.common.lua.LuaManager
+import world.selene.common.lua.LuaModule
+import world.selene.common.lua.util.checkString
+import world.selene.common.lua.util.pushError
+import world.selene.common.lua.util.register
+
+/**
+ * Access other bundles and lua modules.
+ * Registered as `package` global.
+ */
+class LuaPackageModule : LuaModule {
+    override val name: String = "package"
+
+    private val packageResolvers = mutableListOf<(String) -> Pair<String, String>?>()
+
+    lateinit var packageLoaded: LuaValue
+    lateinit var packagePreload: LuaValue
+
+    fun initializeEarly(lua: Lua) {
+        lua.newTable()
+        lua.newTable()
+        lua.pushValue(-1)
+        packageLoaded = lua.get()
+        lua.setField(-2, "loaded")
+        lua.newTable()
+        lua.pushValue(-1)
+        packagePreload = lua.get()
+        lua.setField(-2, "preload")
+        lua.setGlobal("package")
+    }
+
+    fun addPackageResolver(resolver: (String) -> Pair<String, String>?) {
+        packageResolvers.add(resolver)
+    }
+
+    fun preloadModule(lua: Lua, moduleName: String, script: String) {
+        lua.push(packagePreload)
+        lua.load(LuaManager.Companion.loadBuffer(script), moduleName)
+        lua.setField(-2, moduleName)
+        lua.pop(1)
+    }
+
+    override fun initialize(luaManager: LuaManager) {
+        luaManager.lua.register("require", this::luaRequire)
+    }
+
+    override fun register(table: LuaValue) = Unit
+
+    /**
+     * Loads a module by name. Throws an error if the module cannot be found or failed to load.
+     * As with Lua's standard `require` function, this will only load the module once and then cache it for future use.
+     *
+     * ```signatures
+     * require(moduleName: string) -> any
+     * ```
+     */
+    private fun luaRequire(lua: Lua): Int {
+        val moduleName = lua.checkString(1)
+        lua.push(packageLoaded)
+        lua.getField(-1, moduleName)
+        lua.remove(-2)
+        if (!lua.isNil(-1)) {
+            return 1
+        }
+        lua.pop(1)
+
+        lua.push(packagePreload)
+        lua.getField(-1, moduleName)
+        if (!lua.isNil(-1)) {
+            lua.remove(-2)
+            lua.pCall(0, 1)
+            lua.push(packageLoaded)
+            lua.pushValue(-2)
+            lua.setField(-2, moduleName)
+            lua.pop(1)
+            return 1
+        }
+        lua.pop(1)
+
+        val found = packageResolvers.asSequence().mapNotNull { it(moduleName) }.firstOrNull()
+        if (found != null) {
+            val preTop = lua.top
+            lua.load(LuaManager.Companion.loadBuffer(found.second), found.first)
+            lua.pCall(0, 1)
+            if (lua.top > preTop) {
+                lua.push(packageLoaded)
+                lua.pushValue(-2)
+                lua.setField(-2, moduleName)
+                lua.pop(1)
+                return 1
+            }
+        }
+
+        return lua.pushError("module '$moduleName' not found")
+    }
+}

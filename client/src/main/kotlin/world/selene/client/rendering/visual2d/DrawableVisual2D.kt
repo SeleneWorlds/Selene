@@ -3,12 +3,12 @@ package world.selene.client.rendering.visual2d
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
-import world.selene.client.data.VisualDefinition
+import world.selene.client.rendering.visual.VisualDefinition
 import world.selene.client.rendering.drawable.Drawable
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.checkUserdata
+import world.selene.common.lua.util.checkUserdata
 
 class DrawableVisual2D(
     private val visualDefinition: VisualDefinition,

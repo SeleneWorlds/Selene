@@ -1,5 +1,6 @@
 package world.selene.common.data
 
+import world.selene.common.data.mappings.NameIdRegistry
 import kotlin.reflect.KClass
 
 interface Registry<TData : Any> {

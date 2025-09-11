@@ -1,6 +1,5 @@
 package world.selene.client.rendering.visual
 
-import world.selene.client.data.*
 import world.selene.client.rendering.animator.DrawableAnimator
 import world.selene.client.rendering.drawable.AnimatedDrawableOptions
 import world.selene.client.rendering.drawable.DrawableManager

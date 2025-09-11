@@ -5,7 +5,7 @@ import org.slf4j.Logger
 import world.selene.client.config.ClientRuntimeConfig
 import world.selene.common.bundles.BundleLocator
 import world.selene.common.bundles.BundleManifest
-import world.selene.common.bundles.LocatedBundle
+import world.selene.common.bundles.Bundle
 import java.io.File
 
 class ClientBundleLocator(
@@ -14,7 +14,7 @@ class ClientBundleLocator(
     private val logger: Logger
 ) :
     BundleLocator {
-    override fun locateBundle(name: String): LocatedBundle? {
+    override fun locateBundle(name: String): Bundle? {
         val bundlePath = config.bundles[name] ?: return null
         val dir = File(bundlePath)
         val manifestFile = File(dir, "bundle.json")
@@ -25,6 +25,6 @@ class ClientBundleLocator(
             logger.error("Failed to read bundle manifest", e)
             return null
         }
-        return LocatedBundle(manifest, dir)
+        return Bundle(manifest, dir)
     }
 }

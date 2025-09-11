@@ -3,14 +3,14 @@ package world.selene.server.sync
 import com.fasterxml.jackson.databind.ObjectMapper
 import world.selene.common.network.Packet
 import world.selene.common.network.packet.*
-import world.selene.common.util.ChunkWindow
-import world.selene.common.util.Coordinate
+import world.selene.common.grid.ChunkWindow
+import world.selene.common.grid.Coordinate
 import world.selene.server.cameras.Camera
 import world.selene.server.cameras.CameraListener
 import world.selene.server.dimensions.Dimension
 import world.selene.server.entities.Entity
 import world.selene.server.entities.EntityManager
-import world.selene.server.player.Player
+import world.selene.server.players.Player
 
 class PlayerSyncManager(
     private val chunkViewManager: ChunkViewManager,

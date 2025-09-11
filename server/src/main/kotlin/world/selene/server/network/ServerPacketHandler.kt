@@ -4,17 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
-import world.selene.common.data.NameIdRegistry
+import world.selene.common.data.mappings.NameIdRegistry
 import world.selene.common.grid.Grid
 import world.selene.common.lua.LuaManager
-import world.selene.common.lua.LuaPayloadRegistry
-import world.selene.common.lua.xpCall
+import world.selene.common.network.LuaPayloadRegistry
+import world.selene.common.lua.util.xpCall
 import world.selene.common.network.Packet
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.packet.*
 import world.selene.server.login.SessionAuthentication
 import world.selene.server.lua.ServerLuaSignals
-import world.selene.server.player.Player
+import world.selene.server.players.Player
 import java.util.*
 
 class ServerPacketHandler(

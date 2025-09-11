@@ -4,7 +4,7 @@ import world.selene.common.grid.Grid
 import world.selene.server.collision.CollisionResolver
 import world.selene.server.dimensions.DimensionManager
 import world.selene.server.entities.EntityManager
-import world.selene.server.player.PlayerManager
+import world.selene.server.players.PlayerManager
 import world.selene.server.sync.ChunkViewManager
 
 class World(

@@ -2,7 +2,7 @@ package world.selene.common.i18n
 
 import org.slf4j.Logger
 import world.selene.common.bundles.BundleDatabase
-import world.selene.common.bundles.LocatedBundle
+import world.selene.common.bundles.Bundle
 import java.io.File
 import java.util.*
 
@@ -45,7 +45,7 @@ class Messages(
         return mergedMessages
     }
 
-    private fun loadBundleMessages(bundle: LocatedBundle, locale: Locale): Properties {
+    private fun loadBundleMessages(bundle: Bundle, locale: Locale): Properties {
         val messages = Properties()
 
         val i18nDirs = listOf(

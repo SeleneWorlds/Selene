@@ -3,6 +3,8 @@ package world.selene.common.lua
 import org.koin.mp.KoinPlatform.getKoin
 import party.iroiro.luajava.ClassPathLoader
 import party.iroiro.luajava.lua54.Lua54
+import world.selene.common.lua.libraries.LuaPackageModule
+import world.selene.common.lua.util.newTable
 import java.nio.Buffer
 import java.nio.ByteBuffer
 import kotlin.reflect.KClass

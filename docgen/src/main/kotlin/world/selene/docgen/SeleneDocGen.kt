@@ -3,9 +3,13 @@ package world.selene.docgen
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.kjetland.jackson.jsonSchema.JsonSchemaGenerator
-import world.selene.client.data.AudioDefinition
-import world.selene.client.data.VisualDefinition
-import world.selene.common.data.*
+import world.selene.client.sounds.AudioDefinition
+import world.selene.client.rendering.visual.VisualDefinition
+import world.selene.common.entities.EntityDefinition
+import world.selene.common.entities.component.ComponentDefinition
+import world.selene.common.sounds.SoundDefinition
+import world.selene.common.tiles.TileDefinition
+import world.selene.common.tiles.transitions.TransitionDefinition
 import java.io.File
 
 enum class Side(val order: Int) {
