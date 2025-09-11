@@ -11,6 +11,7 @@ import world.selene.common.sounds.SoundDefinition
 import world.selene.common.tiles.TileDefinition
 import world.selene.common.tiles.transitions.TransitionDefinition
 import java.io.File
+import java.io.FileWriter
 
 enum class Side(val order: Int) {
     COMMON(1),
@@ -27,6 +28,7 @@ fun main(args: Array<String>) {
     val baseDir = args.getOrNull(0) ?: "."
     val moduleAnalyzer = LuaModuleAnalyzer()
     val classAnalyzer = LuaClassAnalyzer()
+    val lmlAnalyzer = LmlAnalyzer()
     val objectMapper = ObjectMapper().registerKotlinModule()
 
     try {
@@ -60,7 +62,7 @@ fun main(args: Array<String>) {
             }
         }
 
-        val classesDir = File("3.classes")
+        val classesDir = File("4.classes")
         if (!classesDir.exists()) {
             classesDir.mkdirs()
         }
@@ -124,4 +126,14 @@ fun main(args: Array<String>) {
         File(commonDataDir, "EntityDefinition.json"),
         schemaGenerator.generateJsonSchema(EntityDefinition::class.java)
     )
+
+    val lmlDir = File("3.lml")
+    if (!lmlDir.exists()) {
+        lmlDir.mkdirs()
+    }
+    val dtdFile = File(lmlDir, "schema.dtd")
+    lmlAnalyzer.writeDtd(FileWriter(dtdFile))
+
+    val lmlInfo = lmlAnalyzer.analyzeDtd(dtdFile)
+    objectMapper.writeValue(File(lmlDir, "schema.json"), lmlInfo)
 }

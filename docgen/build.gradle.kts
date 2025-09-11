@@ -9,6 +9,12 @@ dependencies {
     implementation(project(":server"))
     implementation(project(":client"))
 
+    val gdxVersion by properties
+    implementation("com.badlogicgames.gdx:gdx-backend-lwjgl3:${gdxVersion}")
+    val lmlVersion by properties
+    implementation("com.crashinvaders.lml:gdx-lml:$lmlVersion")
+    implementation("com.crashinvaders.lml:gdx-lml-vis:$lmlVersion")
+
     // Kotlin Compiler Frontend
     implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:2.1.21")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.21")
