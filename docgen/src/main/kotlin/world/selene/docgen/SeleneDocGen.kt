@@ -62,7 +62,7 @@ fun main(args: Array<String>) {
             }
         }
 
-        val classesDir = File("4.classes")
+        val classesDir = File("3.classes")
         if (!classesDir.exists()) {
             classesDir.mkdirs()
         }
