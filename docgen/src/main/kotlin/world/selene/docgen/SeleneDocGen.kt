@@ -127,10 +127,6 @@ fun main(args: Array<String>) {
         schemaGenerator.generateJsonSchema(EntityDefinition::class.java)
     )
 
-    val lmlDir = File("3.lml")
-    if (!lmlDir.exists()) {
-        lmlDir.mkdirs()
-    }
-    val dtdFile = File(lmlDir, "schema.dtd")
+    val dtdFile = File("schema.dtd")
     lmlAnalyzer.writeDtd(FileWriter(dtdFile))
 }
