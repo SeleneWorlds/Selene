@@ -133,7 +133,4 @@ fun main(args: Array<String>) {
     }
     val dtdFile = File(lmlDir, "schema.dtd")
     lmlAnalyzer.writeDtd(FileWriter(dtdFile))
-
-    val lmlInfo = lmlAnalyzer.analyzeDtd(dtdFile)
-    objectMapper.writeValue(File(lmlDir, "schema.json"), lmlInfo)
 }
