@@ -1,48 +1,37 @@
 plugins {
-    kotlin("jvm")
+    alias(libs.plugins.kotlin.jvm)
     `maven-publish`
 }
 
 dependencies {
-    val koinVersion by properties
-    api(project.dependencies.platform("io.insert-koin:koin-bom:$koinVersion"))
-    api("io.insert-koin:koin-core")
-    api("io.insert-koin:koin-logger-slf4j")
+    api(project.dependencies.platform(libs.koin.bom))
+    api(libs.bundles.koin)
 
-    api("com.fasterxml.jackson.core:jackson-databind:2.19.0")
-    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.19.0")
+    api(libs.bundles.jackson)
 
-    val nettyVersion by properties
-    api("io.netty:netty-all:$nettyVersion")
+    api(libs.netty.all)
 
-    val luaJavaVersion by properties
-    api("party.iroiro.luajava:luajava:$luaJavaVersion")
-    api("party.iroiro.luajava:lua54:$luaJavaVersion")
-    runtimeOnly("party.iroiro.luajava:lua54-platform:$luaJavaVersion:natives-desktop")
+    api(libs.bundles.lua)
+    runtimeOnly(libs.lua54.platform) {
+        artifact {
+            classifier = "natives-desktop"
+        }
+    }
 
-    val hopliteVersion by properties
-    api("com.sksamuel.hoplite:hoplite-core:$hopliteVersion")
+    api(libs.hoplite.core)
 
-    val log4jVersion by properties
-    api("org.slf4j:slf4j-api:2.0.17")
-    api("org.apache.logging.log4j:log4j-api:${log4jVersion}")
-    runtimeOnly("org.apache.logging.log4j:log4j-core:${log4jVersion}")
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:${log4jVersion}")
+    api(libs.slf4j.api)
+    api(libs.bundles.log4j)
 
-    api("com.auth0:java-jwt:4.5.0")
+    api(libs.java.jwt)
 
-    val arrowVersion by properties
-    api("io.arrow-kt:arrow-core:$arrowVersion")
+    api(libs.arrow.core)
 
-    api("com.mojang:brigadier:1.0.17")
+    api(libs.brigadier)
 
-    api("com.google.guava:guava:33.4.8-jre")
+    api(libs.guava)
 
-    val ktorVersion by properties
-    api("io.ktor:ktor-client-core:$ktorVersion")
-    api("io.ktor:ktor-client-cio:$ktorVersion")
-    api("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    api("io.ktor:ktor-serialization-jackson:$ktorVersion")
+    api(libs.bundles.ktor.client)
 }
 
 publishing {

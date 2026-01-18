@@ -1,0 +1,76 @@
+[versions]
+gdx = "1.13.5"
+ktx = "1.13.1-rc1"
+luajava = "4.0.2"
+ktor = "3.2.1"
+log4j = "2.24.3"
+jackson = "2.19.0"
+
+[libraries]
+gdx-backend-lwjgl3 = { module = "com.badlogicgames.gdx:gdx-backend-lwjgl3", version.ref = "gdx" }
+gdx-tools = { module = "com.badlogicgames.gdx:gdx-tools", version.ref = "gdx" }
+gdx-platform = { module = "com.badlogicgames.gdx:gdx-platform", version.ref = "gdx" }
+gdx-freetype-platform = { module = "com.badlogicgames.gdx:gdx-freetype-platform", version.ref = "gdx" }
+gdx-lml = { module = "com.crashinvaders.lml:gdx-lml", version = "1.10.1.12.1" }
+gdx-lml-vis = { module = "com.crashinvaders.lml:gdx-lml-vis", version = "1.10.1.12.1" }
+vis-ui = { module = "com.kotcrab.vis:vis-ui", version = "1.5.7" }
+
+ktx-app = { module = "io.github.libktx:ktx-app", version.ref = "ktx" }
+ktx-assets-async = { module = "io.github.libktx:ktx-assets-async", version.ref = "ktx" }
+ktx-freetype-async = { module = "io.github.libktx:ktx-freetype-async", version.ref = "ktx" }
+
+luajava = { module = "party.iroiro.luajava:luajava", version.ref = "luajava" }
+lua54 = { module = "party.iroiro.luajava:lua54", version.ref = "luajava" }
+lua54-platform = { module = "party.iroiro.luajava:lua54-platform", version.ref = "luajava" }
+
+netty-all = { module = "io.netty:netty-all", version = "4.2.1.Final" }
+
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-serialization-jackson = { module = "io.ktor:ktor-serialization-jackson", version.ref = "ktor" }
+ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
+ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
+ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
+ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt", version.ref = "ktor" }
+
+koin-bom = { module = "io.insert-koin:koin-bom", version = "4.0.4" }
+koin-core = { module = "io.insert-koin:koin-core" }
+koin-logger-slf4j = { module = "io.insert-koin:koin-logger-slf4j" }
+
+hoplite-core = { module = "com.sksamuel.hoplite:hoplite-core", version = "2.9.0" }
+
+slf4j-api = { module = "org.slf4j:slf4j-api", version = "2.0.17" }
+
+log4j-api = { module = "org.apache.logging.log4j:log4j-api", version.ref = "log4j" }
+log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
+log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
+
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
+jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+
+java-jwt = { module = "com.auth0:java-jwt", version = "4.5.0" }
+
+arrow-core = { module = "io.arrow-kt:arrow-core", version = "2.1.2" }
+
+brigadier = { module = "com.mojang:brigadier", version = "1.0.17" }
+
+guava = { module = "com.google.guava:guava", version = "33.4.8-jre" }
+
+jline = { module = "org.jline:jline", version = "3.30.4" }
+
+[bundles]
+gdx-natives = ["gdx-platform", "gdx-freetype-platform"]
+ktx = ["ktx-app", "ktx-assets-async", "ktx-freetype-async"]
+lua = ["luajava", "lua54"]
+ktor-client = ["ktor-client-core", "ktor-client-cio", "ktor-client-content-negotiation", "ktor-serialization-jackson"]
+ktor-server = ["ktor-server-netty", "ktor-server-content-negotiation", "ktor-serialization-jackson", "ktor-server-auth", "ktor-server-auth-jwt"]
+koin = ["koin-core", "koin-logger-slf4j"]
+log4j = ["log4j-api", "log4j-core", "log4j-slf4j2-impl"]
+jackson = ["jackson-databind", "jackson-module-kotlin"]
+lml = ["gdx-lml", "gdx-lml-vis"]
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.2.20" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.3.0" }
+shadow = { id = "com.gradleup.shadow", version = "9.3.1" }

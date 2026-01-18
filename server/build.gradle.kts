@@ -1,10 +1,10 @@
 import java.time.Instant
 
 plugins {
-    kotlin("jvm")
+    alias(libs.plugins.kotlin.jvm)
     application
     `maven-publish`
-    id("com.gradleup.shadow") version "9.3.1"
+    alias(libs.plugins.shadow)
 }
 
 application {
@@ -14,14 +14,9 @@ application {
 dependencies {
     implementation(project(":common"))
 
-    val ktorVersion by properties
-    implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
+    implementation(libs.bundles.ktor.server)
 
-    implementation("org.jline:jline:3.30.4")
+    implementation(libs.jline)
 }
 
 tasks.register("generateLibrariesJson") {

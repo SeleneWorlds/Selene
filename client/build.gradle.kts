@@ -1,10 +1,10 @@
 import java.time.Instant
 
 plugins {
-    kotlin("jvm")
+    alias(libs.plugins.kotlin.jvm)
     application
     `maven-publish`
-    id("com.gradleup.shadow") version "9.3.1"
+    alias(libs.plugins.shadow)
 }
 
 application {
@@ -14,24 +14,20 @@ application {
 dependencies {
     implementation(project(":common"))
 
-    val gdxVersion by properties
-    implementation("com.badlogicgames.gdx:gdx-backend-lwjgl3:${gdxVersion}")
-    implementation("com.badlogicgames.gdx:gdx-tools:$gdxVersion") {
+    implementation(libs.gdx.backend.lwjgl3)
+    implementation(libs.gdx.tools) {
         exclude("com.badlogicgames.gdx", "gdx-backend-lwjgl")
     }
-    runtimeOnly("com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop")
-    runtimeOnly("com.badlogicgames.gdx:gdx-freetype-platform:$gdxVersion:natives-desktop")
+    runtimeOnly(libs.bundles.gdx.natives) {
+        artifact {
+            classifier = "natives-desktop"
+        }
+    }
 
-    val ktxVersion by properties
-    implementation("io.github.libktx:ktx-app:$ktxVersion")
-    implementation("io.github.libktx:ktx-assets-async:$ktxVersion")
-    implementation("io.github.libktx:ktx-freetype-async:$ktxVersion")
+    implementation(libs.bundles.ktx)
 
-    val visuiVersion by properties
-    implementation("com.kotcrab.vis:vis-ui:$visuiVersion")
-    val lmlVersion by properties
-    implementation("com.crashinvaders.lml:gdx-lml:$lmlVersion")
-    implementation("com.crashinvaders.lml:gdx-lml-vis:$lmlVersion")
+    implementation(libs.vis.ui)
+    implementation(libs.bundles.lml)
 }
 
 tasks.register("generateLibrariesJson") {
