@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="VBU Server" type="JetRunConfigurationType">
     <option name="MAIN_CLASS_NAME" value="world.selene.server.ServerBootstrapKt" />
-    <module name="SeleneV3.server.main" />
+    <module name="Selene.server.main" />
     <shortenClasspath name="NONE" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/server/run/vbu" />
     <method v="2">
