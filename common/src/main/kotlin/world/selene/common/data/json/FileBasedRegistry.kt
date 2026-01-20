@@ -39,37 +39,46 @@ abstract class FileBasedRegistry<TData : Any>(
     fun load(bundleDatabase: BundleDatabase) {
         entries.clear()
         entriesById.clear()
-        metadataLookupTable.clear() // Clear cache when reloading entries
+        metadataLookupTable.clear()
         for (bundle in bundleDatabase.loadedBundles) {
-            val dataDir = File(bundle.dir, "$platform/data/$name")
-            if (dataDir.exists() && dataDir.isDirectory) {
+            val baseDataDir = File(bundle.dir, "$platform/data")
+            if (baseDataDir.exists() && baseDataDir.isDirectory) {
                 try {
-                    val dataDirPath = dataDir.toPath()
-                    Files.walk(dataDirPath)
-                        .filter { path -> Files.isRegularFile(path) && path.toString().endsWith(".json") }
-                        .forEach { path ->
-                            try {
-                                val relativePath = dataDirPath.relativize(path)
-                                val entryName = relativePath.toString().removeSuffix(".json").replace(File.separatorChar, '/')
-                                val data = objectMapper.readValue(path.toFile(), dataClass.java)
+                    val namespaceDirs = baseDataDir.listFiles {
+                        it.isDirectory && File(it, name).isDirectory
+                    } ?: emptyArray()
+                    for (namespaceDir in namespaceDirs) {
+                        val namespace = namespaceDir.name
+                        val registryDir = File(namespaceDir, name)
+                        val registryDirPath = registryDir.toPath()
+                        Files.walk(registryDirPath)
+                            .filter { path -> Files.isRegularFile(path) && path.toString().endsWith(".json") }
+                            .forEach { path ->
+                                try {
+                                    val relativePath = registryDirPath.relativize(path)
+                                    val entryName = relativePath.toString().removeSuffix(".json").replace(File.separatorChar, '/')
+                                    val fullName = "$namespace:$entryName"
+                                    
+                                    val data = objectMapper.readValue(path.toFile(), dataClass.java)
 
-                                @Suppress("UNCHECKED_CAST")
-                                entries[entryName] = data.apply {
-                                    if (data is RegistryObject<*>) {
-                                        // We do an early init without an id so that the item is immediately aware of its parent registry.
-                                        (data as RegistryObject<TData>).initializeFromRegistry(
-                                            this@FileBasedRegistry,
-                                            entryName,
-                                            -1
-                                        )
+                                    @Suppress("UNCHECKED_CAST")
+                                    entries[fullName] = data.apply {
+                                        if (data is RegistryObject<*>) {
+                                            // We do an early init without an id so that the item is immediately aware of its parent registry.
+                                            (data as RegistryObject<TData>).initializeFromRegistry(
+                                                this@FileBasedRegistry,
+                                                fullName,
+                                                -1
+                                            )
+                                        }
                                     }
+                                } catch (e: Exception) {
+                                    logger.error("Failed to load $path from bundle ${bundle.manifest.name}", e)
                                 }
-                            } catch (e: Exception) {
-                                logger.error("Failed to load $path from bundle ${bundle.manifest.name}", e)
                             }
-                        }
+                    }
                 } catch (e: Exception) {
-                    logger.error("Failed to walk directory tree $dataDir for bundle ${bundle.manifest.name}", e)
+                    logger.error("Failed to walk directory tree $baseDataDir for bundle ${bundle.manifest.name}", e)
                 }
             }
         }
