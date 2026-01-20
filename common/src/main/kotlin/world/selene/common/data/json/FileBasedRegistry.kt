@@ -7,14 +7,12 @@ import org.slf4j.LoggerFactory
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
-import world.selene.common.data.RegistryFile
 import world.selene.common.data.RegistryObject
 import world.selene.common.data.mappings.NameIdRegistry
 import java.io.File
-import kotlin.collections.iterator
 import kotlin.reflect.KClass
 
-abstract class JsonRegistry<TData : Any>(
+abstract class FileBasedRegistry<TData : Any>(
     private val objectMapper: ObjectMapper,
     val platform: String,
     override val name: String,
@@ -39,22 +37,29 @@ abstract class JsonRegistry<TData : Any>(
 
     fun load(bundleDatabase: BundleDatabase) {
         entries.clear()
+        entriesById.clear()
         metadataLookupTable.clear() // Clear cache when reloading entries
         for (bundle in bundleDatabase.loadedBundles) {
-            val dataDir = File(bundle.dir, "$platform/data")
-            val files = dataDir.listFiles { _, file -> file == "$name.json" || file.endsWith(".$name.json") }
-            if (files != null) {
-                for (file in files) {
+            val dataDir = File(bundle.dir, "$platform/data/$name")
+            if (dataDir.exists() && dataDir.isDirectory) {
+                val files = dataDir.listFiles { file -> file.isFile && file.extension == "json" }
+                if (files == null) {
+                    logger.warn("Failed to list files in $dataDir for bundle ${bundle.manifest.name}")
+                }
+                files?.forEach { file ->
                     try {
-                        val type =
-                            objectMapper.typeFactory.constructParametricType(RegistryFile::class.java, dataClass.java)
-                        val parsed = objectMapper.readValue<RegistryFile<TData>>(file, type)
-                        for ((name, data) in parsed.entries) {
-                            @Suppress("UNCHECKED_CAST")
-                            entries[name] = data.apply {
-                                if (data is RegistryObject<*>) {
-                                    (data as RegistryObject<TData>).initializeFromRegistry(this@JsonRegistry, name, -1)
-                                }
+                        val entryName = file.nameWithoutExtension
+                        val data = objectMapper.readValue(file, dataClass.java)
+
+                        @Suppress("UNCHECKED_CAST")
+                        entries[entryName] = data.apply {
+                            if (data is RegistryObject<*>) {
+                                // We do an early init without an id so that the item is immediately aware of its parent registry.
+                                (data as RegistryObject<TData>).initializeFromRegistry(
+                                    this@FileBasedRegistry,
+                                    entryName,
+                                    -1
+                                )
                             }
                         }
                     } catch (e: Exception) {
@@ -71,7 +76,9 @@ abstract class JsonRegistry<TData : Any>(
                 ?: if (throwOnMissingId) throw RuntimeException("Missing id mapping for $name in ${this.name}") else -1
             @Suppress("UNCHECKED_CAST")
             ((data as? RegistryObject<TData>)?.initializeFromRegistry(this, name, id))
-            entriesById[id] = data
+            if (id != -1) {
+                entriesById[id] = data
+            }
 
             if (data is MetadataHolder) {
                 data.metadata.forEach { (key, value) ->
@@ -85,5 +92,4 @@ abstract class JsonRegistry<TData : Any>(
             }
         }
     }
-
 }
