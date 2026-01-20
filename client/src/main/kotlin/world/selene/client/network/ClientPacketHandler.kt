@@ -178,10 +178,21 @@ class ClientPacketHandler(
                 }
             }
 
+            is NotifyAssetUpdatePacket -> {
+                context.enqueueWork {
+                    handleRegistryUpdatePacket(packet)
+                }
+            }
+
             is DisconnectPacket -> {
                 context.disconnect()
                 logger.info("Disconnected from server: ${packet.reason}")
             }
         }
     }
+    
+    private fun handleRegistryUpdatePacket(packet: NotifyAssetUpdatePacket) {
+        println(packet)
+    }
+
 }

@@ -119,6 +119,12 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             RequestFacingPacket::decode
         )
         packetFactory.registerPacket(
+            20,
+            NotifyAssetUpdatePacket::class,
+            NotifyAssetUpdatePacket::encode,
+            NotifyAssetUpdatePacket.Companion::decode
+        )
+        packetFactory.registerPacket(
             254,
             CustomPayloadPacket::class,
             CustomPayloadPacket::encode,
