@@ -10,6 +10,7 @@ import world.selene.common.data.Registry
 import world.selene.common.data.RegistryObject
 import world.selene.common.data.mappings.NameIdRegistry
 import java.io.File
+import java.nio.file.Files
 import kotlin.reflect.KClass
 
 abstract class FileBasedRegistry<TData : Any>(
@@ -42,29 +43,33 @@ abstract class FileBasedRegistry<TData : Any>(
         for (bundle in bundleDatabase.loadedBundles) {
             val dataDir = File(bundle.dir, "$platform/data/$name")
             if (dataDir.exists() && dataDir.isDirectory) {
-                val files = dataDir.listFiles { file -> file.isFile && file.extension == "json" }
-                if (files == null) {
-                    logger.warn("Failed to list files in $dataDir for bundle ${bundle.manifest.name}")
-                }
-                files?.forEach { file ->
-                    try {
-                        val entryName = file.nameWithoutExtension
-                        val data = objectMapper.readValue(file, dataClass.java)
+                try {
+                    val dataDirPath = dataDir.toPath()
+                    Files.walk(dataDirPath)
+                        .filter { path -> Files.isRegularFile(path) && path.toString().endsWith(".json") }
+                        .forEach { path ->
+                            try {
+                                val relativePath = dataDirPath.relativize(path)
+                                val entryName = relativePath.toString().removeSuffix(".json").replace(File.separatorChar, '/')
+                                val data = objectMapper.readValue(path.toFile(), dataClass.java)
 
-                        @Suppress("UNCHECKED_CAST")
-                        entries[entryName] = data.apply {
-                            if (data is RegistryObject<*>) {
-                                // We do an early init without an id so that the item is immediately aware of its parent registry.
-                                (data as RegistryObject<TData>).initializeFromRegistry(
-                                    this@FileBasedRegistry,
-                                    entryName,
-                                    -1
-                                )
+                                @Suppress("UNCHECKED_CAST")
+                                entries[entryName] = data.apply {
+                                    if (data is RegistryObject<*>) {
+                                        // We do an early init without an id so that the item is immediately aware of its parent registry.
+                                        (data as RegistryObject<TData>).initializeFromRegistry(
+                                            this@FileBasedRegistry,
+                                            entryName,
+                                            -1
+                                        )
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                logger.error("Failed to load $path from bundle ${bundle.manifest.name}", e)
                             }
                         }
-                    } catch (e: Exception) {
-                        logger.error("Failed to load $file from bundle ${bundle.manifest.name}", e)
-                    }
+                } catch (e: Exception) {
+                    logger.error("Failed to walk directory tree $dataDir for bundle ${bundle.manifest.name}", e)
                 }
             }
         }
