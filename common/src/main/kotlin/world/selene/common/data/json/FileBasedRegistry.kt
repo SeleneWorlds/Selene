@@ -37,6 +37,7 @@ abstract class FileBasedRegistry<TData : Any>(
 
     fun load(bundleDatabase: BundleDatabase) {
         entries.clear()
+        entriesById.clear()
         metadataLookupTable.clear() // Clear cache when reloading entries
         for (bundle in bundleDatabase.loadedBundles) {
             val dataDir = File(bundle.dir, "$platform/data/$name")
