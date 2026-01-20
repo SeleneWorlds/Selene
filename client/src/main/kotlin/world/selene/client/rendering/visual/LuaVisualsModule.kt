@@ -5,6 +5,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.register
+import world.selene.common.lua.util.throwError
 
 /**
  * Create visuals from visual definitions.
@@ -27,6 +28,7 @@ class LuaVisualsModule(private val visualManager: VisualManager) : LuaModule {
     private fun luaCreate(lua: Lua): Int {
         val name = lua.checkString(1)
         val visual = visualManager.createVisual(name, VisualCreationContext())
+            ?: lua.throwError("Failed to create visual: $name")
         lua.push(visual, Lua.Conversion.NONE)
         return 1
     }
