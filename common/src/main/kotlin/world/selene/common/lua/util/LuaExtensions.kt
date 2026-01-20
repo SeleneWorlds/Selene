@@ -230,7 +230,7 @@ fun <T : Any> Lua.checkRegistry(index: Int, registry: Registry<T>): T {
     if (isUserdata(index)) {
         return checkUserdata(index, registry.clazz)
     }
-    return toRegistry(index, registry) ?: throwTypeError(index, Registry::class)
+    return toRegistry(index, registry) ?: throwTypeError(index, registry.clazz)
 }
 
 fun Lua.toAny(index: Int): Any? {
