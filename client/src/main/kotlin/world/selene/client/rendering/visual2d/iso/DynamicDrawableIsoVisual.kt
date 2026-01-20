@@ -41,7 +41,7 @@ class DynamicDrawableIsoVisual(
     }
 
     override fun toString(): String {
-        return "DynamicDrawableIsoVisual(visual=${visualDef.name})"
+        return "DynamicDrawableIsoVisual(visual=${visualDef.identifier})"
     }
 
     @Suppress("SameReturnValue")

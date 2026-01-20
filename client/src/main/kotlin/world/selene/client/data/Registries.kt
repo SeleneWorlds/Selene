@@ -17,15 +17,15 @@ class Registries(
     val customRegistries: CustomRegistries
 ) : RegistryProvider {
 
-    override fun getRegistry(name: String): Registry<*>? {
-        return when (name) {
-            "tiles" -> tiles
-            "entities" -> entities
-            "visuals" -> visuals
-            "sounds" -> sounds
-            "audios" -> audios
-            "registries" -> customRegistries
-            else -> customRegistries.getCustomRegistry(name)
+    override fun getRegistry(identifier: Identifier): Registry<*>? {
+        return when (identifier) {
+            TileRegistry.IDENTIFIER -> tiles
+            EntityRegistry.IDENTIFIER -> entities
+            VisualRegistry.IDENTIFIER -> visuals
+            SoundRegistry.IDENTIFIER -> sounds
+            AudioRegistry.IDENTIFIER -> audios
+            CustomRegistries.IDENTIFIER -> customRegistries
+            else -> customRegistries.getCustomRegistry(identifier)
         }
     }
 }

@@ -38,7 +38,7 @@ class DrawableVisual2D(
     }
 
     override fun toString(): String {
-        return "DrawableVisual2D(visual=${visualDefinition.name})"
+        return "DrawableVisual2D(visual=${visualDefinition.identifier})"
     }
 
     @Suppress("SameReturnValue")

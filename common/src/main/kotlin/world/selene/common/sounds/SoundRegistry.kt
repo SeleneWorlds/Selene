@@ -1,6 +1,7 @@
 package world.selene.common.sounds
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import world.selene.common.data.Identifier
 import world.selene.common.data.json.FileBasedRegistry
 
 class SoundRegistry(objectMapper: ObjectMapper) : FileBasedRegistry<SoundDefinition>(
@@ -8,4 +9,8 @@ class SoundRegistry(objectMapper: ObjectMapper) : FileBasedRegistry<SoundDefinit
     "common",
     "sounds",
     SoundDefinition::class
-)
+) {
+    companion object {
+        val IDENTIFIER = Identifier.withDefaultNamespace("sounds")
+    }
+}

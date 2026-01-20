@@ -2,6 +2,7 @@ package world.selene.common.entities
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import world.selene.common.data.Identifier
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
 import world.selene.common.data.RegistryObject
@@ -13,16 +14,16 @@ data class EntityDefinition(
     override val tags: Set<String> = emptySet()
 ) : MetadataHolder, TagHolder, RegistryObject<EntityDefinition> {
     override var id: Int = 0; private set
-    override lateinit var name: String; private set
+    override lateinit var identifier: Identifier; private set
     override lateinit var registry: Registry<EntityDefinition>; private set
 
     override fun initializeFromRegistry(
         registry: Registry<EntityDefinition>,
-        name: String,
+        identifier: Identifier,
         id: Int
     ) {
         this.registry = registry
-        this.name = name
+        this.identifier = identifier
         this.id = id
     }
 }

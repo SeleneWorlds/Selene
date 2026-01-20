@@ -38,7 +38,7 @@ class DrawableIsoVisual(
     }
 
     override fun toString(): String {
-        return "DrawableIsoVisual(visual=${visualDefinition.name})"
+        return "DrawableIsoVisual(visual=${visualDefinition.identifier})"
     }
 
     @Suppress("SameReturnValue")

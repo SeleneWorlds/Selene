@@ -184,7 +184,7 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
          */
         private fun luaGetName(lua: Lua): Int {
             val tile = lua.checkUserdata<Tile>(1)
-            lua.push(tile.tileDefinition.name)
+            lua.push(tile.tileDefinition.identifier.toString())
             return 1
         }
 

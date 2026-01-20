@@ -2,6 +2,7 @@ package world.selene.client.sounds
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import world.selene.common.data.Identifier
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
 import world.selene.common.data.RegistryObject
@@ -21,16 +22,16 @@ data class SimpleAudioDefinition(
     override val metadata: Map<String, String> = emptyMap()
 ) : AudioDefinition, MetadataHolder, RegistryObject<AudioDefinition> {
     override var id: Int = 0; private set
-    override lateinit var name: String; private set
+    override lateinit var identifier: Identifier; private set
     override lateinit var registry: Registry<AudioDefinition>; private set
 
     override fun initializeFromRegistry(
         registry: Registry<AudioDefinition>,
-        name: String,
+        identifier: Identifier,
         id: Int
     ) {
         this.registry = registry
-        this.name = name
+        this.identifier = identifier
         this.id = id
     }
 }
@@ -40,16 +41,16 @@ data class MusicAudioDefinition(
     override val metadata: Map<String, String> = emptyMap()
 ) : AudioDefinition, MetadataHolder, RegistryObject<AudioDefinition> {
     override var id: Int = 0; private set
-    override lateinit var name: String; private set
+    override lateinit var identifier: Identifier; private set
     override lateinit var registry: Registry<AudioDefinition>; private set
 
     override fun initializeFromRegistry(
         registry: Registry<AudioDefinition>,
-        name: String,
+        identifier: Identifier,
         id: Int
     ) {
         this.registry = registry
-        this.name = name
+        this.identifier = identifier
         this.id = id
     }
 }

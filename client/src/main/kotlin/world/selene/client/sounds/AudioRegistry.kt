@@ -1,6 +1,7 @@
 package world.selene.client.sounds
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import world.selene.common.data.Identifier
 import world.selene.common.data.json.FileBasedRegistry
 
 class AudioRegistry(objectMapper: ObjectMapper) : FileBasedRegistry<AudioDefinition>(
@@ -8,4 +9,8 @@ class AudioRegistry(objectMapper: ObjectMapper) : FileBasedRegistry<AudioDefinit
     "client",
     "audio",
     AudioDefinition::class,
-)
+) {
+    companion object {
+        val IDENTIFIER = Identifier.withDefaultNamespace("audio")
+    }
+}

@@ -8,14 +8,15 @@ import world.selene.common.lua.util.checkUserdata
 
 interface RegistryObject<T : Any> : LuaMetatableProvider {
     @get:JsonIgnore
-    val name: String
+    val identifier: Identifier
 
     @get:JsonIgnore
     val registry: Registry<T>
 
     @get:JsonIgnore
     val id: Int
-    fun initializeFromRegistry(registry: Registry<T>, name: String, id: Int)
+
+    fun initializeFromRegistry(registry: Registry<T>, identifier: Identifier, id: Int)
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta
@@ -45,7 +46,7 @@ interface RegistryObject<T : Any> : LuaMetatableProvider {
          */
         private fun luaGetName(lua: Lua): Int {
             val registryObject = lua.checkUserdata<RegistryObject<*>>(1)
-            lua.push(registryObject.name)
+            lua.push(registryObject.identifier.toString())
             return 1
         }
 

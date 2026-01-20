@@ -72,8 +72,8 @@ class PersistentNameIdRegistry(
     }
 
     fun populate(registry: Registry<*>) {
-        registry.getAll().keys.forEach { name ->
-            getOrAssign(registry.name, name)
+        registry.getAll().keys.forEach { identifier ->
+            getOrAssign(registry.name, identifier.toString())
         }
         registry.registryPopulated(this)
     }

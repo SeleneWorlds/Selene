@@ -14,7 +14,7 @@ class TransientTile(
     private val dimension: Dimension,
     private val coordinate: Coordinate
 ) : LuaMetatableProvider {
-    val name get() = definition.name
+    val identifier get() = definition.identifier
     val x get() = coordinate.x
     val y get() = coordinate.y
     val z get() = coordinate.z
@@ -47,7 +47,7 @@ class TransientTile(
          */
         private fun luaGetName(lua: Lua): Int {
             val entity = lua.checkUserdata<TransientTile>(1)
-            lua.push(entity.name)
+            lua.push(entity.identifier.toString())
             return 1
         }
 

@@ -5,6 +5,7 @@ import com.google.common.collect.HashBasedTable
 import com.google.common.collect.Table
 import org.slf4j.LoggerFactory
 import world.selene.common.bundles.BundleDatabase
+import world.selene.common.data.Identifier
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
 import world.selene.common.data.RegistryObject
@@ -20,20 +21,20 @@ abstract class FileBasedRegistry<TData : Any>(
     private val dataClass: KClass<TData>
 ) : Registry<TData> {
     private val logger = LoggerFactory.getLogger("selene")
-    protected val entries: MutableMap<String, TData> = mutableMapOf()
+    protected val entries: MutableMap<Identifier, TData> = mutableMapOf()
     protected val entriesById: MutableMap<Int, TData> = mutableMapOf()
-    private val metadataLookupTable: Table<String, Any, MutableList<String>> = HashBasedTable.create()
+    private val metadataLookupTable: Table<String, Any, MutableList<Identifier>> = HashBasedTable.create()
 
     override val clazz: KClass<TData> = dataClass
     override fun get(id: Int): TData? = entriesById[id]
-    override fun get(name: String): TData? = entries[name]
-    override fun getAll(): Map<String, TData> = entries
+    override fun get(identifier: Identifier): TData? = entries[identifier]
+    override fun getAll(): Map<Identifier, TData> = entries
 
-    override fun findByMetadata(key: String, value: Any): Pair<String, TData>? {
-        val entryNames = metadataLookupTable[key, value] ?: emptyList()
-        val firstEntryName = entryNames.firstOrNull() ?: return null
-        val data = entries[firstEntryName] ?: return null
-        return firstEntryName to data
+    override fun findByMetadata(key: String, value: Any): Pair<Identifier, TData>? {
+        val identifiers = metadataLookupTable[key, value] ?: emptyList()
+        val firstIdentifier = identifiers.firstOrNull() ?: return null
+        val data = entries[firstIdentifier] ?: return null
+        return firstIdentifier to data
     }
 
     fun load(bundleDatabase: BundleDatabase) {
@@ -57,17 +58,17 @@ abstract class FileBasedRegistry<TData : Any>(
                                 try {
                                     val relativePath = registryDirPath.relativize(path)
                                     val entryName = relativePath.toString().removeSuffix(".json").replace(File.separatorChar, '/')
-                                    val fullName = "$namespace:$entryName"
+                                    val identifier = Identifier(namespace, entryName)
                                     
                                     val data = objectMapper.readValue(path.toFile(), dataClass.java)
 
                                     @Suppress("UNCHECKED_CAST")
-                                    entries[fullName] = data.apply {
+                                    entries[identifier] = data.apply {
                                         if (data is RegistryObject<*>) {
                                             // We do an early init without an id so that the item is immediately aware of its parent registry.
                                             (data as RegistryObject<TData>).initializeFromRegistry(
                                                 this@FileBasedRegistry,
-                                                fullName,
+                                                identifier,
                                                 -1
                                             )
                                         }
@@ -85,11 +86,11 @@ abstract class FileBasedRegistry<TData : Any>(
     }
 
     override fun registryPopulated(mappings: NameIdRegistry, throwOnMissingId: Boolean) {
-        for ((name, data) in entries) {
-            val id = mappings.getId(this.name, name)
-                ?: if (throwOnMissingId) throw RuntimeException("Missing id mapping for $name in ${this.name}") else -1
+        for ((identifier, data) in entries) {
+            val id = mappings.getId(this.name, identifier.toString())
+                ?: if (throwOnMissingId) throw RuntimeException("Missing id mapping for $identifier in ${this.name}") else -1
             @Suppress("UNCHECKED_CAST")
-            ((data as? RegistryObject<TData>)?.initializeFromRegistry(this, name, id))
+            ((data as? RegistryObject<TData>)?.initializeFromRegistry(this, identifier, id))
             if (id != -1) {
                 entriesById[id] = data
             }
@@ -98,9 +99,9 @@ abstract class FileBasedRegistry<TData : Any>(
                 data.metadata.forEach { (key, value) ->
                     val list = metadataLookupTable.get(key, value)
                     if (list != null) {
-                        list.add(name)
+                        list.add(identifier)
                     } else {
-                        metadataLookupTable.put(key, value, mutableListOf(name))
+                        metadataLookupTable.put(key, value, mutableListOf(identifier))
                     }
                 }
             }

@@ -1,6 +1,8 @@
 package world.selene.server.data
 
-import world.selene.common.data.*
+import world.selene.common.data.Identifier
+import world.selene.common.data.Registry
+import world.selene.common.data.RegistryProvider
 import world.selene.common.data.custom.CustomRegistries
 import world.selene.common.entities.EntityRegistry
 import world.selene.common.entities.component.ComponentRegistry
@@ -17,15 +19,15 @@ class Registries(
     val customRegistries: CustomRegistries
 ) : RegistryProvider {
 
-    override fun getRegistry(name: String): Registry<*>? {
-        return when (name) {
-            "tiles" -> tiles
-            "transitions" -> transitions
-            "entities" -> entities
-            "components" -> components
-            "sounds" -> sounds
-            "registries" -> customRegistries
-            else -> customRegistries.getCustomRegistry(name)
+    override fun getRegistry(identifier: Identifier): Registry<*>? {
+        return when (identifier) {
+            TileRegistry.IDENTIFIER -> tiles
+            TransitionRegistry.IDENTIFIER -> transitions
+            EntityRegistry.IDENTIFIER -> entities
+            ComponentRegistry.IDENTIFIER -> components
+            SoundRegistry.IDENTIFIER -> sounds
+            CustomRegistries.IDENTIFIER -> customRegistries
+            else -> customRegistries.getCustomRegistry(identifier)
         }
     }
 }

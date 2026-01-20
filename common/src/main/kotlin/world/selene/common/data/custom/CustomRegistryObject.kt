@@ -8,17 +8,18 @@ import world.selene.common.util.asAny
 import world.selene.common.lua.*
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
+import world.selene.common.data.Identifier
 
-class CustomRegistryObject(val registry: CustomRegistry, val name: String, val element: JsonNode) :
+class CustomRegistryObject(val registry: CustomRegistry, val identifier: Identifier, val element: JsonNode) :
     LuaMetatableProvider,
-    LuaReferencable<String, CustomRegistryObject> {
-    val luaReference = LuaReference(CustomRegistryObject::class, name, registry, this)
+    LuaReferencable<Identifier, CustomRegistryObject> {
+    val luaReference = LuaReference(CustomRegistryObject::class, identifier, registry, this)
 
     fun getMetadata(key: String): Any? {
         return element["metadata"]?.get(key)?.asAny()
     }
 
-    override fun luaReference(): LuaReference<String, CustomRegistryObject> {
+    override fun luaReference(): LuaReference<Identifier, CustomRegistryObject> {
         return luaReference
     }
 
@@ -27,11 +28,24 @@ class CustomRegistryObject(val registry: CustomRegistry, val name: String, val e
     }
 
     override fun toString(): String {
-        return "CustomRegistryObject(${registry.name}, $name, $element)"
+        return "CustomRegistryObject(${registry.name}, $identifier, $element)"
     }
 
     @Suppress("SameReturnValue")
     companion object {
+        /**
+         * Unique identifier of this custom registry object.
+         *
+         * ```property
+         * Identifier: Identifier
+         * ```
+         */
+        private fun luaGetIdentifier(lua: Lua): Int {
+            val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
+            lua.push(registryObject.identifier, Lua.Conversion.FULL)
+            return 1
+        }
+
         /**
          * Unique name of this custom registry object.
          *
@@ -41,7 +55,7 @@ class CustomRegistryObject(val registry: CustomRegistry, val name: String, val e
          */
         private fun luaGetName(lua: Lua): Int {
             val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
-            lua.push(registryObject.name)
+            lua.push(registryObject.identifier.toString())
             return 1
         }
 
@@ -85,6 +99,7 @@ class CustomRegistryObject(val registry: CustomRegistry, val name: String, val e
         }
 
         val luaMeta = LuaMappedMetatable(CustomRegistryObject::class) {
+            getter(::luaGetIdentifier)
             getter(::luaGetName)
             callable(::luaGetMetadata)
             callable(::luaGetField)

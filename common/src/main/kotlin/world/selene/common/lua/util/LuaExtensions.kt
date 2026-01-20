@@ -8,13 +8,14 @@ import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.LuaException.LuaError
 import party.iroiro.luajava.value.LuaFunction
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.data.Identifier
 import world.selene.common.data.Registry
+import world.selene.common.grid.Coordinate
 import world.selene.common.grid.Direction
 import world.selene.common.grid.Grid
 import world.selene.common.lua.LuaReference
 import world.selene.common.lua.LuaTrace
 import world.selene.common.observable.ObservableMap
-import world.selene.common.grid.Coordinate
 import java.util.*
 import kotlin.math.abs
 import kotlin.reflect.KClass
@@ -228,7 +229,10 @@ fun <T : Any> Lua.toRegistry(index: Int, registry: Registry<T>): T? {
 
 fun <T : Any> Lua.checkRegistry(index: Int, registry: Registry<T>): T {
     if (isUserdata(index)) {
-        return checkUserdata(index, registry.clazz)
+        return when (val item = toAny(index)) {
+            is Identifier -> registry.get(item) ?: throwTypeError(index, registry.clazz)
+            else -> checkUserdata(index, registry.clazz)
+        }
     }
     return toRegistry(index, registry) ?: throwTypeError(index, registry.clazz)
 }

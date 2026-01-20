@@ -132,7 +132,7 @@ class Entity(val registries: Registries, val world: World, val signals: ServerLu
     }
 
     override fun toString(): String {
-        return "Entity($networkId, $name, ${entityDefinition.name})"
+        return "Entity($networkId, $name, ${entityDefinition.identifier})"
     }
 
     private fun playAnimation(animationName: String) {

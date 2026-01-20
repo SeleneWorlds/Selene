@@ -7,6 +7,7 @@ import com.google.common.collect.Table
 import org.slf4j.LoggerFactory
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.data.Registry
+import world.selene.common.data.Identifier
 import world.selene.common.util.asAny
 import world.selene.common.lua.LuaReferenceResolver
 import java.io.File
@@ -16,23 +17,23 @@ import kotlin.reflect.KClass
 class CustomRegistry(
     val objectMapper: ObjectMapper,
     private val definition: CustomRegistryDefinition
-) : Registry<CustomRegistryObject>, LuaReferenceResolver<String, CustomRegistryObject> {
+) : Registry<CustomRegistryObject>, LuaReferenceResolver<Identifier, CustomRegistryObject> {
 
     private val logger = LoggerFactory.getLogger(CustomRegistry::class.java)
-    private val entries: MutableMap<String, CustomRegistryObject> = mutableMapOf()
-    private val metadataLookupTable: Table<String, Any, MutableList<String>> = HashBasedTable.create()
+    private val entries: MutableMap<Identifier, CustomRegistryObject> = mutableMapOf()
+    private val metadataLookupTable: Table<String, Any, MutableList<Identifier>> = HashBasedTable.create()
 
     override val name: String = definition.name
     override val clazz: KClass<CustomRegistryObject> = CustomRegistryObject::class
     override fun get(id: Int): CustomRegistryObject? = null
-    override fun get(name: String): CustomRegistryObject? = entries[name]
-    override fun getAll(): Map<String, CustomRegistryObject> = entries
+    override fun get(identifier: Identifier): CustomRegistryObject? = entries[identifier]
+    override fun getAll(): Map<Identifier, CustomRegistryObject> = entries.mapKeys { it.key }
 
-    override fun findByMetadata(key: String, value: Any): Pair<String, CustomRegistryObject>? {
-        val entryNames = metadataLookupTable[key, value] ?: emptyList()
-        val firstEntryName = entryNames.firstOrNull() ?: return null
-        val data = entries[firstEntryName] ?: return null
-        return firstEntryName to data
+    override fun findByMetadata(key: String, value: Any): Pair<Identifier, CustomRegistryObject>? {
+        val identifiers = metadataLookupTable[key, value] ?: emptyList()
+        val firstIdentifier = identifiers.firstOrNull() ?: return null
+        val data = entries[firstIdentifier] ?: return null
+        return firstIdentifier to data
     }
 
     fun load(bundleDatabase: BundleDatabase) {
@@ -53,13 +54,13 @@ class CustomRegistry(
                             .forEach { path ->
                                 try {
                                     val relativePath = registryDirPath.relativize(path)
-                                    val entryName = relativePath.toString().removeSuffix(".json").replace(File.separatorChar, '/')
-                                    val fullName = "$namespace:$entryName"
+                                    val entryPath = relativePath.toString().removeSuffix(".json").replace(File.separatorChar, '/')
+                                    val identifier = Identifier(namespace, entryPath)
                                     
                                     val data = objectMapper.readTree(path.toFile())
-                                    val customObject = CustomRegistryObject(this, fullName, data)
+                                    val customObject = CustomRegistryObject(this, identifier, data)
 
-                                    entries[fullName] = customObject
+                                    entries[identifier] = customObject
 
                                     // Process metadata for lookup
                                     (data.get("metadata") as? ObjectNode)?.forEachEntry { key, node ->
@@ -67,9 +68,9 @@ class CustomRegistry(
                                         if (value != null) {
                                             val list = metadataLookupTable.get(key, value)
                                             if (list != null) {
-                                                list.add(fullName)
+                                                list.add(identifier)
                                             } else {
-                                                metadataLookupTable.put(key, value, mutableListOf(fullName))
+                                                metadataLookupTable.put(key, value, mutableListOf(identifier))
                                             }
                                         }
                                     }
@@ -85,7 +86,7 @@ class CustomRegistry(
         }
     }
 
-    override fun luaDereference(id: String): CustomRegistryObject? {
+    override fun luaDereference(id: Identifier): CustomRegistryObject? {
         return entries[id]
     }
 

@@ -6,6 +6,7 @@ import com.badlogic.gdx.utils.Align
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import world.selene.common.data.Identifier
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
 import world.selene.common.data.RegistryObject
@@ -20,15 +21,15 @@ import world.selene.common.data.RegistryObject
 )
 abstract class VisualDefinition : MetadataHolder, RegistryObject<VisualDefinition> {
     override var id: Int = 0; protected set
-    override lateinit var name: String; protected set
+    override lateinit var identifier: Identifier; protected set
     override lateinit var registry: Registry<VisualDefinition>; protected set
     override fun initializeFromRegistry(
         registry: Registry<VisualDefinition>,
-        name: String,
+        identifier: Identifier,
         id: Int
     ) {
         this.registry = registry
-        this.name = name
+        this.identifier = identifier
         this.id = id
     }
 }

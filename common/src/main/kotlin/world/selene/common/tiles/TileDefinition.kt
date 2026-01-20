@@ -1,5 +1,6 @@
 package world.selene.common.tiles
 
+import world.selene.common.data.Identifier
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
 import world.selene.common.data.RegistryObject
@@ -13,16 +14,16 @@ data class TileDefinition(
     override val tags: Set<String> = emptySet()
 ) : MetadataHolder, TagHolder, RegistryObject<TileDefinition> {
     override var id: Int = 0; private set
-    override lateinit var name: String; private set
+    override lateinit var identifier: Identifier; private set
     override lateinit var registry: Registry<TileDefinition>; private set
 
     override fun initializeFromRegistry(
         registry: Registry<TileDefinition>,
-        name: String,
+        identifier: Identifier,
         id: Int
     ) {
         this.registry = registry
-        this.name = name
+        this.identifier = identifier
         this.id = id
     }
 }
