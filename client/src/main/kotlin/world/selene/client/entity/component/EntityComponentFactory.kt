@@ -1,5 +1,6 @@
 package world.selene.client.entity.component
 
+import org.slf4j.Logger
 import world.selene.client.entity.component.rendering.ComponentPositioner
 import world.selene.client.entity.component.rendering.IsoVisualComponent
 import world.selene.client.entity.component.rendering.Visual2DComponent
@@ -12,7 +13,7 @@ import world.selene.common.entities.ClientScriptComponentConfiguration
 import world.selene.common.entities.ComponentConfiguration
 import world.selene.common.entities.VisualComponentConfiguration
 
-class EntityComponentFactory(private val visualManager: VisualManager) {
+class EntityComponentFactory(private val visualManager: VisualManager, private val logger: Logger) {
     fun create(entity: Entity, configuration: ComponentConfiguration): EntityComponent? {
         return when (configuration) {
             is VisualComponentConfiguration -> {
@@ -27,7 +28,10 @@ class EntityComponentFactory(private val visualManager: VisualManager) {
                         Visual2DComponent(visual, positioner)
                     }
 
-                    else -> null
+                    else -> {
+                        logger.error("Failed to create visual: $configuration")
+                        null
+                    }
                 }
             }
 

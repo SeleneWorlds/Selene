@@ -6,9 +6,12 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Pool
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
 import world.selene.client.controls.EntityMotion
-import world.selene.client.entity.component.*
+import world.selene.client.entity.component.EntityComponent
+import world.selene.client.entity.component.EntityComponentFactory
+import world.selene.client.entity.component.TickableComponent
 import world.selene.client.entity.component.rendering.IsoComponent
 import world.selene.client.entity.component.rendering.RenderableComponent
 import world.selene.client.grid.ClientGrid
@@ -21,12 +24,14 @@ import world.selene.client.rendering.scene.Renderable
 import world.selene.client.rendering.scene.Scene
 import world.selene.common.entities.ComponentConfiguration
 import world.selene.common.entities.EntityDefinition
-import world.selene.common.lua.*
+import world.selene.common.grid.Coordinate
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.util.checkCoordinate
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.toAnyMap
-import world.selene.common.grid.Coordinate
 import java.util.*
 
 class Entity(
@@ -37,6 +42,9 @@ class Entity(
     val entityComponentFactory: EntityComponentFactory
 ) :
     Pool.Poolable, Renderable, LuaMetatableProvider {
+
+    private val logger = LoggerFactory.getLogger(Entity::class.java)
+
     var networkId: Int = 0
     var entityDefinition: EntityDefinition? = null
         set(value) {
@@ -63,7 +71,8 @@ class Entity(
     val componentsToBeRemoved = mutableSetOf<EntityComponent>()
 
     val motionQueue: ArrayDeque<EntityMotion> = ArrayDeque()
-    var animator: AnimatorController = StateMachineAnimatorController().configure(DefaultHumanoidAnimator(grid)::configure)
+    var animator: AnimatorController =
+        StateMachineAnimatorController().configure(DefaultHumanoidAnimator(grid)::configure)
 
     override var coordinate: Coordinate = Coordinate.Zero
         private set(value) {
@@ -133,7 +142,7 @@ class Entity(
         }
 
         animator.update(this, delta)
-        
+
         processComponents {
             tickableComponents.forEach { component ->
                 component.update(this, delta)
@@ -206,6 +215,8 @@ class Entity(
         val component = entityComponentFactory.create(this, componentConfiguration)
         if (component != null) {
             addComponent(name, component)
+        } else {
+            logger.error("Failed to create component $name for entity $this")
         }
     }
 
