@@ -41,7 +41,11 @@ abstract class FileBasedRegistry<TData : Any>(
         for (bundle in bundleDatabase.loadedBundles) {
             val dataDir = File(bundle.dir, "$platform/data/$name")
             if (dataDir.exists() && dataDir.isDirectory) {
-                dataDir.listFiles { file -> file.isFile && file.extension == "json" }?.forEach { file ->
+                val files = dataDir.listFiles { file -> file.isFile && file.extension == "json" }
+                if (files == null) {
+                    logger.warn("Failed to list files in $dataDir for bundle ${bundle.manifest.name}")
+                }
+                files?.forEach { file ->
                     try {
                         val entryName = file.nameWithoutExtension
                         val data = objectMapper.readValue(file, dataClass.java)
@@ -49,6 +53,7 @@ abstract class FileBasedRegistry<TData : Any>(
                         @Suppress("UNCHECKED_CAST")
                         entries[entryName] = data.apply {
                             if (data is RegistryObject<*>) {
+                                // We do an early init without an id so that the item is immediately aware of its parent registry.
                                 (data as RegistryObject<TData>).initializeFromRegistry(
                                     this@FileBasedRegistry,
                                     entryName,
@@ -70,7 +75,9 @@ abstract class FileBasedRegistry<TData : Any>(
                 ?: if (throwOnMissingId) throw RuntimeException("Missing id mapping for $name in ${this.name}") else -1
             @Suppress("UNCHECKED_CAST")
             ((data as? RegistryObject<TData>)?.initializeFromRegistry(this, name, id))
-            entriesById[id] = data
+            if (id != -1) {
+                entriesById[id] = data
+            }
 
             if (data is MetadataHolder) {
                 data.metadata.forEach { (key, value) ->
