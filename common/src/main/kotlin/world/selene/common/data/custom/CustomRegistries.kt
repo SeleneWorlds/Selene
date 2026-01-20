@@ -2,13 +2,13 @@ package world.selene.common.data.custom
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import world.selene.common.bundles.BundleDatabase
-import world.selene.common.data.json.JsonRegistry
 import world.selene.common.data.Registry
+import world.selene.common.data.json.FileBasedRegistry
 import kotlin.collections.iterator
 
 class CustomRegistries(
     private val objectMapper: ObjectMapper
-) : JsonRegistry<CustomRegistryDefinition>(
+) : FileBasedRegistry<CustomRegistryDefinition>(
     objectMapper,
     "common",
     "registries",

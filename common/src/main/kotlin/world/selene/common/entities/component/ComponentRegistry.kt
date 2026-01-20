@@ -1,9 +1,9 @@
 package world.selene.common.entities.component
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import world.selene.common.data.json.JsonRegistry
+import world.selene.common.data.json.FileBasedRegistry
 
-class ComponentRegistry(objectMapper: ObjectMapper) : JsonRegistry<ComponentDefinition>(
+class ComponentRegistry(objectMapper: ObjectMapper) : FileBasedRegistry<ComponentDefinition>(
     objectMapper,
     "common",
     "components",
