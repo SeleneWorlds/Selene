@@ -29,6 +29,10 @@ abstract class FileBasedRegistry<TData : Any>(
     override val clazz: KClass<TData> = dataClass
     override fun get(id: Int): TData? = entriesById[id]
     override fun get(identifier: Identifier): TData? = entries[identifier]
+    override fun getIdentifier(id: Int): Identifier? {
+        return (entriesById[id] as? RegistryOwnedObject<*>)?.identifier
+    }
+
     override fun getAll(): Map<Identifier, TData> = entries
 
     override fun findByMetadata(key: String, value: Any): Pair<Identifier, TData>? {
@@ -42,6 +46,7 @@ abstract class FileBasedRegistry<TData : Any>(
         entries.clear()
         entriesById.clear()
         metadataLookupTable.clear()
+        subscriptions.clear()
         for (bundle in bundleDatabase.loadedBundles) {
             val baseDataDir = File(bundle.dir, "$platform/data")
             if (baseDataDir.exists() && baseDataDir.isDirectory) {
@@ -141,6 +146,10 @@ abstract class FileBasedRegistry<TData : Any>(
             (oldEntry as? MetadataHolder)?.let { removeFromMetadataLookup(identifier, it) }
             (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
 
+            subscriptions[identifier]?.forEach { handler ->
+                handler(data)
+            }
+
             logger.info("Updated registry entry $identifier in ${this.name} due to file update: $path")
         } else {
             logger.warn("Failed to load updated entry $identifier from $path")
@@ -179,6 +188,20 @@ abstract class FileBasedRegistry<TData : Any>(
                 }
             }
         }
+    }
+
+    private val subscriptions: MutableMap<Identifier, MutableList<(TData) -> Unit>> = mutableMapOf()
+
+    override fun subscribe(
+        reference: RegistryReference<TData>,
+        handler: (TData) -> Unit
+    ) {
+        val resolved = reference.get()
+        if (resolved != null) {
+            handler(resolved)
+        }
+
+        subscriptions.getOrPut(reference.identifier) { mutableListOf() }.add(handler)
     }
 
     override fun luaDereference(id: Identifier): TData? {

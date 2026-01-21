@@ -6,23 +6,30 @@ import com.badlogic.gdx.utils.Pool
 import party.iroiro.luajava.Lua
 import world.selene.client.grid.ClientGrid
 import world.selene.client.rendering.environment.Environment
+import world.selene.client.rendering.scene.Renderable
+import world.selene.client.rendering.scene.Scene
 import world.selene.client.rendering.visual.VisualCreationContext
 import world.selene.client.rendering.visual.VisualManager
 import world.selene.client.rendering.visual2d.iso.IsoVisual
-import world.selene.client.rendering.scene.Renderable
-import world.selene.client.rendering.scene.Scene
-import world.selene.common.tiles.TileDefinition
+import world.selene.common.data.RegistryReference
+import world.selene.common.grid.Coordinate
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.util.checkUserdata
-import world.selene.common.grid.Coordinate
+import world.selene.common.tiles.TileDefinition
 import kotlin.math.abs
 
 class Tile(private val grid: ClientGrid, private val visualManager: VisualManager, private val pool: TilePool) :
     Pool.Poolable, Renderable,
     LuaMetatableProvider {
-    lateinit var tileDefinition: TileDefinition
+    var tileDefinition: RegistryReference<TileDefinition> = RegistryReference.unbound()
+        set(value) {
+            field = value
+            value.subscribe {
+                updateVisual()
+            }
+        }
     var visual: IsoVisual? = null
 
     override val sortLayerOffset: Int get() = visual?.sortLayerOffset ?: 0
@@ -85,7 +92,10 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     }
 
     fun updateVisual() {
-        visual = visualManager.createVisual(tileDefinition.visual, VisualCreationContext(coordinate)) as? IsoVisual
+        tileDefinition.get()?.visual?.let {
+            visual = visualManager.createVisual(it, VisualCreationContext(coordinate)) as? IsoVisual
+        }
+        // TODO Maybe use a default missing visual as fallback if tile def is not present or no longer resolves
     }
 
     override fun addedToScene(scene: Scene) {
