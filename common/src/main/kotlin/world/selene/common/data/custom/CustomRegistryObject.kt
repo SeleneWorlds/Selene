@@ -9,11 +9,35 @@ import world.selene.common.lua.*
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.data.Identifier
+import world.selene.common.data.RegistryObject
+import world.selene.common.data.MetadataHolder
+import world.selene.common.data.Registry
 
-class CustomRegistryObject(val registry: CustomRegistry, val identifier: Identifier, val element: JsonNode) :
+class CustomRegistryObject(override val registry: CustomRegistry, override val identifier: Identifier, val element: JsonNode) :
     LuaMetatableProvider,
-    LuaReferencable<Identifier, CustomRegistryObject> {
+    LuaReferencable<Identifier, CustomRegistryObject>,
+    RegistryObject<CustomRegistryObject>,
+    MetadataHolder {
     val luaReference = LuaReference(CustomRegistryObject::class, identifier, registry, this)
+
+    override var id: Int = -1
+
+    override val metadata: Map<String, Any> by lazy {
+        (element.get("metadata") as? ObjectNode)?.let { metadataNode ->
+            val metadataMap = mutableMapOf<String, Any>()
+            metadataNode.forEachEntry { key, node ->
+                val value = node.asAny()
+                if (value != null) {
+                    metadataMap[key] = value
+                }
+            }
+            metadataMap
+        } ?: emptyMap()
+    }
+    
+    override fun initializeFromRegistry(registry: Registry<CustomRegistryObject>, identifier: Identifier, id: Int) {
+        this.id = id
+    }
 
     fun getMetadata(key: String): Any? {
         return element["metadata"]?.get(key)?.asAny()

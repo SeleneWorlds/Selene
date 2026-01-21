@@ -3,6 +3,7 @@ package world.selene.common.data.json
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.HashBasedTable
 import com.google.common.collect.Table
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import world.selene.common.bundles.Bundle
 import world.selene.common.bundles.BundleDatabase
@@ -12,17 +13,19 @@ import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
 import world.selene.common.data.RegistryObject
 import world.selene.common.data.mappings.NameIdRegistry
+import world.selene.common.lua.LuaReferenceResolver
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
 import kotlin.reflect.KClass
 
 abstract class FileBasedRegistry<TData : Any>(
-    private val objectMapper: ObjectMapper,
+    val objectMapper: ObjectMapper,
     val platform: String,
     override val name: String,
     private val dataClass: KClass<TData>
-) : Registry<TData>, BundleDrivenRegistry {
-    private val logger = LoggerFactory.getLogger("selene")
+) : Registry<TData>, BundleDrivenRegistry, LuaReferenceResolver<Identifier, TData> {
+    protected val logger: Logger = LoggerFactory.getLogger("selene")
     protected val entries: MutableMap<Identifier, TData> = mutableMapOf()
     protected val entriesById: MutableMap<Int, TData> = mutableMapOf()
     private val metadataLookupTable: Table<String, Any, MutableList<Identifier>> = HashBasedTable.create()
@@ -62,17 +65,19 @@ abstract class FileBasedRegistry<TData : Any>(
                                     val entryName = relativePath.toString().removeSuffix(".json").replace(File.separatorChar, '/')
                                     val identifier = Identifier(namespace, entryName)
                                     
-                                    val data = objectMapper.readValue(path.toFile(), dataClass.java)
+                                    val data = loadEntryFromFile(path, identifier)
+                                    if (data != null) {
+                                        entries[identifier] = data
 
-                                    @Suppress("UNCHECKED_CAST")
-                                    entries[identifier] = data.apply {
-                                        if (data is RegistryObject<*>) {
-                                            // We do an early init without an id so that the item is immediately aware of its parent registry.
-                                            (data as RegistryObject<TData>).initializeFromRegistry(
-                                                this@FileBasedRegistry,
-                                                identifier,
-                                                -1
-                                            )
+                                        if (data is MetadataHolder) {
+                                            data.metadata.forEach { (key, value) ->
+                                                val list = metadataLookupTable.get(key, value)
+                                                if (list != null) {
+                                                    list.add(identifier)
+                                                } else {
+                                                    metadataLookupTable.put(key, value, mutableListOf(identifier))
+                                                }
+                                            }
                                         }
                                     }
                                 } catch (e: Exception) {
@@ -87,6 +92,22 @@ abstract class FileBasedRegistry<TData : Any>(
         }
     }
 
+    protected open fun loadEntryFromFile(path: Path, identifier: Identifier): TData? {
+        val data = objectMapper.readValue(path.toFile(), dataClass.java)
+
+        @Suppress("UNCHECKED_CAST")
+        return data.apply {
+            if (data is RegistryObject<*>) {
+                // We do an early init without an id so that the item is immediately aware of its parent registry.
+                (data as RegistryObject<TData>).initializeFromRegistry(
+                    this@FileBasedRegistry,
+                    identifier,
+                    -1
+                )
+            }
+        }
+    }
+
     override fun registryPopulated(mappings: NameIdRegistry, throwOnMissingId: Boolean) {
         for ((identifier, data) in entries) {
             val id = mappings.getId(this.name, identifier.toString())
@@ -95,17 +116,6 @@ abstract class FileBasedRegistry<TData : Any>(
             ((data as? RegistryObject<TData>)?.initializeFromRegistry(this, identifier, id))
             if (id != -1) {
                 entriesById[id] = data
-            }
-
-            if (data is MetadataHolder) {
-                data.metadata.forEach { (key, value) ->
-                    val list = metadataLookupTable.get(key, value)
-                    if (list != null) {
-                        list.add(identifier)
-                    } else {
-                        metadataLookupTable.put(key, value, mutableListOf(identifier))
-                    }
-                }
             }
         }
     }
@@ -124,5 +134,9 @@ abstract class FileBasedRegistry<TData : Any>(
         path: String
     ): Boolean {
         TODO("Not yet implemented")
+    }
+
+    override fun luaDereference(id: Identifier): TData? {
+        return entries[id]
     }
 }

@@ -8,7 +8,7 @@ import world.selene.common.data.json.FileBasedRegistry
 import kotlin.collections.iterator
 
 class CustomRegistries(
-    private val objectMapper: ObjectMapper
+    objectMapper: ObjectMapper
 ) : FileBasedRegistry<CustomRegistryDefinition>(
     objectMapper,
     "common",
