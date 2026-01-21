@@ -121,7 +121,7 @@ class SeleneServer(
         while (running.get()) {
             mainThreadDispatcher.process()
             networkServer.process()
-            bundleWatcher.sendPendingUpdates()
+            bundleWatcher.processPendingUpdates()
 
             Thread.sleep(10)
         }

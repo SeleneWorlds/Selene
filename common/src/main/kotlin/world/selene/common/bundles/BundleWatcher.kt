@@ -24,15 +24,11 @@ abstract class BundleWatcher(
     protected var isRunning = false
     private var watchThread: Thread? = null
 
-    protected val pendingChanges = ConcurrentHashMap<String, BundleChanges>()
+    private val pendingUpdates = ConcurrentHashMap<String, MutableSet<String>>()
+    private val pendingDeletes = ConcurrentHashMap<String, MutableSet<String>>()
     private val fileHashes = ConcurrentHashMap<String, String>()
 
-    data class BundleChanges(
-        val updated: MutableSet<String> = ConcurrentHashMap.newKeySet(),
-        val deleted: MutableSet<String> = ConcurrentHashMap.newKeySet(),
-    )
-
-    protected abstract fun onChangeDetected(bundleId: String, changes: BundleChanges)
+    protected abstract fun onChangeDetected(bundleId: String, updated: Set<String>, deleted: Set<String>)
 
     fun findRegistryForFile(filePath: String): BundleDrivenRegistry? {
         val normalizedFilePath = filePath.replace('\\', '/')
@@ -102,37 +98,40 @@ abstract class BundleWatcher(
         }
     }
 
-    fun sendPendingUpdates() {
-        if (pendingChanges.isEmpty()) {
+    fun processPendingUpdates() {
+        if (pendingUpdates.isEmpty() && pendingDeletes.isEmpty()) {
             return
         }
 
-        val updates = synchronized(pendingChanges) {
-            pendingChanges.toList().also { pendingChanges.clear() }
-        }
+        val dirtyBundleIds = mutableSetOf<String>()
+        dirtyBundleIds.addAll(pendingUpdates.keys)
+        dirtyBundleIds.addAll(pendingDeletes.keys)
 
-        for ((bundleId, changes) in updates) {
-            if (changes.updated.isNotEmpty() || changes.deleted.isNotEmpty()) {
+        for (bundleId in dirtyBundleIds) {
+            val updatedFiles = pendingUpdates.remove(bundleId)?.toSet() ?: emptySet()
+            val deletedFiles = pendingDeletes.remove(bundleId)?.toSet() ?: emptySet()
+
+            if (updatedFiles.isNotEmpty() || deletedFiles.isNotEmpty()) {
                 // Notify registries of changes first
                 val bundle = bundleDatabase.getBundle(bundleId)
                 if (bundle != null) {
                     // Handle updated files
-                    for (filePath in changes.updated) {
+                    for (filePath in updatedFiles) {
                         findRegistryForFile(filePath)?.bundleFileUpdated(bundleDatabase, bundle, filePath)
                     }
 
                     // Handle deleted files
-                    for (filePath in changes.deleted) {
+                    for (filePath in deletedFiles) {
                         findRegistryForFile(filePath)?.bundleFileRemoved(bundleDatabase, bundle, filePath)
                     }
                 }
 
                 // Let subclass handle the change notification
-                onChangeDetected(bundleId, changes)
+                onChangeDetected(bundleId, updatedFiles, deletedFiles)
 
                 logger.info(
                     "Processed content update for bundle {}: +{}, -{}",
-                    bundleId, changes.updated.size, changes.deleted.size
+                    bundleId, updatedFiles.size, deletedFiles.size
                 )
             }
         }
@@ -218,9 +217,8 @@ abstract class BundleWatcher(
         // Only send update if hash actually changed
         if (previousHash == null || currentHash != previousHash) {
             fileHashes[fileKey] = currentHash
-            val changes = pendingChanges.computeIfAbsent(bundle.manifest.name) { BundleChanges() }
-            changes.updated.add(relativePath)
-            changes.deleted.remove(relativePath)
+            pendingUpdates.computeIfAbsent(bundle.manifest.name) { ConcurrentHashMap.newKeySet() }.add(relativePath)
+            pendingDeletes[bundle.manifest.name]?.remove(relativePath)
             logger.debug("File content actually changed: $relativePath (hash: ${currentHash.take(8)}...)")
         } else {
             logger.debug("File content unchanged, ignoring update: $relativePath")
@@ -235,9 +233,8 @@ abstract class BundleWatcher(
         val currentHash = calculateFileHash(filePath)
         fileHashes[fileKey] = currentHash
 
-        val changes = pendingChanges.computeIfAbsent(bundle.manifest.name) { BundleChanges() }
-        changes.updated.add(relativePath)
-        changes.deleted.remove(relativePath)
+        pendingUpdates.computeIfAbsent(bundle.manifest.name) { ConcurrentHashMap.newKeySet() }.add(relativePath)
+        pendingDeletes[bundle.manifest.name]?.remove(relativePath)
         logger.debug("New file created: $relativePath (hash: ${currentHash.take(8)}...)")
     }
 
@@ -248,9 +245,8 @@ abstract class BundleWatcher(
         // Remove hash for deleted file
         fileHashes.remove(fileKey)
 
-        val changes = pendingChanges.computeIfAbsent(bundle.manifest.name) { BundleChanges() }
-        changes.updated.remove(relativePath)
-        changes.deleted.add(relativePath)
+        pendingUpdates[bundle.manifest.name]?.remove(relativePath)
+        pendingDeletes.computeIfAbsent(bundle.manifest.name) { ConcurrentHashMap.newKeySet() }.add(relativePath)
         logger.debug("File deleted: $relativePath")
     }
 
