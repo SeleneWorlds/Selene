@@ -7,11 +7,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import world.selene.common.bundles.Bundle
 import world.selene.common.bundles.BundleDatabase
-import world.selene.common.data.BundleDrivenRegistry
-import world.selene.common.data.Identifier
-import world.selene.common.data.MetadataHolder
-import world.selene.common.data.Registry
-import world.selene.common.data.RegistryObject
+import world.selene.common.data.*
 import world.selene.common.data.mappings.NameIdRegistry
 import world.selene.common.lua.LuaReferenceResolver
 import java.io.File
@@ -62,23 +58,14 @@ abstract class FileBasedRegistry<TData : Any>(
                             .forEach { path ->
                                 try {
                                     val relativePath = registryDirPath.relativize(path)
-                                    val entryName = relativePath.toString().removeSuffix(".json").replace(File.separatorChar, '/')
+                                    val entryName =
+                                        relativePath.toString().removeSuffix(".json").replace(File.separatorChar, '/')
                                     val identifier = Identifier(namespace, entryName)
-                                    
+
                                     val data = loadEntryFromFile(path, identifier)
                                     if (data != null) {
                                         entries[identifier] = data
-
-                                        if (data is MetadataHolder) {
-                                            data.metadata.forEach { (key, value) ->
-                                                val list = metadataLookupTable.get(key, value)
-                                                if (list != null) {
-                                                    list.add(identifier)
-                                                } else {
-                                                    metadataLookupTable.put(key, value, mutableListOf(identifier))
-                                                }
-                                            }
-                                        }
+                                        (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
                                     }
                                 } catch (e: Exception) {
                                     logger.error("Failed to load $path from bundle ${bundle.manifest.name}", e)
@@ -120,12 +107,45 @@ abstract class FileBasedRegistry<TData : Any>(
         }
     }
 
+    val registryJsonPattern = "(common|server|client)/data/([\\w-]+)/([\\w-]+)/(.+\\.json)".toRegex()
+    private fun filePathToIdentifier(filePath: String): Identifier? {
+        val matchResult = registryJsonPattern.matchEntire(filePath.replace('\\', '/'))
+        if (matchResult != null) {
+            val namespace = matchResult.groupValues[2]
+            val path = matchResult.groupValues[4]
+            return Identifier(namespace, path)
+        }
+
+        return null
+    }
+
     override fun bundleFileUpdated(
         bundleDatabase: BundleDatabase,
         bundle: Bundle,
         path: String
     ): Boolean {
-        TODO("Not yet implemented")
+        val identifier = filePathToIdentifier(path) ?: return false
+        val data = loadEntryFromFile(Path.of(path), identifier)
+        if (data != null) {
+            val oldEntry = entries.remove(identifier)
+            entries[identifier] = data
+            if (oldEntry is RegistryObject<*> && data is RegistryObject<*>) {
+                val id = oldEntry.id
+                if (id != -1) {
+                    entriesById[id] = data
+                    (data as RegistryObject<TData>).initializeFromRegistry(this, identifier, id)
+                }
+            }
+
+            (oldEntry as? MetadataHolder)?.let { removeFromMetadataLookup(identifier, it) }
+            (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
+
+            logger.info("Updated registry entry $identifier in ${this.name} due to file update: $path")
+            return true
+        } else {
+            logger.warn("Failed to load updated entry $identifier from $path")
+            return false
+        }
     }
 
     override fun bundleFileRemoved(
@@ -133,7 +153,34 @@ abstract class FileBasedRegistry<TData : Any>(
         bundle: Bundle,
         path: String
     ): Boolean {
-        TODO("Not yet implemented")
+        val identifier = filePathToIdentifier(path) ?: return false
+        val removedEntry = entries.remove(identifier)
+        (removedEntry as? RegistryObject<*>)?.let { entriesById.remove(it.id) }
+        (removedEntry as? MetadataHolder)?.let { removeFromMetadataLookup(identifier, it) }
+        return true
+    }
+
+    private fun addToMetadataLookup(identifier: Identifier, metadataHolder: MetadataHolder) {
+        metadataHolder.metadata.forEach { (key, value) ->
+            val list = metadataLookupTable.get(key, value)
+            if (list != null) {
+                list.add(identifier)
+            } else {
+                metadataLookupTable.put(key, value, mutableListOf(identifier))
+            }
+        }
+    }
+
+    private fun removeFromMetadataLookup(identifier: Identifier, metadataHolder: MetadataHolder) {
+        metadataHolder.metadata.forEach { (key, value) ->
+            val identifierList = metadataLookupTable.get(key, value)
+            if (identifierList != null) {
+                identifierList.remove(identifier)
+                if (identifierList.isEmpty()) {
+                    metadataLookupTable.remove(key, value)
+                }
+            }
+        }
     }
 
     override fun luaDereference(id: Identifier): TData? {
