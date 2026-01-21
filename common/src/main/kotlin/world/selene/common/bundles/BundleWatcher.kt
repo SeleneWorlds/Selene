@@ -23,10 +23,10 @@ abstract class BundleWatcher(
     private val watchKeys = ConcurrentHashMap<WatchKey, WatchContext>()
     protected var isRunning = false
     private var watchThread: Thread? = null
-    
+
     protected val pendingChanges = ConcurrentHashMap<String, BundleChanges>()
     private val fileHashes = ConcurrentHashMap<String, String>()
-    
+
     data class BundleChanges(
         val updated: MutableSet<String> = mutableSetOf(),
         val deleted: MutableSet<String> = mutableSetOf()
@@ -85,15 +85,16 @@ abstract class BundleWatcher(
 
         try {
             val rootPath = bundleDir.toPath()
-            Files.walk(rootPath)
-                .filter { Files.isDirectory(it) }
-                .forEach { dirPath ->
-                    registerDirectoryWatch(dirPath, bundle)
-                }
-            
+            Files.walk(rootPath).use { stream ->
+                stream.filter { Files.isDirectory(it) }
+                    .forEach { dirPath ->
+                        registerDirectoryWatch(dirPath, bundle)
+                    }
+            }
+
             // Initialize file hashes for existing files
             initializeFileHashes(bundle)
-            
+
             logger.debug("Registered watch for bundle {} at {}", bundle.manifest.name, bundleDir)
         } catch (e: Exception) {
             logger.error("Failed to register watch for bundle ${bundle.manifest.name}", e)
@@ -104,10 +105,10 @@ abstract class BundleWatcher(
         if (pendingChanges.isEmpty()) {
             return
         }
-        
+
         val updates = pendingChanges.toList()
         pendingChanges.clear()
-        
+
         for ((bundleId, changes) in updates) {
             if (changes.updated.isNotEmpty() || changes.deleted.isNotEmpty()) {
                 // Notify registries of changes first
@@ -117,18 +118,20 @@ abstract class BundleWatcher(
                     for (filePath in changes.updated) {
                         findRegistryForFile(filePath)?.bundleFileUpdated(bundleDatabase, bundle, filePath)
                     }
-                    
+
                     // Handle deleted files
                     for (filePath in changes.deleted) {
                         findRegistryForFile(filePath)?.bundleFileRemoved(bundleDatabase, bundle, filePath)
                     }
                 }
-                
+
                 // Let subclass handle the change notification
                 onChangeDetected(bundleId, changes)
-                
-                logger.info("Processed content update for bundle {}: +{}, -{}",
-                    bundleId, changes.updated.size, changes.deleted.size)
+
+                logger.info(
+                    "Processed content update for bundle {}: +{}, -{}",
+                    bundleId, changes.updated.size, changes.deleted.size
+                )
             }
         }
     }
@@ -204,11 +207,11 @@ abstract class BundleWatcher(
     private fun handleBundleContentFileModified(filePath: Path, bundle: Bundle) {
         val relativePath = bundle.dir.toPath().relativize(filePath).toString()
         val fileKey = getFileHashKey(bundle, relativePath)
-        
+
         // Calculate current hash and compare with stored hash
         val currentHash = calculateFileHash(filePath)
         val previousHash = fileHashes[fileKey]
-        
+
         // Only send update if hash actually changed
         if (previousHash == null || currentHash != previousHash) {
             fileHashes[fileKey] = currentHash
@@ -224,11 +227,11 @@ abstract class BundleWatcher(
     private fun handleBundleContentFileCreated(filePath: Path, bundle: Bundle) {
         val relativePath = bundle.dir.toPath().relativize(filePath).toString()
         val fileKey = getFileHashKey(bundle, relativePath)
-        
+
         // Calculate hash for new file
         val currentHash = calculateFileHash(filePath)
         fileHashes[fileKey] = currentHash
-        
+
         val changes = pendingChanges.computeIfAbsent(bundle.dir.name) { BundleChanges() }
         changes.updated.add(relativePath)
         changes.deleted.remove(relativePath)
@@ -238,10 +241,10 @@ abstract class BundleWatcher(
     private fun handleBundleContentFileDeleted(filePath: Path, bundle: Bundle) {
         val relativePath = bundle.dir.toPath().relativize(filePath).toString()
         val fileKey = getFileHashKey(bundle, relativePath)
-        
+
         // Remove hash for deleted file
         fileHashes.remove(fileKey)
-        
+
         val changes = pendingChanges.computeIfAbsent(bundle.dir.name) { BundleChanges() }
         changes.updated.remove(relativePath)
         changes.deleted.add(relativePath)
@@ -260,15 +263,16 @@ abstract class BundleWatcher(
     private fun initializeFileHashes(bundle: Bundle) {
         try {
             val bundleDir = bundle.dir.toPath()
-            Files.walk(bundleDir)
-                .filter { Files.isRegularFile(it) }
-                .filter { isSyncedBundleContentFile(bundle, it) }
-                .forEach { filePath ->
-                    val relativePath = bundleDir.relativize(filePath).toString()
-                    val fileKey = getFileHashKey(bundle, relativePath)
-                    val hash = calculateFileHash(filePath)
-                    fileHashes[fileKey] = hash
-                }
+            Files.walk(bundleDir).use { stream ->
+                stream.filter { Files.isRegularFile(it) }
+                    .filter { isSyncedBundleContentFile(bundle, it) }
+                    .forEach { filePath ->
+                        val relativePath = bundleDir.relativize(filePath).toString()
+                        val fileKey = getFileHashKey(bundle, relativePath)
+                        val hash = calculateFileHash(filePath)
+                        fileHashes[fileKey] = hash
+                    }
+            }
             logger.debug("Initialized hashes for ${fileHashes.size} files in bundle ${bundle.manifest.name}")
         } catch (e: Exception) {
             logger.error("Failed to initialize file hashes for bundle ${bundle.manifest.name}", e)

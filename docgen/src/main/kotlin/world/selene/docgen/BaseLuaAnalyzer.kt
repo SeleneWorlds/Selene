@@ -48,11 +48,12 @@ abstract class BaseLuaAnalyzer {
         val results = mutableMapOf<String, T>()
         val srcPath = Paths.get(baseDir.absolutePath, "src", "main", "kotlin")
         if (Files.exists(srcPath)) {
-            Files.walk(srcPath)
-                .filter { Files.isRegularFile(it) && it.toString().endsWith(".kt") }
-                .forEach { kotlinFile ->
-                    results.putAll(analyzer(baseDir, kotlinFile.toFile()))
-                }
+            Files.walk(srcPath).use { stream ->
+                stream.filter { Files.isRegularFile(it) && it.toString().endsWith(".kt") }
+                    .forEach { kotlinFile ->
+                        results.putAll(analyzer(baseDir, kotlinFile.toFile()))
+                    }
+            }
         }
         return results
     }

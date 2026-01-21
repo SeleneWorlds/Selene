@@ -53,24 +53,26 @@ abstract class FileBasedRegistry<TData : Any>(
                         val namespace = namespaceDir.name
                         val registryDir = File(namespaceDir, name)
                         val registryDirPath = registryDir.toPath()
-                        Files.walk(registryDirPath)
-                            .filter { path -> Files.isRegularFile(path) && path.toString().endsWith(".json") }
-                            .forEach { path ->
-                                try {
-                                    val relativePath = registryDirPath.relativize(path)
-                                    val entryName =
-                                        relativePath.toString().removeSuffix(".json").replace(File.separatorChar, '/')
-                                    val identifier = Identifier(namespace, entryName)
+                        Files.walk(registryDirPath).use { stream ->
+                            stream.filter { path -> Files.isRegularFile(path) && path.toString().endsWith(".json") }
+                                .forEach { path ->
+                                    try {
+                                        val relativePath = registryDirPath.relativize(path)
+                                        val entryName =
+                                            relativePath.toString().removeSuffix(".json")
+                                                .replace(File.separatorChar, '/')
+                                        val identifier = Identifier(namespace, entryName)
 
-                                    val data = loadEntryFromFile(path, identifier)
-                                    if (data != null) {
-                                        entries[identifier] = data
-                                        (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
+                                        val data = loadEntryFromFile(path, identifier)
+                                        if (data != null) {
+                                            entries[identifier] = data
+                                            (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
+                                        }
+                                    } catch (e: Exception) {
+                                        logger.error("Failed to load $path from bundle ${bundle.manifest.name}", e)
                                     }
-                                } catch (e: Exception) {
-                                    logger.error("Failed to load $path from bundle ${bundle.manifest.name}", e)
                                 }
-                            }
+                        }
                     }
                 } catch (e: Exception) {
                     logger.error("Failed to walk directory tree $baseDataDir for bundle ${bundle.manifest.name}", e)
