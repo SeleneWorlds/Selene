@@ -100,7 +100,7 @@ abstract class FileBasedRegistry<TData : Any>(
         }
     }
 
-    val registryJsonPattern = "(common|server|client)/data/([\\w-]+)/([\\w-]+)/(.+\\.json)".toRegex()
+    val registryJsonPattern = "(common|server|client)/data/([\\w-]+)/([\\w-]+)/(.+)\\.json".toRegex()
     private fun filePathToIdentifier(filePath: String): Identifier? {
         val matchResult = registryJsonPattern.matchEntire(filePath.replace('\\', '/'))
         if (matchResult != null) {
@@ -118,7 +118,7 @@ abstract class FileBasedRegistry<TData : Any>(
         path: String
     ): Boolean {
         val identifier = filePathToIdentifier(path) ?: return false
-        val data = loadEntryFromFile(Path.of(path), identifier)
+        val data = loadEntryFromFile(bundle.dir.toPath().resolve(path), identifier)
         if (data != null) {
             val oldEntry = entries.remove(identifier)
             entries[identifier] = data
