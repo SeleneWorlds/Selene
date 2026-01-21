@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import world.selene.common.data.MetadataHolder
+import world.selene.common.data.RegistryAdoptedObject
 import world.selene.common.data.RegistryObject
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -17,7 +18,7 @@ import world.selene.common.data.RegistryObject
     JsonSubTypes.Type(value = AnimatorVisualDefinition::class, name = "animator"),
     JsonSubTypes.Type(value = TextVisualDefinition::class, name = "text")
 )
-abstract class VisualDefinition : MetadataHolder, RegistryObject<VisualDefinition>()
+abstract class VisualDefinition : MetadataHolder, RegistryAdoptedObject<VisualDefinition>()
 
 data class SimpleVisualDefinition(
     val texture: String,

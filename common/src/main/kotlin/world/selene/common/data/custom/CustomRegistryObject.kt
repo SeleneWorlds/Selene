@@ -13,24 +13,15 @@ import world.selene.common.data.RegistryObject
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
 
-class CustomRegistryObject(private val customRegistry: CustomRegistry, private val _identifier: Identifier, val element: JsonNode) :
+class CustomRegistryObject(private val customRegistry: CustomRegistry, override val identifier: Identifier, val element: JsonNode) :
     LuaMetatableProvider,
     LuaReferencable<Identifier, CustomRegistryObject>,
     RegistryObject<CustomRegistryObject>(),
     MetadataHolder {
     val luaReference = LuaReference(CustomRegistryObject::class, identifier, customRegistry, this)
 
-    override var registry: Registry<CustomRegistryObject>
+    override val registry: Registry<CustomRegistryObject>
         get() = customRegistry
-        set(_) {
-            throw UnsupportedOperationException("CustomRegistryObject.registry is read-only")
-        }
-
-    override var identifier: Identifier
-        get() = _identifier
-        set(_) {
-            throw UnsupportedOperationException("CustomRegistryObject.identifier is read-only")
-        }
 
     override var id: Int = -1
 

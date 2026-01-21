@@ -6,7 +6,7 @@ import world.selene.common.bundles.BundleDatabase
 interface BundleDrivenRegistry {
     fun load(bundleDatabase: BundleDatabase)
 
-    fun bundleFileUpdated(bundleDatabase: BundleDatabase, bundle: Bundle, path: String): Boolean
+    fun bundleFileUpdated(bundleDatabase: BundleDatabase, bundle: Bundle, path: String)
 
-    fun bundleFileRemoved(bundleDatabase: BundleDatabase, bundle: Bundle, path: String): Boolean
+    fun bundleFileRemoved(bundleDatabase: BundleDatabase, bundle: Bundle, path: String)
 }

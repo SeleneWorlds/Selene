@@ -86,8 +86,8 @@ abstract class FileBasedRegistry<TData : Any>(
 
         @Suppress("UNCHECKED_CAST")
         return data.also {
-            (it as? RegistryOwnedObject<TData>)?.registry = this@FileBasedRegistry
-            (it as? RegistryOwnedObject<*>)?.identifier = identifier
+            (it as? RegistryAdoptedObject<TData>)?.registry = this@FileBasedRegistry
+            (it as? RegistryAdoptedObject<*>)?.identifier = identifier
         }
     }
 
@@ -106,7 +106,11 @@ abstract class FileBasedRegistry<TData : Any>(
     private fun filePathToIdentifier(filePath: String): Identifier? {
         val matchResult = registryJsonPattern.matchEntire(filePath.replace('\\', '/'))
         if (matchResult != null) {
+            val platform = matchResult.groupValues[1]
+            require(platform == this.platform)
             val namespace = matchResult.groupValues[2]
+            val registryName = matchResult.groupValues[3]
+            require(registryName == this.name)
             val path = matchResult.groupValues[4]
             return Identifier(namespace, path)
         }
@@ -118,8 +122,8 @@ abstract class FileBasedRegistry<TData : Any>(
         bundleDatabase: BundleDatabase,
         bundle: Bundle,
         path: String
-    ): Boolean {
-        val identifier = filePathToIdentifier(path) ?: return false
+    ) {
+        val identifier = filePathToIdentifier(path) ?: return
         val data = loadEntryFromFile(bundle.dir.toPath().resolve(path), identifier)
         if (data != null) {
             val oldEntry = entries.remove(identifier)
@@ -136,10 +140,8 @@ abstract class FileBasedRegistry<TData : Any>(
             (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
 
             logger.info("Updated registry entry $identifier in ${this.name} due to file update: $path")
-            return true
         } else {
             logger.warn("Failed to load updated entry $identifier from $path")
-            return false
         }
     }
 
@@ -147,12 +149,11 @@ abstract class FileBasedRegistry<TData : Any>(
         bundleDatabase: BundleDatabase,
         bundle: Bundle,
         path: String
-    ): Boolean {
-        val identifier = filePathToIdentifier(path) ?: return false
+    ) {
+        val identifier = filePathToIdentifier(path) ?: return
         val removedEntry = entries.remove(identifier)
         (removedEntry as? RegistryObject<*>)?.let { entriesById.remove(it.id) }
         (removedEntry as? MetadataHolder)?.let { removeFromMetadataLookup(identifier, it) }
-        return true
     }
 
     private fun addToMetadataLookup(identifier: Identifier, metadataHolder: MetadataHolder) {

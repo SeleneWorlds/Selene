@@ -3,14 +3,14 @@ package world.selene.common.entities
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import world.selene.common.data.MetadataHolder
-import world.selene.common.data.RegistryObject
+import world.selene.common.data.RegistryAdoptedObject
 import world.selene.common.data.TagHolder
 
 data class EntityDefinition(
     val components: Map<String, ComponentConfiguration> = emptyMap(),
     override val metadata: Map<String, Any> = emptyMap(),
     override val tags: Set<String> = emptySet()
-) : MetadataHolder, TagHolder, RegistryObject<EntityDefinition>()
+) : MetadataHolder, TagHolder, RegistryAdoptedObject<EntityDefinition>()
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(

@@ -7,11 +7,6 @@ import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 
 abstract class RegistryObject<T : Any> : LuaMetatableProvider, RegistryOwnedObject<T>, IdMappedObject {
-    @get:JsonIgnore
-    override lateinit var identifier: Identifier
-
-    @get:JsonIgnore
-    override lateinit var registry: Registry<T>
 
     @get:JsonIgnore
     override var id: Int = -1

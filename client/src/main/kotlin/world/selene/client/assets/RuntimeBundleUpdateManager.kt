@@ -39,7 +39,7 @@ class RuntimeBundleUpdateManager(
 
                 // Download updated files and notify registry
                 for (filePath in packet.updated) {
-                    downloadBundleContentFile(bundle.manifest.name, filePath)
+                    downloadBundleContentFile(bundle, filePath)
                 }
 
                 // Remove deleted files and notify registry
@@ -52,9 +52,9 @@ class RuntimeBundleUpdateManager(
         }
     }
 
-    private suspend fun downloadBundleContentFile(bundleName: String, filePath: String) {
+    private suspend fun downloadBundleContentFile(bundle: Bundle, filePath: String) {
         try {
-            val url = "${contentServerUrl}/bundles/$bundleName/content/$filePath"
+            val url = "${contentServerUrl}/bundles/${bundle.manifest.name}/content/$filePath"
             logger.debug("Downloading bundle content: {}", url)
 
             val response: HttpResponse = httpClient.get(url) {
@@ -65,25 +65,20 @@ class RuntimeBundleUpdateManager(
                 }
             }
             if (response.status.value in 200..299) {
-                val bundle = bundleDatabase.getBundle(bundleName)
-                if (bundle != null) {
-                    val outputFile = bundle.dir.resolve(filePath)
-                    if (!isPathWithinBundle(bundle, outputFile.toPath())) {
-                        logger.error("Forbidden: Attempted to update file outside bundle directory: $filePath")
-                        throw SecurityException("File path $filePath is outside bundle directory")
-                    }
-                    
-                    outputFile.parentFile.mkdirs()
-
-                    val channel = response.bodyAsChannel()
-                    outputFile.outputStream().use { output ->
-                        channel.copyTo(output)
-                    }
-
-                    logger.debug("Successfully downloaded content update: $filePath")
-                } else {
-                    logger.warn("Bundle not found for content update download: $bundleName")
+                val outputFile = bundle.dir.resolve(filePath)
+                if (!isPathWithinBundle(bundle, outputFile.toPath())) {
+                    logger.error("Forbidden: Attempted to update file outside bundle directory: $filePath")
+                    throw SecurityException("File path $filePath is outside bundle directory")
                 }
+
+                outputFile.parentFile.mkdirs()
+
+                val channel = response.bodyAsChannel()
+                outputFile.outputStream().use { output ->
+                    channel.copyTo(output)
+                }
+
+                logger.debug("Successfully downloaded content update: $filePath")
             } else {
                 logger.warn("Failed to download content update $filePath: HTTP ${response.status.value}")
             }
@@ -108,6 +103,7 @@ class RuntimeBundleUpdateManager(
             }
         } catch (e: Exception) {
             logger.error("Failed to delete bundle content file: $filePath", e)
+            throw e
         }
     }
 

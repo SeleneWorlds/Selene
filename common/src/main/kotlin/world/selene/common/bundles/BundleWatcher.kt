@@ -106,8 +106,9 @@ abstract class BundleWatcher(
             return
         }
 
-        val updates = pendingChanges.toList()
-        pendingChanges.clear()
+        val updates = synchronized(pendingChanges) {
+            pendingChanges.toList().also { pendingChanges.clear() }
+        }
 
         for ((bundleId, changes) in updates) {
             if (changes.updated.isNotEmpty() || changes.deleted.isNotEmpty()) {
@@ -215,7 +216,7 @@ abstract class BundleWatcher(
         // Only send update if hash actually changed
         if (previousHash == null || currentHash != previousHash) {
             fileHashes[fileKey] = currentHash
-            val changes = pendingChanges.computeIfAbsent(bundle.dir.name) { BundleChanges() }
+            val changes = pendingChanges.computeIfAbsent(bundle.manifest.name) { BundleChanges() }
             changes.updated.add(relativePath)
             changes.deleted.remove(relativePath)
             logger.debug("File content actually changed: $relativePath (hash: ${currentHash.take(8)}...)")
@@ -232,7 +233,7 @@ abstract class BundleWatcher(
         val currentHash = calculateFileHash(filePath)
         fileHashes[fileKey] = currentHash
 
-        val changes = pendingChanges.computeIfAbsent(bundle.dir.name) { BundleChanges() }
+        val changes = pendingChanges.computeIfAbsent(bundle.manifest.name) { BundleChanges() }
         changes.updated.add(relativePath)
         changes.deleted.remove(relativePath)
         logger.debug("New file created: $relativePath (hash: ${currentHash.take(8)}...)")
@@ -245,7 +246,7 @@ abstract class BundleWatcher(
         // Remove hash for deleted file
         fileHashes.remove(fileKey)
 
-        val changes = pendingChanges.computeIfAbsent(bundle.dir.name) { BundleChanges() }
+        val changes = pendingChanges.computeIfAbsent(bundle.manifest.name) { BundleChanges() }
         changes.updated.remove(relativePath)
         changes.deleted.add(relativePath)
         logger.debug("File deleted: $relativePath")
@@ -263,6 +264,7 @@ abstract class BundleWatcher(
     private fun initializeFileHashes(bundle: Bundle) {
         try {
             val bundleDir = bundle.dir.toPath()
+            var count = 0
             Files.walk(bundleDir).use { stream ->
                 stream.filter { Files.isRegularFile(it) }
                     .filter { isSyncedBundleContentFile(bundle, it) }
@@ -271,9 +273,10 @@ abstract class BundleWatcher(
                         val fileKey = getFileHashKey(bundle, relativePath)
                         val hash = calculateFileHash(filePath)
                         fileHashes[fileKey] = hash
+                        count++
                     }
             }
-            logger.debug("Initialized hashes for ${fileHashes.size} files in bundle ${bundle.manifest.name}")
+            logger.debug("Initialized hashes for ${count} files in bundle ${bundle.manifest.name}")
         } catch (e: Exception) {
             logger.error("Failed to initialize file hashes for bundle ${bundle.manifest.name}", e)
         }
@@ -298,7 +301,7 @@ abstract class BundleWatcher(
     }
 
     companion object {
-        protected val syncedBundleContentFilePattern = "^(?!.*/\\.|.*~$)(common|client)/.+".toRegex()
-        protected val registryFilePattern = "^(common|client)/data/[\\w-]+/([\\w-]+)/.*".toRegex()
+        private val syncedBundleContentFilePattern = "^(?!.*/\\.|.*~$)(common|client)/.+".toRegex()
+        private val registryFilePattern = "^(common|client)/data/[\\w-]+/([\\w-]+)/.*".toRegex()
     }
 }
