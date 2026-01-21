@@ -15,6 +15,7 @@ import world.selene.common.data.Identifier
 import world.selene.common.network.packet.NotifyBundleUpdatePacket
 import world.selene.common.util.Disposable
 import java.nio.file.Files
+import java.nio.file.Path
 
 class RuntimeBundleUpdateManager(
     private val logger: Logger,
@@ -85,6 +86,11 @@ class RuntimeBundleUpdateManager(
                 val bundle = bundleDatabase.getBundle(bundleName)
                 if (bundle != null) {
                     val outputFile = bundle.dir.resolve(filePath)
+                    if (!isPathWithinBundle(bundle, outputFile.toPath())) {
+                        logger.error("Forbidden: Attempted to update file outside bundle directory: $filePath")
+                        throw SecurityException("File path $filePath is outside bundle directory")
+                    }
+                    
                     outputFile.parentFile.mkdirs()
 
                     val channel = response.bodyAsChannel()
@@ -109,6 +115,11 @@ class RuntimeBundleUpdateManager(
     private fun deleteBundleContentFile(bundle: Bundle, filePath: String) {
         try {
             val targetFile = bundle.dir.resolve(filePath)
+            if (!isPathWithinBundle(bundle, targetFile.toPath())) {
+                logger.error("Forbidden: Attempted to delete outside bundle directory: $filePath")
+                throw SecurityException("File path $filePath is outside bundle directory")
+            }
+            
             if (targetFile.exists()) {
                 Files.delete(targetFile.toPath())
                 logger.debug("Deleted bundle content file: $filePath")
@@ -116,6 +127,10 @@ class RuntimeBundleUpdateManager(
         } catch (e: Exception) {
             logger.error("Failed to delete bundle content file: $filePath", e)
         }
+    }
+
+    private fun isPathWithinBundle(bundle: Bundle, path: Path): Boolean {
+        return path.normalize().startsWith(bundle.dir.toPath().normalize())
     }
 
     override fun dispose() {
