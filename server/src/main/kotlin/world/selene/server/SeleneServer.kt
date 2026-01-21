@@ -17,7 +17,7 @@ import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.tiles.TileRegistry
 import world.selene.common.tiles.transitions.TransitionRegistry
 import world.selene.common.util.Disposable
-import world.selene.server.bundle.BundleWatcher
+import world.selene.server.bundle.ServerBundleWatcher
 import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.config.ServerConfig
 import world.selene.server.data.mappings.PersistentNameIdRegistry
@@ -34,7 +34,7 @@ class SeleneServer(
     private val httpServer: HttpServer,
     private val networkServer: NetworkServer,
     private val serverHeartbeat: ServerHeartbeat,
-    private val bundleWatcher: BundleWatcher,
+    private val bundleWatcher: ServerBundleWatcher,
     packetRegistrations: PacketRegistrations,
     clientBundleCache: ClientBundleCache,
     bundleLoader: BundleLoader,

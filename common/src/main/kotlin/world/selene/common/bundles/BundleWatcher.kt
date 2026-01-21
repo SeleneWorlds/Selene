@@ -1,11 +1,9 @@
-package world.selene.server.bundle
+package world.selene.common.bundles
 
 import org.slf4j.Logger
-import world.selene.common.bundles.Bundle
-import world.selene.common.bundles.BundleDatabase
-import world.selene.common.network.packet.NotifyBundleUpdatePacket
+import world.selene.common.data.BundleDrivenRegistry
+import world.selene.common.data.Registry
 import world.selene.common.util.Disposable
-import world.selene.server.network.NetworkServer
 import java.nio.file.*
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
@@ -16,18 +14,17 @@ data class WatchContext(
     val basePath: Path
 )
 
-class BundleWatcher(
-    private val logger: Logger,
-    private val bundleDatabase: BundleDatabase,
-    private val networkServer: NetworkServer
+abstract class BundleWatcher(
+    protected val logger: Logger,
+    protected val bundleDatabase: BundleDatabase
 ) : Disposable {
 
     private val watchService = FileSystems.getDefault().newWatchService()
     private val watchKeys = ConcurrentHashMap<WatchKey, WatchContext>()
-    private var isRunning = false
+    protected var isRunning = false
     private var watchThread: Thread? = null
     
-    private val pendingChanges = ConcurrentHashMap<String, BundleChanges>()
+    protected val pendingChanges = ConcurrentHashMap<String, BundleChanges>()
     private val fileHashes = ConcurrentHashMap<String, String>()
     
     data class BundleChanges(
@@ -35,7 +32,11 @@ class BundleWatcher(
         val deleted: MutableSet<String> = mutableSetOf()
     )
 
-    private val syncedBundleContentFilePattern = "^(?!.*/\\.|.*~$)(common|client)/.+".toRegex()
+    protected abstract fun onChangeDetected(bundleId: String, changes: BundleChanges)
+
+    fun findRegistryForFile(filePath: String): BundleDrivenRegistry? {
+        return (registryFilePattern.find(filePath)?.groups[2]?.value?.let(::getRegistry) as? BundleDrivenRegistry)
+    }
 
     fun startWatching() {
         if (isRunning) {
@@ -46,6 +47,7 @@ class BundleWatcher(
             registerBundleWatch(bundle)
         }
 
+        isRunning = true
         watchThread = thread(name = "BundleWatcher", isDaemon = true) {
             watchLoop()
         }
@@ -53,6 +55,7 @@ class BundleWatcher(
 
     fun stopWatching() {
         logger.info("Stopping bundle watcher")
+        isRunning = false
         watchThread?.interrupt()
         watchService.close()
         watchKeys.clear()
@@ -107,13 +110,24 @@ class BundleWatcher(
         
         for ((bundleId, changes) in updates) {
             if (changes.updated.isNotEmpty() || changes.deleted.isNotEmpty()) {
-                val packet = NotifyBundleUpdatePacket(
-                    bundleId = bundleId,
-                    updated = changes.updated.toList(),
-                    deleted = changes.deleted.toList()
-                )
-                networkServer.clients.forEach { it.send(packet) }
-                logger.info("Sent content update notification for bundle {}: +{}, -{}",
+                // Notify registries of changes first
+                val bundle = bundleDatabase.getBundle(bundleId)
+                if (bundle != null) {
+                    // Handle updated files
+                    for (filePath in changes.updated) {
+                        findRegistryForFile(filePath)?.bundleFileUpdated(bundleDatabase, bundle, filePath)
+                    }
+                    
+                    // Handle deleted files
+                    for (filePath in changes.deleted) {
+                        findRegistryForFile(filePath)?.bundleFileRemoved(bundleDatabase, bundle, filePath)
+                    }
+                }
+                
+                // Let subclass handle the change notification
+                onChangeDetected(bundleId, changes)
+                
+                logger.info("Processed content update for bundle {}: +{}, -{}",
                     bundleId, changes.updated.size, changes.deleted.size)
             }
         }
@@ -261,6 +275,8 @@ class BundleWatcher(
         }
     }
 
+    abstract fun getRegistry(name: String): Registry<*>?
+
     private fun calculateFileHash(filePath: Path): String {
         return try {
             val digest = MessageDigest.getInstance("SHA-256")
@@ -275,5 +291,10 @@ class BundleWatcher(
 
     override fun dispose() {
         stopWatching()
+    }
+
+    companion object {
+        protected val syncedBundleContentFilePattern = "^(?!.*/\\.|.*~$)(common|client)/.+".toRegex()
+        protected val registryFilePattern = "^(common|client)/data/[\\w-]+/([\\w-]+)/.*".toRegex()
     }
 }

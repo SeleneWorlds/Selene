@@ -21,6 +21,7 @@ import org.koin.logger.slf4jLogger
 import org.slf4j.LoggerFactory
 import world.selene.client.assets.AssetProvider
 import world.selene.client.assets.RuntimeBundleUpdateManager
+import world.selene.client.bundle.ClientBundleWatcher
 import world.selene.client.bundles.BundleFileResolver
 import world.selene.client.bundles.ClientBundleLocator
 import world.selene.client.camera.CameraManager
@@ -141,6 +142,7 @@ class SeleneApplication(
             singleOf(::BundleLoader)
             singleOf(::BundleDatabase)
             singleOf(::ClientBundleLocator) { bind<BundleLocator>() }
+            singleOf(::ClientBundleWatcher) { bind<Disposable>() }
         }
         val networkModule = module {
             singleOf(::NetworkClientImpl) { bind<NetworkClient>(); bind<Disposable>() }

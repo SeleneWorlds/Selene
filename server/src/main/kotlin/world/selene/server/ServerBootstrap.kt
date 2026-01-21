@@ -52,7 +52,7 @@ import world.selene.common.tiles.TileRegistry
 import world.selene.common.tiles.transitions.TransitionRegistry
 import world.selene.common.util.Disposable
 import world.selene.server.attributes.LuaAttributesModule
-import world.selene.server.bundle.BundleWatcher
+import world.selene.server.bundle.ServerBundleWatcher
 import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.bundles.ServerBundleLocator
 import world.selene.server.collision.CollisionResolver
@@ -151,7 +151,7 @@ fun main(args: Array<String>) {
         singleOf(::BundleDatabase)
         singleOf(::ClientBundleCache)
         singleOf(::ServerBundleLocator) { bind<BundleLocator>() }
-        singleOf(::BundleWatcher) { bind<Disposable>() }
+        singleOf(::ServerBundleWatcher) { bind<Disposable>() }
     }
     val networkModule = module {
         singleOf(::NetworkServerImpl) { bind<NetworkServer>() }
