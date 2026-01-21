@@ -13,12 +13,24 @@ import world.selene.common.data.RegistryObject
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
 
-class CustomRegistryObject(override val registry: CustomRegistry, override val identifier: Identifier, val element: JsonNode) :
+class CustomRegistryObject(private val customRegistry: CustomRegistry, private val _identifier: Identifier, val element: JsonNode) :
     LuaMetatableProvider,
     LuaReferencable<Identifier, CustomRegistryObject>,
-    RegistryObject<CustomRegistryObject>,
+    RegistryObject<CustomRegistryObject>(),
     MetadataHolder {
-    val luaReference = LuaReference(CustomRegistryObject::class, identifier, registry, this)
+    val luaReference = LuaReference(CustomRegistryObject::class, identifier, customRegistry, this)
+
+    override var registry: Registry<CustomRegistryObject>
+        get() = customRegistry
+        set(_) {
+            throw UnsupportedOperationException("CustomRegistryObject.registry is read-only")
+        }
+
+    override var identifier: Identifier
+        get() = _identifier
+        set(_) {
+            throw UnsupportedOperationException("CustomRegistryObject.identifier is read-only")
+        }
 
     override var id: Int = -1
 
@@ -33,10 +45,6 @@ class CustomRegistryObject(override val registry: CustomRegistry, override val i
             }
             metadataMap
         } ?: emptyMap()
-    }
-    
-    override fun initializeFromRegistry(registry: Registry<CustomRegistryObject>, identifier: Identifier, id: Int) {
-        this.id = id
     }
 
     fun getMetadata(key: String): Any? {
@@ -108,7 +116,7 @@ class CustomRegistryObject(override val registry: CustomRegistry, override val i
         private fun luaGetField(lua: Lua): Int {
             val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
             val key = lua.checkString(2)
-            val objectMapper = registryObject.registry.objectMapper
+            val objectMapper = registryObject.customRegistry.objectMapper
             when (val value = registryObject.element[key]) {
                 is LongNode -> lua.push(value.asLong())
                 is IntNode, is ShortNode -> lua.push(value.asInt())

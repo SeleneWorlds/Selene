@@ -6,9 +6,7 @@ import com.badlogic.gdx.utils.Align
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import world.selene.common.data.Identifier
 import world.selene.common.data.MetadataHolder
-import world.selene.common.data.Registry
 import world.selene.common.data.RegistryObject
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -19,20 +17,7 @@ import world.selene.common.data.RegistryObject
     JsonSubTypes.Type(value = AnimatorVisualDefinition::class, name = "animator"),
     JsonSubTypes.Type(value = TextVisualDefinition::class, name = "text")
 )
-abstract class VisualDefinition : MetadataHolder, RegistryObject<VisualDefinition> {
-    override var id: Int = 0; protected set
-    override lateinit var identifier: Identifier; protected set
-    override lateinit var registry: Registry<VisualDefinition>; protected set
-    override fun initializeFromRegistry(
-        registry: Registry<VisualDefinition>,
-        identifier: Identifier,
-        id: Int
-    ) {
-        this.registry = registry
-        this.identifier = identifier
-        this.id = id
-    }
-}
+abstract class VisualDefinition : MetadataHolder, RegistryObject<VisualDefinition>()
 
 data class SimpleVisualDefinition(
     val texture: String,

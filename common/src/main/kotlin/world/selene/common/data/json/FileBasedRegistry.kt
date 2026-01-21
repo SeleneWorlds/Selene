@@ -83,15 +83,9 @@ abstract class FileBasedRegistry<TData : Any>(
         val data = objectMapper.readValue(path.toFile(), dataClass.java)
 
         @Suppress("UNCHECKED_CAST")
-        return data.apply {
-            if (data is RegistryObject<*>) {
-                // We do an early init without an id so that the item is immediately aware of its parent registry.
-                (data as RegistryObject<TData>).initializeFromRegistry(
-                    this@FileBasedRegistry,
-                    identifier,
-                    -1
-                )
-            }
+        return data.also {
+            (it as? RegistryOwnedObject<TData>)?.registry = this@FileBasedRegistry
+            (it as? RegistryOwnedObject<*>)?.identifier = identifier
         }
     }
 
@@ -99,8 +93,7 @@ abstract class FileBasedRegistry<TData : Any>(
         for ((identifier, data) in entries) {
             val id = mappings.getId(this.name, identifier.toString())
                 ?: if (throwOnMissingId) throw RuntimeException("Missing id mapping for $identifier in ${this.name}") else -1
-            @Suppress("UNCHECKED_CAST")
-            ((data as? RegistryObject<TData>)?.initializeFromRegistry(this, identifier, id))
+            (data as? IdMappedObject)?.id = id
             if (id != -1) {
                 entriesById[id] = data
             }
@@ -133,7 +126,7 @@ abstract class FileBasedRegistry<TData : Any>(
                 val id = oldEntry.id
                 if (id != -1) {
                     entriesById[id] = data
-                    (data as RegistryObject<TData>).initializeFromRegistry(this, identifier, id)
+                    (data as IdMappedObject).id = id
                 }
             }
 
