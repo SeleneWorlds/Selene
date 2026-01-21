@@ -91,7 +91,7 @@ class HttpServer(
                         )
                     ))
                 }
-                authenticate("session") {
+                authenticate("session", optional = config.insecureMode) {
                     get("/bundles") {
                         call.respond(bundleDatabase.loadedBundles.associateBy { it.manifest.name }
                             .filter { clientBundleCache.hasClientSide(it.value.dir) }
