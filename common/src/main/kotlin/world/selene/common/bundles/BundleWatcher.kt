@@ -28,8 +28,6 @@ abstract class BundleWatcher(
     private val pendingDeletes = ConcurrentHashMap<String, MutableSet<String>>()
     private val fileHashes = ConcurrentHashMap<String, String>()
 
-    protected abstract fun onChangeDetected(bundleId: String, updated: Set<String>, deleted: Set<String>)
-
     fun findRegistryForFile(filePath: String): BundleDrivenRegistry? {
         val normalizedFilePath = filePath.replace('\\', '/')
         return (registryFilePattern.find(normalizedFilePath)?.groups[2]?.value?.let(::getRegistry) as? BundleDrivenRegistry)
@@ -112,27 +110,24 @@ abstract class BundleWatcher(
             val deletedFiles = pendingDeletes.remove(bundleId)?.toSet() ?: emptySet()
 
             if (updatedFiles.isNotEmpty() || deletedFiles.isNotEmpty()) {
-                // Notify registries of changes first
-                val bundle = bundleDatabase.getBundle(bundleId)
-                if (bundle != null) {
-                    // Handle updated files
-                    for (filePath in updatedFiles) {
-                        findRegistryForFile(filePath)?.bundleFileUpdated(bundleDatabase, bundle, filePath)
-                    }
-
-                    // Handle deleted files
-                    for (filePath in deletedFiles) {
-                        findRegistryForFile(filePath)?.bundleFileRemoved(bundleDatabase, bundle, filePath)
-                    }
-                }
-
-                // Let subclass handle the change notification
-                onChangeDetected(bundleId, updatedFiles, deletedFiles)
-
+                processPendingBundleUpdates(bundleId, updatedFiles, deletedFiles)
                 logger.info(
                     "Processed content update for bundle {}: +{}, -{}",
                     bundleId, updatedFiles.size, deletedFiles.size
                 )
+            }
+        }
+    }
+
+    protected open fun processPendingBundleUpdates(bundleId: String, updatedFiles: Set<String>, deletedFiles: Set<String>) {
+        val bundle = bundleDatabase.getBundle(bundleId)
+        if (bundle != null) {
+            for (filePath in updatedFiles) {
+                findRegistryForFile(filePath)?.bundleFileUpdated(bundleDatabase, bundle, filePath)
+            }
+
+            for (filePath in deletedFiles) {
+                findRegistryForFile(filePath)?.bundleFileRemoved(bundleDatabase, bundle, filePath)
             }
         }
     }

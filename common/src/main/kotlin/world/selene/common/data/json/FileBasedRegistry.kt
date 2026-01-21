@@ -102,7 +102,6 @@ abstract class FileBasedRegistry<TData : Any>(
         }
     }
 
-    val registryJsonPattern = "(common|server|client)/data/([\\w-]+)/([\\w-]+)/(.+)\\.json".toRegex()
     private fun filePathToIdentifier(filePath: String): Identifier? {
         val matchResult = registryJsonPattern.matchEntire(filePath.replace('\\', '/'))
         if (matchResult != null) {
@@ -130,8 +129,7 @@ abstract class FileBasedRegistry<TData : Any>(
         val identifier = filePathToIdentifier(path) ?: return
         val data = loadEntryFromFile(bundle.dir.toPath().resolve(path), identifier)
         if (data != null) {
-            val oldEntry = entries.remove(identifier)
-            entries[identifier] = data
+            val oldEntry = entries.put(identifier, data)
             if (oldEntry is RegistryObject<*> && data is RegistryObject<*>) {
                 val id = oldEntry.id
                 if (id != -1) {
@@ -185,5 +183,9 @@ abstract class FileBasedRegistry<TData : Any>(
 
     override fun luaDereference(id: Identifier): TData? {
         return entries[id]
+    }
+
+    companion object {
+        private val registryJsonPattern = "(common|server|client)/data/([\\w-]+)/([\\w-]+)/(.+)\\.json".toRegex()
     }
 }

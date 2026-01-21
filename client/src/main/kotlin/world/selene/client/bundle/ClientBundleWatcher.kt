@@ -13,11 +13,6 @@ class ClientBundleWatcher(
     private val registries: Registries
 ) : BundleWatcher(logger, bundleDatabase) {
 
-    override fun onChangeDetected(bundleId: String, changes: BundleChanges) {
-        logger.debug("Client-side bundle change detected for bundle {}: +{}, -{}",
-            bundleId, changes.updated.size, changes.deleted.size)
-    }
-
     override fun getRegistry(name: String): Registry<*>? {
         val builtinRegistry = registries.getRegistry(Identifier.withDefaultNamespace(name))
         if (builtinRegistry != null) {

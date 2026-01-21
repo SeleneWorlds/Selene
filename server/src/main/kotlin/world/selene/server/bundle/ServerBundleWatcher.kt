@@ -16,11 +16,17 @@ class ServerBundleWatcher(
     private val registries: Registries
 ) : BundleWatcher(logger, bundleDatabase) {
 
-    override fun onChangeDetected(bundleId: String, changes: BundleChanges) {
+    override fun processPendingBundleUpdates(
+        bundleId: String,
+        updatedFiles: Set<String>,
+        deletedFiles: Set<String>
+    ) {
+        super.processPendingBundleUpdates(bundleId, updatedFiles, deletedFiles)
+
         val packet = NotifyBundleUpdatePacket(
             bundleId = bundleId,
-            updated = changes.updated.toList(),
-            deleted = changes.deleted.toList()
+            updated = updatedFiles.toList(),
+            deleted = deletedFiles.toList()
         )
         networkServer.clients.forEach { it.send(packet) }
     }
