@@ -7,6 +7,7 @@ import world.selene.common.network.packet.NotifyBundleUpdatePacket
 import world.selene.common.util.Disposable
 import world.selene.server.network.NetworkServer
 import java.nio.file.*
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
@@ -27,6 +28,7 @@ class BundleWatcher(
     private var watchThread: Thread? = null
     
     private val pendingChanges = ConcurrentHashMap<String, BundleChanges>()
+    private val fileHashes = ConcurrentHashMap<String, String>()
     
     data class BundleChanges(
         val updated: MutableSet<String> = mutableSetOf(),
@@ -85,6 +87,9 @@ class BundleWatcher(
                 .forEach { dirPath ->
                     registerDirectoryWatch(dirPath, bundle)
                 }
+            
+            // Initialize file hashes for existing files
+            initializeFileHashes(bundle)
             
             logger.debug("Registered watch for bundle {} at {}", bundle.manifest.name, bundleDir)
         } catch (e: Exception) {
@@ -183,29 +188,89 @@ class BundleWatcher(
     }
 
     private fun handleBundleContentFileModified(filePath: Path, bundle: Bundle) {
-        val relativePath = bundle.dir.toPath().relativize(filePath)
-        val changes = pendingChanges.computeIfAbsent(bundle.dir.name) { BundleChanges() }
-        changes.updated.add(relativePath.toString())
-        changes.deleted.remove(relativePath.toString())
+        val relativePath = bundle.dir.toPath().relativize(filePath).toString()
+        val fileKey = getFileHashKey(bundle, relativePath)
+        
+        // Calculate current hash and compare with stored hash
+        val currentHash = calculateFileHash(filePath)
+        val previousHash = fileHashes[fileKey]
+        
+        // Only send update if hash actually changed
+        if (previousHash == null || currentHash != previousHash) {
+            fileHashes[fileKey] = currentHash
+            val changes = pendingChanges.computeIfAbsent(bundle.dir.name) { BundleChanges() }
+            changes.updated.add(relativePath)
+            changes.deleted.remove(relativePath)
+            logger.debug("File content actually changed: $relativePath (hash: ${currentHash.take(8)}...)")
+        } else {
+            logger.debug("File content unchanged, ignoring update: $relativePath")
+        }
     }
 
     private fun handleBundleContentFileCreated(filePath: Path, bundle: Bundle) {
-        val relativePath = bundle.dir.toPath().relativize(filePath)
+        val relativePath = bundle.dir.toPath().relativize(filePath).toString()
+        val fileKey = getFileHashKey(bundle, relativePath)
+        
+        // Calculate hash for new file
+        val currentHash = calculateFileHash(filePath)
+        fileHashes[fileKey] = currentHash
+        
         val changes = pendingChanges.computeIfAbsent(bundle.dir.name) { BundleChanges() }
-        changes.updated.add(relativePath.toString())
-        changes.deleted.remove(relativePath.toString())
+        changes.updated.add(relativePath)
+        changes.deleted.remove(relativePath)
+        logger.debug("New file created: $relativePath (hash: ${currentHash.take(8)}...)")
     }
 
     private fun handleBundleContentFileDeleted(filePath: Path, bundle: Bundle) {
-        val relativePath = bundle.dir.toPath().relativize(filePath)
+        val relativePath = bundle.dir.toPath().relativize(filePath).toString()
+        val fileKey = getFileHashKey(bundle, relativePath)
+        
+        // Remove hash for deleted file
+        fileHashes.remove(fileKey)
+        
         val changes = pendingChanges.computeIfAbsent(bundle.dir.name) { BundleChanges() }
-        changes.updated.remove(relativePath.toString())
-        changes.deleted.add(relativePath.toString())
+        changes.updated.remove(relativePath)
+        changes.deleted.add(relativePath)
+        logger.debug("File deleted: $relativePath")
     }
 
     private fun isSyncedBundleContentFile(bundle: Bundle, filePath: Path): Boolean {
         val relativePath = bundle.dir.toPath().relativize(filePath)
         return syncedBundleContentFilePattern.containsMatchIn(relativePath.toString())
+    }
+
+    private fun getFileHashKey(bundle: Bundle, relativePath: String): String {
+        return "${bundle.manifest.name}:$relativePath"
+    }
+
+    private fun initializeFileHashes(bundle: Bundle) {
+        try {
+            val bundleDir = bundle.dir.toPath()
+            Files.walk(bundleDir)
+                .filter { Files.isRegularFile(it) }
+                .filter { isSyncedBundleContentFile(bundle, it) }
+                .forEach { filePath ->
+                    val relativePath = bundleDir.relativize(filePath).toString()
+                    val fileKey = getFileHashKey(bundle, relativePath)
+                    val hash = calculateFileHash(filePath)
+                    fileHashes[fileKey] = hash
+                }
+            logger.debug("Initialized hashes for ${fileHashes.size} files in bundle ${bundle.manifest.name}")
+        } catch (e: Exception) {
+            logger.error("Failed to initialize file hashes for bundle ${bundle.manifest.name}", e)
+        }
+    }
+
+    private fun calculateFileHash(filePath: Path): String {
+        return try {
+            val digest = MessageDigest.getInstance("SHA-256")
+            val bytes = Files.readAllBytes(filePath)
+            val hash = digest.digest(bytes)
+            hash.joinToString("") { "%02x".format(it) }
+        } catch (e: Exception) {
+            logger.warn("Failed to calculate hash for file: $filePath", e)
+            ""
+        }
     }
 
     override fun dispose() {
