@@ -5,14 +5,14 @@ import world.selene.common.network.Packet
 import world.selene.common.network.readString
 import world.selene.common.network.writeString
 
-data class NotifyAssetUpdatePacket(
+data class NotifyBundleUpdatePacket(
     val bundleId: String,
     val updated: List<String> = emptyList(),
     val deleted: List<String> = emptyList()
 ) : Packet {
     
     companion object {
-        fun decode(buf: ByteBuf): NotifyAssetUpdatePacket {
+        fun decode(buf: ByteBuf): NotifyBundleUpdatePacket {
             val bundleId = buf.readString()
 
             val updatedCount = buf.readInt()
@@ -27,10 +27,10 @@ data class NotifyAssetUpdatePacket(
                 deleted.add(buf.readString())
             }
             
-            return NotifyAssetUpdatePacket(bundleId, updated, deleted)
+            return NotifyBundleUpdatePacket(bundleId, updated, deleted)
         }
 
-        fun encode(buf: ByteBuf, packet: NotifyAssetUpdatePacket) {
+        fun encode(buf: ByteBuf, packet: NotifyBundleUpdatePacket) {
             buf.writeString(packet.bundleId)
             
             buf.writeInt(packet.updated.size)

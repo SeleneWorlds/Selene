@@ -3,7 +3,7 @@ package world.selene.server.bundle
 import org.slf4j.Logger
 import world.selene.common.bundles.Bundle
 import world.selene.common.bundles.BundleDatabase
-import world.selene.common.network.packet.NotifyAssetUpdatePacket
+import world.selene.common.network.packet.NotifyBundleUpdatePacket
 import world.selene.common.util.Disposable
 import world.selene.server.network.NetworkServer
 import java.nio.file.*
@@ -102,7 +102,7 @@ class BundleWatcher(
         
         for ((bundleId, changes) in updates) {
             if (changes.updated.isNotEmpty() || changes.deleted.isNotEmpty()) {
-                val packet = NotifyAssetUpdatePacket(
+                val packet = NotifyBundleUpdatePacket(
                     bundleId = bundleId,
                     updated = changes.updated.toList(),
                     deleted = changes.deleted.toList()

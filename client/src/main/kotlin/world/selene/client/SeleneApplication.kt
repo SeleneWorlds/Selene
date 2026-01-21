@@ -20,6 +20,7 @@ import org.koin.dsl.module
 import org.koin.logger.slf4jLogger
 import org.slf4j.LoggerFactory
 import world.selene.client.assets.AssetProvider
+import world.selene.client.assets.RuntimeBundleUpdateManager
 import world.selene.client.bundles.BundleFileResolver
 import world.selene.client.bundles.ClientBundleLocator
 import world.selene.client.camera.CameraManager
@@ -178,6 +179,7 @@ class SeleneApplication(
             singleOf(::UI)
             singleOf(::MainThreadDispatcher)
             singleOf(::SeleneClient)
+            singleOf(::RuntimeBundleUpdateManager) { bind<Disposable>() }
         }
         val gdxModule = module {
             singleOf(::SeleneApplicationListener) { bind<ApplicationListener>() }

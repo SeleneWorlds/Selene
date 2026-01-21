@@ -120,9 +120,9 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
         )
         packetFactory.registerPacket(
             20,
-            NotifyAssetUpdatePacket::class,
-            NotifyAssetUpdatePacket::encode,
-            NotifyAssetUpdatePacket.Companion::decode
+            NotifyBundleUpdatePacket::class,
+            NotifyBundleUpdatePacket::encode,
+            NotifyBundleUpdatePacket.Companion::decode
         )
         packetFactory.registerPacket(
             254,

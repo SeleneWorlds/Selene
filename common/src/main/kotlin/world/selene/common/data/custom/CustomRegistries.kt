@@ -33,6 +33,10 @@ class CustomRegistries(
         return customRegistries[identifier]
     }
 
+    fun findByRegistryName(name: String): CustomRegistry? {
+        return customRegistries.values.find { it.name == name }
+    }
+
     companion object {
         val IDENTIFIER = Identifier.withDefaultNamespace("registries")
     }

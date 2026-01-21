@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.google.common.collect.HashBasedTable
 import com.google.common.collect.Table
 import org.slf4j.LoggerFactory
+import world.selene.common.bundles.Bundle
 import world.selene.common.bundles.BundleDatabase
+import world.selene.common.data.BundleDrivenRegistry
 import world.selene.common.data.Registry
 import world.selene.common.data.Identifier
 import world.selene.common.util.asAny
@@ -17,7 +19,7 @@ import kotlin.reflect.KClass
 class CustomRegistry(
     val objectMapper: ObjectMapper,
     private val definition: CustomRegistryDefinition
-) : Registry<CustomRegistryObject>, LuaReferenceResolver<Identifier, CustomRegistryObject> {
+) : Registry<CustomRegistryObject>, BundleDrivenRegistry, LuaReferenceResolver<Identifier, CustomRegistryObject> {
 
     private val logger = LoggerFactory.getLogger(CustomRegistry::class.java)
     private val entries: MutableMap<Identifier, CustomRegistryObject> = mutableMapOf()
@@ -36,7 +38,7 @@ class CustomRegistry(
         return firstIdentifier to data
     }
 
-    fun load(bundleDatabase: BundleDatabase) {
+    override fun load(bundleDatabase: BundleDatabase) {
         entries.clear()
         for (bundle in bundleDatabase.loadedBundles) {
             val baseDataDir = File(bundle.dir, "${definition.platform}/data")
@@ -90,4 +92,19 @@ class CustomRegistry(
         return entries[id]
     }
 
+    override fun bundleFileUpdated(
+        bundleDatabase: BundleDatabase,
+        bundle: Bundle,
+        path: String
+    ): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun bundleFileRemoved(
+        bundleDatabase: BundleDatabase,
+        bundle: Bundle,
+        path: String
+    ): Boolean {
+        TODO("Not yet implemented")
+    }
 }

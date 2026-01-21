@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.HashBasedTable
 import com.google.common.collect.Table
 import org.slf4j.LoggerFactory
+import world.selene.common.bundles.Bundle
 import world.selene.common.bundles.BundleDatabase
+import world.selene.common.data.BundleDrivenRegistry
 import world.selene.common.data.Identifier
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
@@ -19,7 +21,7 @@ abstract class FileBasedRegistry<TData : Any>(
     val platform: String,
     override val name: String,
     private val dataClass: KClass<TData>
-) : Registry<TData> {
+) : Registry<TData>, BundleDrivenRegistry {
     private val logger = LoggerFactory.getLogger("selene")
     protected val entries: MutableMap<Identifier, TData> = mutableMapOf()
     protected val entriesById: MutableMap<Int, TData> = mutableMapOf()
@@ -37,7 +39,7 @@ abstract class FileBasedRegistry<TData : Any>(
         return firstIdentifier to data
     }
 
-    fun load(bundleDatabase: BundleDatabase) {
+    override fun load(bundleDatabase: BundleDatabase) {
         entries.clear()
         entriesById.clear()
         metadataLookupTable.clear()
@@ -106,5 +108,21 @@ abstract class FileBasedRegistry<TData : Any>(
                 }
             }
         }
+    }
+
+    override fun bundleFileUpdated(
+        bundleDatabase: BundleDatabase,
+        bundle: Bundle,
+        path: String
+    ): Boolean {
+        TODO("Not yet implemented")
+    }
+
+    override fun bundleFileRemoved(
+        bundleDatabase: BundleDatabase,
+        bundle: Bundle,
+        path: String
+    ): Boolean {
+        TODO("Not yet implemented")
     }
 }
