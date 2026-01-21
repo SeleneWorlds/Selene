@@ -107,10 +107,14 @@ abstract class FileBasedRegistry<TData : Any>(
         val matchResult = registryJsonPattern.matchEntire(filePath.replace('\\', '/'))
         if (matchResult != null) {
             val platform = matchResult.groupValues[1]
-            require(platform == this.platform)
+            if (platform != this.platform) {
+                return null
+            }
             val namespace = matchResult.groupValues[2]
             val registryName = matchResult.groupValues[3]
-            require(registryName == this.name)
+            if (registryName != this.name) {
+                return null
+            }
             val path = matchResult.groupValues[4]
             return Identifier(namespace, path)
         }

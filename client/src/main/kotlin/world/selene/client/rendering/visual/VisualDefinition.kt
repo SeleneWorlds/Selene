@@ -40,7 +40,7 @@ data class VariantsVisualDefinition(
     val flipX: Boolean = false,
     val flipY: Boolean = false,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition(), MetadataHolder
+) : VisualDefinition()
 
 data class AnimatedVisualDefinition(
     val textures: List<String>,
@@ -53,7 +53,7 @@ data class AnimatedVisualDefinition(
     val flipY: Boolean = false,
     val instanced: Boolean = false,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition(), MetadataHolder
+) : VisualDefinition()
 
 data class AnimatorVisualDefinition(
     val animator: String,
@@ -63,7 +63,7 @@ data class AnimatorVisualDefinition(
     val surfaceOffsetY: Float = 0f,
     val sortLayerOffset: Int = 0,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition(), MetadataHolder
+) : VisualDefinition()
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class AnimationFrames(
@@ -85,4 +85,4 @@ data class TextVisualDefinition(
     val text: String,
     val align: HorizontalAlign = HorizontalAlign.LEFT,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition(), MetadataHolder
+) : VisualDefinition()

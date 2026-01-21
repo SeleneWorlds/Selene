@@ -28,14 +28,15 @@ abstract class BundleWatcher(
     private val fileHashes = ConcurrentHashMap<String, String>()
 
     data class BundleChanges(
-        val updated: MutableSet<String> = mutableSetOf(),
-        val deleted: MutableSet<String> = mutableSetOf()
+        val updated: MutableSet<String> = ConcurrentHashMap.newKeySet(),
+        val deleted: MutableSet<String> = ConcurrentHashMap.newKeySet(),
     )
 
     protected abstract fun onChangeDetected(bundleId: String, changes: BundleChanges)
 
     fun findRegistryForFile(filePath: String): BundleDrivenRegistry? {
-        return (registryFilePattern.find(filePath)?.groups[2]?.value?.let(::getRegistry) as? BundleDrivenRegistry)
+        val normalizedFilePath = filePath.replace('\\', '/')
+        return (registryFilePattern.find(normalizedFilePath)?.groups[2]?.value?.let(::getRegistry) as? BundleDrivenRegistry)
     }
 
     fun startWatching() {
@@ -160,6 +161,7 @@ abstract class BundleWatcher(
                 }
             }
         } catch (_: InterruptedException) {
+        } catch (_: ClosedWatchServiceException) {
         } catch (e: Exception) {
             logger.error("Error in bundle watcher", e)
         }
@@ -254,7 +256,7 @@ abstract class BundleWatcher(
 
     private fun isSyncedBundleContentFile(bundle: Bundle, filePath: Path): Boolean {
         val relativePath = bundle.dir.toPath().relativize(filePath)
-        return syncedBundleContentFilePattern.containsMatchIn(relativePath.toString())
+        return syncedBundleContentFilePattern.containsMatchIn(relativePath.toString().replace('\\', '/'))
     }
 
     private fun getFileHashKey(bundle: Bundle, relativePath: String): String {
