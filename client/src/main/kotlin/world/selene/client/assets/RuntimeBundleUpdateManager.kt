@@ -53,6 +53,11 @@ class RuntimeBundleUpdateManager(
     }
 
     private suspend fun downloadBundleContentFile(bundle: Bundle, filePath: String) {
+        if (contentServerUrl.isEmpty()) {
+            logger.warn("Content server URL is empty, skipping bundle content update")
+            return
+        }
+
         try {
             val url = "${contentServerUrl}/bundles/${bundle.manifest.name}/content/$filePath"
             logger.debug("Downloading bundle content: {}", url)

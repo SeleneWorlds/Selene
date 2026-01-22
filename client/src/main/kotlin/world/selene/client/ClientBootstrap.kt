@@ -38,7 +38,7 @@ fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {
     var host = "localhost"
     var port = 8147
     var token = ""
-    var contentServerUrl = "http://localhost:8080"
+    var contentServerUrl = ""
     val bundles = mutableMapOf<String, String>()
 
     var i = 0
