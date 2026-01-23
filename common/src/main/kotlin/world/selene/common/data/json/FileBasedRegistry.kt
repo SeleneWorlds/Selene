@@ -176,6 +176,10 @@ abstract class FileBasedRegistry<TData : Any>(
         (removedEntry as? RegistryObject<*>)?.let { entriesById.remove(it.id) }
         (removedEntry as? MetadataHolder)?.let { removeFromMetadataLookup(identifier, it) }
         incrementCacheKey()
+
+        subscriptions[identifier]?.forEach { handler ->
+            handler(null)
+        }
     }
 
     private fun addToMetadataLookup(identifier: Identifier, metadataHolder: MetadataHolder) {
@@ -201,11 +205,11 @@ abstract class FileBasedRegistry<TData : Any>(
         }
     }
 
-    private val subscriptions: MutableMap<Identifier, MutableList<(TData) -> Unit>> = mutableMapOf()
+    private val subscriptions: MutableMap<Identifier, MutableList<(TData?) -> Unit>> = mutableMapOf()
 
     override fun subscribe(
         reference: RegistryReference<TData>,
-        handler: (TData) -> Unit
+        handler: (TData?) -> Unit
     ) {
         val resolved = reference.get()
         if (resolved != null) {
@@ -217,7 +221,7 @@ abstract class FileBasedRegistry<TData : Any>(
 
     override fun unsubscribe(
         reference: RegistryReference<TData>,
-        handler: (TData) -> Unit
+        handler: (TData?) -> Unit
     ) {
         subscriptions[reference.identifier]?.remove(handler)
     }
