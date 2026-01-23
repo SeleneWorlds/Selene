@@ -124,7 +124,7 @@ fun printUsage() {
         Options:
           --host, -h <hostname>                      Server hostname (default: localhost)
           --port, -p <port>                          Server port (default: 8147)
-          --contentServer, -c <contentServerUrl>     Content server URL (default: http://localhost:8080)
+          --contentServer, -c <contentServerUrl>     Content server URL (default: empty)
           --token, -t <token>                        Authentication token (default: empty)
           --bundle, -b <name> <path>                 Add bundle mapping (can be used multiple times)
           --help                                     Show this help message
