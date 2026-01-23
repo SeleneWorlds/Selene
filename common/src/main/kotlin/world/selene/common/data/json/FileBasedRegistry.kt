@@ -46,7 +46,6 @@ abstract class FileBasedRegistry<TData : Any>(
         entries.clear()
         entriesById.clear()
         metadataLookupTable.clear()
-        subscriptions.clear()
         for (bundle in bundleDatabase.loadedBundles) {
             val baseDataDir = File(bundle.dir, "$platform/data")
             if (baseDataDir.exists() && baseDataDir.isDirectory) {
