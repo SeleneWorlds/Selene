@@ -23,4 +23,5 @@ interface Registry<TData : Any> {
     fun findByMetadata(key: String, value: Any): Pair<Identifier, TData>?
     fun registryPopulated(mappings: NameIdRegistry, throwOnMissingId: Boolean = true) = Unit
     fun subscribe(reference: RegistryReference<TData>, handler: (TData) -> Unit)
+    fun unsubscribe(reference: RegistryReference<TData>, handler: (TData) -> Unit)
 }

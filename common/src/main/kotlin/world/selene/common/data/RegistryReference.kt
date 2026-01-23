@@ -10,8 +10,11 @@ sealed interface RegistryReference<T : Any> {
 
     fun subscribe(handler: (T) -> Unit)
 
+    fun unsubscribeAll()
+
     class ByIdentifier<T : Any>(val registry: Registry<T>, override val identifier: Identifier) : RegistryReference<T> {
         private var cache: T? = null
+        private val subscriptions = mutableListOf<(T) -> Unit>()
 
         init {
             subscribe {
@@ -31,7 +34,15 @@ sealed interface RegistryReference<T : Any> {
         }
 
         override fun subscribe(handler: (T) -> Unit) {
+            subscriptions.add(handler)
             registry.subscribe(this, handler)
+        }
+
+        override fun unsubscribeAll() {
+            subscriptions.forEach { handler ->
+                registry.unsubscribe(this, handler)
+            }
+            subscriptions.clear()
         }
     }
 
@@ -45,6 +56,9 @@ sealed interface RegistryReference<T : Any> {
         }
 
         override fun subscribe(handler: (Any) -> Unit) {
+        }
+
+        override fun unsubscribeAll() {
         }
     }
 

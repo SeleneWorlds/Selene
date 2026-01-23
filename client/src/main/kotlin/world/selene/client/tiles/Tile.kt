@@ -25,6 +25,7 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     LuaMetatableProvider {
     var tileDefinition: RegistryReference<TileDefinition> = RegistryReference.unbound()
         set(value) {
+            field.unsubscribeAll()
             field = value
             value.subscribe {
                 updateVisual()

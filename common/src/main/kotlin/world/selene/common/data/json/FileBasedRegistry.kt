@@ -203,6 +203,13 @@ abstract class FileBasedRegistry<TData : Any>(
         subscriptions.getOrPut(reference.identifier) { mutableListOf() }.add(handler)
     }
 
+    override fun unsubscribe(
+        reference: RegistryReference<TData>,
+        handler: (TData) -> Unit
+    ) {
+        subscriptions[reference.identifier]?.remove(handler)
+    }
+
     override fun luaDereference(id: Identifier): TData? {
         return entries[id]
     }
