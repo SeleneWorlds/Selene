@@ -14,23 +14,23 @@ sealed interface RegistryReference<T : Any> {
 
     class ByIdentifier<T : Any>(val registry: Registry<T>, override val identifier: Identifier) : RegistryReference<T> {
         private var cache: T? = null
+        private var lastCacheKey: Long = -1
         private val subscriptions = mutableListOf<(T) -> Unit>()
-
-        init {
-            subscribe {
-                cache = it
-            }
-        }
 
         private fun resolve(): T? {
             return registry.get(identifier)
         }
 
         override fun get(): T? {
-            if (cache == null) {
-                cache = resolve()
+            if (registry is CacheableRegistry) {
+                val currentCacheKey = registry.cacheKey
+                if (cache == null || lastCacheKey != currentCacheKey) {
+                    cache = resolve()
+                    lastCacheKey = currentCacheKey
+                }
+                return cache
             }
-            return cache
+            return resolve()
         }
 
         override fun subscribe(handler: (T) -> Unit) {

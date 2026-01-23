@@ -20,11 +20,19 @@ abstract class FileBasedRegistry<TData : Any>(
     val platform: String,
     override val name: String,
     private val dataClass: KClass<TData>
-) : Registry<TData>, BundleDrivenRegistry, LuaReferenceResolver<Identifier, TData> {
+) : Registry<TData>, BundleDrivenRegistry, LuaReferenceResolver<Identifier, TData>, CacheableRegistry {
     protected val logger: Logger = LoggerFactory.getLogger("selene")
     protected val entries: MutableMap<Identifier, TData> = mutableMapOf()
     protected val entriesById: MutableMap<Int, TData> = mutableMapOf()
     private val metadataLookupTable: Table<String, Any, MutableList<Identifier>> = HashBasedTable.create()
+    private var _cacheKey: Long = 0
+    
+    override val cacheKey: Long
+        get() = _cacheKey
+
+    private fun incrementCacheKey() {
+        _cacheKey++
+    }
 
     override val clazz: KClass<TData> = dataClass
     override fun get(id: Int): TData? = entriesById[id]
@@ -46,6 +54,7 @@ abstract class FileBasedRegistry<TData : Any>(
         entries.clear()
         entriesById.clear()
         metadataLookupTable.clear()
+        incrementCacheKey()
         for (bundle in bundleDatabase.loadedBundles) {
             val baseDataDir = File(bundle.dir, "$platform/data")
             if (baseDataDir.exists() && baseDataDir.isDirectory) {
@@ -145,6 +154,8 @@ abstract class FileBasedRegistry<TData : Any>(
             (oldEntry as? MetadataHolder)?.let { removeFromMetadataLookup(identifier, it) }
             (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
 
+            incrementCacheKey()
+
             subscriptions[identifier]?.forEach { handler ->
                 handler(data)
             }
@@ -164,6 +175,7 @@ abstract class FileBasedRegistry<TData : Any>(
         val removedEntry = entries.remove(identifier)
         (removedEntry as? RegistryObject<*>)?.let { entriesById.remove(it.id) }
         (removedEntry as? MetadataHolder)?.let { removeFromMetadataLookup(identifier, it) }
+        incrementCacheKey()
     }
 
     private fun addToMetadataLookup(identifier: Identifier, metadataHolder: MetadataHolder) {
