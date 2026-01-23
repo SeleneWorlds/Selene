@@ -81,6 +81,7 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     }
 
     override fun reset() {
+        tileDefinition = RegistryReference.unbound()
         localSortLayer = 0
         coordinate = Coordinate.Zero
         visual = null
@@ -130,7 +131,7 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
          */
         private fun luaGetDefinition(lua: Lua): Int {
             val tile = lua.checkUserdata<Tile>(1)
-            lua.push(tile.tileDefinition, Lua.Conversion.NONE)
+            lua.push(tile.tileDefinition.get(), Lua.Conversion.NONE)
             return 1
         }
 
