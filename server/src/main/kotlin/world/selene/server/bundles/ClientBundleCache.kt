@@ -99,7 +99,7 @@ class ClientBundleCache(config: ServerConfig, private val logger: Logger) {
 
     fun clearCacheForBundle(bundleName: String) {
         // Remove old zip file if it exists
-        cachedZipByBundleName[bundleName]?.let { oldZipFile ->
+        cachedZipByBundleName.remove(bundleName)?.let { oldZipFile ->
             try {
                 if (oldZipFile.exists()) {
                     oldZipFile.delete()
@@ -108,7 +108,6 @@ class ClientBundleCache(config: ServerConfig, private val logger: Logger) {
                 logger.error("Failed to clear cached zip file for bundle $bundleName", e)
             }
         }
-        cachedZipByBundleName.remove(bundleName)
         
         // Remove hash entry to force recalculation
         hashByBundleName.remove(bundleName)
