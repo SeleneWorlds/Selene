@@ -1,4 +1,4 @@
-FROM gradle:8.5-jdk21 AS build
+FROM gradle:9.3-jdk21 AS build
 COPY --chown=gradle:gradle . /app
 WORKDIR /app
 RUN gradle :server:installDist --no-daemon
