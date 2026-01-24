@@ -91,7 +91,7 @@ class ClientMap(
             return
         }
         val entity = entitiesByNetworkId[networkId] ?: entityPool.obtain().also {
-            it.entityDefinition = entityDefinition
+            it.entityDefinition = entityDefinition.asReference
             it.networkId = networkId
             it.setCoordinateAndUpdate(coordinate)
             addEntity(it)

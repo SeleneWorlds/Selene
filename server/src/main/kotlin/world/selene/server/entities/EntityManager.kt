@@ -36,7 +36,7 @@ class EntityManager : LuaReferenceResolver<Int, Entity> {
     fun createEntity(entityDefinition: EntityDefinition): Entity {
         val entity = getKoin().get<Entity>()
         entity.networkId = nextEntityId()
-        entity.entityDefinition = entityDefinition
+        entity.entityDefinition = entityDefinition.asReference
         addEntity(entity)
         return entity
     }
@@ -44,7 +44,7 @@ class EntityManager : LuaReferenceResolver<Int, Entity> {
     fun createTransientEntity(entityDefinition: EntityDefinition): Entity {
         val entity = getKoin().get<Entity>()
         entity.networkId = -1
-        entity.entityDefinition = entityDefinition
+        entity.entityDefinition = entityDefinition.asReference
         return entity
     }
 

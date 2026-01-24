@@ -23,10 +23,11 @@ abstract class FileBasedRegistry<TData : Any>(
 ) : Registry<TData>, BundleDrivenRegistry, LuaReferenceResolver<Identifier, TData>, CacheableRegistry {
     protected val logger: Logger = LoggerFactory.getLogger("selene")
     protected val entries: MutableMap<Identifier, TData> = mutableMapOf()
+    protected val idByIdentifier: MutableMap<Identifier, Int> = mutableMapOf()
     protected val entriesById: MutableMap<Int, TData> = mutableMapOf()
     private val metadataLookupTable: Table<String, Any, MutableList<Identifier>> = HashBasedTable.create()
     private var _cacheKey: Long = 0
-    
+
     override val cacheKey: Long
         get() = _cacheKey
 
@@ -36,6 +37,7 @@ abstract class FileBasedRegistry<TData : Any>(
 
     override val clazz: KClass<TData> = dataClass
     override fun get(id: Int): TData? = entriesById[id]
+    override fun getId(identifier: Identifier): Int = idByIdentifier[identifier] ?: -1
     override fun get(identifier: Identifier): TData? = entries[identifier]
     override fun getIdentifier(id: Int): Identifier? {
         return (entriesById[id] as? RegistryOwnedObject<*>)?.identifier
@@ -53,6 +55,7 @@ abstract class FileBasedRegistry<TData : Any>(
     override fun load(bundleDatabase: BundleDatabase) {
         entries.clear()
         entriesById.clear()
+        idByIdentifier.clear()
         metadataLookupTable.clear()
         incrementCacheKey()
         for (bundle in bundleDatabase.loadedBundles) {
@@ -111,6 +114,7 @@ abstract class FileBasedRegistry<TData : Any>(
             (data as? IdMappedObject)?.id = id
             if (id != -1) {
                 entriesById[id] = data
+                idByIdentifier[identifier] = id
             }
         }
     }
@@ -147,6 +151,7 @@ abstract class FileBasedRegistry<TData : Any>(
                 val id = oldEntry.id
                 if (id != -1) {
                     entriesById[id] = data
+                    idByIdentifier[identifier] = id
                     (data as IdMappedObject).id = id
                 }
             }
@@ -173,7 +178,10 @@ abstract class FileBasedRegistry<TData : Any>(
     ) {
         val identifier = filePathToIdentifier(path) ?: return
         val removedEntry = entries.remove(identifier)
-        (removedEntry as? RegistryObject<*>)?.let { entriesById.remove(it.id) }
+        (removedEntry as? RegistryObject<*>)?.let {
+            entriesById.remove(it.id)
+            idByIdentifier.remove(identifier)
+        }
         (removedEntry as? MetadataHolder)?.let { removeFromMetadataLookup(identifier, it) }
         incrementCacheKey()
 

@@ -44,9 +44,9 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
         layerName: String?
     ): TransientTile {
         return if (mapTree.swapTile(coordinate, oldTileDef, newTileDef, layerName)) {
-            TransientTile(newTileDef, this, coordinate)
+            TransientTile(newTileDef.asReference, this, coordinate)
         } else {
-            TransientTile(oldTileDef, this, coordinate)
+            TransientTile(oldTileDef.asReference, this, coordinate)
         }
     }
 
@@ -126,7 +126,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             val tileDef = lua.checkRegistry(index + 1, dimension.registries.tiles)
             val layerName = lua.toString(index + 2)
             dimension.mapTree.placeTile(coordinate, tileDef, layerName)
-            lua.push(TransientTile(tileDef, dimension, coordinate), Lua.Conversion.NONE)
+            lua.push(TransientTile(tileDef.asReference, dimension, coordinate), Lua.Conversion.NONE)
             return 1
         }
 
@@ -166,13 +166,13 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
             val baseTileId = chunkView.getBaseTileAt(coordinate)
             val baseTile = dimension.registries.tiles.get(baseTileId)
             if (baseTile != null) {
-                tiles.add(TransientTile(baseTile, dimension, coordinate))
+                tiles.add(TransientTile(baseTile.asReference, dimension, coordinate))
             }
             val additionalTiles = chunkView.getAdditionalTilesAt(coordinate)
             additionalTiles.forEach { tileId ->
                 val tile = dimension.registries.tiles.get(tileId)
                 if (tile != null) {
-                    tiles.add(TransientTile(tile, dimension, coordinate))
+                    tiles.add(TransientTile(tile.asReference, dimension, coordinate))
                 }
             }
             lua.push(tiles, Lua.Conversion.FULL)

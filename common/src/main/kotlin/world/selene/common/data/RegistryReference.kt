@@ -8,6 +8,8 @@ sealed interface RegistryReference<T : Any> {
 
     val identifier: Identifier
 
+    val id: Int
+
     fun get(): T?
 
     fun subscribe(handler: (T?) -> Unit)
@@ -26,6 +28,9 @@ sealed interface RegistryReference<T : Any> {
         private fun resolve(): T? {
             return registry.get(identifier)
         }
+
+        override val id: Int
+            get() = registry.getId(identifier)
 
         override fun get(): T? {
             if (registry is CacheableRegistry) {
@@ -58,6 +63,8 @@ sealed interface RegistryReference<T : Any> {
         override val registry: Registry<Any> get() = throw UnsupportedOperationException()
 
         override val identifier: Identifier = Identifier.withDefaultNamespace("unbound")
+
+        override val id: Int = -1
 
         override fun get(): Any? {
             return null

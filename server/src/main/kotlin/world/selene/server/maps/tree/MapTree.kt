@@ -203,23 +203,31 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
     fun applyOperation(operation: SparseOperation, layerName: String? = null) {
         when (operation) {
             is SparseTilePlacement -> {
-                placeTile(
-                    operation.coordinate,
-                    operation.tileDef,
-                    layerName
-                )
+                operation.tileDef.get()?.let { tileDefinition ->
+                    placeTile(
+                        operation.coordinate,
+                        tileDefinition,
+                        layerName
+                    )
+                }
             }
 
             is SparseTilesReplacement -> {
-                replaceTiles(
-                    operation.coordinate,
-                    operation.tileDef,
-                    layerName
-                )
+                operation.tileDef.get()?.let { tileDefinition ->
+                    replaceTiles(
+                        operation.coordinate,
+                        tileDefinition,
+                        layerName
+                    )
+                }
             }
 
             is SparseTileSwap -> {
-                swapTile(operation.coordinate, operation.oldTileDef, operation.newTileDef, layerName)
+                operation.oldTileDef.get()?.let { oldTileDefinition ->
+                    operation.newTileDef.get()?.let { newTileDefinition ->
+                        swapTile(operation.coordinate, oldTileDefinition, newTileDefinition, layerName)
+                    }
+                }
             }
 
             is SparseTileAnnotation -> {
@@ -227,11 +235,13 @@ class MapTree(private val registries: Registries) : LuaMetatableProvider {
             }
 
             is SparseTileRemoval -> {
-                removeTile(
-                    operation.coordinate,
-                    operation.tileDef,
-                    layerName
-                )
+                operation.tileDef.get()?.let { tileDefinition ->
+                    removeTile(
+                        operation.coordinate,
+                        tileDefinition,
+                        layerName
+                    )
+                }
             }
         }
     }

@@ -19,6 +19,7 @@ interface Registry<TData : Any> {
     fun getReference(id: Int): RegistryReference<TData> {
         return getIdentifier(id)?.let { getReference(it) } ?: RegistryReference.unbound()
     }
+    fun getId(identifier: Identifier): Int
     fun getAll(): Map<Identifier, TData>
     fun findByMetadata(key: String, value: Any): Pair<Identifier, TData>?
     fun registryPopulated(mappings: NameIdRegistry, throwOnMissingId: Boolean = true) = Unit
