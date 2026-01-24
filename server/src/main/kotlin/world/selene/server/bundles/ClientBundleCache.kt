@@ -3,6 +3,7 @@ package world.selene.server.bundles
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.slf4j.Logger
 import world.selene.server.config.ServerConfig
 import java.io.File
 import java.io.FileInputStream
@@ -15,10 +16,11 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-class ClientBundleCache(config: ServerConfig) {
+class ClientBundleCache(config: ServerConfig, private val logger: Logger) {
     private val bundlesDir = File(config.bundlesPath)
     private val cacheDir = File("cache", "client_bundles")
     private val hashByBundleName = ConcurrentHashMap<String, String>()
+    private val cachedZipByBundleName = ConcurrentHashMap<String, File>()
 
     fun createClientZip(bundleDir: File, outputFile: File) {
         outputFile.parentFile.mkdirs()
@@ -95,6 +97,23 @@ class ClientBundleCache(config: ServerConfig) {
         return hasher.digest().joinToString("") { "%02x".format(it) }
     }
 
+    fun clearCacheForBundle(bundleName: String) {
+        // Remove old zip file if it exists
+        cachedZipByBundleName[bundleName]?.let { oldZipFile ->
+            try {
+                if (oldZipFile.exists()) {
+                    oldZipFile.delete()
+                }
+            } catch (e: Exception) {
+                logger.error("Failed to clear cached zip file for bundle $bundleName", e)
+            }
+        }
+        cachedZipByBundleName.remove(bundleName)
+        
+        // Remove hash entry to force recalculation
+        hashByBundleName.remove(bundleName)
+    }
+
     fun cleanupStaleZips() {
         val currentHashes = hashByBundleName.values.toSet()
         for (file in cacheDir.listFiles() ?: emptyArray()) {
@@ -124,7 +143,7 @@ class ClientBundleCache(config: ServerConfig) {
                     StandardWatchEventKinds.ENTRY_DELETE
                 )] = dir
             } catch (e: Exception) {
-                println("Failed to watch $dir: ${e.message}")
+                logger.warn("Failed to watch $dir: ${e.message}")
             }
         }
         CoroutineScope(Dispatchers.IO).launch {
@@ -132,9 +151,16 @@ class ClientBundleCache(config: ServerConfig) {
                 val key = watcher.take() ?: break
                 if (key.pollEvents().isNotEmpty()) {
                     bundleByWatchKey[key]?.let { bundleDir ->
-                        val hash = hashBundleDir(bundleDir)
-                        hashByBundleName[bundleDir.name] = hash
-                        println("Recomputed hash for ${bundleDir.name}: $hash")
+                        val oldHash = hashByBundleName[bundleDir.name]
+                        val newHash = hashBundleDir(bundleDir)
+                        
+                        // Clear cache if bundle content changed
+                        if (oldHash != null && oldHash != newHash) {
+                            clearCacheForBundle(bundleDir.name)
+                        }
+                        
+                        hashByBundleName[bundleDir.name] = newHash
+                        logger.debug("Recomputed hash for ${bundleDir.name}: $newHash")
                     }
                 }
                 key.reset()
@@ -157,6 +183,9 @@ class ClientBundleCache(config: ServerConfig) {
             cacheDir.mkdirs()
             createClientZip(bundleDir, zipFile)
         }
+
+        // Track the zip file for this bundle
+        cachedZipByBundleName[bundleDir.name] = zipFile
 
         return zipFile
     }

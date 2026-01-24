@@ -6,6 +6,7 @@ import world.selene.common.bundles.BundleWatcher
 import world.selene.common.data.Identifier
 import world.selene.common.data.Registry
 import world.selene.common.network.packet.NotifyBundleUpdatePacket
+import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.data.Registries
 import world.selene.server.network.NetworkServer
 
@@ -13,7 +14,8 @@ class ServerBundleWatcher(
     logger: Logger,
     bundleDatabase: BundleDatabase,
     private val networkServer: NetworkServer,
-    private val registries: Registries
+    private val registries: Registries,
+    private val clientBundleCache: ClientBundleCache
 ) : BundleWatcher(logger, bundleDatabase) {
 
     override fun processPendingBundleUpdates(
@@ -22,6 +24,11 @@ class ServerBundleWatcher(
         deletedFiles: Set<String>
     ) {
         super.processPendingBundleUpdates(bundleId, updatedFiles, deletedFiles)
+
+        // Clear client bundle cache when bundle content changes
+        if (updatedFiles.isNotEmpty() || deletedFiles.isNotEmpty()) {
+            clientBundleCache.clearCacheForBundle(bundleId)
+        }
 
         val packet = NotifyBundleUpdatePacket(
             bundleId = bundleId,
