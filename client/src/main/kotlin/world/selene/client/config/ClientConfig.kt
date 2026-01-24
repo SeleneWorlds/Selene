@@ -2,7 +2,7 @@ package world.selene.client.config
 
 import java.io.File
 
-data class ClientConfig(val vsync: Boolean = true) {
+data class ClientConfig(val vsync: Boolean = true, val hotReload: Boolean = true) {
     companion object {
         fun createDefault() {
             val configFile = File("client.properties")

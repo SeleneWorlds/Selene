@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
 import world.selene.client.config.ClientRuntimeConfig
 import world.selene.client.bundle.ClientBundleWatcher
+import world.selene.client.config.ClientConfig
 import world.selene.client.sounds.AudioRegistry
 import world.selene.client.rendering.visual.VisualRegistry
 import world.selene.client.network.NetworkClient
@@ -27,6 +28,7 @@ import kotlin.math.min
 import kotlin.math.pow
 
 class SeleneClient(
+    private val config: ClientConfig,
     private val networkClient: NetworkClient,
     private val bundleLoader: BundleLoader,
     private val bundleDatabase: BundleDatabase,
@@ -63,7 +65,9 @@ class SeleneClient(
         customRegistries.loadCustomRegistries(bundleDatabase, "client")
         bundleLoader.loadBundleEntrypoints(bundles, listOf("common/", "client/", "init.lua"))
         (networkClient as NetworkClientImpl).packetHandler = packetHandler
-        bundleWatcher.startWatching()
+        if (config.hotReload) {
+            bundleWatcher.startWatching()
+        }
 
         runBlocking {
             connectWithRetry()

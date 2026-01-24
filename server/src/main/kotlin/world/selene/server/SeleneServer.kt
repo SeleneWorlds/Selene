@@ -88,7 +88,9 @@ class SeleneServer(
         httpServer.start()
         networkServer.start(config.port)
         serverHeartbeat.start()
-        bundleWatcher.startWatching()
+        if (config.hotReload) {
+            bundleWatcher.startWatching()
+        }
 
         startConsoleThread()
         startMainEventLoop()

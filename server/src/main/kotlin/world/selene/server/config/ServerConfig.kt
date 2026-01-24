@@ -12,7 +12,8 @@ data class ServerConfig(
     val insecureMode: Boolean = false,
     val public: Boolean = false,
     val announcedHost: String = "",
-    val announcedApi: String = ""
+    val announcedApi: String = "",
+    val hotReload: Boolean = true
 ) {
     companion object {
         fun createDefault() {
