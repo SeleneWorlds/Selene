@@ -4,7 +4,7 @@ WORKDIR /app
 RUN gradle :server:installDist --no-daemon
 RUN mv /app/server/build/install/server/lib/server.jar /app/server/build/install/server/server.jar
 
-FROM openjdk:21-jdk-slim
+FROM eclipse-temurin:21-alpine
 WORKDIR /app
 COPY --from=build /app/server/build/install/server/bin/ ./bin/
 COPY --from=build /app/server/build/install/server/lib/ ./lib/
