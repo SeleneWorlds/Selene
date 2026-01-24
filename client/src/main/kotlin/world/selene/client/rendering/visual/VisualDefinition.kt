@@ -6,9 +6,8 @@ import com.badlogic.gdx.utils.Align
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import world.selene.common.data.Identifier
 import world.selene.common.data.MetadataHolder
-import world.selene.common.data.Registry
+import world.selene.common.data.RegistryAdoptedObject
 import world.selene.common.data.RegistryObject
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
@@ -19,20 +18,7 @@ import world.selene.common.data.RegistryObject
     JsonSubTypes.Type(value = AnimatorVisualDefinition::class, name = "animator"),
     JsonSubTypes.Type(value = TextVisualDefinition::class, name = "text")
 )
-abstract class VisualDefinition : MetadataHolder, RegistryObject<VisualDefinition> {
-    override var id: Int = 0; protected set
-    override lateinit var identifier: Identifier; protected set
-    override lateinit var registry: Registry<VisualDefinition>; protected set
-    override fun initializeFromRegistry(
-        registry: Registry<VisualDefinition>,
-        identifier: Identifier,
-        id: Int
-    ) {
-        this.registry = registry
-        this.identifier = identifier
-        this.id = id
-    }
-}
+abstract class VisualDefinition : MetadataHolder, RegistryAdoptedObject<VisualDefinition>()
 
 data class SimpleVisualDefinition(
     val texture: String,
@@ -54,7 +40,7 @@ data class VariantsVisualDefinition(
     val flipX: Boolean = false,
     val flipY: Boolean = false,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition(), MetadataHolder
+) : VisualDefinition()
 
 data class AnimatedVisualDefinition(
     val textures: List<String>,
@@ -67,7 +53,7 @@ data class AnimatedVisualDefinition(
     val flipY: Boolean = false,
     val instanced: Boolean = false,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition(), MetadataHolder
+) : VisualDefinition()
 
 data class AnimatorVisualDefinition(
     val animator: String,
@@ -77,7 +63,7 @@ data class AnimatorVisualDefinition(
     val surfaceOffsetY: Float = 0f,
     val sortLayerOffset: Int = 0,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition(), MetadataHolder
+) : VisualDefinition()
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class AnimationFrames(
@@ -99,4 +85,4 @@ data class TextVisualDefinition(
     val text: String,
     val align: HorizontalAlign = HorizontalAlign.LEFT,
     override val metadata: Map<String, Any> = emptyMap()
-) : VisualDefinition(), MetadataHolder
+) : VisualDefinition()

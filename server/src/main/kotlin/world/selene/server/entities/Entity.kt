@@ -1,6 +1,7 @@
 package world.selene.server.entities
 
 import party.iroiro.luajava.Lua
+import world.selene.common.data.RegistryReference
 import world.selene.common.entities.ComponentConfiguration
 import world.selene.common.entities.EntityDefinition
 import world.selene.common.grid.Direction
@@ -32,7 +33,7 @@ class Entity(val registries: Registries, val world: World, val signals: ServerLu
     LuaReferencable<Int, Entity> {
     val impassable: Boolean = true
     var networkId: Int = -1
-    lateinit var entityDefinition: EntityDefinition
+    var entityDefinition: RegistryReference<EntityDefinition> = RegistryReference.unbound()
     var name = "John Selene"
     var coordinate = Coordinate(0, 0, 0)
     var facing: Direction? = null
@@ -176,7 +177,7 @@ class Entity(val registries: Registries, val world: World, val signals: ServerLu
          */
         private fun luaGetEntityDefinition(lua: Lua): Int {
             val entity = lua.checkUserdata<Entity>(1)
-            lua.push(entity.entityDefinition, Lua.Conversion.NONE)
+            lua.push(entity.entityDefinition.get(), Lua.Conversion.NONE)
             return 1
         }
 

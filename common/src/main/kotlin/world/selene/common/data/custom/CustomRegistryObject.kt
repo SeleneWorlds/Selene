@@ -9,11 +9,34 @@ import world.selene.common.lua.*
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.data.Identifier
+import world.selene.common.data.RegistryObject
+import world.selene.common.data.MetadataHolder
+import world.selene.common.data.Registry
 
-class CustomRegistryObject(val registry: CustomRegistry, val identifier: Identifier, val element: JsonNode) :
+class CustomRegistryObject(private val customRegistry: CustomRegistry, override val identifier: Identifier, val element: JsonNode) :
     LuaMetatableProvider,
-    LuaReferencable<Identifier, CustomRegistryObject> {
-    val luaReference = LuaReference(CustomRegistryObject::class, identifier, registry, this)
+    LuaReferencable<Identifier, CustomRegistryObject>,
+    RegistryObject<CustomRegistryObject>(),
+    MetadataHolder {
+    val luaReference = LuaReference(CustomRegistryObject::class, identifier, customRegistry, this)
+
+    override val registry: Registry<CustomRegistryObject>
+        get() = customRegistry
+
+    override var id: Int = -1
+
+    override val metadata: Map<String, Any> by lazy {
+        (element.get("metadata") as? ObjectNode)?.let { metadataNode ->
+            val metadataMap = mutableMapOf<String, Any>()
+            metadataNode.forEachEntry { key, node ->
+                val value = node.asAny()
+                if (value != null) {
+                    metadataMap[key] = value
+                }
+            }
+            metadataMap
+        } ?: emptyMap()
+    }
 
     fun getMetadata(key: String): Any? {
         return element["metadata"]?.get(key)?.asAny()
@@ -84,7 +107,7 @@ class CustomRegistryObject(val registry: CustomRegistry, val identifier: Identif
         private fun luaGetField(lua: Lua): Int {
             val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
             val key = lua.checkString(2)
-            val objectMapper = registryObject.registry.objectMapper
+            val objectMapper = registryObject.customRegistry.objectMapper
             when (val value = registryObject.element[key]) {
                 is LongNode -> lua.push(value.asLong())
                 is IntNode, is ShortNode -> lua.push(value.asInt())

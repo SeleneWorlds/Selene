@@ -1,5 +1,6 @@
 package world.selene.server.maps.layers
 
+import world.selene.common.data.RegistryReference
 import world.selene.common.tiles.TileDefinition
 import world.selene.common.grid.Coordinate
 import world.selene.server.maps.MapChunk
@@ -12,7 +13,7 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
 
     override fun placeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean {
         val chunk = getOrCreateChunk(coordinate)
-        chunk.addOperation(coordinate, SparseTilePlacement(coordinate, tileDef))
+        chunk.addOperation(coordinate, SparseTilePlacement(coordinate, tileDef.asReference))
         return true
     }
 
@@ -21,7 +22,7 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
         tileDef: TileDefinition
     ): Boolean {
         val chunk = getOrCreateChunk(coordinate)
-        chunk.addOperation(coordinate, SparseTilesReplacement(coordinate, tileDef))
+        chunk.addOperation(coordinate, SparseTilesReplacement(coordinate, tileDef.asReference))
         return true
     }
 
@@ -31,13 +32,13 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
         newTileDef: TileDefinition
     ): Boolean {
         val chunk = getOrCreateChunk(coordinate)
-        chunk.addOperation(coordinate, SparseTileSwap(coordinate, tileDef, newTileDef))
+        chunk.addOperation(coordinate, SparseTileSwap(coordinate, tileDef.asReference, newTileDef.asReference))
         return true
     }
 
     override fun removeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean {
         val chunk = getOrCreateChunk(coordinate)
-        chunk.addOperation(coordinate, SparseTileRemoval(coordinate, tileDef))
+        chunk.addOperation(coordinate, SparseTileRemoval(coordinate, tileDef.asReference))
         return true
     }
 
@@ -74,7 +75,7 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
         }
     }
 
-    class SparseChunk() : MapChunk {
+    class SparseChunk : MapChunk {
         val operations = mutableMapOf<Coordinate, MutableList<SparseOperation>>()
 
         fun addOperation(coordinate: Coordinate, op: SparseOperation) {
@@ -105,14 +106,14 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
 
 sealed interface SparseOperation
 
-class SparseTilePlacement(val coordinate: Coordinate, val tileDef: TileDefinition) : SparseOperation
+class SparseTilePlacement(val coordinate: Coordinate, val tileDef: RegistryReference<TileDefinition>) : SparseOperation
 
-class SparseTileRemoval(val coordinate: Coordinate, val tileDef: TileDefinition) : SparseOperation
+class SparseTileRemoval(val coordinate: Coordinate, val tileDef: RegistryReference<TileDefinition>) : SparseOperation
 
-class SparseTilesReplacement(val coordinate: Coordinate, val tileDef: TileDefinition) :
+class SparseTilesReplacement(val coordinate: Coordinate, val tileDef: RegistryReference<TileDefinition>) :
     SparseOperation
 
-class SparseTileSwap(val coordinate: Coordinate, val oldTileDef: TileDefinition, val newTileDef: TileDefinition) :
+class SparseTileSwap(val coordinate: Coordinate, val oldTileDef: RegistryReference<TileDefinition>, val newTileDef: RegistryReference<TileDefinition>) :
     SparseOperation
 
 class SparseTileAnnotation(val coordinate: Coordinate, val key: String, val data: Map<Any, Any>?) :

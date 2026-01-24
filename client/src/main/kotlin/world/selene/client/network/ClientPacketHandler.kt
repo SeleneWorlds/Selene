@@ -3,6 +3,7 @@ package world.selene.client.network
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
 import party.iroiro.luajava.LuaException
+import world.selene.client.assets.RuntimeBundleUpdateManager
 import world.selene.client.camera.CameraManager
 import world.selene.client.controls.GridMovement
 import world.selene.client.controls.PlayerController
@@ -29,7 +30,8 @@ class ClientPacketHandler(
     private val cameraManager: CameraManager,
     private val playerController: PlayerController,
     private val gridMovement: GridMovement,
-    private val soundManager: SoundManager
+    private val soundManager: SoundManager,
+    private val runtimeBundleUpdateManager: RuntimeBundleUpdateManager
 ) : PacketHandler<NetworkClient> {
     override fun handle(
         context: NetworkClient,
@@ -178,10 +180,21 @@ class ClientPacketHandler(
                 }
             }
 
+            is NotifyBundleUpdatePacket -> {
+                context.enqueueWork {
+                    handleRegistryUpdatePacket(packet)
+                }
+            }
+
             is DisconnectPacket -> {
                 context.disconnect()
                 logger.info("Disconnected from server: ${packet.reason}")
             }
         }
     }
+    
+    private fun handleRegistryUpdatePacket(packet: NotifyBundleUpdatePacket) {
+        runtimeBundleUpdateManager.handleBundleContentUpdate(packet)
+    }
+
 }

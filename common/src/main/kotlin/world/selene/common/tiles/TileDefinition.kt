@@ -1,9 +1,7 @@
 package world.selene.common.tiles
 
-import world.selene.common.data.Identifier
 import world.selene.common.data.MetadataHolder
-import world.selene.common.data.Registry
-import world.selene.common.data.RegistryObject
+import world.selene.common.data.RegistryAdoptedObject
 import world.selene.common.data.TagHolder
 
 data class TileDefinition(
@@ -12,18 +10,4 @@ data class TileDefinition(
     val passableAbove: Boolean = false,
     override val metadata: Map<String, Any> = emptyMap(),
     override val tags: Set<String> = emptySet()
-) : MetadataHolder, TagHolder, RegistryObject<TileDefinition> {
-    override var id: Int = 0; private set
-    override lateinit var identifier: Identifier; private set
-    override lateinit var registry: Registry<TileDefinition>; private set
-
-    override fun initializeFromRegistry(
-        registry: Registry<TileDefinition>,
-        identifier: Identifier,
-        id: Int
-    ) {
-        this.registry = registry
-        this.identifier = identifier
-        this.id = id
-    }
-}
+) : MetadataHolder, TagHolder, RegistryAdoptedObject<TileDefinition>()

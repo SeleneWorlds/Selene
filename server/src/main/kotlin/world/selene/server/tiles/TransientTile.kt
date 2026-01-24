@@ -1,16 +1,18 @@
 package world.selene.server.tiles
 
 import party.iroiro.luajava.Lua
+import world.selene.common.data.RegistryReference
 import world.selene.common.tiles.TileDefinition
 import world.selene.common.lua.*
 import world.selene.common.lua.util.checkRegistry
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.grid.Coordinate
+import world.selene.common.lua.util.throwError
 import world.selene.server.dimensions.Dimension
 
 class TransientTile(
-    private val definition: TileDefinition,
+    private val definition: RegistryReference<TileDefinition>,
     private val dimension: Dimension,
     private val coordinate: Coordinate
 ) : LuaMetatableProvider {
@@ -34,7 +36,7 @@ class TransientTile(
          */
         private fun luaGetDefinition(lua: Lua): Int {
             val entity = lua.checkUserdata<TransientTile>(1)
-            lua.push(entity.definition, Lua.Conversion.NONE)
+            lua.push(entity.definition.get(), Lua.Conversion.NONE)
             return 1
         }
 
@@ -157,8 +159,13 @@ class TransientTile(
             val tile = lua.checkUserdata<TransientTile>(1)
             val newTileDef = lua.checkRegistry(2, tile.definition.registry)
             val layer = lua.toString(3)
-            val newTile = tile.dimension.swapTile(tile.coordinate, tile.definition, newTileDef, layer)
-            lua.push(newTile, Lua.Conversion.NONE)
+            val oldTileDef = tile.definition.get()
+            if (oldTileDef != null) {
+                val newTile = tile.dimension.swapTile(tile.coordinate, oldTileDef, newTileDef, layer)
+                lua.push(newTile, Lua.Conversion.NONE)
+            } else {
+                lua.throwError("Tried to swap tile at ${tile.coordinate} but tile definition ${tile.definition.identifier} is not valid")
+            }
             return 1
         }
 

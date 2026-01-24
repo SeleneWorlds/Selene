@@ -6,17 +6,10 @@ import world.selene.common.lua.*
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 
-interface RegistryObject<T : Any> : LuaMetatableProvider {
-    @get:JsonIgnore
-    val identifier: Identifier
+abstract class RegistryObject<T : Any> : LuaMetatableProvider, RegistryOwnedObject<T>, IdMappedObject {
 
     @get:JsonIgnore
-    val registry: Registry<T>
-
-    @get:JsonIgnore
-    val id: Int
-
-    fun initializeFromRegistry(registry: Registry<T>, identifier: Identifier, id: Int)
+    override var id: Int = -1
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
         return luaMeta

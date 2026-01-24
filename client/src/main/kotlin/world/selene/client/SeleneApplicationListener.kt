@@ -10,6 +10,7 @@ import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.ScreenUtils
 import org.koin.mp.KoinPlatform.getKoin
+import world.selene.client.bundle.ClientBundleWatcher
 import world.selene.client.camera.CameraManager
 import world.selene.client.controls.GridMovement
 import world.selene.client.input.InputManager
@@ -19,6 +20,7 @@ import world.selene.client.rendering.DebugRenderer
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.ui.UI
+import world.selene.common.bundles.BundleWatcher
 import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.util.Disposable
 
@@ -34,6 +36,7 @@ class SeleneApplicationListener(
     private val sceneRenderer: SceneRenderer,
     private val debugRenderer: DebugRenderer,
     private val signals: ClientLuaSignals,
+    private val bundleWatcher: ClientBundleWatcher,
     private val mainThreadDispatcher: MainThreadDispatcher
 ) : ApplicationListener {
 
@@ -64,6 +67,7 @@ class SeleneApplicationListener(
         signals.gamePreTick.emit()
 
         networkClient.processWork()
+        bundleWatcher.processPendingUpdates()
 
         val delta = Gdx.graphics.deltaTime
         inputManager.update()

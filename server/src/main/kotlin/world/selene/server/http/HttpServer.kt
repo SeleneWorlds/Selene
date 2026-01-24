@@ -22,6 +22,7 @@ import world.selene.server.login.SessionAuthentication
 import world.selene.server.players.PlayerManager
 import world.selene.server.startupTime
 import java.net.URI
+import java.nio.file.Paths
 
 data class SeleneUser(val userId: String)
 
@@ -90,7 +91,7 @@ class HttpServer(
                         )
                     ))
                 }
-                authenticate("session") {
+                authenticate("session", optional = config.insecureMode) {
                     get("/bundles") {
                         call.respond(bundleDatabase.loadedBundles.associateBy { it.manifest.name }
                             .filter { clientBundleCache.hasClientSide(it.value.dir) }
@@ -113,6 +114,50 @@ class HttpServer(
                             ).toString()
                         )
                         call.respondFile(clientBundleCache.getZipFile(bundle.dir))
+                    }
+                    get("/bundles/{bundleName}/content/{path...}") {
+                        val bundleName = call.parameters["bundleName"] ?: return@get
+                        val unsafePath = call.parameters.getAll("path")?.joinToString("/") ?: return@get
+                        val normalizedPath = Paths.get(unsafePath).normalize().toString()
+                        
+                        val bundle = bundleDatabase.getBundle(bundleName)
+                        if (bundle == null) {
+                            call.respond(HttpStatusCode.NotFound, "Bundle not found")
+                            return@get
+                        }
+                        
+                        val assetPath = bundle.dir.resolve(normalizedPath).normalize()
+                        if (normalizedPath.contains("/.") || normalizedPath.startsWith(".")) {
+                            call.respond(HttpStatusCode.NotFound, "Asset not found")
+                            return@get
+                        }
+                        
+                        val commonBaseDir = bundle.dir.resolve("common").normalize()
+                        val clientBaseDir = bundle.dir.resolve("client").normalize()
+                        if (!assetPath.startsWith(commonBaseDir) && !assetPath.startsWith(clientBaseDir)) {
+                            call.respond(HttpStatusCode.NotFound, "Asset not found")
+                            return@get
+                        }
+                        
+                        if (!assetPath.exists()) {
+                            call.respond(HttpStatusCode.NotFound, "Asset not found")
+                            return@get
+                        }
+                        
+                        if (!assetPath.isFile) {
+                            call.respond(HttpStatusCode.BadRequest, "Asset not found")
+                            return@get
+                        }
+                        
+                        call.response.header(
+                            HttpHeaders.ContentDisposition,
+                            ContentDisposition.Inline.withParameter(
+                                ContentDisposition.Parameters.FileName,
+                                assetPath.name
+                            ).toString()
+                        )
+
+                        call.respondFile(assetPath)
                     }
                 }
                 authenticate("user") {

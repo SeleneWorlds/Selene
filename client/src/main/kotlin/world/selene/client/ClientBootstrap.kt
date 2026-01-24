@@ -38,6 +38,7 @@ fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {
     var host = "localhost"
     var port = 8147
     var token = ""
+    var contentServerUrl = ""
     val bundles = mutableMapOf<String, String>()
 
     var i = 0
@@ -56,6 +57,15 @@ fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {
                 if (i + 1 < args.size) {
                     port = args[i + 1].toIntOrNull()
                         ?: throw IllegalArgumentException("Invalid port number: ${args[i + 1]}")
+                    i++
+                } else {
+                    throw IllegalArgumentException("Missing value for ${args[i]}")
+                }
+            }
+
+            "--contentServer", "-c" -> {
+                if (i + 1 < args.size) {
+                    contentServerUrl = args[i + 1]
                     i++
                 } else {
                     throw IllegalArgumentException("Missing value for ${args[i]}")
@@ -100,6 +110,7 @@ fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {
     return ClientRuntimeConfig(
         host = host,
         port = port,
+        contentServerUrl = contentServerUrl,
         token = token,
         bundles = bundles
     )
@@ -111,11 +122,12 @@ fun printUsage() {
         Selene Client Usage:
         
         Options:
-          --host, -h <hostname>     Server hostname (default: localhost)
-          --port, -p <port>         Server port (default: 8147)
-          --token, -t <token>       Authentication token (default: empty)
-          --bundle, -b <name> <path> Add bundle mapping (can be used multiple times)
-          --help                    Show this help message
+          --host, -h <hostname>                      Server hostname (default: localhost)
+          --port, -p <port>                          Server port (default: 8147)
+          --contentServer, -c <contentServerUrl>     Content server URL (default: empty)
+          --token, -t <token>                        Authentication token (default: empty)
+          --bundle, -b <name> <path>                 Add bundle mapping (can be used multiple times)
+          --help                                     Show this help message
           
         Examples:
           java -jar selene-client.jar --host example.com --port 9000 --token eyJhb...
