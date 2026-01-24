@@ -22,6 +22,7 @@ import world.selene.client.rendering.animator.StateMachineAnimatorController
 import world.selene.client.rendering.environment.Environment
 import world.selene.client.rendering.scene.Renderable
 import world.selene.client.rendering.scene.Scene
+import world.selene.common.data.RegistryReference
 import world.selene.common.entities.ComponentConfiguration
 import world.selene.common.entities.EntityDefinition
 import world.selene.common.grid.Coordinate
@@ -46,14 +47,17 @@ class Entity(
     private val logger = LoggerFactory.getLogger(Entity::class.java)
 
     var networkId: Int = 0
-    var entityDefinition: EntityDefinition? = null
+    var entityDefinition: RegistryReference<EntityDefinition> = RegistryReference.unbound()
         set(value) {
+            field.unsubscribeAll()
             field = value
-            components.clear()
-            tickableComponents.clear()
-            renderableComponents.clear()
-            value?.components?.forEach {
-                addComponent(it.key, it.value)
+            value.subscribe { def ->
+                components.clear()
+                tickableComponents.clear()
+                renderableComponents.clear()
+                def?.components?.forEach {
+                    addComponent(it.key, it.value)
+                }
             }
         }
 
@@ -193,7 +197,7 @@ class Entity(
         coordinate = Coordinate.Zero
         facing = 0f
         localSortLayer = 0
-        entityDefinition = null
+        entityDefinition = RegistryReference.unbound()
         processingComponents = false
         removed = false
         componentsToBeAdded.clear()
@@ -276,7 +280,7 @@ class Entity(
     }
 
     fun hasTag(tag: String): Boolean {
-        return entityDefinition?.tags?.contains(tag) ?: false
+        return entityDefinition.tags.contains(tag)
     }
 
     override fun addedToScene(scene: Scene) {
