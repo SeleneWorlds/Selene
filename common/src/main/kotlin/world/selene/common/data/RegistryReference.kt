@@ -4,6 +4,8 @@ sealed interface RegistryReference<T : Any> {
 
     val valid get() = get() != null
 
+    val registry: Registry<T>
+
     val identifier: Identifier
 
     fun get(): T?
@@ -12,7 +14,11 @@ sealed interface RegistryReference<T : Any> {
 
     fun unsubscribeAll()
 
-    class ByIdentifier<T : Any>(val registry: Registry<T>, override val identifier: Identifier) : RegistryReference<T> {
+    val metadata get() = (get() as? MetadataHolder)?.metadata ?: emptyMap()
+
+    val tags get() = (get() as? TagHolder)?.tags ?: emptySet()
+
+    class ByIdentifier<T : Any>(override val registry: Registry<T>, override val identifier: Identifier) : RegistryReference<T> {
         private var cache: T? = null
         private var lastCacheKey: Long = -1
         private val subscriptions = mutableListOf<(T?) -> Unit>()
@@ -48,6 +54,8 @@ sealed interface RegistryReference<T : Any> {
 
     object Unbound : RegistryReference<Any> {
         override val valid: Boolean = false
+
+        override val registry: Registry<Any> get() = throw UnsupportedOperationException()
 
         override val identifier: Identifier = Identifier.withDefaultNamespace("unbound")
 
