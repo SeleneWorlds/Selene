@@ -5,11 +5,12 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.GlyphLayout
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import world.selene.client.assets.AssetProvider
+import world.selene.common.data.Identifier
 import world.selene.common.util.Disposable
 
 class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
     private val cache = mutableMapOf<Pair<String, DrawableOptions>, Drawable>()
-    private val animatedDrawables = mutableMapOf<String, AnimatedDrawable>()
+    private val animatedDrawables = mutableMapOf<Identifier, AnimatedDrawable>()
 
     private fun getMissingDrawable(): TextureRegionDrawable {
         return TextureRegionDrawable(assetProvider.missingTexture, 0f, 0f)
@@ -43,12 +44,12 @@ class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
     fun getAnimatedDrawable(
         frames: List<Pair<String, DrawableOptions>>,
         options: AnimatedDrawableOptions,
-        managedKey: String? = null
+        sharedIdentifier: Identifier? = null
     ): AnimatedDrawable {
-        if (managedKey == null) {
+        if (sharedIdentifier == null) {
             return createAnimatedDrawable(frames, options)
         }
-        return animatedDrawables.getOrPut(managedKey) {
+        return animatedDrawables.getOrPut(sharedIdentifier) {
             createAnimatedDrawable(frames, options)
         }
     }

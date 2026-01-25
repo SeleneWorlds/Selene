@@ -48,10 +48,10 @@ class VisualFactory(private val drawableManager: DrawableManager) {
                 val options = AnimatedDrawableOptions(
                     duration = visualDef.duration
                 )
-                val managedKey = if (!visualDef.instanced) visualDef.identifier else null
-                val drawable = drawableManager.getAnimatedDrawable(frames, options, managedKey.toString())
+                val sharedIdentifier = if (!visualDef.instanced) visualDef.identifier else null
+                val drawable = drawableManager.getAnimatedDrawable(frames, options, sharedIdentifier)
                 DrawableIsoVisual(visualDef, drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY).apply {
-                    if (managedKey != null) {
+                    if (sharedIdentifier != null) {
                         shouldUpdate = false
                     }
                 }
