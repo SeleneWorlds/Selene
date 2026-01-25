@@ -11,7 +11,8 @@ import world.selene.common.lua.util.throwError
  * Create visuals from visual definitions.
  */
 @Suppress("SameReturnValue")
-class LuaVisualsModule(private val visualManager: VisualManager) : LuaModule {
+class LuaVisualsModule(private val visualRegistry: VisualRegistry, private val visualFactory: VisualFactory) :
+    LuaModule {
     override val name = "selene.visuals"
 
     override fun register(table: LuaValue) {
@@ -27,7 +28,8 @@ class LuaVisualsModule(private val visualManager: VisualManager) : LuaModule {
      */
     private fun luaCreate(lua: Lua): Int {
         val identifier = lua.checkIdentifier(1)
-        val visual = visualManager.createVisual(identifier, VisualCreationContext())
+        val visualDef = visualRegistry.get(identifier) ?: lua.throwError("Visual not found: $identifier")
+        val visual = visualFactory.createVisual(visualDef, VisualCreationContext())
             ?: lua.throwError("Failed to create visual: $identifier")
         lua.push(visual, Lua.Conversion.NONE)
         return 1

@@ -4,12 +4,13 @@ import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.utils.Pool
 import party.iroiro.luajava.Lua
+import world.selene.client.data.Registries
 import world.selene.client.grid.ClientGrid
 import world.selene.client.rendering.environment.Environment
 import world.selene.client.rendering.scene.Renderable
 import world.selene.client.rendering.scene.Scene
 import world.selene.client.rendering.visual.VisualCreationContext
-import world.selene.client.rendering.visual.VisualManager
+import world.selene.client.rendering.visual.VisualFactory
 import world.selene.client.rendering.visual2d.iso.IsoVisual
 import world.selene.common.data.RegistryReference
 import world.selene.common.grid.Coordinate
@@ -20,7 +21,7 @@ import world.selene.common.lua.util.checkUserdata
 import world.selene.common.tiles.TileDefinition
 import kotlin.math.abs
 
-class Tile(private val grid: ClientGrid, private val visualManager: VisualManager, private val pool: TilePool) :
+class Tile(private val grid: ClientGrid, private val registries: Registries, private val visualFactory: VisualFactory, private val pool: TilePool) :
     Pool.Poolable, Renderable,
     LuaMetatableProvider {
     var tileDefinition: RegistryReference<TileDefinition> = RegistryReference.unbound()
@@ -95,7 +96,9 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
 
     fun updateVisual() {
         tileDefinition.get()?.visual?.let {
-            visual = visualManager.createVisual(it, VisualCreationContext(coordinate)) as? IsoVisual
+            registries.visuals.get(it)
+        }?.let {
+            visual = visualFactory.createVisual(it, VisualCreationContext(coordinate)) as? IsoVisual
         }
         // TODO Maybe use a default missing visual as fallback if tile def is not present or no longer resolves
     }
