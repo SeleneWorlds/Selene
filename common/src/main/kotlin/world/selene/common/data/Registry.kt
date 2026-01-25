@@ -25,4 +25,14 @@ interface Registry<TData : Any> {
     fun registryPopulated(mappings: NameIdRegistry, throwOnMissingId: Boolean = true) = Unit
     fun subscribe(reference: RegistryReference<TData>, handler: (TData?) -> Unit)
     fun unsubscribe(reference: RegistryReference<TData>, handler: (TData?) -> Unit)
+    
+    /**
+     * Registers a reload listener to receive notifications about registry-wide changes.
+     */
+    fun addReloadListener(listener: RegistryReloadListener<TData>)
+    
+    /**
+     * Removes a previously registered reload listener.
+     */
+    fun removeReloadListener(listener: RegistryReloadListener<TData>)
 }
