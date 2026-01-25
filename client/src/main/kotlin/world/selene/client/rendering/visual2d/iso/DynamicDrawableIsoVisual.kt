@@ -51,7 +51,7 @@ class DynamicDrawableIsoVisual(
          * Drawable rendered by this visual (this frame).
          *
          * ```property
-         * Drawable: Drawable|nil
+         * Drawable: Drawable
          * ```
          */
         private fun luaGetDrawable(lua: Lua): Int {

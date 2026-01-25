@@ -49,9 +49,10 @@ class ReloadableVisualComponent(val visual: ReloadableVisual, override val posit
         y: Float
     ) {
         if (red != 1f || green != 1f || blue != 1f || alpha != 1f) {
-            batch.color = batch.color.mul(red, green, blue, alpha)
+            batch.color.mul(red, green, blue, alpha)
         }
         visual.render(batch, x, y)
+        batch.color.set(1f, 1f, 1f, 1f)
     }
 
     override fun toString(): String {
@@ -155,7 +156,7 @@ class ReloadableVisualComponent(val visual: ReloadableVisual, override val posit
         private fun luaGetAlpha(lua: Lua): Int {
             val component = lua.checkUserdata<ReloadableVisualComponent>(1)
             lua.push(component.alpha)
-            return 0
+            return 1
         }
 
         /**
@@ -166,7 +167,7 @@ class ReloadableVisualComponent(val visual: ReloadableVisual, override val posit
         private fun luaSetAlpha(lua: Lua): Int {
             val component = lua.checkUserdata<ReloadableVisualComponent>(1)
             component.alpha = lua.checkFloat(3)
-            return 1
+            return 0
         }
 
         val luaMeta = LuaMappedMetatable(ReloadableVisualComponent::class) {

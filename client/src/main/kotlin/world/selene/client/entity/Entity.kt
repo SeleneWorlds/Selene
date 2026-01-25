@@ -53,6 +53,7 @@ class Entity(
             field.unsubscribeAll()
             field = value
             value.subscribe { def ->
+                components.values.forEach { processRemovedComponent(it) }
                 components.clear()
                 tickableComponents.clear()
                 renderableComponents.clear()

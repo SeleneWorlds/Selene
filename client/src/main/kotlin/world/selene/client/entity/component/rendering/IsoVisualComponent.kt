@@ -150,7 +150,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         private fun luaGetAlpha(lua: Lua): Int {
             val component = lua.checkUserdata<IsoVisualComponent>(1)
             lua.push(component.alpha)
-            return 0
+            return 1
         }
 
         /**
@@ -161,7 +161,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         private fun luaSetAlpha(lua: Lua): Int {
             val component = lua.checkUserdata<IsoVisualComponent>(1)
             component.alpha = lua.checkFloat(3)
-            return 1
+            return 0
         }
 
         val luaMeta = LuaMappedMetatable(IsoVisualComponent::class) {
