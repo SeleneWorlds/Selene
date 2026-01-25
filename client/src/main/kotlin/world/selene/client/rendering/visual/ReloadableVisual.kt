@@ -6,15 +6,15 @@ import world.selene.client.rendering.visual2d.Visual2D
 import world.selene.client.rendering.visual2d.iso.IsoVisual
 import world.selene.common.data.RegistryReference
 
-sealed interface ReloadableVisual {
+sealed interface ReloadableVisual : IsoVisual {
     val visual: Visual?
-    val sortLayerOffset: Int
-    val surfaceHeight: Float
+    override val sortLayerOffset: Int
+    override val surfaceHeight: Float
 
     fun dispose()
-    fun update(delta: Float)
-    fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle
-    fun render(batch: Batch, x: Float, y: Float)
+    override fun update(delta: Float)
+    override fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle
+    override fun render(batch: Batch, x: Float, y: Float)
 
     class Instance(
         private val visualFactory: VisualFactory,

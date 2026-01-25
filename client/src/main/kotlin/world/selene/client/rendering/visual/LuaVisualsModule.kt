@@ -29,8 +29,7 @@ class LuaVisualsModule(private val visualRegistry: VisualRegistry, private val v
     private fun luaCreate(lua: Lua): Int {
         val identifier = lua.checkIdentifier(1)
         val visualDef = visualRegistry.get(identifier) ?: lua.throwError("Visual not found: $identifier")
-        val visual = visualFactory.createVisual(visualDef, VisualCreationContext())
-            ?: lua.throwError("Failed to create visual: $identifier")
+        val visual = ReloadableVisual.Instance(visualFactory, visualDef.asReference, VisualCreationContext())
         lua.push(visual, Lua.Conversion.NONE)
         return 1
     }
