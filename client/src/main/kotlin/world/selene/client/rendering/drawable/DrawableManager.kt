@@ -3,7 +3,6 @@ package world.selene.client.rendering.drawable
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.GlyphLayout
-import com.badlogic.gdx.graphics.g2d.TextureRegion
 import world.selene.client.assets.AssetProvider
 import world.selene.common.data.Identifier
 import world.selene.common.util.Disposable
@@ -16,10 +15,8 @@ class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
         return TextureRegionDrawable(assetProvider.missingTexture, 0f, 0f)
     }
 
-    private fun createDrawable(texture: String, options: DrawableOptions): Drawable? {
-        val texture = assetProvider.loadTexture(texture) ?: return null
-        val textureRegion = TextureRegion(texture)
-        textureRegion.flip(options.flipX, options.flipY)
+    private fun createDrawable(texture: String, options: DrawableOptions): Drawable {
+        val textureRegion = assetProvider.loadReloadableTextureRegion(texture, options.flipX, options.flipY)
         // TODO Test textures currently have their offsets configured with a center origin
         val hackyOffsetX = options.offsetX - textureRegion.regionWidth / 2f
         return TextureRegionDrawable(textureRegion, hackyOffsetX, options.offsetY)
