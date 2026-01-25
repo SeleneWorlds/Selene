@@ -3,6 +3,7 @@ package world.selene.client.assets
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureRegion
+import kotlinx.coroutines.runBlocking
 import ktx.assets.async.AssetLoadingException
 import ktx.assets.async.AssetStorage
 import org.slf4j.Logger
@@ -43,6 +44,9 @@ class AssetProvider(private val logger: Logger, private val assetStorage: AssetS
     }
 
     fun notifyAssetChanged(assetPath: String) {
+        if (textureFilePattern.containsMatchIn(assetPath)) {
+            unloadTextureForReload(assetPath)
+        }
         assetSubscriptions[assetPath]?.forEach { callback ->
             callback(assetPath)
         }
@@ -75,4 +79,13 @@ class AssetProvider(private val logger: Logger, private val assetStorage: AssetS
         }
     }
 
+    fun unloadTextureForReload(texturePath: String) {
+        runBlocking {
+            assetStorage.unload<Texture>(texturePath)
+        }
+    }
+
+    companion object {
+        private val textureFilePattern = "^(common|client)/assets/textures/([\\w-]+)/.*".toRegex()
+    }
 }
