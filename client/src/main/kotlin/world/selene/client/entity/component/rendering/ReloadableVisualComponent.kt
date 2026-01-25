@@ -123,7 +123,7 @@ class ReloadableVisualComponent(val visual: ReloadableVisual, override val posit
         }
 
         /**
-         * Alpha tint applied to the visual (0.0 - 1.0).
+         * Blue tint applied to the visual (0.0 - 1.0).
          *
          * ```property
          * Blue: number

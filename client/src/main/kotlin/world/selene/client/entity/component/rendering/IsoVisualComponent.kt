@@ -117,7 +117,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         }
 
         /**
-         * Alpha tint applied to the visual (0.0 - 1.0).
+         * Blue tint applied to the visual (0.0 - 1.0).
          *
          * ```property
          * Blue: number
