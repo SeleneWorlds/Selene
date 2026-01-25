@@ -77,6 +77,16 @@ fun Lua.checkString(index: Int): String {
     }
 }
 
+fun Lua.checkIdentifier(index: Int): Identifier {
+    if (top < abs(index)) {
+        throwTypeError(index, LuaType.STRING, LuaType.NIL)
+    }
+    return when (val type = type(index)) {
+        LuaType.STRING -> Identifier.parse(toString(index)!!)
+        else -> throwTypeError(index, LuaType.STRING, type)
+    }
+}
+
 fun Lua.checkInt(index: Int): Int {
     if (top < abs(index)) {
         throwTypeError(index, LuaType.NUMBER, LuaType.NIL)
