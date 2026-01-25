@@ -9,9 +9,9 @@ import world.selene.client.grid.ClientGrid
 import world.selene.client.rendering.environment.Environment
 import world.selene.client.rendering.scene.Renderable
 import world.selene.client.rendering.scene.Scene
+import world.selene.client.rendering.visual.ReloadableVisual
 import world.selene.client.rendering.visual.VisualCreationContext
 import world.selene.client.rendering.visual.VisualFactory
-import world.selene.client.rendering.visual2d.iso.IsoVisual
 import world.selene.common.data.RegistryReference
 import world.selene.common.grid.Coordinate
 import world.selene.common.lua.LuaMappedMetatable
@@ -21,7 +21,12 @@ import world.selene.common.lua.util.checkUserdata
 import world.selene.common.tiles.TileDefinition
 import kotlin.math.abs
 
-class Tile(private val grid: ClientGrid, private val registries: Registries, private val visualFactory: VisualFactory, private val pool: TilePool) :
+class Tile(
+    private val grid: ClientGrid,
+    private val registries: Registries,
+    private val visualFactory: VisualFactory,
+    private val pool: TilePool
+) :
     Pool.Poolable, Renderable,
     LuaMetatableProvider {
     var tileDefinition: RegistryReference<TileDefinition> = RegistryReference.unbound()
@@ -32,9 +37,13 @@ class Tile(private val grid: ClientGrid, private val registries: Registries, pri
                 updateVisual()
             }
         }
-    var visual: IsoVisual? = null
+    var visual: ReloadableVisual = ReloadableVisual.None
+        set(value) {
+            field.dispose()
+            field = value
+        }
 
-    override val sortLayerOffset: Int get() = visual?.sortLayerOffset ?: 0
+    override val sortLayerOffset: Int get() = visual.sortLayerOffset
     override val sortLayer: Int get() = grid.getSortLayer(coordinate, sortLayerOffset)
     override var localSortLayer: Int = 0
     override var coordinate: Coordinate = Coordinate.Zero
@@ -48,7 +57,7 @@ class Tile(private val grid: ClientGrid, private val registries: Registries, pri
     private val fadeSpeed: Float = 5f
 
     override fun update(delta: Float) {
-        visual?.update(delta)
+        visual.update(delta)
         if (currentOcclusionAlpha != targetOcclusionAlpha) {
             val diff = targetOcclusionAlpha - currentOcclusionAlpha
             val step = fadeSpeed * delta
@@ -62,7 +71,7 @@ class Tile(private val grid: ClientGrid, private val registries: Registries, pri
 
     private val tmpRenderBounds = Rectangle()
     override fun render(batch: Batch, environment: Environment) {
-        visual?.let {
+        visual.let {
             val displayX = grid.getScreenX(coordinate)
             val displayY = grid.getScreenY(coordinate) + environment.getSurfaceOffset(coordinate)
             val bounds = getBounds(displayX, displayY, tmpRenderBounds)
@@ -78,14 +87,14 @@ class Tile(private val grid: ClientGrid, private val registries: Registries, pri
     }
 
     fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle {
-        return visual?.getBounds(x, y, outRect) ?: outRect.set(x, y, 0f, 0f)
+        return visual.getBounds(x, y, outRect)
     }
 
     override fun reset() {
         tileDefinition = RegistryReference.unbound()
         localSortLayer = 0
         coordinate = Coordinate.Zero
-        visual = null
+        visual = ReloadableVisual.None
         currentOcclusionAlpha = 1f
         targetOcclusionAlpha = 1f
     }
@@ -96,9 +105,10 @@ class Tile(private val grid: ClientGrid, private val registries: Registries, pri
 
     fun updateVisual() {
         tileDefinition.get()?.visual?.let {
-            registries.visuals.get(it)
+            registries.visuals.getReference(it)
         }?.let {
-            visual = visualFactory.createVisual(it, VisualCreationContext(coordinate)) as? IsoVisual
+            val context = VisualCreationContext(coordinate)
+            visual = ReloadableVisual.Instance(visualFactory, it, context)
         }
         // TODO Maybe use a default missing visual as fallback if tile def is not present or no longer resolves
     }
