@@ -22,7 +22,7 @@ class EntityComponentFactory(private val visualRegistry: VisualRegistry, private
                 val positioner = ComponentPositioner.of(configuration.position)
                 val visualDef = visualRegistry.get(configuration.visual)
                 if (visualDef == null) {
-                    logger.error("Failed to create visual: $configuration")
+                    logger.error("Visual definition not found: ${configuration.visual}")
                     return null
                 }
 

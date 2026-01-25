@@ -46,7 +46,7 @@ data class Identifier(val namespace: String, val path: String) : LuaMetatablePro
          */
         class Deserializer : JsonDeserializer<Identifier>() {
             override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Identifier {
-                val value = p.valueAsString
+                val value = p.valueAsString ?: throw ctxt.weirdStringException(null, Identifier::class.java, "Identifier cannot be null")
                 return parse(value)
             }
         }

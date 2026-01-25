@@ -24,13 +24,11 @@ interface RegistryReloadListener<TData : Any> {
 
     /**
      * Called when an entry is removed from the registry.
-     * This is a convenience method that calls onEntryChanged with newData = null.
      */
-    fun onEntryRemoved(registry: Registry<TData>, identifier: Identifier, oldData: TData?) = Unit
+    fun onEntryRemoved(registry: Registry<TData>, identifier: Identifier, oldData: TData) = Unit
 
     /**
      * Called when a new entry is added to the registry.
-     * This is a convenience method that calls onEntryChanged with oldData = null.
      */
-    fun onEntryAdded(registry: Registry<TData>, identifier: Identifier, newData: TData?) = Unit
+    fun onEntryAdded(registry: Registry<TData>, identifier: Identifier, newData: TData) = Unit
 }

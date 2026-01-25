@@ -76,11 +76,31 @@ class SeleneClient(
         }
 
         visualRegistry.addReloadListener(object: RegistryReloadListener<VisualDefinition> {
+            override fun onRegistryReloaded(registry: Registry<VisualDefinition>) {
+                drawableManager.clearSharedIdentifiers()
+            }
+
+            override fun onEntryAdded(
+                registry: Registry<VisualDefinition>,
+                identifier: Identifier,
+                newData: VisualDefinition?
+            ) {
+                drawableManager.clearSharedIdentifier(identifier)
+            }
+
             override fun onEntryChanged(
                 registry: Registry<VisualDefinition>,
                 identifier: Identifier,
                 oldData: VisualDefinition,
                 newData: VisualDefinition
+            ) {
+                drawableManager.clearSharedIdentifier(identifier)
+            }
+
+            override fun onEntryRemoved(
+                registry: Registry<VisualDefinition>,
+                identifier: Identifier,
+                oldData: VisualDefinition?
             ) {
                 drawableManager.clearSharedIdentifier(identifier)
             }

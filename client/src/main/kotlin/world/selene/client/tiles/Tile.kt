@@ -39,8 +39,10 @@ class Tile(
         }
     var visual: ReloadableVisual = ReloadableVisual.None
         set(value) {
-            field.dispose()
-            field = value
+            if (field !== value) {
+                field.dispose()
+                field = value
+            }
         }
 
     override val sortLayerOffset: Int get() = visual.sortLayerOffset
@@ -71,18 +73,16 @@ class Tile(
 
     private val tmpRenderBounds = Rectangle()
     override fun render(batch: Batch, environment: Environment) {
-        visual.let {
-            val displayX = grid.getScreenX(coordinate)
-            val displayY = grid.getScreenY(coordinate) + environment.getSurfaceOffset(coordinate)
-            val bounds = getBounds(displayX, displayY, tmpRenderBounds)
-            if (environment.shouldRender(coordinate, bounds)) {
-                val occluding = environment.occludesFocus(coordinate, bounds)
-                targetOcclusionAlpha = if (occluding) 0.3f else 1f
-                batch.color.set(environment.getColor(coordinate))
-                batch.color = batch.color.mul(1f, 1f, 1f, currentOcclusionAlpha)
-                it.render(batch, displayX, displayY)
-                environment.applySurfaceOffset(coordinate, it.surfaceHeight)
-            }
+        val displayX = grid.getScreenX(coordinate)
+        val displayY = grid.getScreenY(coordinate) + environment.getSurfaceOffset(coordinate)
+        val bounds = getBounds(displayX, displayY, tmpRenderBounds)
+        if (environment.shouldRender(coordinate, bounds)) {
+            val occluding = environment.occludesFocus(coordinate, bounds)
+            targetOcclusionAlpha = if (occluding) 0.3f else 1f
+            batch.color.set(environment.getColor(coordinate))
+            batch.color = batch.color.mul(1f, 1f, 1f, currentOcclusionAlpha)
+            visual.render(batch, displayX, displayY)
+            environment.applySurfaceOffset(coordinate, visual.surfaceHeight)
         }
     }
 

@@ -266,6 +266,10 @@ abstract class FileBasedRegistry<TData : Any>(
     }
 
     private fun notifyEntryChanged(identifier: Identifier, oldData: TData?, newData: TData?) {
+        if (oldData == null && newData == null) {
+            return
+        }
+
         reloadListeners.forEach { listener ->
             try {
                 if (oldData != null && newData != null) {
