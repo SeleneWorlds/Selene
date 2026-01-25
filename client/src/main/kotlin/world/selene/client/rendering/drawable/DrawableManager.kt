@@ -68,4 +68,8 @@ class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
 
     override fun dispose() {}
 
+    fun clearSharedIdentifier(identifier: Identifier) {
+        animatedDrawables.remove(identifier)
+    }
+
 }
