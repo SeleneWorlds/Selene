@@ -276,7 +276,7 @@ abstract class FileBasedRegistry<TData : Any>(
                     listener.onEntryChanged(this, identifier, oldData, newData)
                 } else if (oldData != null) {
                     listener.onEntryRemoved(this, identifier, oldData)
-                } else {
+                } else if (newData != null) {
                     listener.onEntryAdded(this, identifier, newData)
                 }
             } catch (e: Exception) {

@@ -104,13 +104,12 @@ class Tile(
     }
 
     fun updateVisual() {
-        tileDefinition.get()?.visual?.let {
+        visual = tileDefinition.get()?.visual?.let {
             registries.visuals.getReference(it)
         }?.let {
             val context = VisualCreationContext(coordinate)
-            visual = ReloadableVisual.Instance(visualFactory, it, context)
-        }
-        // TODO Maybe use a default missing visual as fallback if tile def is not present or no longer resolves
+            ReloadableVisual.Instance(visualFactory, it, context)
+        } ?: ReloadableVisual.None
     }
 
     override fun addedToScene(scene: Scene) {

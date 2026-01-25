@@ -83,7 +83,7 @@ class SeleneClient(
             override fun onEntryAdded(
                 registry: Registry<VisualDefinition>,
                 identifier: Identifier,
-                newData: VisualDefinition?
+                newData: VisualDefinition
             ) {
                 drawableManager.clearSharedIdentifier(identifier)
             }
@@ -100,7 +100,7 @@ class SeleneClient(
             override fun onEntryRemoved(
                 registry: Registry<VisualDefinition>,
                 identifier: Identifier,
-                oldData: VisualDefinition?
+                oldData: VisualDefinition
             ) {
                 drawableManager.clearSharedIdentifier(identifier)
             }
