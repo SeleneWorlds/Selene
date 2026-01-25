@@ -33,6 +33,7 @@ import world.selene.common.lua.util.checkCoordinate
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.toAnyMap
+import world.selene.common.util.Disposable
 import java.util.*
 
 class Entity(
@@ -264,6 +265,9 @@ class Entity(
         }
         if (component is RenderableComponent) {
             renderableComponents.remove(component)
+        }
+        if (component is Disposable) {
+            component.dispose()
         }
     }
 

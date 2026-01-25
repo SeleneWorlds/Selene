@@ -10,9 +10,10 @@ import world.selene.client.rendering.visual.ReloadableVisual
 import world.selene.common.lua.*
 import world.selene.common.lua.util.checkFloat
 import world.selene.common.lua.util.checkUserdata
+import world.selene.common.util.Disposable
 
 class ReloadableVisualComponent(val visual: ReloadableVisual, override val positioner: ComponentPositioner) : EntityComponent,
-    TickableComponent, RenderableComponent, IsoComponent,
+    TickableComponent, RenderableComponent, Disposable, IsoComponent,
     LuaMetatableProvider {
     var red = 1f
     var green = 1f
@@ -35,6 +36,10 @@ class ReloadableVisualComponent(val visual: ReloadableVisual, override val posit
 
     override fun update(entity: Entity, delta: Float) {
         visual.update(delta)
+    }
+
+    override fun dispose() {
+        visual.dispose()
     }
 
     override fun render(
