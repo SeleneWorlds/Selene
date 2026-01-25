@@ -5,6 +5,7 @@ import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
 import world.selene.client.rendering.visual.AnimatorVisualDefinition
 import world.selene.client.rendering.drawable.Drawable
+import world.selene.client.rendering.visual2d.DrawableVisual
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.util.checkUserdata
 
@@ -13,14 +14,14 @@ class DynamicDrawableIsoVisual(
     private val drawableProvider: () -> Drawable?,
     override val sortLayerOffset: Int,
     override val surfaceHeight: Float
-) : IsoVisual {
+) : IsoVisual, DrawableVisual {
 
-    private val drawable: Drawable? get() = drawableProvider()
+    override val drawable: Drawable get() = drawableProvider() ?: Drawable.Empty
 
     var shouldUpdate = true
     override fun update(delta: Float) {
         if (shouldUpdate) {
-            drawable?.update(delta)
+            drawable.update(delta)
         }
     }
 
@@ -29,11 +30,11 @@ class DynamicDrawableIsoVisual(
         y: Float,
         outRect: Rectangle
     ): Rectangle {
-        return drawable?.getBounds(x, y, outRect) ?: outRect.set(x, y, 0f, 0f)
+        return drawable.getBounds(x, y, outRect)
     }
 
     override fun render(batch: Batch, x: Float, y: Float) {
-        drawable?.render(batch, x, y)
+        drawable.render(batch, x, y)
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {

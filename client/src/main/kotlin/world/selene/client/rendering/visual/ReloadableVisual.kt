@@ -2,11 +2,16 @@ package world.selene.client.rendering.visual
 
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
+import party.iroiro.luajava.Lua
+import world.selene.client.rendering.visual2d.DrawableVisual
 import world.selene.client.rendering.visual2d.Visual2D
 import world.selene.client.rendering.visual2d.iso.IsoVisual
 import world.selene.common.data.RegistryReference
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.lua.util.checkUserdata
 
-sealed interface ReloadableVisual : IsoVisual {
+sealed interface ReloadableVisual : IsoVisual, LuaMetatableProvider {
     val visual: Visual?
     override val sortLayerOffset: Int
     override val surfaceHeight: Float
@@ -72,5 +77,31 @@ sealed interface ReloadableVisual : IsoVisual {
         override fun update(delta: Float) = Unit
         override fun render(batch: Batch, x: Float, y: Float) = Unit
         override fun dispose() = Unit
+    }
+
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
+
+    @Suppress("SameReturnValue")
+    companion object {
+        /**
+         * Drawable rendered by this visual, or nil if this visual is not backed by a Drawable.
+         *
+         * ```property
+         * Drawable: Drawable
+         * ```
+         */
+        private fun luaGetDrawable(lua: Lua): Int {
+            val self = lua.checkUserdata<ReloadableVisual>(1)
+            (self.visual as? DrawableVisual)?.let {
+                lua.push(it.drawable, Lua.Conversion.NONE)
+            } ?: lua.pushNil()
+            return 1
+        }
+
+        val luaMeta = IsoVisual.luaMeta.extend(ReloadableVisual::class) {
+            getter(::luaGetDrawable)
+        }
     }
 }
