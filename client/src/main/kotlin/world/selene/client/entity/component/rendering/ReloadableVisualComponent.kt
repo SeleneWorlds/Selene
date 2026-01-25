@@ -1,0 +1,179 @@
+package world.selene.client.entity.component.rendering
+
+import com.badlogic.gdx.graphics.g2d.Batch
+import com.badlogic.gdx.math.Rectangle
+import party.iroiro.luajava.Lua
+import world.selene.client.entity.component.EntityComponent
+import world.selene.client.entity.component.TickableComponent
+import world.selene.client.entity.Entity
+import world.selene.client.rendering.visual.ReloadableVisual
+import world.selene.common.lua.*
+import world.selene.common.lua.util.checkFloat
+import world.selene.common.lua.util.checkUserdata
+
+class ReloadableVisualComponent(val visual: ReloadableVisual, override val positioner: ComponentPositioner) : EntityComponent,
+    TickableComponent, RenderableComponent, IsoComponent,
+    LuaMetatableProvider {
+    var red = 1f
+    var green = 1f
+    var blue = 1f
+    var alpha = 1f
+
+    override val sortLayerOffset: Int
+        get() = visual.sortLayerOffset
+
+    override val surfaceHeight: Float
+        get() = visual.surfaceHeight
+
+    override fun luaMetatable(lua: Lua): LuaMetatable {
+        return luaMeta
+    }
+
+    override fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle {
+        return visual.getBounds(x, y, outRect)
+    }
+
+    override fun update(entity: Entity, delta: Float) {
+        visual.update(delta)
+    }
+
+    override fun render(
+        entity: Entity,
+        batch: Batch,
+        x: Float,
+        y: Float
+    ) {
+        if (red != 1f || green != 1f || blue != 1f || alpha != 1f) {
+            batch.color = batch.color.mul(red, green, blue, alpha)
+        }
+        visual.render(batch, x, y)
+    }
+
+    override fun toString(): String {
+        return "ReloadableVisualComponent(visual=$visual)"
+    }
+
+    @Suppress("SameReturnValue")
+    companion object {
+        /**
+         * Visual rendered by this component.
+         *
+         * ```property
+         * Visual: IsoVisual
+         * ```
+         */
+        private fun luaGetVisual(lua: Lua): Int {
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
+            lua.push(component.visual, Lua.Conversion.NONE)
+            return 1
+        }
+
+        /**
+         * Red tint applied to the visual (0.0 - 1.0).
+         *
+         * ```property
+         * Red: number
+         * ```
+         */
+        private fun luaGetRed(lua: Lua): Int {
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
+            lua.push(component.red)
+            return 1
+        }
+
+        /**
+         * ```property
+         * Red: number
+         * ```
+         */
+        private fun luaSetRed(lua: Lua): Int {
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
+            component.red = lua.checkFloat(3)
+            return 0
+        }
+
+        /**
+         * Green tint applied to the visual (0.0 - 1.0).
+         *
+         * ```property
+         * Green: number
+         * ```
+         */
+        private fun luaGetGreen(lua: Lua): Int {
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
+            lua.push(component.green)
+            return 1
+        }
+
+        /**
+         * ```property
+         * Green: number
+         * ```
+         */
+        private fun luaSetGreen(lua: Lua): Int {
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
+            component.green = lua.checkFloat(3)
+            return 0
+        }
+
+        /**
+         * Alpha tint applied to the visual (0.0 - 1.0).
+         *
+         * ```property
+         * Blue: number
+         * ```
+         */
+        private fun luaGetBlue(lua: Lua): Int {
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
+            lua.push(component.blue)
+            return 1
+        }
+
+        /**
+         * ```property
+         * Blue: number
+         * ```
+         */
+        private fun luaSetBlue(lua: Lua): Int {
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
+            component.blue = lua.checkFloat(3)
+            return 0
+        }
+
+        /**
+         * Opacity applied to the visual (0.0 - 1.0).
+         *
+         * ```property
+         * Alpha: number
+         * ```
+         */
+        private fun luaGetAlpha(lua: Lua): Int {
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
+            lua.push(component.alpha)
+            return 0
+        }
+
+        /**
+         * ```property
+         * Alpha: number
+         * ```
+         */
+        private fun luaSetAlpha(lua: Lua): Int {
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
+            component.alpha = lua.checkFloat(3)
+            return 1
+        }
+
+        val luaMeta = LuaMappedMetatable(ReloadableVisualComponent::class) {
+            getter(::luaGetVisual)
+            getter(::luaGetRed)
+            setter(::luaSetRed)
+            getter(::luaGetGreen)
+            setter(::luaSetGreen)
+            getter(::luaGetBlue)
+            setter(::luaSetBlue)
+            getter(::luaGetAlpha)
+            setter(::luaSetAlpha)
+        }
+    }
+}
