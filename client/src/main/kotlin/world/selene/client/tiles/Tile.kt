@@ -4,13 +4,14 @@ import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.utils.Pool
 import party.iroiro.luajava.Lua
+import world.selene.client.data.Registries
 import world.selene.client.grid.ClientGrid
 import world.selene.client.rendering.environment.Environment
 import world.selene.client.rendering.scene.Renderable
 import world.selene.client.rendering.scene.Scene
+import world.selene.client.rendering.visual.ReloadableVisual
 import world.selene.client.rendering.visual.VisualCreationContext
-import world.selene.client.rendering.visual.VisualManager
-import world.selene.client.rendering.visual2d.iso.IsoVisual
+import world.selene.client.rendering.visual.VisualFactory
 import world.selene.common.data.RegistryReference
 import world.selene.common.grid.Coordinate
 import world.selene.common.lua.LuaMappedMetatable
@@ -20,7 +21,12 @@ import world.selene.common.lua.util.checkUserdata
 import world.selene.common.tiles.TileDefinition
 import kotlin.math.abs
 
-class Tile(private val grid: ClientGrid, private val visualManager: VisualManager, private val pool: TilePool) :
+class Tile(
+    private val grid: ClientGrid,
+    private val registries: Registries,
+    private val visualFactory: VisualFactory,
+    private val pool: TilePool
+) :
     Pool.Poolable, Renderable,
     LuaMetatableProvider {
     var tileDefinition: RegistryReference<TileDefinition> = RegistryReference.unbound()
@@ -31,9 +37,15 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
                 updateVisual()
             }
         }
-    var visual: IsoVisual? = null
+    var visual: ReloadableVisual = ReloadableVisual.None
+        set(value) {
+            if (field !== value) {
+                field.dispose()
+                field = value
+            }
+        }
 
-    override val sortLayerOffset: Int get() = visual?.sortLayerOffset ?: 0
+    override val sortLayerOffset: Int get() = visual.sortLayerOffset
     override val sortLayer: Int get() = grid.getSortLayer(coordinate, sortLayerOffset)
     override var localSortLayer: Int = 0
     override var coordinate: Coordinate = Coordinate.Zero
@@ -47,7 +59,7 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     private val fadeSpeed: Float = 5f
 
     override fun update(delta: Float) {
-        visual?.update(delta)
+        visual.update(delta)
         if (currentOcclusionAlpha != targetOcclusionAlpha) {
             val diff = targetOcclusionAlpha - currentOcclusionAlpha
             val step = fadeSpeed * delta
@@ -61,30 +73,28 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
 
     private val tmpRenderBounds = Rectangle()
     override fun render(batch: Batch, environment: Environment) {
-        visual?.let {
-            val displayX = grid.getScreenX(coordinate)
-            val displayY = grid.getScreenY(coordinate) + environment.getSurfaceOffset(coordinate)
-            val bounds = getBounds(displayX, displayY, tmpRenderBounds)
-            if (environment.shouldRender(coordinate, bounds)) {
-                val occluding = environment.occludesFocus(coordinate, bounds)
-                targetOcclusionAlpha = if (occluding) 0.3f else 1f
-                batch.color.set(environment.getColor(coordinate))
-                batch.color = batch.color.mul(1f, 1f, 1f, currentOcclusionAlpha)
-                it.render(batch, displayX, displayY)
-                environment.applySurfaceOffset(coordinate, it.surfaceHeight)
-            }
+        val displayX = grid.getScreenX(coordinate)
+        val displayY = grid.getScreenY(coordinate) + environment.getSurfaceOffset(coordinate)
+        val bounds = getBounds(displayX, displayY, tmpRenderBounds)
+        if (environment.shouldRender(coordinate, bounds)) {
+            val occluding = environment.occludesFocus(coordinate, bounds)
+            targetOcclusionAlpha = if (occluding) 0.3f else 1f
+            batch.color.set(environment.getColor(coordinate))
+            batch.color = batch.color.mul(1f, 1f, 1f, currentOcclusionAlpha)
+            visual.render(batch, displayX, displayY)
+            environment.applySurfaceOffset(coordinate, visual.surfaceHeight)
         }
     }
 
     fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle {
-        return visual?.getBounds(x, y, outRect) ?: outRect.set(x, y, 0f, 0f)
+        return visual.getBounds(x, y, outRect)
     }
 
     override fun reset() {
         tileDefinition = RegistryReference.unbound()
         localSortLayer = 0
         coordinate = Coordinate.Zero
-        visual = null
+        visual = ReloadableVisual.None
         currentOcclusionAlpha = 1f
         targetOcclusionAlpha = 1f
     }
@@ -94,10 +104,12 @@ class Tile(private val grid: ClientGrid, private val visualManager: VisualManage
     }
 
     fun updateVisual() {
-        tileDefinition.get()?.visual?.let {
-            visual = visualManager.createVisual(it, VisualCreationContext(coordinate)) as? IsoVisual
-        }
-        // TODO Maybe use a default missing visual as fallback if tile def is not present or no longer resolves
+        visual = tileDefinition.get()?.visual?.let {
+            registries.visuals.getReference(it)
+        }?.let {
+            val context = VisualCreationContext(coordinate)
+            ReloadableVisual.Instance(visualFactory, it, context)
+        } ?: ReloadableVisual.None
     }
 
     override fun addedToScene(scene: Scene) {

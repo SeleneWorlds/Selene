@@ -95,6 +95,9 @@ abstract class FileBasedRegistry<TData : Any>(
                 }
             }
         }
+
+        // Notify listeners that the entire registry has been reloaded
+        notifyRegistryReloaded()
     }
 
     protected open fun loadEntryFromFile(path: Path, identifier: Identifier): TData? {
@@ -161,6 +164,8 @@ abstract class FileBasedRegistry<TData : Any>(
 
             incrementCacheKey()
 
+            notifyEntryChanged(identifier, oldEntry, data)
+
             subscriptions[identifier]?.forEach { handler ->
                 handler(data)
             }
@@ -188,6 +193,9 @@ abstract class FileBasedRegistry<TData : Any>(
         subscriptions[identifier]?.forEach { handler ->
             handler(null)
         }
+
+        // Notify reload listeners of the entry removal
+        notifyEntryChanged(identifier, removedEntry, null)
     }
 
     private fun addToMetadataLookup(identifier: Identifier, metadataHolder: MetadataHolder) {
@@ -214,6 +222,7 @@ abstract class FileBasedRegistry<TData : Any>(
     }
 
     private val subscriptions: MutableMap<Identifier, MutableList<(TData?) -> Unit>> = mutableMapOf()
+    private val reloadListeners: MutableSet<RegistryReloadListener<TData>> = mutableSetOf()
 
     override fun subscribe(
         reference: RegistryReference<TData>,
@@ -236,6 +245,44 @@ abstract class FileBasedRegistry<TData : Any>(
 
     override fun luaDereference(id: Identifier): TData? {
         return entries[id]
+    }
+
+    override fun addReloadListener(listener: RegistryReloadListener<TData>) {
+        reloadListeners.add(listener)
+    }
+
+    override fun removeReloadListener(listener: RegistryReloadListener<TData>) {
+        reloadListeners.remove(listener)
+    }
+
+    private fun notifyRegistryReloaded() {
+        reloadListeners.forEach { listener ->
+            try {
+                listener.onRegistryReloaded(this)
+            } catch (e: Exception) {
+                logger.error("Error notifying reload listener of registry reload", e)
+            }
+        }
+    }
+
+    private fun notifyEntryChanged(identifier: Identifier, oldData: TData?, newData: TData?) {
+        if (oldData == null && newData == null) {
+            return
+        }
+
+        reloadListeners.forEach { listener ->
+            try {
+                if (oldData != null && newData != null) {
+                    listener.onEntryChanged(this, identifier, oldData, newData)
+                } else if (oldData != null) {
+                    listener.onEntryRemoved(this, identifier, oldData)
+                } else if (newData != null) {
+                    listener.onEntryAdded(this, identifier, newData)
+                }
+            } catch (e: Exception) {
+                logger.error("Error notifying reload listener of entry change for $identifier", e)
+            }
+        }
     }
 
     companion object {

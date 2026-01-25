@@ -6,13 +6,14 @@ import party.iroiro.luajava.Lua
 import world.selene.client.entity.component.EntityComponent
 import world.selene.client.entity.component.TickableComponent
 import world.selene.client.entity.Entity
-import world.selene.client.rendering.visual2d.iso.IsoVisual
+import world.selene.client.rendering.visual.ReloadableVisual
 import world.selene.common.lua.*
 import world.selene.common.lua.util.checkFloat
 import world.selene.common.lua.util.checkUserdata
+import world.selene.common.util.Disposable
 
-class IsoVisualComponent(val visual: IsoVisual, override val positioner: ComponentPositioner) : EntityComponent,
-    TickableComponent, RenderableComponent, IsoComponent,
+class ReloadableVisualComponent(val visual: ReloadableVisual, override val positioner: ComponentPositioner) : EntityComponent,
+    TickableComponent, RenderableComponent, Disposable, IsoComponent,
     LuaMetatableProvider {
     var red = 1f
     var green = 1f
@@ -37,6 +38,10 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         visual.update(delta)
     }
 
+    override fun dispose() {
+        visual.dispose()
+    }
+
     override fun render(
         entity: Entity,
         batch: Batch,
@@ -44,13 +49,14 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
         y: Float
     ) {
         if (red != 1f || green != 1f || blue != 1f || alpha != 1f) {
-            batch.color = batch.color.mul(red, green, blue, alpha)
+            batch.color.mul(red, green, blue, alpha)
         }
         visual.render(batch, x, y)
+        batch.color.set(1f, 1f, 1f, 1f)
     }
 
     override fun toString(): String {
-        return "IsoVisualComponent(visual=$visual)"
+        return "ReloadableVisualComponent(visual=$visual)"
     }
 
     @Suppress("SameReturnValue")
@@ -63,7 +69,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
          * ```
          */
         private fun luaGetVisual(lua: Lua): Int {
-            val component = lua.checkUserdata<IsoVisualComponent>(1)
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
             lua.push(component.visual, Lua.Conversion.NONE)
             return 1
         }
@@ -76,7 +82,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
          * ```
          */
         private fun luaGetRed(lua: Lua): Int {
-            val component = lua.checkUserdata<IsoVisualComponent>(1)
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
             lua.push(component.red)
             return 1
         }
@@ -87,7 +93,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
          * ```
          */
         private fun luaSetRed(lua: Lua): Int {
-            val component = lua.checkUserdata<IsoVisualComponent>(1)
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
             component.red = lua.checkFloat(3)
             return 0
         }
@@ -100,7 +106,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
          * ```
          */
         private fun luaGetGreen(lua: Lua): Int {
-            val component = lua.checkUserdata<IsoVisualComponent>(1)
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
             lua.push(component.green)
             return 1
         }
@@ -111,7 +117,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
          * ```
          */
         private fun luaSetGreen(lua: Lua): Int {
-            val component = lua.checkUserdata<IsoVisualComponent>(1)
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
             component.green = lua.checkFloat(3)
             return 0
         }
@@ -124,7 +130,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
          * ```
          */
         private fun luaGetBlue(lua: Lua): Int {
-            val component = lua.checkUserdata<IsoVisualComponent>(1)
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
             lua.push(component.blue)
             return 1
         }
@@ -135,7 +141,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
          * ```
          */
         private fun luaSetBlue(lua: Lua): Int {
-            val component = lua.checkUserdata<IsoVisualComponent>(1)
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
             component.blue = lua.checkFloat(3)
             return 0
         }
@@ -148,7 +154,7 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
          * ```
          */
         private fun luaGetAlpha(lua: Lua): Int {
-            val component = lua.checkUserdata<IsoVisualComponent>(1)
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
             lua.push(component.alpha)
             return 1
         }
@@ -159,12 +165,12 @@ class IsoVisualComponent(val visual: IsoVisual, override val positioner: Compone
          * ```
          */
         private fun luaSetAlpha(lua: Lua): Int {
-            val component = lua.checkUserdata<IsoVisualComponent>(1)
+            val component = lua.checkUserdata<ReloadableVisualComponent>(1)
             component.alpha = lua.checkFloat(3)
             return 0
         }
 
-        val luaMeta = LuaMappedMetatable(IsoVisualComponent::class) {
+        val luaMeta = LuaMappedMetatable(ReloadableVisualComponent::class) {
             getter(::luaGetVisual)
             getter(::luaGetRed)
             setter(::luaSetRed)

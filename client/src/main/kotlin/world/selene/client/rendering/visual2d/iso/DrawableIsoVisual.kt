@@ -5,15 +5,16 @@ import com.badlogic.gdx.math.Rectangle
 import party.iroiro.luajava.Lua
 import world.selene.client.rendering.visual.VisualDefinition
 import world.selene.client.rendering.drawable.Drawable
+import world.selene.client.rendering.visual2d.DrawableVisual
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.util.checkUserdata
 
 class DrawableIsoVisual(
     private val visualDefinition: VisualDefinition,
-    private val drawable: Drawable,
+    override val drawable: Drawable,
     override val sortLayerOffset: Int,
     override val surfaceHeight: Float
-) : IsoVisual {
+) : IsoVisual, DrawableVisual {
     var shouldUpdate = true
     override fun update(delta: Float) {
         if (shouldUpdate) {

@@ -12,8 +12,8 @@ import world.selene.common.lua.util.checkUserdata
 
 class DrawableVisual2D(
     private val visualDefinition: VisualDefinition,
-    private val drawable: Drawable
-) : Visual2D, LuaMetatableProvider {
+    override val drawable: Drawable
+) : Visual2D, LuaMetatableProvider, DrawableVisual {
     var shouldUpdate = true
     override fun update(delta: Float) {
         if (shouldUpdate) {

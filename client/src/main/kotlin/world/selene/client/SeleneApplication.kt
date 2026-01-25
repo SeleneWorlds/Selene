@@ -54,7 +54,7 @@ import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.rendering.environment.Environment
 import world.selene.client.rendering.lua.LuaTexturesModule
 import world.selene.client.rendering.visual.LuaVisualsModule
-import world.selene.client.rendering.visual.VisualManager
+import world.selene.client.rendering.visual.VisualFactory
 import world.selene.client.rendering.scene.Scene
 import world.selene.client.sounds.LuaSoundsModule
 import world.selene.client.sounds.SoundManager
@@ -201,7 +201,7 @@ class SeleneApplication(
             factoryOf(::Entity)
         }
         val renderingModule = module {
-            singleOf(::VisualManager)
+            singleOf(::VisualFactory)
             singleOf(::CameraManager)
             singleOf(::SceneRenderer)
             singleOf(::Environment)

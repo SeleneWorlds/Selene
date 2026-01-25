@@ -2,6 +2,7 @@ package world.selene.common.entities
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import world.selene.common.data.Identifier
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.RegistryAdoptedObject
 import world.selene.common.data.TagHolder
@@ -26,7 +27,7 @@ data class VisualComponentPosition(val origin: String = "none", val offsetX: Flo
 }
 
 data class VisualComponentConfiguration(
-    val visual: String,
+    val visual: Identifier,
     val position: VisualComponentPosition = VisualComponentPosition.Default,
     val overrides: Map<String, Any> = emptyMap()
 ) : ComponentConfiguration

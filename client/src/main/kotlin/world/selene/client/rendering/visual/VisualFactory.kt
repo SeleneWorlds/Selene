@@ -9,10 +9,9 @@ import world.selene.client.rendering.visual2d.DrawableVisual2D
 import world.selene.client.rendering.visual2d.iso.DrawableIsoVisual
 import world.selene.client.rendering.visual2d.iso.DynamicDrawableIsoVisual
 
-class VisualManager(private val drawableManager: DrawableManager, private val visualRegistry: VisualRegistry) {
+class VisualFactory(private val drawableManager: DrawableManager) {
 
-    fun createVisual(name: String, context: VisualCreationContext): Visual? {
-        val visualDef = visualRegistry.get(name) ?: return null
+    fun createVisual(visualDef: VisualDefinition, context: VisualCreationContext): Visual? {
         return when (visualDef) {
             is SimpleVisualDefinition -> {
                 val drawable = drawableManager.getDrawable(
@@ -49,10 +48,10 @@ class VisualManager(private val drawableManager: DrawableManager, private val vi
                 val options = AnimatedDrawableOptions(
                     duration = visualDef.duration
                 )
-                val managedKey = if (!visualDef.instanced) name else null
-                val drawable = drawableManager.getAnimatedDrawable(frames, options, managedKey)
+                val sharedIdentifier = if (!visualDef.instanced) visualDef.identifier else null
+                val drawable = drawableManager.getAnimatedDrawable(frames, options, sharedIdentifier)
                 DrawableIsoVisual(visualDef, drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY).apply {
-                    if (managedKey != null) {
+                    if (sharedIdentifier != null) {
                         shouldUpdate = false
                     }
                 }

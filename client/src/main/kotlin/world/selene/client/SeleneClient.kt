@@ -10,8 +10,13 @@ import world.selene.client.sounds.AudioRegistry
 import world.selene.client.rendering.visual.VisualRegistry
 import world.selene.client.network.NetworkClient
 import world.selene.client.network.NetworkClientImpl
+import world.selene.client.rendering.drawable.DrawableManager
+import world.selene.client.rendering.visual.VisualDefinition
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.bundles.BundleLoader
+import world.selene.common.data.Identifier
+import world.selene.common.data.Registry
+import world.selene.common.data.RegistryReloadListener
 import world.selene.common.data.custom.CustomRegistries
 import world.selene.common.entities.EntityRegistry
 import world.selene.common.entities.component.ComponentRegistry
@@ -44,6 +49,7 @@ class SeleneClient(
     private val runtimeConfig: ClientRuntimeConfig,
     private val packetHandler: PacketHandler<NetworkClient>,
     private val bundleWatcher: ClientBundleWatcher,
+    private val drawableManager: DrawableManager,
     private val logger: Logger
 ) {
     fun start() {
@@ -68,6 +74,37 @@ class SeleneClient(
         if (config.hotReload) {
             bundleWatcher.startWatching()
         }
+
+        visualRegistry.addReloadListener(object: RegistryReloadListener<VisualDefinition> {
+            override fun onRegistryReloaded(registry: Registry<VisualDefinition>) {
+                drawableManager.clearSharedIdentifiers()
+            }
+
+            override fun onEntryAdded(
+                registry: Registry<VisualDefinition>,
+                identifier: Identifier,
+                newData: VisualDefinition
+            ) {
+                drawableManager.clearSharedIdentifier(identifier)
+            }
+
+            override fun onEntryChanged(
+                registry: Registry<VisualDefinition>,
+                identifier: Identifier,
+                oldData: VisualDefinition,
+                newData: VisualDefinition
+            ) {
+                drawableManager.clearSharedIdentifier(identifier)
+            }
+
+            override fun onEntryRemoved(
+                registry: Registry<VisualDefinition>,
+                identifier: Identifier,
+                oldData: VisualDefinition
+            ) {
+                drawableManager.clearSharedIdentifier(identifier)
+            }
+        })
 
         runBlocking {
             connectWithRetry()
