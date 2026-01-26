@@ -68,7 +68,7 @@ class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule
      * ```
      */
     private fun luaLoadAsString(lua: Lua): Int {
-        val path = lua.checkString(-1)
+        val path = lua.checkString(1)
         val bundleName = path.substringBefore("/")
         val remainingPath = path.substringAfter("/")
         val baseDir = bundleDatabase.getBundle(bundleName)?.dir
@@ -97,7 +97,7 @@ class LuaResourcesModule(private val bundleDatabase: BundleDatabase) : LuaModule
      * ```
      */
     private fun luaFileExists(lua: Lua): Int {
-        val path = lua.checkString(-1)
+        val path = lua.checkString(1)
         val bundleName = path.substringBefore("/")
         val remainingPath = path.substringAfter("/")
         val baseDir = bundleDatabase.getBundle(bundleName)?.dir
