@@ -66,8 +66,8 @@ class LuaSoundsModule(
         ) else world.dimensionManager.getOrCreateDimension(0)
         if (lua.top >= index + 3) lua.checkType(index + 3, Lua.LuaType.TABLE)
 
-        val volume = lua.getFieldFloat(index + 2, "volume") ?: 1f
-        val pitch = lua.getFieldFloat(index + 2, "pitch") ?: 1f
+        val volume = lua.getFieldFloat(index + 3, "volume") ?: 1f
+        val pitch = lua.getFieldFloat(index + 3, "pitch") ?: 1f
 
         val packet = PlaySoundPacket(sound.id, volume, pitch, coordinate)
         dimension.syncManager.sendToAllWatching(coordinate, packet)
@@ -89,8 +89,8 @@ class LuaSoundsModule(
         ) else world.dimensionManager.getOrCreateDimension(0)
         if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
 
-        val volume = lua.getFieldFloat(2, "volume") ?: 1f
-        val pitch = lua.getFieldFloat(2, "pitch") ?: 1f
+        val volume = lua.getFieldFloat(3, "volume") ?: 1f
+        val pitch = lua.getFieldFloat(3, "pitch") ?: 1f
 
         dimension.syncManager.sendToAll(PlaySoundPacket(sound.id, volume, pitch, null))
         return 0
