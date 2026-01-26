@@ -67,7 +67,6 @@ class LuaHttpModule(
             lua.setField(-2, "success")
         } catch (e: Exception) {
             lua.createTable(0, 3)
-            lua.push("status")
             lua.push(0)
             lua.setField(-2, "status")
             lua.push(e.message ?: "Unknown error")
