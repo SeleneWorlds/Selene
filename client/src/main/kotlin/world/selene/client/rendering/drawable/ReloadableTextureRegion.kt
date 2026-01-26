@@ -10,9 +10,11 @@ class ReloadableTextureRegion(
     private val flipY: Boolean = false
 ) : TextureRegion() {
 
+    val reloadCallback = ::reload
+
     init {
         reload(texturePath)
-        assetProvider.subscribeToAssetChanges(texturePath, ::reload)
+        assetProvider.subscribeToAssetChanges(texturePath, reloadCallback)
     }
 
     fun reload(texturePath: String) {
@@ -26,7 +28,7 @@ class ReloadableTextureRegion(
     }
 
     fun dispose() {
-        assetProvider.unsubscribeFromAssetChanges(texturePath, ::reload)
+        assetProvider.unsubscribeFromAssetChanges(texturePath, reloadCallback)
     }
 
     override fun toString(): String {

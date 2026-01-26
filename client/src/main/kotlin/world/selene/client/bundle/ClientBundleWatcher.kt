@@ -24,7 +24,7 @@ class ClientBundleWatcher(
     }
 
     override fun processPendingBundleUpdates(bundleId: String, updatedFiles: Set<String>, deletedFiles: Set<String>) {
-        updatedFiles
+        (updatedFiles + deletedFiles)
             .filter { isAssetFile(it) }
             .forEach { assetPath ->
                 assetProvider.notifyAssetChanged(assetPath)

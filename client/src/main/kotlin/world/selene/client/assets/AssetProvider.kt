@@ -10,13 +10,14 @@ import org.slf4j.Logger
 import world.selene.client.rendering.drawable.ReloadableTextureRegion
 import world.selene.common.util.Disposable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 class AssetProvider(private val logger: Logger, private val assetStorage: AssetStorage) : Disposable {
 
     val missingTexture = TextureRegion(Texture(1, 1, Pixmap.Format.RGBA8888))
 
     private val assetSubscriptions = ConcurrentHashMap<String, MutableSet<(String) -> Unit>>()
-    private val reloadListeners = mutableSetOf<AssetReloadListener>()
+    private val reloadListeners = CopyOnWriteArrayList<AssetReloadListener>()
 
     fun loadTexture(texturePath: String): Texture? {
         try {
@@ -50,7 +51,9 @@ class AssetProvider(private val logger: Logger, private val assetStorage: AssetS
         assetSubscriptions[assetPath]?.forEach { callback ->
             callback(assetPath)
         }
-        notifyAssetChangedListeners(assetPath)
+        reloadListeners.forEach { listener ->
+            listener.onAssetChanged(assetPath)
+        }
     }
 
     override fun dispose() {
@@ -71,12 +74,6 @@ class AssetProvider(private val logger: Logger, private val assetStorage: AssetS
      */
     fun removeReloadListener(listener: AssetReloadListener) {
         reloadListeners.remove(listener)
-    }
-
-    private fun notifyAssetChangedListeners(assetPath: String) {
-        reloadListeners.forEach { listener ->
-            listener.onAssetChanged(assetPath)
-        }
     }
 
     fun unloadTextureForReload(texturePath: String) {
