@@ -6,6 +6,7 @@ import world.selene.common.network.packet.SetCameraPositionPacket
 import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.observable.ObservableMap
 import world.selene.common.grid.Coordinate
+import world.selene.common.util.ResolvableReference
 import world.selene.server.cameras.Camera
 import world.selene.server.dimensions.Dimension
 import world.selene.server.dimensions.DimensionManager

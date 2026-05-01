@@ -9,7 +9,7 @@ import world.selene.common.bundles.Bundle
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.data.*
 import world.selene.common.data.mappings.NameIdRegistry
-import world.selene.common.lua.ReferenceResolver
+import world.selene.common.util.ReferenceResolver
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

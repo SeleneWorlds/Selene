@@ -8,6 +8,7 @@ import world.selene.common.lua.*
 import world.selene.common.network.packet.EntityAnimationPacket
 import world.selene.common.observable.ObservableMap
 import world.selene.common.grid.Coordinate
+import world.selene.common.util.ResolvableReference
 import world.selene.server.attributes.Attribute
 import world.selene.server.cameras.viewer.Viewer
 import world.selene.server.data.Registries

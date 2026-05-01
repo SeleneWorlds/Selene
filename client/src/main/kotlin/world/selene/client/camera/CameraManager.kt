@@ -4,7 +4,7 @@ import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.math.Rectangle
 import world.selene.client.grid.ClientGrid
-import world.selene.client.lua.ClientEvents
+import world.selene.client.game.ClientEvents
 import world.selene.client.maps.ClientMap
 import world.selene.common.grid.Coordinate
 

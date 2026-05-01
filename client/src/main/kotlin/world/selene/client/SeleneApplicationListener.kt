@@ -13,14 +13,13 @@ import org.koin.mp.KoinPlatform.getKoin
 import world.selene.client.bundle.ClientBundleWatcher
 import world.selene.client.camera.CameraManager
 import world.selene.client.controls.GridMovement
+import world.selene.client.game.ClientEvents
 import world.selene.client.input.InputManager
-import world.selene.client.lua.ClientEvents
 import world.selene.client.network.NetworkClient
 import world.selene.client.rendering.DebugRenderer
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.ui.UI
-import world.selene.common.bundles.BundleWatcher
 import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.util.Disposable
 

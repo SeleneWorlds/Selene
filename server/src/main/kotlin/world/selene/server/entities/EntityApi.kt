@@ -9,7 +9,7 @@ import world.selene.common.grid.Direction
 import world.selene.common.lua.IdResolvable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.ResolvableReference
+import world.selene.common.util.ResolvableReference
 import world.selene.common.observable.ObservableMap
 import world.selene.server.attributes.Attribute
 import world.selene.server.attributes.AttributeApi

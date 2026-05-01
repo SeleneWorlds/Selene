@@ -13,7 +13,7 @@ import world.selene.common.data.Registry
 import world.selene.common.grid.Coordinate
 import world.selene.common.grid.Direction
 import world.selene.common.grid.Grid
-import world.selene.common.lua.ResolvableReference
+import world.selene.common.util.ResolvableReference
 import world.selene.common.lua.LuaTrace
 import world.selene.common.observable.ObservableMap
 import java.util.*

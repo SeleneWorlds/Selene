@@ -1,6 +1,9 @@
-package world.selene.common.lua
+package world.selene.common.util
 
 import party.iroiro.luajava.Lua
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 import java.lang.ref.WeakReference

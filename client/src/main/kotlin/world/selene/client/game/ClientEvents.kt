@@ -1,6 +1,6 @@
-package world.selene.client.lua
+package world.selene.client.game
 
-import world.selene.common.event.EventFactory.arrayBackedEvent
+import world.selene.common.event.EventFactory
 import world.selene.common.grid.Coordinate
 
 class ClientEvents {
@@ -8,7 +8,7 @@ class ClientEvents {
         fun gamePreTick()
 
         companion object {
-            val EVENT = arrayBackedEvent<GamePreTick> { listeners ->
+            val EVENT = EventFactory.arrayBackedEvent<GamePreTick> { listeners ->
                 GamePreTick { listeners.forEach { it.gamePreTick() } }
             }
         }
@@ -18,7 +18,7 @@ class ClientEvents {
         fun mapChunkChanged(coordinate: Coordinate, width: Int, height: Int)
 
         companion object {
-            val EVENT = arrayBackedEvent<MapChunkChanged> { listeners ->
+            val EVENT = EventFactory.arrayBackedEvent<MapChunkChanged> { listeners ->
                 MapChunkChanged { coordinate, width, height ->
                     listeners.forEach { it.mapChunkChanged(coordinate, width, height) }
                 }
@@ -30,7 +30,7 @@ class ClientEvents {
         fun cameraCoordinateChanged(coordinate: Coordinate)
 
         companion object {
-            val EVENT = arrayBackedEvent<CameraCoordinateChanged> { listeners ->
+            val EVENT = EventFactory.arrayBackedEvent<CameraCoordinateChanged> { listeners ->
                 CameraCoordinateChanged { coordinate ->
                     listeners.forEach { it.cameraCoordinateChanged(coordinate) }
                 }

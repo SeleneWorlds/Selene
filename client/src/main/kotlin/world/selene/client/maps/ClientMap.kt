@@ -6,7 +6,7 @@ import org.slf4j.Logger
 import world.selene.client.data.Registries
 import world.selene.client.entity.Entity
 import world.selene.client.entity.EntityPool
-import world.selene.client.lua.ClientEvents
+import world.selene.client.game.ClientEvents
 import world.selene.client.rendering.scene.Scene
 import world.selene.client.tiles.Tile
 import world.selene.client.tiles.TilePool

@@ -2,7 +2,7 @@ package world.selene.client.camera
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import world.selene.client.lua.ClientEvents
+import world.selene.client.game.ClientEvents
 import world.selene.common.lua.LuaEventSink
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.LuaTrace

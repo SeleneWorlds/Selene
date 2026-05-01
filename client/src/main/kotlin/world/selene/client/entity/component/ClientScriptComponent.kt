@@ -9,6 +9,7 @@ import world.selene.common.lua.LuaTrace
 import world.selene.common.observable.ObservableMap
 import world.selene.common.lua.util.xpCall
 
+// TODO Migrate to new scripting API
 class ClientScriptComponent(val moduleName: String) : EntityComponent, TickableComponent,
     LuaTrace {
     private val luaManager: LuaManager by KoinPlatform.getKoin().inject()

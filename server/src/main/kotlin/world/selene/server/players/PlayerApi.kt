@@ -5,7 +5,7 @@ import world.selene.common.grid.Coordinate
 import world.selene.common.lua.IdResolvable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.ResolvableReference
+import world.selene.common.util.ResolvableReference
 import world.selene.common.observable.ObservableMap
 import world.selene.server.dimensions.Dimension
 import world.selene.server.entities.EntityApi

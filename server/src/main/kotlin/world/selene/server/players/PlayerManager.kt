@@ -1,7 +1,7 @@
 package world.selene.server.players
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import world.selene.common.lua.ReferenceResolver
+import world.selene.common.util.ReferenceResolver
 import world.selene.server.dimensions.DimensionManager
 import world.selene.server.entities.EntityManager
 import world.selene.server.network.NetworkClient

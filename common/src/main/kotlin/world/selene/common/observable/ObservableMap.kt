@@ -4,7 +4,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.IdResolvable
-import world.selene.common.lua.ResolvableReference
+import world.selene.common.util.ResolvableReference
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.pushError
 import world.selene.common.lua.util.throwError

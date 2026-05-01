@@ -9,6 +9,7 @@ import world.selene.common.data.Identifier
 import world.selene.common.data.RegistryObject
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
+import world.selene.common.util.ResolvableReference
 
 class CustomRegistryObject(val customRegistry: CustomRegistry, override val identifier: Identifier, val element: JsonNode) :
     LuaMetatableProvider,

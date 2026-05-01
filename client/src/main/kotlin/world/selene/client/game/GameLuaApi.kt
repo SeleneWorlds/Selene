@@ -1,4 +1,4 @@
-package world.selene.client.lua
+package world.selene.client.game
 
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaEventSink

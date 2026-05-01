@@ -41,13 +41,14 @@ import world.selene.client.entity.EntityPool
 import world.selene.client.entity.EntitiesLuaApi
 import world.selene.client.rendering.visual.VisualRegistry
 import world.selene.client.entity.component.EntityComponentFactory
+import world.selene.client.game.GameApi
+import world.selene.client.game.GameLuaApi
 import world.selene.client.grid.ClientGrid
 import world.selene.client.grid.ClientGridApi
 import world.selene.client.grid.ClientGridLuaApi
 import world.selene.client.input.InputApi
 import world.selene.client.input.InputManager
 import world.selene.client.input.InputLuaApi
-import world.selene.client.lua.*
 import world.selene.client.maps.*
 import world.selene.client.network.ClientPacketHandler
 import world.selene.client.network.NetworkApi

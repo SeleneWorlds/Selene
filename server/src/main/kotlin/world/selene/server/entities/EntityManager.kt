@@ -2,7 +2,7 @@ package world.selene.server.entities
 
 import org.koin.mp.KoinPlatform.getKoin
 import world.selene.common.entities.EntityDefinition
-import world.selene.common.lua.ReferenceResolver
+import world.selene.common.util.ReferenceResolver
 import world.selene.common.grid.Coordinate
 import world.selene.server.dimensions.Dimension
 import java.util.concurrent.atomic.AtomicInteger

@@ -4,6 +4,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaTrace
 import world.selene.common.lua.util.CallerInfo
 
+// TODO Migrate to new scripting API
 class LuaPayloadRegistry {
 
     data class PayloadHandler(
