@@ -2,22 +2,24 @@ package world.selene.common.data
 
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.*
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.JsonSerializer
+import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.util.checkString
-import world.selene.common.lua.util.checkUserdata
 
 @JsonSerialize(using = Identifier.Companion.Serializer::class)
 @JsonDeserialize(using = Identifier.Companion.Deserializer::class)
-data class Identifier(val namespace: String, val path: String) : LuaMetatableProvider {
+data class Identifier(val namespace: String, val path: String) : LuaMetatableProvider, Comparable<Identifier> {
 
     companion object {
         const val DEFAULT_NAMESPACE = "selene"
+
+        private val COMPARATOR = Comparator.comparing<Identifier, String> { it.namespace }.then(Comparator.comparing { it.path })
 
         fun withDefaultNamespace(path: String): Identifier {
             return Identifier(DEFAULT_NAMESPACE, path)
@@ -73,5 +75,9 @@ data class Identifier(val namespace: String, val path: String) : LuaMetatablePro
 
     fun withPrefix(prefix: String): Identifier = Identifier(namespace, prefix + path)
 
-    fun withSuffix(suffix: String): Identifier = Identifier(namespace, path + suffix);
+    fun withSuffix(suffix: String): Identifier = Identifier(namespace, path + suffix)
+
+    override fun compareTo(other: Identifier): Int {
+        return COMPARATOR.compare(this, other)
+    }
 }
