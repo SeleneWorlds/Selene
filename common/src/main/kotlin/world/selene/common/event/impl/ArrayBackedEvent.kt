@@ -112,7 +112,4 @@ internal class ArrayBackedEvent<T : Any>(type: Class<in T>, private val invokerF
         }
     }
 
-    override fun hasHandlers(): Boolean {
-        return handlers.isNotEmpty()
-    }
 }

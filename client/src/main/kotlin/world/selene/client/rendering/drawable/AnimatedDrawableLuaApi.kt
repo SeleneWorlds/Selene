@@ -1,7 +1,11 @@
 package world.selene.client.rendering.drawable
 
 import party.iroiro.luajava.Lua
+import party.iroiro.luajava.value.LuaValue
+import world.selene.common.lua.LuaEventSink
+import world.selene.common.lua.LuaTrace
 import world.selene.common.lua.util.checkUserdata
+import world.selene.common.lua.util.xpCall
 
 object AnimatedDrawableLuaApi {
 
@@ -48,12 +52,19 @@ object AnimatedDrawableLuaApi {
      * Emitted when the animation completes.
      *
      * ```property
-     * AnimationCompleted: Signal
+     * AnimationCompleted: Event
      * ```
      */
     private fun luaGetAnimationCompleted(lua: Lua): Int {
         val self = lua.checkUserdata<AnimatedDrawableApi>(1)
-        lua.push(self.getAnimationCompleted(), Lua.Conversion.NONE)
+        val luaEventSink = LuaEventSink(self.animatedDrawable.animationCompleted) { callback: LuaValue, trace: LuaTrace ->
+            AnimatedDrawable.AnimationCompleted {
+                val lua = callback.state()
+                lua.push(callback)
+                lua.xpCall(0, 0, trace)
+            }
+        }
+        lua.push(luaEventSink, Lua.Conversion.NONE)
         return 1
     }
 

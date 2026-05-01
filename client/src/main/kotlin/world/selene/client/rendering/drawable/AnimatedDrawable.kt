@@ -2,7 +2,7 @@ package world.selene.client.rendering.drawable
 
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
-import world.selene.common.lua.Signal
+import world.selene.common.event.EventFactory.arrayBackedEvent
 
 class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawable {
     override val api = AnimatedDrawableApi(this)
@@ -10,7 +10,9 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
     var elapsedTime = 0f
     var speed = 1f
 
-    val animationCompleted = Signal("AnimationCompleted")
+    val animationCompleted = arrayBackedEvent<AnimationCompleted> { listeners ->
+        AnimationCompleted { listeners.forEach { it.animationCompleted() } }
+    }
 
     override fun getBounds(
         x: Float,
@@ -28,7 +30,7 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
             elapsedTime -= frameDuration
             currentFrame = (currentFrame + 1) % frames.size
             if (currentFrame == 0) {
-                animationCompleted.emit()
+                animationCompleted.invoker().animationCompleted()
             }
         }
     }
@@ -65,5 +67,9 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
 
     override fun toString(): String {
         return "AnimatedDrawable(duration=$duration, speed=$speed, currentFrameIndex=$currentFrame, currentFrame=${frames.getOrNull(currentFrame)}, elapsedTime=$elapsedTime)"
+    }
+
+    fun interface AnimationCompleted {
+        fun animationCompleted()
     }
 }

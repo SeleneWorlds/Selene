@@ -112,4 +112,10 @@ object EventFactory {
 
         return event
     }
+
+    inline fun <reified T : Any> arrayBackedEvent(
+        crossinline invoker: (Array<T>) -> T
+    ) = createArrayBacked(T::class.java) { listeners ->
+        invoker(listeners)
+    }
 }

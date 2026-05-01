@@ -11,6 +11,7 @@ import world.selene.common.network.LuaPayloadRegistry
 import world.selene.common.network.packet.CustomPayloadPacket
 import world.selene.server.entities.EntityApi
 import world.selene.server.players.Player
+import world.selene.server.players.PlayerApi
 
 /**
  * Send and handle custom payloads.
@@ -29,10 +30,10 @@ class NetworkApi(
     }
 
     fun luaSendToPlayer(lua: Lua): Int {
-        val player = lua.checkUserdata<Player>(1)
+        val player = lua.checkUserdata<PlayerApi>(1)
         val payloadId = lua.checkString(2)
         val payload = lua.toAnyMap(3)
-        player.client.send(CustomPayloadPacket(payloadId, objectMapper.writeValueAsString(payload)))
+        player.delegate.client.send(CustomPayloadPacket(payloadId, objectMapper.writeValueAsString(payload)))
         return 0
     }
 

@@ -2,23 +2,33 @@ package world.selene.client.maps
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import world.selene.client.lua.ClientLuaSignals
+import world.selene.client.lua.ClientEvents
+import world.selene.common.lua.LuaEventSink
 import world.selene.common.lua.LuaModule
-import world.selene.common.lua.Signal
+import world.selene.common.lua.LuaTrace
 import world.selene.common.lua.util.checkInt
 import world.selene.common.lua.util.register
+import world.selene.common.lua.util.xpCall
 
 /**
  * Lookup tiles on the map.
  */
 @Suppress("SameReturnValue")
 class MapLuaApi(
-    private val api: MapApi,
-    signals: ClientLuaSignals
+    private val api: MapApi
 ) : LuaModule {
     override val name = "selene.map"
 
-    private val mapChunkChanged: Signal = signals.mapChunkChanged
+    private val mapChunkChanged = LuaEventSink(ClientEvents.MapChunkChanged.EVENT) { callback: LuaValue, trace: LuaTrace ->
+        ClientEvents.MapChunkChanged { coordinate, width, height ->
+            val lua = callback.state()
+            lua.push(callback)
+            lua.push(coordinate, Lua.Conversion.NONE)
+            lua.push(width)
+            lua.push(height)
+            lua.xpCall(3, 0, trace)
+        }
+    }
 
     override fun register(table: LuaValue) {
         table.register("GetTilesAt", this::luaGetTilesAt)

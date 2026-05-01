@@ -79,8 +79,6 @@ abstract class Event<T : Any> {
      */
     abstract fun addPhaseOrdering(firstPhase: Identifier, secondPhase: Identifier)
 
-    abstract fun hasHandlers(): Boolean
-
     companion object {
         /**
          * The identifier of the default phase.

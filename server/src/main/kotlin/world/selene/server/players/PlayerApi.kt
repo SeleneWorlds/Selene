@@ -10,58 +10,58 @@ import world.selene.common.observable.ObservableMap
 import world.selene.server.dimensions.Dimension
 import world.selene.server.entities.EntityApi
 
-class PlayerApi(val player: Player) : IdResolvable<String, Player>, LuaMetatableProvider {
+class PlayerApi(val delegate: Player) : IdResolvable<String, Player>, LuaMetatableProvider {
 
     fun getCustomData(): ObservableMap {
-        return player.customData
+        return delegate.customData
     }
 
     fun getIdleTime(): Int {
-        return player.idleTime
+        return delegate.idleTime
     }
 
     fun getUserId(): String? {
-        return player.userId
+        return delegate.userId
     }
 
     fun getLocaleString(): String {
-        return player.localeString
+        return delegate.localeString
     }
 
     fun getLanguageString(): String {
-        return player.languageString
+        return delegate.languageString
     }
 
     fun getControlledEntity(): EntityApi? {
-        return player.controlledEntity?.api
+        return delegate.controlledEntity?.api
     }
 
     fun setControlledEntity(entity: EntityApi) {
-        player.controlledEntity = entity.entity
+        delegate.controlledEntity = entity.entity
     }
 
     fun getCameraEntity(): EntityApi? {
-        return player.cameraEntity?.api
+        return delegate.cameraEntity?.api
     }
 
     fun setCameraEntity(entity: EntityApi) {
-        player.cameraEntity = entity.entity
+        delegate.cameraEntity = entity.entity
     }
 
     fun setCameraToFollowControlledEntity() {
-        player.setCameraToFollowControlledEntity()
+        delegate.setCameraToFollowControlledEntity()
     }
 
     fun setCameraToFollowTarget() {
-        player.setCameraToFollowTarget()
+        delegate.setCameraToFollowTarget()
     }
 
     fun setCameraToCoordinate(dimension: Dimension?, coordinate: Coordinate) {
-        player.setCameraToCoordinate(dimension ?: player.camera.dimension ?: player.dimensionManager.getOrCreateDimension(0), coordinate)
+        delegate.setCameraToCoordinate(dimension ?: delegate.camera.dimension ?: delegate.dimensionManager.getOrCreateDimension(0), coordinate)
     }
 
     override fun resolvableReference(): ResolvableReference<String, Player> {
-        return player.resolvableReference()
+        return delegate.resolvableReference()
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {

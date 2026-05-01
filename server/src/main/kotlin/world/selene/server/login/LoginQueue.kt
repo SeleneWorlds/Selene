@@ -3,7 +3,7 @@ package world.selene.server.login
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.LuaMetatableProvider
-import world.selene.server.lua.ServerLuaSignals
+import world.selene.server.players.PlayerEvents
 
 enum class LoginQueueStatus {
     Pending,
@@ -20,7 +20,6 @@ data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var
 data class CompletedLogin(val token: String)
 
 class LoginQueue(
-    private val signals: ServerLuaSignals,
     private val sessionAuth: SessionAuthentication
 ) {
 
@@ -30,14 +29,7 @@ class LoginQueue(
         val entry = entries.getOrPut(userId) {
             LoginQueueEntry(userId, LoginQueueStatus.Pending, null)
         }
-        if (signals.playerQueued.hasListeners()) {
-            signals.playerQueued.emit {
-                it.push(entry, Lua.Conversion.NONE)
-                1
-            }
-        } else {
-            entry.status = LoginQueueStatus.Accepted
-        }
+        entry.status = PlayerEvents.PlayerQueued.EVENT.invoker().playerQueued(entry)
         return entry
     }
 
@@ -48,10 +40,7 @@ class LoginQueue(
     fun removeUser(userId: String) {
         val entry = entries.remove(userId)
         if (entry != null) {
-            signals.playerDequeued.emit {
-                it.push(entry, Lua.Conversion.NONE)
-                1
-            }
+            PlayerEvents.PlayerDequeued.EVENT.invoker().playerDequeued(entry)
         }
     }
 

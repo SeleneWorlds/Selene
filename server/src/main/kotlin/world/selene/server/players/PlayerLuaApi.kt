@@ -175,7 +175,7 @@ object PlayerLuaApi {
      */
     private fun luaRef(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
-        lua.push(player.player.resolvableReference(), Lua.Conversion.NONE)
+        lua.push(player.delegate.resolvableReference(), Lua.Conversion.NONE)
         return 1
     }
 

@@ -5,7 +5,6 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaTrace
-import world.selene.common.lua.Signal
 import world.selene.common.lua.util.CallerInfo
 import world.selene.common.lua.util.checkFunction
 import world.selene.common.lua.util.checkInt
@@ -23,7 +22,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 /**
- * Schedule functions for timeouts, intervals, and periodic signals.
+ * Schedule functions for timeouts, intervals, and periodic events.
  */
 @Suppress("SameReturnValue")
 class SchedulesApi(
@@ -65,10 +64,6 @@ class SchedulesApi(
     private var nextTimeoutId = 1
     private var nextIntervalId = 1
 
-    val secondSignal: Signal = Signal("Second")
-    val minuteSignal: Signal = Signal("Minute")
-    val hourSignal: Signal = Signal("Hour")
-
     init {
         executor.scheduleAtFixedRate(::runPeriodicSignals, 0, 1, TimeUnit.SECONDS)
     }
@@ -82,21 +77,21 @@ class SchedulesApi(
         if (lastSecond != currentSecond) {
             lastSecond = currentSecond
             mainThreadDispatcher.runOnMainThread {
-                secondSignal.emit()
+                ScheduleEvents.Second.EVENT.invoker().second()
             }
         }
 
         if (lastMinute != currentMinute) {
             lastMinute = currentMinute
             mainThreadDispatcher.runOnMainThread {
-                minuteSignal.emit()
+                ScheduleEvents.Minute.EVENT.invoker().minute()
             }
         }
 
         if (lastHour != currentHour) {
             lastHour = currentHour
             mainThreadDispatcher.runOnMainThread {
-                hourSignal.emit()
+                ScheduleEvents.Hour.EVENT.invoker().hour()
             }
         }
     }

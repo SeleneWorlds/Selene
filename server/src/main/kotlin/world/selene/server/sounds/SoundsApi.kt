@@ -10,6 +10,7 @@ import world.selene.common.network.packet.PlaySoundPacket
 import world.selene.server.data.Registries
 import world.selene.server.dimensions.DimensionApi
 import world.selene.server.players.Player
+import world.selene.server.players.PlayerApi
 import world.selene.server.world.World
 
 /**
@@ -21,14 +22,14 @@ class SoundsApi(
     private val world: World
 ) {
     fun luaPlaySound(lua: Lua): Int {
-        val player = lua.checkUserdata<Player>(1)
+        val player = lua.checkUserdata<PlayerApi>(1)
         val sound = lua.checkRegistry(2, registries.sounds)
         if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
 
         val volume = lua.getFieldFloat(3, "volume") ?: 1f
         val pitch = lua.getFieldFloat(3, "pitch") ?: 1f
 
-        player.client.send(PlaySoundPacket(sound.id, volume, pitch, null))
+        player.delegate.client.send(PlaySoundPacket(sound.id, volume, pitch, null))
         return 0
     }
 

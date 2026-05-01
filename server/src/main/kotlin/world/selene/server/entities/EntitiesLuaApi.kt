@@ -2,13 +2,14 @@ package world.selene.server.entities
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.lua.LuaEventSink
 import world.selene.common.lua.LuaModule
-import world.selene.common.lua.Signal
+import world.selene.common.lua.LuaTrace
 import world.selene.common.lua.util.checkInt
 import world.selene.common.lua.util.checkRegistry
 import world.selene.common.lua.util.register
+import world.selene.common.lua.util.xpCall
 import world.selene.server.data.Registries
-import world.selene.server.lua.ServerLuaSignals
 
 /**
  * Create or lookup entities.
@@ -16,13 +17,28 @@ import world.selene.server.lua.ServerLuaSignals
 @Suppress("SameReturnValue")
 class EntitiesLuaApi(
     private val api: EntitiesApi,
-    private val registries: Registries,
-    signals: ServerLuaSignals
+    private val registries: Registries
 ) : LuaModule {
     override val name = "selene.entities"
 
-    private val entitySteppedOnTile: Signal = signals.entitySteppedOnTile
-    private val entitySteppedOffTile: Signal = signals.entitySteppedOffTile
+    private val entitySteppedOnTile = LuaEventSink(EntityEvents.EntitySteppedOnTile.EVENT) { callback: LuaValue, trace: LuaTrace ->
+        EntityEvents.EntitySteppedOnTile { entity, coordinate ->
+            val lua = callback.state()
+            lua.push(callback)
+            lua.push(entity, Lua.Conversion.NONE)
+            lua.push(coordinate, Lua.Conversion.NONE)
+            lua.xpCall(2, 0, trace)
+        }
+    }
+    private val entitySteppedOffTile = LuaEventSink(EntityEvents.EntitySteppedOffTile.EVENT) { callback: LuaValue, trace: LuaTrace ->
+        EntityEvents.EntitySteppedOffTile { entity, coordinate ->
+            val lua = callback.state()
+            lua.push(callback)
+            lua.push(entity, Lua.Conversion.NONE)
+            lua.push(coordinate, Lua.Conversion.NONE)
+            lua.xpCall(2, 0, trace)
+        }
+    }
 
     override fun register(table: LuaValue) {
         table.register("Create", this::luaCreate)

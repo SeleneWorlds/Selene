@@ -2,10 +2,8 @@ package world.selene.client.rendering.drawable
 
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.Signal
 
 class AnimatedDrawableApi(val animatedDrawable: AnimatedDrawable) : DrawableApi(animatedDrawable) {
-
     fun getCurrentFrame(): Int {
         return animatedDrawable.currentFrame
     }
@@ -16,10 +14,6 @@ class AnimatedDrawableApi(val animatedDrawable: AnimatedDrawable) : DrawableApi(
 
     fun getDuration(): Float {
         return animatedDrawable.duration
-    }
-
-    fun getAnimationCompleted(): Signal {
-        return animatedDrawable.animationCompleted
     }
 
     fun withoutOffset(): AnimatedDrawableApi {

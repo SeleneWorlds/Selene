@@ -10,7 +10,7 @@ import world.selene.common.lua.util.checkInt
 import world.selene.common.lua.util.checkUserdata
 
 @Suppress("SameReturnValue")
-data class TextureApi(val texture: Texture, val pixmap: Pixmap) : LuaMetatableProvider {
+data class ScriptableTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatableProvider {
     val width: Int get() = texture.width
     val height: Int get() = texture.height
 
@@ -27,7 +27,7 @@ data class TextureApi(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
          * ```
          */
         private fun luaGetWidth(lua: Lua): Int {
-            val self = lua.checkUserdata<TextureApi>(1)
+            val self = lua.checkUserdata<ScriptableTexture>(1)
             lua.push(self.width)
             return 1
         }
@@ -40,7 +40,7 @@ data class TextureApi(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
          * ```
          */
         private fun luaGetHeight(lua: Lua): Int {
-            val self = lua.checkUserdata<TextureApi>(1)
+            val self = lua.checkUserdata<ScriptableTexture>(1)
             lua.push(self.height)
             return 1
         }
@@ -56,7 +56,7 @@ data class TextureApi(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
          * ```
          */
         private fun luaSetPixel(lua: Lua): Int {
-            val self = lua.checkUserdata<TextureApi>(1)
+            val self = lua.checkUserdata<ScriptableTexture>(1)
             val x = lua.checkInt(2)
             val y = lua.checkInt(3)
             val (color, _) = lua.checkColor(4)
@@ -74,7 +74,7 @@ data class TextureApi(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
          * ```
          */
         private fun luaGetPixel(lua: Lua): Int {
-            val self = lua.checkUserdata<TextureApi>(1)
+            val self = lua.checkUserdata<ScriptableTexture>(1)
             val x = lua.checkInt(2)
             val y = lua.checkInt(3)
             val colorInt = self.pixmap.getPixel(x, y)
@@ -97,7 +97,7 @@ data class TextureApi(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
          * ```
          */
         private fun luaFill(lua: Lua): Int {
-            val self = lua.checkUserdata<TextureApi>(1)
+            val self = lua.checkUserdata<ScriptableTexture>(1)
             val (color, _) = lua.checkColor(2)
             self.pixmap.setColor(color)
             self.pixmap.fill()
@@ -112,8 +112,8 @@ data class TextureApi(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
          * ```
          */
         private fun luaCopyFrom(lua: Lua): Int {
-            val self = lua.checkUserdata<TextureApi>(1)
-            val sourceTexture = lua.checkUserdata<TextureApi>(2)
+            val self = lua.checkUserdata<ScriptableTexture>(1)
+            val sourceTexture = lua.checkUserdata<ScriptableTexture>(2)
             val srcX = lua.checkInt(3)
             val srcY = lua.checkInt(4)
             val srcWidth = lua.checkInt(5)
@@ -143,7 +143,7 @@ data class TextureApi(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
          * ```
          */
         private fun luaUpdate(lua: Lua): Int {
-            val self = lua.checkUserdata<TextureApi>(1)
+            val self = lua.checkUserdata<ScriptableTexture>(1)
             self.texture.draw(self.pixmap, 0, 0)
             return 0
         }
@@ -157,13 +157,13 @@ data class TextureApi(val texture: Texture, val pixmap: Pixmap) : LuaMetatablePr
          * ```
          */
         private fun luaDispose(lua: Lua): Int {
-            val self = lua.checkUserdata<TextureApi>(1)
+            val self = lua.checkUserdata<ScriptableTexture>(1)
             self.texture.dispose()
             self.pixmap.dispose()
             return 0
         }
 
-        val luaMeta = LuaMappedMetatable(TextureApi::class) {
+        val luaMeta = LuaMappedMetatable(ScriptableTexture::class) {
             getter(::luaGetWidth)
             getter(::luaGetHeight)
             callable(::luaSetPixel)

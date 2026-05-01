@@ -3,16 +3,14 @@ package world.selene.client.camera
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.math.Rectangle
-import party.iroiro.luajava.Lua
 import world.selene.client.grid.ClientGrid
-import world.selene.client.lua.ClientLuaSignals
+import world.selene.client.lua.ClientEvents
 import world.selene.client.maps.ClientMap
 import world.selene.common.grid.Coordinate
 
 class CameraManager(
     private val map: ClientMap,
-    private val grid: ClientGrid,
-    private val signals: ClientLuaSignals
+    private val grid: ClientGrid
 ) {
     val camera = OrthographicCamera().apply {
         setToOrtho(false)
@@ -22,7 +20,7 @@ class CameraManager(
         set(value) {
             if (field != value) {
                 field = value
-                signals.cameraCoordinateChanged.emit { lua -> lua.push(field, Lua.Conversion.NONE); 1 }
+                ClientEvents.CameraCoordinateChanged.EVENT.invoker().cameraCoordinateChanged(field)
             }
         }
     var viewportOffsetX = 0

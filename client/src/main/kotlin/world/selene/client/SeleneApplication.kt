@@ -143,7 +143,6 @@ class SeleneApplication(
         val luaModule = module {
             singleOf(::LuaManager)
             singleOf(::LuaPayloadRegistry)
-            singleOf(::ClientLuaSignals)
             singleOf(::Messages)
             singleOf(::LuaSkinUtils)
             singleOf(::SkinLuaMetatable)

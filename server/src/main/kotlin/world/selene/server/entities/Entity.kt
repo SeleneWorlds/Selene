@@ -1,6 +1,5 @@
 package world.selene.server.entities
 
-import party.iroiro.luajava.Lua
 import world.selene.common.data.RegistryReference
 import world.selene.common.entities.ComponentConfiguration
 import world.selene.common.entities.EntityDefinition
@@ -13,12 +12,11 @@ import world.selene.server.attributes.Attribute
 import world.selene.server.cameras.viewer.Viewer
 import world.selene.server.data.Registries
 import world.selene.server.dimensions.Dimension
-import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.maps.layers.MapLayer
 import world.selene.server.players.Player
 import world.selene.server.world.World
 
-class Entity(val registries: Registries, val world: World, val signals: ServerLuaSignals) : IdResolvable<Int, Entity> {
+class Entity(val registries: Registries, val world: World) : IdResolvable<Int, Entity> {
     val api = EntityApi(this)
     val impassable: Boolean = true
     var networkId: Int = -1
@@ -90,16 +88,8 @@ class Entity(val registries: Registries, val world: World, val signals: ServerLu
         val prevCoordinate = this.coordinate
         this.coordinate = coordinate
         dimension.syncManager.entityMoved(this, prevCoordinate, coordinate, 0.2f)
-        signals.entitySteppedOffTile.emit {
-            it.push(this, Lua.Conversion.NONE)
-            it.push(prevCoordinate, Lua.Conversion.NONE)
-            2
-        }
-        signals.entitySteppedOnTile.emit {
-            it.push(this, Lua.Conversion.NONE)
-            it.push(coordinate, Lua.Conversion.NONE)
-            2
-        }
+        EntityEvents.EntitySteppedOffTile.EVENT.invoker().entitySteppedOffTile(this, prevCoordinate)
+        EntityEvents.EntitySteppedOnTile.EVENT.invoker().entitySteppedOnTile(this, coordinate)
         return true
     }
 

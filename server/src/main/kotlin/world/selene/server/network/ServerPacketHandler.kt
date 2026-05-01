@@ -13,14 +13,13 @@ import world.selene.common.network.Packet
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.packet.*
 import world.selene.server.login.SessionAuthentication
-import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.players.Player
+import world.selene.server.players.PlayerEvents
 import java.util.*
 
 class ServerPacketHandler(
     private val logger: Logger,
     private val objectMapper: ObjectMapper,
-    private val signals: ServerLuaSignals,
     private val nameIdRegistry: NameIdRegistry,
     private val luaManager: LuaManager,
     private val payloadRegistry: LuaPayloadRegistry,
@@ -69,10 +68,7 @@ class ServerPacketHandler(
         } else if (packet is FinalizeJoinPacket) {
             val player = (context as NetworkClientImpl).player
             player.connectionState = Player.ConnectionState.READY
-            signals.playerJoined.emit { lua ->
-                lua.push(player, Lua.Conversion.NONE)
-                1
-            }
+            PlayerEvents.PlayerJoined.EVENT.invoker().playerJoined(player.api)
         }
     }
 

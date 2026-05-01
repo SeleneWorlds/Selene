@@ -1,10 +1,15 @@
 package world.selene.common.lua.util
 
 import party.iroiro.luajava.Lua
+import world.selene.common.lua.LuaTrace
 
-data class CallerInfo(val source: String, val line: Int) {
+data class CallerInfo(val source: String, val line: Int) : LuaTrace {
     override fun toString(): String {
         return "$source:$line"
+    }
+
+    override fun luaTrace(): String {
+        return toString()
     }
 }
 

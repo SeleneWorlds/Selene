@@ -26,8 +26,8 @@ class TexturesApi {
 
         val pixmap = Pixmap(width, height, format)
         val texture = Texture(pixmap)
-        val textureApi = TextureApi(texture, pixmap)
-        lua.push(textureApi, Lua.Conversion.NONE)
+        val scriptableTexture = ScriptableTexture(texture, pixmap)
+        lua.push(scriptableTexture, Lua.Conversion.NONE)
         return 1
     }
 }

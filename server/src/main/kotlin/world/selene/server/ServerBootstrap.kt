@@ -152,7 +152,6 @@ fun main(args: Array<String>) {
     val luaModule = module {
         singleOf(::LuaManager)
         singleOf(::LuaPayloadRegistry)
-        singleOf(::ServerLuaSignals)
         singleOf(::ServerCustomData)
         singleOf(::Messages)
         singleOf(::LuaDebugModule) { bind<LuaModule>() }
