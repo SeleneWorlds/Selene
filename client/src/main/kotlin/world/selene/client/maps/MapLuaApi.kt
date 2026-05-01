@@ -3,7 +3,10 @@ package world.selene.client.maps
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.game.ClientEvents
+import world.selene.client.tiles.TileApi
+import world.selene.client.tiles.TileLuaApi
 import world.selene.common.lua.LuaEventSink
+import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.LuaTrace
 import world.selene.common.lua.util.checkInt
@@ -18,6 +21,10 @@ class MapLuaApi(
     private val api: MapApi
 ) : LuaModule {
     override val name = "selene.map"
+
+    override fun initialize(luaManager: LuaManager) {
+        luaManager.defineMetatable(TileApi::class, TileLuaApi.luaMeta)
+    }
 
     private val mapChunkChanged = LuaEventSink(ClientEvents.MapChunkChanged.EVENT) { callback: LuaValue, trace: LuaTrace ->
         ClientEvents.MapChunkChanged { coordinate, width, height ->

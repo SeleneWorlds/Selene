@@ -5,18 +5,14 @@ import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
 import party.iroiro.luajava.Lua
 import world.selene.client.lua.checkColor
-import world.selene.common.lua.*
+import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.util.checkInt
 import world.selene.common.lua.util.checkUserdata
 
 @Suppress("SameReturnValue")
-data class ScriptableTexture(val texture: Texture, val pixmap: Pixmap) : LuaMetatableProvider {
+data class ScriptableTexture(val texture: Texture, val pixmap: Pixmap) {
     val width: Int get() = texture.width
     val height: Int get() = texture.height
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
 
     companion object {
         /**

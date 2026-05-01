@@ -8,13 +8,9 @@ import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-
 @JsonSerialize(using = Identifier.Companion.Serializer::class)
 @JsonDeserialize(using = Identifier.Companion.Deserializer::class)
-data class Identifier(val namespace: String, val path: String) : LuaMetatableProvider, Comparable<Identifier> {
+data class Identifier(val namespace: String, val path: String) : Comparable<Identifier> {
 
     companion object {
         const val DEFAULT_NAMESPACE = "selene"
@@ -61,10 +57,6 @@ data class Identifier(val namespace: String, val path: String) : LuaMetatablePro
     init {
         require(namespace.isNotEmpty()) { "Namespace cannot be empty" }
         require(path.isNotEmpty()) { "Path cannot be empty" }
-    }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return IdentifierLuaApi.luaMeta
     }
 
     override fun toString(): String = "$namespace:$path"

@@ -3,9 +3,12 @@ package world.selene.server.players
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaEventSink
+import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.util.register
 import world.selene.common.lua.util.xpCall
+import world.selene.server.login.LoginQueueEntry
+import world.selene.server.login.LoginQueueEntryLuaApi
 
 /**
  * Player management and player-related events.
@@ -13,6 +16,11 @@ import world.selene.common.lua.util.xpCall
 @Suppress("SameReturnValue")
 class PlayersLuaApi(private val api: PlayersApi) : LuaModule {
     override val name = "selene.players"
+
+    override fun initialize(luaManager: LuaManager) {
+        luaManager.defineMetatable(PlayerApi::class, PlayerLuaApi.luaMeta)
+        luaManager.defineMetatable(LoginQueueEntry::class, LoginQueueEntryLuaApi.luaMeta)
+    }
 
     override fun register(table: LuaValue) {
         table.set("PlayerQueued", LuaEventSink(PlayerEvents.PlayerQueued.EVENT) { callback, trace ->

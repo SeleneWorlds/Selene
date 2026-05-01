@@ -1,7 +1,6 @@
 package world.selene.common.grid
 
-import party.iroiro.luajava.Lua
-import world.selene.common.lua.*
+import world.selene.common.lua.LuaMetatable
 import kotlin.math.sqrt
 
 /**
@@ -9,7 +8,7 @@ import kotlin.math.sqrt
  *
  * Can also be passed as three x, y, and z arguments or a table with x, y, and z fields.
  */
-data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider {
+data class Coordinate(val x: Int, val y: Int, val z: Int) {
     fun horizontalDistanceTo(other: Coordinate): Int {
         val dx = (x - other.x).toFloat()
         val dy = (y - other.y).toFloat()
@@ -22,10 +21,6 @@ data class Coordinate(val x: Int, val y: Int, val z: Int) : LuaMetatableProvider
 
     fun up(): Coordinate {
         return Coordinate(x, y, z + 1)
-    }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return CoordinateLuaApi.luaMeta
     }
 
     @Suppress("SameReturnValue")

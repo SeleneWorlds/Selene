@@ -1,8 +1,5 @@
 package world.selene.server.login
 
-import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 import world.selene.server.players.PlayerEvents
 
 enum class LoginQueueStatus {
@@ -11,11 +8,7 @@ enum class LoginQueueStatus {
     Rejected
 }
 
-data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var message: String?) : LuaMetatableProvider {
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return LoginQueueEntryLuaApi.luaMeta
-    }
-}
+data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var message: String?)
 
 data class CompletedLogin(val token: String)
 

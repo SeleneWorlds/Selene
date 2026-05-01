@@ -5,7 +5,7 @@ import world.selene.common.grid.Coordinate
 
 class EntityEvents {
     fun interface EntitySteppedOnTile {
-        fun entitySteppedOnTile(entity: Entity, coordinate: Coordinate)
+        fun entitySteppedOnTile(entity: EntityApi, coordinate: Coordinate)
 
         companion object {
             val EVENT = arrayBackedEvent<EntitySteppedOnTile> { listeners ->
@@ -17,7 +17,7 @@ class EntityEvents {
     }
 
     fun interface EntitySteppedOffTile {
-        fun entitySteppedOffTile(entity: Entity, coordinate: Coordinate)
+        fun entitySteppedOffTile(entity: EntityApi, coordinate: Coordinate)
 
         companion object {
             val EVENT = arrayBackedEvent<EntitySteppedOffTile> { listeners ->

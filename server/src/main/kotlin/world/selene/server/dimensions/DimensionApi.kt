@@ -1,9 +1,6 @@
 package world.selene.server.dimensions
 
-import party.iroiro.luajava.Lua
 import world.selene.common.grid.Coordinate
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 import world.selene.server.cameras.viewer.DefaultViewer
 import world.selene.server.cameras.viewer.Viewer
 import world.selene.server.entities.EntityApi
@@ -11,7 +8,7 @@ import world.selene.server.maps.tree.MapTreeApi
 import world.selene.server.tiles.TransientTile
 import world.selene.server.tiles.TransientTileApi
 
-class DimensionApi(val dimension: Dimension) : LuaMetatableProvider {
+class DimensionApi(val dimension: Dimension) {
 
     fun getMapTree(): MapTreeApi {
         return dimension.mapTree.api
@@ -70,9 +67,4 @@ class DimensionApi(val dimension: Dimension) : LuaMetatableProvider {
     fun getEntitiesInRange(coordinate: Coordinate, range: Int): List<EntityApi> {
         return dimension.getEntitiesInRange(coordinate, range).map { it.api }
     }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return DimensionLuaApi.luaMeta
-    }
-
 }

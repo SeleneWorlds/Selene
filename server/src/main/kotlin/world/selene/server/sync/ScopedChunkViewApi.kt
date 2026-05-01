@@ -1,12 +1,9 @@
 package world.selene.server.sync
 
-import party.iroiro.luajava.Lua
 import world.selene.common.grid.ChunkWindow
 import world.selene.common.grid.Coordinate
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 
-class ScopedChunkViewApi(val chunkView: ScopedChunkView) : LuaMetatableProvider {
+class ScopedChunkViewApi(val chunkView: ScopedChunkView) {
 
     fun getWindow(): ChunkWindow {
         return chunkView.window
@@ -31,9 +28,4 @@ class ScopedChunkViewApi(val chunkView: ScopedChunkView) : LuaMetatableProvider 
     fun getAnnotationAt(coordinate: Coordinate, key: String): Map<*, *>? {
         return chunkView.getAnnotationAt(coordinate, key)
     }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return ScopedChunkViewLuaApi.luaMeta
-    }
-
 }

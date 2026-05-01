@@ -1,12 +1,9 @@
 package world.selene.client.rendering.visual2d.iso
 
-import party.iroiro.luajava.Lua
 import world.selene.client.rendering.visual.IsoVisualApi
 import world.selene.client.rendering.visual.VisualDefinition
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 
-class DrawableIsoVisualApi(val visual: DrawableIsoVisual) : IsoVisualApi, LuaMetatableProvider {
+class DrawableIsoVisualApi(val visual: DrawableIsoVisual) : IsoVisualApi {
 
     fun getDrawable() = visual.drawable.api
 
@@ -16,9 +13,5 @@ class DrawableIsoVisualApi(val visual: DrawableIsoVisual) : IsoVisualApi, LuaMet
 
     override fun getSurfaceHeight(): Float {
         return visual.surfaceHeight
-    }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return DrawableIsoVisualLuaApi.luaMeta
     }
 }

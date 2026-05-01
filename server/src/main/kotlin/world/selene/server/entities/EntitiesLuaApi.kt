@@ -3,6 +3,7 @@ package world.selene.server.entities
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaEventSink
+import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.LuaTrace
 import world.selene.common.lua.util.checkInt
@@ -38,6 +39,10 @@ class EntitiesLuaApi(
             lua.push(coordinate, Lua.Conversion.NONE)
             lua.xpCall(2, 0, trace)
         }
+    }
+
+    override fun initialize(luaManager: LuaManager) {
+        luaManager.defineMetatable(EntityApi::class, EntityLuaApi.luaMeta)
     }
 
     override fun register(table: LuaValue) {

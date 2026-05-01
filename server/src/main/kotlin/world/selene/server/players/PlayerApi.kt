@@ -1,16 +1,13 @@
 package world.selene.server.players
 
-import party.iroiro.luajava.Lua
 import world.selene.common.grid.Coordinate
 import world.selene.common.lua.IdResolvable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.util.ResolvableReference
 import world.selene.common.observable.ObservableMap
 import world.selene.server.dimensions.Dimension
 import world.selene.server.entities.EntityApi
 
-class PlayerApi(val delegate: Player) : IdResolvable<String, Player>, LuaMetatableProvider {
+class PlayerApi(val delegate: Player) : IdResolvable<String, Player> {
 
     fun getCustomData(): ObservableMap {
         return delegate.customData
@@ -63,9 +60,4 @@ class PlayerApi(val delegate: Player) : IdResolvable<String, Player>, LuaMetatab
     override fun resolvableReference(): ResolvableReference<String, Player> {
         return delegate.resolvableReference()
     }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return PlayerLuaApi.luaMeta
-    }
-
 }

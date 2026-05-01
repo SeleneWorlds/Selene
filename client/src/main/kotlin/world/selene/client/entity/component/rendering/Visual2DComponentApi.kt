@@ -1,10 +1,6 @@
 package world.selene.client.entity.component.rendering
 
-import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-
-class Visual2DComponentApi(val component: Visual2DComponent) : LuaMetatableProvider {
+class Visual2DComponentApi(val component: Visual2DComponent) {
 
     fun getVisual() = component.visual.api
 
@@ -30,9 +26,5 @@ class Visual2DComponentApi(val component: Visual2DComponent) : LuaMetatableProvi
 
     fun setAlpha(value: Float) {
         component.alpha = value
-    }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return Visual2DComponentLuaApi.luaMeta
     }
 }

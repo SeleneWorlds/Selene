@@ -1,14 +1,11 @@
 package world.selene.server.attributes
 
-import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.observable.Observable
 import world.selene.common.observable.Observer
 import world.selene.server.entities.Entity
 import world.selene.server.players.Player
 
-class AttributeApi(val attribute: Attribute<Any?>) : LuaMetatableProvider, Observable<Attribute<*>> {
+class AttributeApi(val attribute: Attribute<Any?>) : Observable<AttributeApi> {
 
     fun getName(): String {
         return attribute.name
@@ -35,22 +32,18 @@ class AttributeApi(val attribute: Attribute<Any?>) : LuaMetatableProvider, Obser
     }
 
     fun refresh() {
-        attribute.notifyObservers(attribute)
+        attribute.notifyObservers(attribute.api)
     }
 
-    override fun subscribe(observer: Observer<Attribute<*>>) {
+    override fun subscribe(observer: Observer<AttributeApi>) {
         attribute.subscribe(observer)
     }
 
-    override fun unsubscribe(observer: Observer<Attribute<*>>) {
+    override fun unsubscribe(observer: Observer<AttributeApi>) {
         attribute.unsubscribe(observer)
     }
 
-    override fun notifyObservers(data: Attribute<*>) {
+    override fun notifyObservers(data: AttributeApi) {
         attribute.notifyObservers(data)
-    }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return AttributeLuaApi.luaMeta
     }
 }

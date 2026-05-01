@@ -2,6 +2,7 @@ package world.selene.server.attributes
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.util.checkInt
 import world.selene.common.lua.util.checkString
@@ -15,6 +16,10 @@ import world.selene.common.lua.util.throwTypeError
 @Suppress("SameReturnValue")
 class AttributesLuaApi(private val api: AttributesApi) : LuaModule {
     override val name = "selene.attributes"
+
+    override fun initialize(luaManager: LuaManager) {
+        luaManager.defineMetatable(AttributeApi::class, AttributeLuaApi.luaMeta)
+    }
 
     override fun register(table: LuaValue) {
         table.register("ClampFilter", this::luaClampFilter)

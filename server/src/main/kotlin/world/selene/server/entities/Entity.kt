@@ -89,8 +89,8 @@ class Entity(val registries: Registries, val world: World) : IdResolvable<Int, E
         val prevCoordinate = this.coordinate
         this.coordinate = coordinate
         dimension.syncManager.entityMoved(this, prevCoordinate, coordinate, 0.2f)
-        EntityEvents.EntitySteppedOffTile.EVENT.invoker().entitySteppedOffTile(this, prevCoordinate)
-        EntityEvents.EntitySteppedOnTile.EVENT.invoker().entitySteppedOnTile(this, coordinate)
+        EntityEvents.EntitySteppedOffTile.EVENT.invoker().entitySteppedOffTile(api, prevCoordinate)
+        EntityEvents.EntitySteppedOnTile.EVENT.invoker().entitySteppedOnTile(api, coordinate)
         return true
     }
 

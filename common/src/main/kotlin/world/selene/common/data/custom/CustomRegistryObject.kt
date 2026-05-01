@@ -2,7 +2,6 @@ package world.selene.common.data.custom
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.*
-import party.iroiro.luajava.Lua
 import world.selene.common.util.asAny
 import world.selene.common.lua.*
 import world.selene.common.data.Identifier
@@ -12,7 +11,6 @@ import world.selene.common.data.Registry
 import world.selene.common.util.ResolvableReference
 
 class CustomRegistryObject(val customRegistry: CustomRegistry, override val identifier: Identifier, val element: JsonNode) :
-    LuaMetatableProvider,
     IdResolvable<Identifier, CustomRegistryObject>,
     RegistryObject<CustomRegistryObject>(),
     MetadataHolder {
@@ -42,10 +40,6 @@ class CustomRegistryObject(val customRegistry: CustomRegistry, override val iden
 
     override fun resolvableReference(): ResolvableReference<Identifier, CustomRegistryObject> {
         return resolvableReference
-    }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return CustomRegistryObjectLuaApi.luaMeta
     }
 
     override fun toString(): String {

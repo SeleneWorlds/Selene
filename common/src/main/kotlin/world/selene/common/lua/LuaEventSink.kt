@@ -7,11 +7,7 @@ import world.selene.common.lua.util.checkFunction
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.getCallerInfo
 
-class LuaEventSink<T : Any>(private val event: Event<T>, private val factory: (LuaValue, LuaTrace) -> T) : LuaMetatableProvider {
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
-
+class LuaEventSink<T : Any>(private val event: Event<T>, private val factory: (LuaValue, LuaTrace) -> T) {
     companion object {
         /**
          * Connects a callback function to this signal.

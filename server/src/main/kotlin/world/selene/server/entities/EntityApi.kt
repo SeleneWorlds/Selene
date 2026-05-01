@@ -1,14 +1,11 @@
 package world.selene.server.entities
 
-import party.iroiro.luajava.Lua
 import world.selene.common.data.RegistryReference
 import world.selene.common.entities.ComponentConfiguration
 import world.selene.common.entities.EntityDefinition
 import world.selene.common.grid.Coordinate
 import world.selene.common.grid.Direction
 import world.selene.common.lua.IdResolvable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.util.ResolvableReference
 import world.selene.common.observable.ObservableMap
 import world.selene.server.attributes.Attribute
@@ -20,7 +17,7 @@ import world.selene.server.maps.tree.MapTree
 import world.selene.server.players.Player
 import world.selene.server.players.PlayerApi
 
-class EntityApi(val entity: Entity) : IdResolvable<Int, Entity>, LuaMetatableProvider {
+class EntityApi(val entity: Entity) : IdResolvable<Int, Entity> {
 
     fun getNetworkId(): Int {
         return entity.networkId
@@ -192,9 +189,4 @@ class EntityApi(val entity: Entity) : IdResolvable<Int, Entity>, LuaMetatablePro
     override fun resolvableReference(): ResolvableReference<Int, Entity> {
         return entity.resolvableReference()
     }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return EntityLuaApi.luaMeta
-    }
-
 }

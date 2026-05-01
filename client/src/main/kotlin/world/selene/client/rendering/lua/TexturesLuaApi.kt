@@ -2,6 +2,7 @@ package world.selene.client.rendering.lua
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.util.checkInt
 import world.selene.common.lua.util.checkString
@@ -12,6 +13,10 @@ import world.selene.common.lua.util.register
  */
 class TexturesLuaApi(private val api: TexturesApi) : LuaModule {
     override val name = "selene.textures"
+
+    override fun initialize(luaManager: LuaManager) {
+        luaManager.defineMetatable(ScriptableTexture::class, ScriptableTexture.luaMeta)
+    }
 
     override fun register(table: LuaValue) {
         table.register("Create", ::luaCreateTexture)

@@ -1,16 +1,13 @@
 package world.selene.client.entity
 
-import party.iroiro.luajava.Lua
 import world.selene.client.entity.component.EntityComponent
 import world.selene.client.entity.component.rendering.IsoVisualComponent
 import world.selene.client.entity.component.rendering.ReloadableVisualComponent
 import world.selene.client.entity.component.rendering.Visual2DComponent
 import world.selene.common.entities.ComponentConfiguration
 import world.selene.common.grid.Coordinate
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 
-class EntityApi(val entity: Entity) : LuaMetatableProvider {
+class EntityApi(val entity: Entity) {
 
     fun getCoordinate(): Coordinate {
         return entity.coordinate
@@ -36,7 +33,7 @@ class EntityApi(val entity: Entity) : LuaMetatableProvider {
         return entity.components[name]
     }
 
-    fun getLuaComponent(name: String): LuaMetatableProvider? {
+    fun getLuaComponent(name: String): Any? {
         return when (val component = getComponent(name)) {
             is Visual2DComponent -> component.api
             is IsoVisualComponent -> component.api
@@ -45,7 +42,4 @@ class EntityApi(val entity: Entity) : LuaMetatableProvider {
         }
     }
 
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return EntityLuaApi.luaMeta
-    }
 }

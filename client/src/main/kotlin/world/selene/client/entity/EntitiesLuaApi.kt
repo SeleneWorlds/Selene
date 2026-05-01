@@ -3,6 +3,13 @@ package world.selene.client.entity
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.client.data.Registries
+import world.selene.client.entity.component.rendering.IsoVisualComponentApi
+import world.selene.client.entity.component.rendering.IsoVisualComponentLuaApi
+import world.selene.client.entity.component.rendering.ReloadableVisualComponentApi
+import world.selene.client.entity.component.rendering.ReloadableVisualComponentLuaApi
+import world.selene.client.entity.component.rendering.Visual2DComponentApi
+import world.selene.client.entity.component.rendering.Visual2DComponentLuaApi
+import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.util.checkCoordinate
 import world.selene.common.lua.util.checkRegistry
@@ -19,6 +26,13 @@ class EntitiesLuaApi(
     private val registries: Registries
 ) : LuaModule {
     override val name = "selene.entities"
+
+    override fun initialize(luaManager: LuaManager) {
+        luaManager.defineMetatable(EntityApi::class, EntityLuaApi.luaMeta)
+        luaManager.defineMetatable(Visual2DComponentApi::class, Visual2DComponentLuaApi.luaMeta)
+        luaManager.defineMetatable(IsoVisualComponentApi::class, IsoVisualComponentLuaApi.luaMeta)
+        luaManager.defineMetatable(ReloadableVisualComponentApi::class, ReloadableVisualComponentLuaApi.luaMeta)
+    }
 
     override fun register(table: LuaValue) {
         table.register("Create", this::luaCreate)

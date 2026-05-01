@@ -1,14 +1,11 @@
 package world.selene.server.tiles
 
-import party.iroiro.luajava.Lua
 import world.selene.common.data.RegistryReference
 import world.selene.common.grid.Coordinate
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.tiles.TileDefinition
 import world.selene.server.dimensions.DimensionApi
 
-class TransientTileApi(val tile: TransientTile) : LuaMetatableProvider {
+class TransientTileApi(val tile: TransientTile) {
 
     fun getDefinition(): RegistryReference<TileDefinition> {
         return tile.definition
@@ -51,9 +48,4 @@ class TransientTileApi(val tile: TransientTile) : LuaMetatableProvider {
             ?: error("Tried to swap tile at ${tile.coordinate} but tile definition ${tile.definition.identifier} is not valid")
         return tile.dimension.swapTile(tile.coordinate, oldTileDef, newTileDef, layerName).api
     }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return TransientTileLuaApi.luaMeta
-    }
-
 }

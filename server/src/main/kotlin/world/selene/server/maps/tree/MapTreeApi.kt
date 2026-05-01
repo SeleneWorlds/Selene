@@ -1,12 +1,9 @@
 package world.selene.server.maps.tree
 
-import party.iroiro.luajava.Lua
 import world.selene.common.grid.Coordinate
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 import world.selene.common.tiles.TileDefinition
 
-class MapTreeApi(val mapTree: MapTree) : LuaMetatableProvider {
+class MapTreeApi(val mapTree: MapTree) {
 
     fun merge(other: MapTreeApi) {
         mapTree.merge(other.mapTree)
@@ -86,9 +83,4 @@ class MapTreeApi(val mapTree: MapTree) : LuaMetatableProvider {
     fun disableCollisions(layerName: String, tagName: String = "default") {
         mapTree.getLayer(layerName).removeCollisionTag(tagName)
     }
-
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return MapTreeLuaApi.luaMeta
-    }
-
 }

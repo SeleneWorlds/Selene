@@ -4,10 +4,10 @@ import world.selene.common.observable.Observable
 import world.selene.common.observable.Observer
 import world.selene.server.attributes.filters.AttributeFilter
 
-class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : Observable<Attribute<*>> {
+class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : Observable<AttributeApi> {
     @Suppress("UNCHECKED_CAST")
     val api = AttributeApi(this as Attribute<Any?>)
-    val observers = mutableListOf<Observer<Attribute<*>>>()
+    val observers = mutableListOf<Observer<AttributeApi>>()
     val constraints = mutableListOf<AttributeFilter<T>>()
     val constraintsByName = mutableMapOf<String, AttributeFilter<T>>()
     val modifiers = mutableListOf<AttributeFilter<T>>()
@@ -23,7 +23,7 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : O
                         field = it.apply(this, field)
                     }
                 }
-                notifyObservers(this)
+                notifyObservers(api)
             }
         }
 
@@ -38,16 +38,16 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : O
             return value
         }
 
-    override fun subscribe(observer: Observer<Attribute<*>>) {
+    override fun subscribe(observer: Observer<AttributeApi>) {
         observers.add(observer)
     }
 
-    override fun unsubscribe(observer: Observer<Attribute<*>>) {
+    override fun unsubscribe(observer: Observer<AttributeApi>) {
         observers.remove(observer)
     }
 
-    override fun notifyObservers(data: Attribute<*>) {
-        observers.forEach { it.notifyObserver(this) }
+    override fun notifyObservers(data: AttributeApi) {
+        observers.forEach { it.notifyObserver(api) }
     }
 
     override fun toString(): String {
