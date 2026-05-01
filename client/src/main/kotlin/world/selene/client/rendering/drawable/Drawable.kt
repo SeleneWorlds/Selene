@@ -2,12 +2,9 @@ package world.selene.client.rendering.drawable
 
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
-import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
 
-interface Drawable : LuaMetatableProvider {
+interface Drawable {
+    val api: DrawableApi
     fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle
     fun update(delta: Float)
     fun render(batch: Batch, x: Float, y: Float)
@@ -20,16 +17,9 @@ interface Drawable : LuaMetatableProvider {
         rotation: Float
     )
 
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
-
-    companion object {
-        val luaMeta = LuaMappedMetatable(Drawable::class) {
-        }
-    }
-
     object Empty : Drawable {
+        override val api = DrawableApi(this)
+
         override fun getBounds(
             x: Float,
             y: Float,

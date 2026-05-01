@@ -25,57 +25,70 @@ import world.selene.client.bundle.ClientBundleWatcher
 import world.selene.client.bundles.BundleFileResolver
 import world.selene.client.bundles.ClientBundleLocator
 import world.selene.client.camera.CameraManager
-import world.selene.client.camera.LuaCameraModule
+import world.selene.client.camera.CameraApi
+import world.selene.client.camera.CameraLuaApi
 import world.selene.client.config.ClientConfig
 import world.selene.client.config.ClientRuntimeConfig
 import world.selene.client.controls.GridMovement
-import world.selene.client.controls.LuaMovementGridModule
+import world.selene.client.controls.MovementGridApi
+import world.selene.client.controls.MovementGridLuaApi
 import world.selene.client.controls.PlayerController
 import world.selene.client.sounds.AudioRegistry
 import world.selene.client.data.Registries
 import world.selene.client.entity.Entity
+import world.selene.client.entity.EntitiesApi
 import world.selene.client.entity.EntityPool
-import world.selene.client.entity.LuaEntitiesModule
+import world.selene.client.entity.EntitiesLuaApi
 import world.selene.client.rendering.visual.VisualRegistry
 import world.selene.client.entity.component.EntityComponentFactory
 import world.selene.client.grid.ClientGrid
-import world.selene.client.grid.LuaClientGridModule
+import world.selene.client.grid.ClientGridApi
+import world.selene.client.grid.ClientGridLuaApi
+import world.selene.client.input.InputApi
 import world.selene.client.input.InputManager
-import world.selene.client.input.LuaInputModule
+import world.selene.client.input.InputLuaApi
 import world.selene.client.lua.*
 import world.selene.client.maps.*
 import world.selene.client.network.ClientPacketHandler
-import world.selene.client.network.LuaClientNetworkModule
+import world.selene.client.network.NetworkApi
+import world.selene.client.network.NetworkLuaApi
 import world.selene.client.network.NetworkClient
 import world.selene.client.network.NetworkClientImpl
 import world.selene.client.rendering.DebugRenderer
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.rendering.environment.Environment
-import world.selene.client.rendering.lua.LuaTexturesModule
-import world.selene.client.rendering.visual.LuaVisualsModule
+import world.selene.client.rendering.lua.TexturesApi
+import world.selene.client.rendering.lua.TexturesLuaApi
+import world.selene.client.rendering.visual.VisualsApi
+import world.selene.client.rendering.visual.VisualsLuaApi
 import world.selene.client.rendering.visual.VisualFactory
 import world.selene.client.rendering.scene.Scene
-import world.selene.client.sounds.LuaSoundsModule
+import world.selene.client.sounds.SoundsApi
+import world.selene.client.sounds.SoundsLuaApi
 import world.selene.client.sounds.SoundManager
 import world.selene.client.tiles.Tile
 import world.selene.client.tiles.TilePool
 import world.selene.client.ui.UI
 import world.selene.client.ui.lua.LuaSkinUtils
-import world.selene.client.ui.lua.LuaUIModule
+import world.selene.client.ui.lua.UIApi
+import world.selene.client.ui.lua.UILuaApi
 import world.selene.client.ui.lua.SkinLuaMetatable
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.bundles.BundleLoader
 import world.selene.common.bundles.BundleLocator
-import world.selene.common.bundles.LuaResourcesModule
+import world.selene.common.bundles.ResourcesApi
+import world.selene.common.bundles.ResourcesLuaApi
 import world.selene.common.data.*
 import world.selene.common.data.custom.CustomRegistries
 import world.selene.common.data.mappings.NameIdRegistry
 import world.selene.common.entities.EntityRegistry
 import world.selene.common.entities.component.ComponentRegistry
-import world.selene.common.i18n.LuaI18nModule
+import world.selene.common.i18n.I18nApi
+import world.selene.common.i18n.I18nLuaApi
 import world.selene.common.i18n.Messages
-import world.selene.common.jobs.LuaSchedulesModule
+import world.selene.common.jobs.SchedulesApi
+import world.selene.common.jobs.SchedulesLuaApi
 import world.selene.common.lua.*
 import world.selene.common.lua.libraries.LuaDebugModule
 import world.selene.common.lua.libraries.LuaMathxModule
@@ -83,7 +96,8 @@ import world.selene.common.lua.libraries.LuaOsModule
 import world.selene.common.lua.libraries.LuaPackageModule
 import world.selene.common.lua.libraries.LuaStringxModule
 import world.selene.common.lua.libraries.LuaTablexModule
-import world.selene.common.network.LuaHttpModule
+import world.selene.common.network.HttpApi
+import world.selene.common.network.HttpLuaApi
 import world.selene.common.network.LuaPayloadRegistry
 import world.selene.common.network.PacketFactory
 import world.selene.common.network.PacketHandler
@@ -107,6 +121,25 @@ class SeleneApplication(
         val coreModule = module {
             single { LoggerFactory.getLogger("Selene") }
         }
+        val apiModule = module {
+            singleOf(::UIApi)
+            singleOf(::VisualsApi)
+            singleOf(::NetworkApi)
+            singleOf(::CameraApi)
+            singleOf(::MapApi)
+            singleOf(::SoundsApi)
+            singleOf(::TexturesApi)
+            singleOf(::InputApi)
+            singleOf(::ClientGridApi)
+            singleOf(::MovementGridApi)
+            singleOf(::GameApi)
+            singleOf(::EntitiesApi)
+            singleOf(::SchedulesApi)
+            singleOf(::HttpApi)
+            singleOf(::I18nApi)
+            singleOf(::ResourcesApi)
+            singleOf(::RegistriesApi)
+        }
         val luaModule = module {
             singleOf(::LuaManager)
             singleOf(::LuaPayloadRegistry)
@@ -120,23 +153,23 @@ class SeleneApplication(
             singleOf(::LuaMathxModule) { bind<LuaModule>() }
             singleOf(::LuaStringxModule) { bind<LuaModule>() }
             singleOf(::LuaTablexModule) { bind<LuaModule>() }
-            singleOf(::LuaUIModule) { bind<LuaModule>() }
-            singleOf(::LuaVisualsModule) { bind<LuaModule>() }
-            singleOf(::LuaClientNetworkModule) { bind<LuaModule>() }
-            singleOf(::LuaCameraModule) { bind<LuaModule>() }
-            singleOf(::LuaClientMapModule) { bind<LuaModule>() }
-            singleOf(::LuaSoundsModule) { bind<LuaModule>() }
-            singleOf(::LuaTexturesModule) { bind<LuaModule>() }
-            singleOf(::LuaResourcesModule) { bind<LuaModule>() }
-            singleOf(::LuaInputModule) { bind<LuaModule>() }
-            singleOf(::LuaClientGridModule) { bind<LuaModule>() }
-            singleOf(::LuaMovementGridModule) { bind<LuaModule>() }
-            singleOf(::LuaGameModule) { bind<LuaModule>() }
-            singleOf(::LuaEntitiesModule) { bind<LuaModule>() }
-            singleOf(::LuaRegistriesModule) { bind<LuaModule>() }
-            singleOf(::LuaSchedulesModule) { bind<LuaModule>(); bind<Disposable>() }
-            singleOf(::LuaHttpModule) { bind<LuaModule>(); bind<Disposable>() }
-            singleOf(::LuaI18nModule) { bind<LuaModule>() }
+            singleOf(::UILuaApi) { bind<LuaModule>() }
+            singleOf(::VisualsLuaApi) { bind<LuaModule>() }
+            singleOf(::NetworkLuaApi) { bind<LuaModule>() }
+            singleOf(::CameraLuaApi) { bind<LuaModule>() }
+            singleOf(::MapLuaApi) { bind<LuaModule>() }
+            singleOf(::SoundsLuaApi) { bind<LuaModule>() }
+            singleOf(::TexturesLuaApi) { bind<LuaModule>() }
+            singleOf(::ResourcesLuaApi) { bind<LuaModule>() }
+            singleOf(::InputLuaApi) { bind<LuaModule>() }
+            singleOf(::ClientGridLuaApi) { bind<LuaModule>() }
+            singleOf(::MovementGridLuaApi) { bind<LuaModule>() }
+            singleOf(::GameLuaApi) { bind<LuaModule>() }
+            singleOf(::EntitiesLuaApi) { bind<LuaModule>() }
+            singleOf(::RegistriesLuaApi) { bind<LuaModule>() }
+            singleOf(::SchedulesLuaApi) { bind<LuaModule>(); bind<Disposable>() }
+            singleOf(::HttpLuaApi) { bind<LuaModule>(); bind<Disposable>() }
+            singleOf(::I18nLuaApi) { bind<LuaModule>() }
         }
         val bundleModule = module {
             singleOf(::BundleLoader)
@@ -220,6 +253,7 @@ class SeleneApplication(
             slf4jLogger()
             modules(
                 coreModule,
+                apiModule,
                 clientModule,
                 networkModule,
                 bundleModule,

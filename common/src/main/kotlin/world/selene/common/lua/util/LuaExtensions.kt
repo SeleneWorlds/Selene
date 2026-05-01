@@ -13,7 +13,7 @@ import world.selene.common.data.Registry
 import world.selene.common.grid.Coordinate
 import world.selene.common.grid.Direction
 import world.selene.common.grid.Grid
-import world.selene.common.lua.LuaReference
+import world.selene.common.lua.ResolvableReference
 import world.selene.common.lua.LuaTrace
 import world.selene.common.observable.ObservableMap
 import java.util.*
@@ -119,7 +119,7 @@ fun <T : Any> Lua.checkUserdata(index: Int, clazz: KClass<out T>): T {
         LuaType.USERDATA -> toJavaObject(index)!!
         else -> throwTypeError(index, clazz, type)
     }
-    if (clazz != LuaReference::class && value is LuaReference<*, *>) {
+    if (clazz != ResolvableReference::class && value is ResolvableReference<*, *>) {
         value = value.resolve() ?: throwError("Reference $value is invalid")
     }
     if (!clazz.isInstance(value)) {
@@ -142,7 +142,7 @@ fun <T : Any> Lua.toUserdata(index: Int, clazz: KClass<out T>): T? {
         LuaType.USERDATA -> toJavaObject(index)!!
         else -> null
     }
-    if (clazz != LuaReference::class && value is LuaReference<*, *>) {
+    if (clazz != ResolvableReference::class && value is ResolvableReference<*, *>) {
         value = value.resolve() ?: throwError("Reference $value is invalid")
     }
     if (!clazz.isInstance(value)) {

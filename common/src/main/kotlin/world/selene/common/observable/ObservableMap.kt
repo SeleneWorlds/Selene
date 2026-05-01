@@ -3,8 +3,8 @@ package world.selene.common.observable
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaReferencable
-import world.selene.common.lua.LuaReference
+import world.selene.common.lua.IdResolvable
+import world.selene.common.lua.ResolvableReference
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.pushError
 import world.selene.common.lua.util.throwError
@@ -46,7 +46,7 @@ class ObservableMap(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatab
             } else if (value !is LuaValue && value is Collection<*>) {
                 // TODO would be nice if we had an ObservableList counterpart for this
                 lua.throwError("Cannot directly access a table field of an observed map. Use Lookup(\"${key}\") instead to create a local copy.")
-            } else if (value is LuaReference<*, *>) {
+            } else if (value is ResolvableReference<*, *>) {
                 lua.push(value.resolve(), Lua.Conversion.NONE)
             } else {
                 lua.push(value, Lua.Conversion.FULL)
@@ -63,8 +63,8 @@ class ObservableMap(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatab
             else -> return lua.pushNil().let { 1 }
         }
         val value = lua.toAny(3)
-        if (value is LuaReferencable<*, *>) {
-            map[key] = value.luaReference()
+        if (value is IdResolvable<*, *>) {
+            map[key] = value.resolvableReference()
         } else if (value != null) {
             map[key] = value
         } else {
@@ -145,7 +145,7 @@ class ObservableMap(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatab
                             lua.push(ObservableMap(value as MutableMap<Any, Any>), Lua.Conversion.NONE)
                         }
 
-                        is LuaReference<*, *> -> {
+                        is ResolvableReference<*, *> -> {
                             lua.push(value.resolve(), Lua.Conversion.NONE)
                         }
 
@@ -193,7 +193,7 @@ class ObservableMap(val map: MutableMap<Any, Any> = mutableMapOf()) : LuaMetatab
             if (result !is LuaValue && result is Map<*, *>) {
                 @Suppress("UNCHECKED_CAST")
                 lua.push(ObservableMap(result as MutableMap<Any, Any>), Lua.Conversion.NONE)
-            } else if (result is LuaReference<*, *>) {
+            } else if (result is ResolvableReference<*, *>) {
                 lua.push(result.resolve(), Lua.Conversion.NONE)
             } else {
                 lua.push(result, Lua.Conversion.FULL)

@@ -28,7 +28,7 @@ data class Identifier(val namespace: String, val path: String) : LuaMetatablePro
             return if (colonIndex != -1) {
                 Identifier(input.substring(0, colonIndex), input.substring(colonIndex + 1))
             } else {
-                Identifier.withDefaultNamespace(input)
+                withDefaultNamespace(input)
             }
         }
 
@@ -46,70 +46,13 @@ data class Identifier(val namespace: String, val path: String) : LuaMetatablePro
          */
         class Deserializer : JsonDeserializer<Identifier>() {
             override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Identifier {
-                val value = p.valueAsString ?: throw ctxt.weirdStringException(null, Identifier::class.java, "Identifier cannot be null")
+                val value = p.valueAsString ?: throw ctxt.weirdStringException(
+                    null,
+                    Identifier::class.java,
+                    "Identifier cannot be null"
+                )
                 return parse(value)
             }
-        }
-
-        /**
-         * Namespace of this custom registry object.
-         *
-         * ```property
-         * Namespace: string
-         * ```
-         */
-        private fun luaGetNamespace(lua: Lua): Int {
-            val identifier = lua.checkUserdata<Identifier>(1)
-            lua.push(identifier.namespace)
-            return 1
-        }
-
-        /**
-         * Path to this custom registry object.
-         *
-         * ```property
-         * Path: string
-         * ```
-         */
-        private fun luaGetPath(lua: Lua): Int {
-            val identifier = lua.checkUserdata<Identifier>(1)
-            lua.push(identifier.path)
-            return 1
-        }
-
-        /**
-         * Creates a new identifier with the given prefix added to the path.
-         *
-         * ```signatures
-         * WithPrefix(prefix: string) -> Identifier
-         * ```
-         */
-        private fun luaWithPrefix(lua: Lua): Int {
-            val identifier = lua.checkUserdata<Identifier>(1)
-            val prefix = lua.checkString(2)
-            lua.push(identifier.withPrefix(prefix), Lua.Conversion.FULL)
-            return 1
-        }
-
-        /**
-         * Creates a new identifier with the given suffix added to the path.
-         *
-         * ```signatures
-         * WithSuffix(suffix: string) -> Identifier
-         * ```
-         */
-        private fun luaWithSuffix(lua: Lua): Int {
-            val identifier = lua.checkUserdata<Identifier>(1)
-            val suffix = lua.checkString(2)
-            lua.push(identifier.withSuffix(suffix), Lua.Conversion.FULL)
-            return 1
-        }
-
-        val luaMeta = LuaMappedMetatable(Identifier::class) {
-            getter(::luaGetNamespace)
-            getter(::luaGetPath)
-            callable(::luaWithPrefix)
-            callable(::luaWithSuffix)
         }
     }
 
@@ -119,7 +62,7 @@ data class Identifier(val namespace: String, val path: String) : LuaMetatablePro
     }
 
     override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
+        return IdentifierLuaApi.luaMeta
     }
 
     override fun toString(): String = "$namespace:$path"

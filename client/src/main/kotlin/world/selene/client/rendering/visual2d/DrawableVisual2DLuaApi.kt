@@ -1,0 +1,39 @@
+package world.selene.client.rendering.visual2d
+
+import party.iroiro.luajava.Lua
+import world.selene.common.lua.LuaMappedMetatable
+import world.selene.common.lua.util.checkUserdata
+
+object DrawableVisual2DLuaApi {
+
+    /**
+     * Drawable rendered by this visual.
+     *
+     * ```property
+     * Drawable: DrawableApi
+     * ```
+     */
+    private fun luaGetDrawable(lua: Lua): Int {
+        val self = lua.checkUserdata<DrawableVisual2DApi>(1)
+        lua.push(self.getDrawable(), Lua.Conversion.NONE)
+        return 1
+    }
+
+    /**
+     * Registry definition of this visual.
+     *
+     * ```property
+     * Definition: VisualDefinition
+     * ```
+     */
+    private fun luaGetDefinition(lua: Lua): Int {
+        val self = lua.checkUserdata<DrawableVisual2DApi>(1)
+        lua.push(self.getDefinition(), Lua.Conversion.NONE)
+        return 1
+    }
+
+    val luaMeta = LuaMappedMetatable(DrawableVisual2DApi::class) {
+        getter(::luaGetDrawable)
+        getter(::luaGetDefinition)
+    }
+}

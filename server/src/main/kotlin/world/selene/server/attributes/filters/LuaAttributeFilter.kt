@@ -20,7 +20,7 @@ class LuaAttributeFilter<T : Any?>(val callback: LuaValue, val registrationSite:
     override fun apply(attribute: Attribute<T>, value: T): T {
         val lua = callback.state()
         lua.push(callback)
-        lua.push(attribute, Lua.Conversion.NONE)
+        lua.push(attribute.api, Lua.Conversion.NONE)
         lua.push(value, Lua.Conversion.FULL)
         try {
             lua.xpCall(2, 1, this)

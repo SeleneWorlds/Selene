@@ -31,7 +31,7 @@ class ClientScriptComponent(val moduleName: String) : EntityComponent, TickableC
         if (!initialized) {
             lua.getField(-1, "Initialize")
             if (lua.isFunction(-1)) {
-                lua.push(entity, Lua.Conversion.NONE)
+                lua.push(entity.api, Lua.Conversion.NONE)
                 lua.push(data, Lua.Conversion.NONE)
                 lua.xpCall(2, 0, this)
             } else lua.pop(1)
@@ -39,7 +39,7 @@ class ClientScriptComponent(val moduleName: String) : EntityComponent, TickableC
         }
         lua.getField(-1, "TickEntity")
         if (lua.isFunction(-1)) {
-            lua.push(entity, Lua.Conversion.NONE)
+            lua.push(entity.api, Lua.Conversion.NONE)
             lua.push(data, Lua.Conversion.NONE)
             lua.push(delta)
             lua.xpCall(3, 0, this)

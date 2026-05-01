@@ -1,9 +1,8 @@
 package world.selene.server.login
 
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.*
-import world.selene.common.lua.util.checkString
-import world.selene.common.lua.util.checkUserdata
+import world.selene.common.lua.LuaMetatable
+import world.selene.common.lua.LuaMetatableProvider
 import world.selene.server.lua.ServerLuaSignals
 
 enum class LoginQueueStatus {
@@ -12,60 +11,9 @@ enum class LoginQueueStatus {
     Rejected
 }
 
-data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var message: String?) :
-    LuaMetatableProvider {
-
+data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var message: String?) : LuaMetatableProvider {
     override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
-
-    @Suppress("SameReturnValue")
-    companion object {
-        /**
-         * Sends a notification message to the user in the login queue.
-         *
-         * ```signatures
-         * Notify(message: string)
-         * ```
-         */
-        private fun luaNotify(lua: Lua): Int {
-            val entry = lua.checkUserdata<LoginQueueEntry>(1)
-            entry.message = lua.checkString(2)
-            return 0
-        }
-
-        /**
-         * Accepts the user's login request, allowing them to join the server.
-         *
-         * ```signatures
-         * Accept()
-         * ```
-         */
-        private fun luaAccept(lua: Lua): Int {
-            val entry = lua.checkUserdata<LoginQueueEntry>(1)
-            entry.status = LoginQueueStatus.Accepted
-            return 0
-        }
-
-        /**
-         * Rejects the user's login request with a reason message.
-         *
-         * ```signatures
-         * Reject(message: string)
-         * ```
-         */
-        private fun luaReject(lua: Lua): Int {
-            val entry = lua.checkUserdata<LoginQueueEntry>(1)
-            entry.status = LoginQueueStatus.Rejected
-            entry.message = lua.checkString(2)
-            return 0
-        }
-
-        val luaMeta = LuaMappedMetatable(LoginQueueEntry::class) {
-            callable(::luaNotify)
-            callable(::luaAccept)
-            callable(::luaReject)
-        }
+        return LoginQueueEntryLuaApi.luaMeta
     }
 }
 

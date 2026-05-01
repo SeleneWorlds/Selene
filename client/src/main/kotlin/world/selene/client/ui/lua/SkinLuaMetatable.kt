@@ -7,7 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.kotcrab.vis.ui.widget.VisTextField
 import party.iroiro.luajava.Lua
 import world.selene.client.bundles.BundleFileResolver
-import world.selene.client.rendering.lua.LuaTexture
+import world.selene.client.rendering.lua.TextureApi
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkType
@@ -52,7 +52,7 @@ class SkinLuaMetatable(
             val region = TextureRegion(texture)
             skin.add(name, region)
         } else if (lua.isUserdata(3)) {
-            val texture = lua.checkUserdata<LuaTexture>(3).texture
+            val texture = lua.checkUserdata<TextureApi>(3).texture
             val region = TextureRegion(texture)
             skin.add(name, region)
         }

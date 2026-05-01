@@ -2,7 +2,7 @@ package world.selene.server.players
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaReferenceResolver
+import world.selene.common.lua.ReferenceResolver
 import world.selene.server.dimensions.DimensionManager
 import world.selene.server.entities.EntityManager
 import world.selene.server.lua.ServerLuaSignals
@@ -17,7 +17,7 @@ class PlayerManager(
     private val objectMapper: ObjectMapper,
     private val entityManager: EntityManager,
     private val luaSignals: ServerLuaSignals
-) : LuaReferenceResolver<String, Player> {
+) : ReferenceResolver<String, Player> {
     private val _players = ConcurrentHashMap<NetworkClient, Player>()
     val players: Collection<Player> get() = _players.values
 
@@ -43,7 +43,7 @@ class PlayerManager(
         return PlayerSyncManager(chunkViewManager, objectMapper, player, entityManager)
     }
 
-    override fun luaDereference(id: String): Player? {
+    override fun dereferencePersisted(id: String): Player? {
         return _players.values.find { it.userId == id }
     }
 }

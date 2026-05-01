@@ -3,11 +3,10 @@ package world.selene.client.rendering.drawable
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Rectangle
-import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.util.checkUserdata
 
 class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float, val offsetY: Float) : Drawable {
+    override val api = TextureRegionDrawableApi(this)
+
     override fun update(delta: Float) = Unit
     override fun render(batch: Batch, x: Float, y: Float) {
         batch.draw(textureRegion, x + offsetX, y + offsetY)
@@ -43,49 +42,11 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
         return outRect
     }
 
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
-
     fun withoutOffset(): TextureRegionDrawable {
         return TextureRegionDrawable(textureRegion, 0f, 0f)
     }
 
     override fun toString(): String {
         return "TextureRegionDrawable(texture=${textureRegion.texture}, offsetX=$offsetX, offsetY=$offsetY)"
-    }
-
-    @Suppress("SameReturnValue")
-    companion object {
-        /**
-         * Texture region rendered by this drawable.
-         *
-         * ```property
-         * TextureRegion: TextureRegion
-         * ```
-         */
-        private fun luaGetTextureRegion(lua: Lua): Int {
-            val self = lua.checkUserdata<TextureRegionDrawable>(1)
-            lua.push(self.textureRegion, Lua.Conversion.NONE)
-            return 1
-        }
-
-        /**
-         * Gets a new drawable without any offset.
-         *
-         * ```signatures
-         * WithoutOffset() -> TextureRegionDrawable
-         * ```
-         */
-        private fun luaWithoutOffset(lua: Lua): Int {
-            val self = lua.checkUserdata<TextureRegionDrawable>(1)
-            lua.push(self.withoutOffset(), Lua.Conversion.NONE)
-            return 1
-        }
-
-        val luaMeta = Drawable.luaMeta.extend(TextureRegionDrawable::class) {
-            getter(::luaGetTextureRegion)
-            callable(::luaWithoutOffset)
-        }
     }
 }
