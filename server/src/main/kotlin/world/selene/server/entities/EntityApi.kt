@@ -14,6 +14,7 @@ import world.selene.server.cameras.viewer.Viewer
 import world.selene.server.dimensions.Dimension
 import world.selene.server.dimensions.DimensionApi
 import world.selene.server.maps.tree.MapTree
+import world.selene.server.maps.tree.MapTreeApi
 import world.selene.server.players.Player
 import world.selene.server.players.PlayerApi
 
@@ -61,8 +62,9 @@ class EntityApi(val entity: Entity) : IdResolvable<Int, Entity> {
         return entity.dimension?.api
     }
 
-    fun getMap(): MapTree? {
-        return entity.map
+    fun getMap(): MapTreeApi? {
+        return entity.map?.api
+
     }
 
     fun getCollisionViewer(): Viewer {
