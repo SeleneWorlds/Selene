@@ -5,10 +5,6 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
-import party.iroiro.luajava.Lua
-import world.selene.common.lua.util.checkString
-import world.selene.common.lua.util.toAnyMap
-import world.selene.common.lua.util.toTypedMap
 import world.selene.common.util.Disposable
 
 /**
@@ -18,15 +14,9 @@ import world.selene.common.util.Disposable
 class HttpApi(
     private val httpClient: HttpClient
 ) : Disposable {
-    fun luaPost(lua: Lua): Int {
-        val url = lua.checkString(1)
-        val body = if (lua.isString(2)) {
-            lua.checkString(2)
-        } else {
-            lua.toAnyMap(2)
-        }
-        val headers = lua.toTypedMap<String, Any>(3) ?: emptyMap()
+    data class HttpResult(val status: Int, val body: String, val success: Boolean)
 
+    fun post(url: String, body: Any?, headers: Map<String, Any> = emptyMap()): HttpResult {
         try {
             val response = runBlocking {
                 httpClient.post(url) {
@@ -39,24 +29,10 @@ class HttpApi(
             }
 
             val responseBody = runBlocking { response.bodyAsText() }
-            val statusCode = response.status.value
-            lua.createTable(0, 3)
-            lua.push(statusCode)
-            lua.setField(-2, "status")
-            lua.push(responseBody)
-            lua.setField(-2, "body")
-            lua.push(response.status.isSuccess())
-            lua.setField(-2, "success")
+            return HttpResult(response.status.value, responseBody, response.status.isSuccess())
         } catch (e: Exception) {
-            lua.createTable(0, 3)
-            lua.push(0)
-            lua.setField(-2, "status")
-            lua.push(e.message ?: "Unknown error")
-            lua.setField(-2, "body")
-            lua.push(false)
-            lua.setField(-2, "success")
+            return HttpResult(0, e.message ?: "Unknown error", false)
         }
-        return 1
     }
 
     override fun dispose() {

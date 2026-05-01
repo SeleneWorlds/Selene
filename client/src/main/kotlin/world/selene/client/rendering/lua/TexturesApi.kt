@@ -2,19 +2,13 @@ package world.selene.client.rendering.lua
 
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
-import party.iroiro.luajava.Lua
-import world.selene.common.lua.util.checkInt
-import world.selene.common.lua.util.checkString
 
 /**
  * Create and manipulate textures.
  */
 @Suppress("SameReturnValue")
 class TexturesApi {
-    fun luaCreateTexture(lua: Lua): Int {
-        val width = lua.checkInt(1)
-        val height = lua.checkInt(2)
-        val formatName = if (lua.top >= 3) lua.checkString(3) else "RGBA8888"
+    fun createTexture(width: Int, height: Int, formatName: String = "RGBA8888"): ScriptableTexture {
         val format = when (formatName) {
             "RGBA8888" -> Pixmap.Format.RGBA8888
             "RGB888" -> Pixmap.Format.RGB888
@@ -26,8 +20,6 @@ class TexturesApi {
 
         val pixmap = Pixmap(width, height, format)
         val texture = Texture(pixmap)
-        val scriptableTexture = ScriptableTexture(texture, pixmap)
-        lua.push(scriptableTexture, Lua.Conversion.NONE)
-        return 1
+        return ScriptableTexture(texture, pixmap)
     }
 }

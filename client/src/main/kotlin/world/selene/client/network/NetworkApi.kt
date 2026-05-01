@@ -1,12 +1,8 @@
 package world.selene.client.network
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.lua.util.checkFunction
-import world.selene.common.lua.util.checkString
-import world.selene.common.lua.util.getCallerInfo
-import world.selene.common.lua.util.toAnyMap
+import world.selene.common.lua.util.CallerInfo
 import world.selene.common.network.LuaPayloadRegistry
 import world.selene.common.network.packet.CustomPayloadPacket
 
@@ -19,18 +15,11 @@ class NetworkApi(
     private val objectMapper: ObjectMapper,
     private val payloadRegistry: LuaPayloadRegistry
 ) {
-    fun luaHandlePayload(lua: Lua): Int {
-        val payloadId = lua.checkString(1)
-        val callback = lua.checkFunction(2)
-        val registrationSite = lua.getCallerInfo()
+    fun handlePayload(payloadId: String, callback: LuaValue, registrationSite: CallerInfo) {
         payloadRegistry.registerHandler(payloadId, callback, registrationSite)
-        return 0
     }
 
-    fun luaSendToServer(lua: Lua): Int {
-        val payloadId = lua.checkString(1)
-        val payload = lua.toAnyMap(2)
+    fun sendToServer(payloadId: String, payload: Any?) {
         networkClient.send(CustomPayloadPacket(payloadId, objectMapper.writeValueAsString(payload)))
-        return 0
     }
 }

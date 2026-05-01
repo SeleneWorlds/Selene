@@ -1,17 +1,10 @@
 package world.selene.common.jobs
 
 import org.slf4j.Logger
-import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaTrace
 import world.selene.common.lua.util.CallerInfo
-import world.selene.common.lua.util.checkFunction
-import world.selene.common.lua.util.checkInt
-import world.selene.common.lua.util.checkType
-import world.selene.common.lua.util.getCallerInfo
-import world.selene.common.lua.util.getFieldBoolean
-import world.selene.common.lua.util.getFieldString
 import world.selene.common.lua.util.xpCall
 import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.util.Disposable
@@ -96,73 +89,48 @@ class SchedulesApi(
         }
     }
 
-    fun luaSetTimeout(lua: Lua): Int {
-        val intervalMs = lua.checkInt(1)
-        val callback = lua.checkFunction(2)
-        if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
-
+    fun setTimeout(
+        intervalMs: Int,
+        callback: LuaValue,
+        name: String?,
+        registrationSite: CallerInfo
+    ): Int {
         if (intervalMs < 0) {
-            return lua.error(IllegalArgumentException("Timeout interval must be non-negative"))
+            throw IllegalArgumentException("Timeout interval must be non-negative")
         }
-
-        val name = lua.getFieldString(3, "name")
-
-        val registrationSite = lua.getCallerInfo()
         val timeoutId = nextTimeoutId++
         val handler = LuaTimeout(timeoutId, name ?: "#$timeoutId", callback, intervalMs, registrationSite)
 
         val task = executor.schedule({
-            mainThreadDispatcher.runOnMainThread {
-                val callbackLua = callback.state()
-                try {
-                    callbackLua.push(callback)
-                    callbackLua.xpCall(0, 0, handler)
-                } catch (e: LuaException) {
-                    logger.error("Lua Error in Timeout", e)
-                }
-            }
+            runCallback(callback, handler, "Lua Error in Timeout")
             timeouts.remove(timeoutId)
         }, intervalMs.toLong(), TimeUnit.MILLISECONDS)
 
         handler.task = task
         timeouts[timeoutId] = handler
-        lua.push(timeoutId)
-        return 1
+        return timeoutId
     }
 
-    fun luaClearTimeout(lua: Lua): Int {
-        val timeoutId = lua.checkInt(1)
+    fun clearTimeout(timeoutId: Int) {
         val handler = timeouts.remove(timeoutId)
         handler?.task?.cancel(false)
-        return 0
     }
 
-    fun luaSetInterval(lua: Lua): Int {
-        val intervalMs = lua.checkInt(1)
-        val callback = lua.checkFunction(2)
-        if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
-
-        val name = lua.getFieldString(3, "name")
-        val immediate = lua.getFieldBoolean(3, "immediate") ?: false
-
+    fun setInterval(
+        intervalMs: Int,
+        callback: LuaValue,
+        name: String?,
+        immediate: Boolean,
+        registrationSite: CallerInfo
+    ): Int {
         if (intervalMs <= 0) {
-            return lua.error(IllegalArgumentException("Interval must be positive"))
+            throw IllegalArgumentException("Interval must be positive")
         }
-
-        val registrationSite = lua.getCallerInfo()
         val intervalId = nextIntervalId++
         val handler = LuaInterval(intervalId, name ?: "#$intervalId", callback, intervalMs, registrationSite)
 
         val task = executor.scheduleAtFixedRate({
-            mainThreadDispatcher.runOnMainThread {
-                val callbackLua = callback.state()
-                try {
-                    callbackLua.push(callback)
-                    callbackLua.xpCall(0, 0, handler)
-                } catch (e: LuaException) {
-                    logger.error("Lua Error in Interval", e)
-                }
-            }
+            runCallback(callback, handler, "Lua Error in Interval")
         }, intervalMs.toLong(), intervalMs.toLong(), TimeUnit.MILLISECONDS)
 
         handler.task = task
@@ -174,15 +142,24 @@ class SchedulesApi(
             callbackLua.xpCall(0, 0, handler)
         }
 
-        lua.push(intervalId)
-        return 1
+        return intervalId
     }
 
-    fun luaClearInterval(lua: Lua): Int {
-        val intervalId = lua.checkInt(1)
+    fun clearInterval(intervalId: Int) {
         val handler = intervals.remove(intervalId)
         handler?.task?.cancel(false)
-        return 0
+    }
+
+    private fun runCallback(callback: LuaValue, trace: LuaTrace, errorMessage: String) {
+        mainThreadDispatcher.runOnMainThread {
+            val callbackLua = callback.state()
+            try {
+                callbackLua.push(callback)
+                callbackLua.xpCall(0, 0, trace)
+            } catch (e: LuaException) {
+                logger.error(errorMessage, e)
+            }
+        }
     }
 
     override fun dispose() {
