@@ -250,12 +250,12 @@ fun <T : Any> Lua.checkRegistry(index: Int, registry: Registry<T>): T {
 
 fun Lua.toAny(index: Int): Any? {
     return when (type(index)) {
-        LuaType.STRING -> return toString(index)!!
-        LuaType.NUMBER -> return toNumber(index).let { if (it % 1.0 == 0.0) it.toInt() else it }
-        LuaType.BOOLEAN -> return toBoolean(index)
-        LuaType.TABLE -> return toSerializedMap(index)
-        LuaType.FUNCTION -> return toFunction(index)
-        LuaType.USERDATA -> return toJavaObject(index)
+        LuaType.STRING -> toString(index)!!
+        LuaType.NUMBER -> toNumber(index).let { if (it % 1.0 == 0.0) it.toInt() else it }
+        LuaType.BOOLEAN -> toBoolean(index)
+        LuaType.TABLE -> toSerializedMap(index)
+        LuaType.FUNCTION -> toFunction(index)
+        LuaType.USERDATA -> toJavaObject(index)
         else -> null
     }
 }

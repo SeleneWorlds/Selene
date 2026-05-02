@@ -1,11 +1,11 @@
 package com.seleneworlds.common.network
 
-import io.ktor.client.HttpClient
+import com.seleneworlds.common.util.Disposable
+import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
-import com.seleneworlds.common.util.Disposable
 
 /**
  * Make HTTP web requests.
@@ -22,7 +22,9 @@ class HttpApi(
                     contentType(ContentType.Application.Json)
                     setBody(body)
                     headers.forEach { (key, value) ->
-                        header(key, value.toString())
+                        if (value != null) {
+                            header(key, value.toString())
+                        }
                     }
                 }
             }

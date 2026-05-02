@@ -13,8 +13,7 @@ data class TransitionDefinition(
 
     @Serializable
     data class Entry(val tile: String, val neighbours: List<String>) {
-        val neighbourMask: Int
-            get() {
+        val neighbourMask: Int by lazy {
             var mask = 0
             if (neighbours[0][0] == '1') mask = mask or 1
             if (neighbours[0][1] == '1') mask = mask or 2
@@ -24,7 +23,8 @@ data class TransitionDefinition(
             if (neighbours[2][0] == '1') mask = mask or 32
             if (neighbours[2][1] == '1') mask = mask or 64
             if (neighbours[2][2] == '1') mask = mask or 128
-            return mask
+            mask
         }
+
     }
 }

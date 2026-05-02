@@ -114,8 +114,8 @@ object MapTreeLuaApi {
      * Adds annotation data to a tile at the specified coordinate.
      *
      * ```signatures
-     * AnnotateTile(coordinate: Coordinate, key: string, data: table)
-     * AnnotateTile(coordinate: Coordinate, key: string, data: table, layerName: string)
+     * AnnotateTile(coordinate: Coordinate, key: string, data: table[string, any])
+     * AnnotateTile(coordinate: Coordinate, key: string, data: table[string, any], layerName: string)
      * ```
      */
     private fun luaAnnotateTile(lua: Lua): Int {
