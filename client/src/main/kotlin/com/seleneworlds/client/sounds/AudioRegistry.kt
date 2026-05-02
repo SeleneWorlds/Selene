@@ -1,14 +1,15 @@
 package com.seleneworlds.client.sounds
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.json.Json
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.json.FileBasedRegistry
 
-class AudioRegistry(objectMapper: ObjectMapper) : FileBasedRegistry<AudioDefinition>(
-    objectMapper,
+class AudioRegistry(json: Json) : FileBasedRegistry<AudioDefinition>(
+    json,
     "client",
     "audio",
     AudioDefinition::class,
+    AudioDefinition.serializer(),
 ) {
     companion object {
         val IDENTIFIER = Identifier.withDefaultNamespace("audio")

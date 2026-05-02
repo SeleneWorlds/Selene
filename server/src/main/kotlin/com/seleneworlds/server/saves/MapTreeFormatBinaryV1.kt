@@ -1,6 +1,7 @@
 package com.seleneworlds.server.saves
 
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.server.data.Registries
 import com.seleneworlds.server.maps.layers.ChunkedMapLayer
 import com.seleneworlds.server.maps.layers.DenseMapLayer
@@ -326,8 +327,12 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
         return String(bytes, StandardCharsets.UTF_8)
     }
 
-    private fun RandomAccessFile.writeAny(value: Any) {
+    private fun RandomAccessFile.writeAny(value: Any?) {
         when (value) {
+            null -> {
+                writeByte(8)
+            }
+
             is Int -> {
                 writeByte(1); writeInt(value)
             }
@@ -356,15 +361,17 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                 writeByte(7); writeByte(value.toInt())
             }
 
-            else -> {
-                writeByte(0); writeString(value.toString())
+            is String -> {
+                writeByte(0); writeString(value)
             }
+
+            else -> throw RuntimeException("Unsupported annotation value type: ${value::class.qualifiedName}")
         }
     }
 
-    private fun ByteBuffer.readAny(): Any {
-        val type = this.get().toInt()
-        return when (type) {
+    private fun ByteBuffer.readAny(): Any? {
+        return when (val type = this.get().toInt()) {
+            0 -> readString()
             1 -> this.int
             2 -> this.float
             3 -> this.get().toInt() == 1
@@ -372,23 +379,24 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
             5 -> this.long
             6 -> this.short
             7 -> this.get()
-            else -> readString()
+            8 -> null
+            else -> throw RuntimeException("Unsupported annotation value type tag: $type")
         }
     }
 
-    private fun RandomAccessFile.writeMap(map: Map<Any, Any>) {
+    private fun RandomAccessFile.writeMap(map: SerializedMap) {
         writeInt(map.size)
         map.forEach { (key, value) ->
-            writeAny(key)
+            writeString(key)
             writeAny(value)
         }
     }
 
-    private fun ByteBuffer.readMap(): Map<Any, Any> {
+    private fun ByteBuffer.readMap(): SerializedMap {
         val size = this.int
-        val map = mutableMapOf<Any, Any>()
+        val map = mutableMapOf<String, Any?>()
         repeat(size) {
-            val key = readAny()
+            val key = readString()
             val value = readAny()
             map[key] = value
         }

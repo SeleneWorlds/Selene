@@ -6,8 +6,9 @@ import com.seleneworlds.common.lua.LuaMappedMetatable
 import com.seleneworlds.common.lua.util.checkCoordinate
 import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.checkUserdata
-import com.seleneworlds.common.lua.util.toAnyMap
+import com.seleneworlds.common.lua.util.toSerializedMap
 import com.seleneworlds.common.script.ExposedApi
+import com.seleneworlds.common.serialization.toJsonElement
 
 object EntityLuaApi {
 
@@ -74,9 +75,12 @@ object EntityLuaApi {
     private fun luaAddComponent(lua: Lua): Int {
         val self = lua.checkUserdata<EntityApi>(1)
         val componentName = lua.checkString(2)
-        val componentData = lua.toAnyMap(3)
+        val componentData = lua.toSerializedMap(3)
         val componentConfiguration =
-            self.entity.objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
+            self.entity.json.decodeFromJsonElement(
+                ComponentConfiguration.serializer(),
+                componentData?.toJsonElement() ?: emptyMap<String, Any?>().toJsonElement()
+            )
         self.addComponent(componentName, componentConfiguration)
         return 0
     }

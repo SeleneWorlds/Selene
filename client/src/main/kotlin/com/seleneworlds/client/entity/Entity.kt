@@ -5,7 +5,7 @@ import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Pool
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
 import com.seleneworlds.client.controls.EntityMotion
 import com.seleneworlds.client.entity.component.EntityComponent
@@ -30,7 +30,7 @@ import com.seleneworlds.common.util.Disposable
 import java.util.*
 
 class Entity(
-    val objectMapper: ObjectMapper,
+    val json: Json,
     val pool: EntityPool,
     val map: ClientMap,
     val grid: ClientGrid,

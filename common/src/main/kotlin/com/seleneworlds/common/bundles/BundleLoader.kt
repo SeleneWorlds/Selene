@@ -1,10 +1,11 @@
 package com.seleneworlds.common.bundles
 
 import org.slf4j.Logger
-import com.seleneworlds.common.script.ClosureTrace
+import com.seleneworlds.common.script.ConstantTrace
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.libraries.LuaPackageModule
 import com.seleneworlds.common.lua.util.xpCall
+import com.seleneworlds.common.serialization.SerializedMap
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
@@ -109,7 +110,7 @@ class BundleLoader(
                         is String -> preload to StandardCharsets.UTF_8
                         is Map<*, *> -> {
                             @Suppress("UNCHECKED_CAST")
-                            val preloadMap = preload as Map<String, Any>
+                            val preloadMap = preload as SerializedMap
                             val file = preloadMap["file"] as? String
                                 ?: throw IllegalArgumentException("Preload object must have 'file' field")
                             val enc = (preloadMap["encoding"] as? String)?.let { Charset.forName(it) }
@@ -155,10 +156,7 @@ class BundleLoader(
                     try {
                         val lua = luaManager.lua
                         lua.load(LuaManager.loadBuffer(scriptFile.readText()), bundle.getFileDebugName(scriptFile))
-                        lua.xpCall(
-                            0,
-                            1,
-                            ClosureTrace { "[entrypoint \"${entrypoint}\"] in bundle \"${bundle.manifest.name}\"" })
+                        lua.xpCall(0, 1, ConstantTrace("[entrypoint \"$entrypoint\"] in bundle \"${bundle.manifest.name}\""))
                     } catch (e: Exception) {
                         logger.error("Lua Error in Entrypoint", e)
                     }

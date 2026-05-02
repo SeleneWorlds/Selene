@@ -1,6 +1,6 @@
 package com.seleneworlds.common.data.custom
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.json.Json
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.Registry
@@ -8,12 +8,13 @@ import com.seleneworlds.common.data.json.FileBasedRegistry
 import kotlin.collections.iterator
 
 class CustomRegistries(
-    objectMapper: ObjectMapper
+    json: Json
 ) : FileBasedRegistry<CustomRegistryDefinition>(
-    objectMapper,
+    json,
     "common",
     "registries",
-    CustomRegistryDefinition::class
+    CustomRegistryDefinition::class,
+    CustomRegistryDefinition.serializer()
 ) {
 
     private val customRegistries: MutableMap<Identifier, CustomRegistry> = mutableMapOf()
@@ -23,7 +24,7 @@ class CustomRegistries(
 
         val definitions = entries.filterValues { it.platform == platform }
         for ((identifier, definition) in definitions) {
-            val dynamicRegistry = CustomRegistry(objectMapper, definition)
+            val dynamicRegistry = CustomRegistry(json, definition)
             dynamicRegistry.load(bundleDatabase)
             customRegistries[identifier] = dynamicRegistry
         }

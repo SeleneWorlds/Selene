@@ -1,14 +1,10 @@
 package com.seleneworlds.common.lua.libraries
 
+import com.seleneworlds.common.lua.LuaModule
+import com.seleneworlds.common.lua.util.*
+import com.seleneworlds.common.observable.ObservableMap
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import com.seleneworlds.common.lua.LuaModule
-import com.seleneworlds.common.observable.ObservableMap
-import com.seleneworlds.common.lua.util.checkType
-import com.seleneworlds.common.lua.util.checkUserdata
-import com.seleneworlds.common.lua.util.register
-import com.seleneworlds.common.lua.util.throwTypeError
-import com.seleneworlds.common.lua.util.toAnyMap
 
 /**
  * Extended table manipulation functions beyond standard Lua table operations.
@@ -35,8 +31,8 @@ class LuaTablexModule : LuaModule {
      * ```
      */
     private fun luaObservable(lua: Lua): Int {
-        val data = lua.toAnyMap(1) as MutableMap?
-        lua.push(ObservableMap(data ?: mutableMapOf()), Lua.Conversion.NONE)
+        val data = if (lua.isTable(1)) lua.checkSerializedMap(1).toMutableMap() else mutableMapOf()
+        lua.push(ObservableMap(data), Lua.Conversion.NONE)
         return 1
     }
 

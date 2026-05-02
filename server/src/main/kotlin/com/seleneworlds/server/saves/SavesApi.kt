@@ -2,6 +2,7 @@ package com.seleneworlds.server.saves
 
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.server.config.ServerConfig
+import com.seleneworlds.server.maps.tree.MapTreeApi
 import java.io.File
 
 class SavesApi(val saveManager: SaveManager, val serverConfig: ServerConfig) {
@@ -27,7 +28,11 @@ class SavesApi(val saveManager: SaveManager, val serverConfig: ServerConfig) {
      */
     fun save(savable: Any, path: String) {
         val saveFile = File(serverConfig.savePath, path)
-        saveManager.save(saveFile, savable)
+        if (savable is MapTreeApi) {
+            saveManager.save(saveFile, savable.mapTree)
+        } else {
+            saveManager.save(saveFile, savable)
+        }
     }
 
     /**

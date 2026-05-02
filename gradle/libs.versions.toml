@@ -5,6 +5,7 @@ luajava = "4.0.2"
 ktor = "3.2.1"
 log4j = "2.24.3"
 jackson = "2.19.0"
+kotlinx-serialization = "1.9.0"
 
 [libraries]
 gdx-backend-lwjgl3 = { module = "com.badlogicgames.gdx:gdx-backend-lwjgl3", version.ref = "gdx" }
@@ -29,6 +30,7 @@ ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-serialization-jackson = { module = "io.ktor:ktor-serialization-jackson", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
@@ -48,6 +50,7 @@ log4j-slf4j2-impl = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", ver
 
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 jackson-module-kotlin = { module = "com.fasterxml.jackson.module:jackson-module-kotlin", version.ref = "jackson" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 
 java-jwt = { module = "com.auth0:java-jwt", version = "4.5.0" }
 
@@ -63,8 +66,8 @@ jline = { module = "org.jline:jline", version = "3.30.4" }
 gdx-natives = ["gdx-platform", "gdx-freetype-platform"]
 ktx = ["ktx-app", "ktx-assets-async", "ktx-freetype-async"]
 lua = ["luajava", "lua54"]
-ktor-client = ["ktor-client-core", "ktor-client-cio", "ktor-client-content-negotiation", "ktor-serialization-jackson"]
-ktor-server = ["ktor-server-netty", "ktor-server-content-negotiation", "ktor-serialization-jackson", "ktor-server-auth", "ktor-server-auth-jwt"]
+ktor-client = ["ktor-client-core", "ktor-client-cio", "ktor-client-content-negotiation", "ktor-serialization-kotlinx-json"]
+ktor-server = ["ktor-server-netty", "ktor-server-content-negotiation", "ktor-serialization-kotlinx-json", "ktor-server-auth", "ktor-server-auth-jwt"]
 koin = ["koin-core", "koin-logger-slf4j"]
 log4j = ["log4j-api", "log4j-core", "log4j-slf4j2-impl"]
 jackson = ["jackson-databind", "jackson-module-kotlin"]
@@ -72,5 +75,5 @@ lml = ["gdx-lml", "gdx-lml-vis"]
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.2.20" }
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.3.0" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.2.20" }
 shadow = { id = "com.gradleup.shadow", version = "9.3.1" }

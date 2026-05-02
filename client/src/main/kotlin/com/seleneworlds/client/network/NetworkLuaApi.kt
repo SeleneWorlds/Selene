@@ -5,13 +5,14 @@ import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
-import com.seleneworlds.common.script.ClosureTrace
+import com.seleneworlds.common.script.ConstantTrace
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.checkFunction
+import com.seleneworlds.common.lua.util.checkSerializedMap
 import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.getCallerInfo
 import com.seleneworlds.common.lua.util.register
-import com.seleneworlds.common.lua.util.toAnyMap
+import com.seleneworlds.common.lua.util.toSerializedMap
 import com.seleneworlds.common.lua.util.xpCall
 
 /**
@@ -34,7 +35,7 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
             function.push(lua)
             lua.push(payload)
             try {
-                lua.xpCall(1, 0, ClosureTrace { "[payload \"$payloadId\"] registered in <$trace>" })
+                lua.xpCall(1, 0, ConstantTrace("[payload \"$payloadId\"] registered in <$trace>"))
             } catch (e: LuaException) {
                 logger.error("Lua Error in Payload Handler", e)
             }
@@ -44,7 +45,7 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
     }
 
     private fun luaSendToServer(lua: Lua): Int {
-        api.sendToServer(lua.checkString(1), lua.toAnyMap(2))
+        api.sendToServer(lua.checkString(1), if (!lua.isNil(2)) lua.checkSerializedMap(2) else emptyMap())
         return 0
     }
 

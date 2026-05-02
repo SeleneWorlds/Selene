@@ -1,6 +1,6 @@
 package com.seleneworlds.client.network
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import com.seleneworlds.client.assets.RuntimeBundleUpdateManager
 import com.seleneworlds.client.camera.CameraManager
@@ -15,10 +15,11 @@ import com.seleneworlds.common.network.PayloadHandlerRegistry
 import com.seleneworlds.common.network.Packet
 import com.seleneworlds.common.network.PacketHandler
 import com.seleneworlds.common.network.packet.*
+import com.seleneworlds.common.serialization.SerializedMapSerializer
 
 class ClientPacketHandler(
     private val logger: Logger,
-    private val objectMapper: ObjectMapper,
+    private val json: Json,
     private val registries: Registries,
     private val payloadRegistry: PayloadHandlerRegistry<Unit>,
     private val nameIdRegistry: NameIdRegistry,
@@ -79,10 +80,7 @@ class ClientPacketHandler(
                 context.enqueueWork {
                     val componentOverrides =
                         packet.components.mapValues {
-                            objectMapper.readValue(
-                                it.value,
-                                ComponentConfiguration::class.java
-                            )
+                            json.decodeFromString<ComponentConfiguration>(it.value)
                         }
                     clientMap.placeOrUpdateEntity(
                         packet.entityId,
@@ -163,7 +161,7 @@ class ClientPacketHandler(
                 context.enqueueWork {
                     val handler = payloadRegistry.getHandler(packet.payloadId)
                     if (handler != null) {
-                        val payload = objectMapper.readValue(packet.payload, Map::class.java)
+                        val payload = json.decodeFromString(SerializedMapSerializer, packet.payload)
                         handler(Unit, payload)
                     }
                 }

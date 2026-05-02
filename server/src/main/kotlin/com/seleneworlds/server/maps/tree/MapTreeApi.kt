@@ -1,6 +1,7 @@
 package com.seleneworlds.server.maps.tree
 
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.common.tiles.TileDefinition
 
 class MapTreeApi(val mapTree: MapTree) {
@@ -34,7 +35,7 @@ class MapTreeApi(val mapTree: MapTree) {
         mapTree.resetTile(coordinate, layerName)
     }
 
-    fun annotateTile(coordinate: Coordinate, key: String, data: Map<Any, Any>?, layerName: String? = null) {
+    fun annotateTile(coordinate: Coordinate, key: String, data: SerializedMap?, layerName: String? = null) {
         mapTree.annotateTile(coordinate, key, data, layerName)
     }
 

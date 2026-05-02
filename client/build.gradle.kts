@@ -2,6 +2,7 @@ import java.time.Instant
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     application
     `maven-publish`
     alias(libs.plugins.shadow)
@@ -28,6 +29,12 @@ dependencies {
 
     implementation(libs.vis.ui)
     implementation(libs.bundles.lml)
+
+    testImplementation(kotlin("test"))
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.register("generateLibrariesJson") {

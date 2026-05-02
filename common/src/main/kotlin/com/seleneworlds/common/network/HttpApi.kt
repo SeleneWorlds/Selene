@@ -1,11 +1,11 @@
 package com.seleneworlds.common.network
 
-import io.ktor.client.HttpClient
+import com.seleneworlds.common.util.Disposable
+import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
-import com.seleneworlds.common.util.Disposable
 
 /**
  * Make HTTP web requests.
@@ -15,14 +15,16 @@ class HttpApi(
 ) : Disposable {
     data class HttpResult(val status: Int, val body: String, val success: Boolean)
 
-    fun post(url: String, body: Any?, headers: Map<String, Any> = emptyMap()): HttpResult {
+    fun post(url: String, body: Any?, headers: Map<String, Any?> = emptyMap()): HttpResult {
         try {
             val response = runBlocking {
                 httpClient.post(url) {
                     contentType(ContentType.Application.Json)
                     setBody(body)
                     headers.forEach { (key, value) ->
-                        header(key, value.toString())
+                        if (value != null) {
+                            header(key, value.toString())
+                        }
                     }
                 }
             }

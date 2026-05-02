@@ -1,6 +1,7 @@
 package com.seleneworlds.server.sync
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import com.seleneworlds.common.network.Packet
 import com.seleneworlds.common.network.packet.*
 import com.seleneworlds.common.grid.ChunkWindow
@@ -14,7 +15,7 @@ import com.seleneworlds.server.players.Player
 
 class PlayerSyncManager(
     private val chunkViewManager: ChunkViewManager,
-    private val objectMapper: ObjectMapper,
+    private val json: Json,
     val player: Player,
     private val entityManager: EntityManager
 ) : CameraListener {
@@ -143,7 +144,7 @@ class PlayerSyncManager(
                     coordinate = entity.coordinate,
                     facing = entity.facing?.angle ?: 0f,
                     components = entity.resolveComponentsFor(player)
-                        .mapValues { objectMapper.writeValueAsString(it.value) }
+                        .mapValues { json.encodeToString(it.value) }
                 )
             )
         }

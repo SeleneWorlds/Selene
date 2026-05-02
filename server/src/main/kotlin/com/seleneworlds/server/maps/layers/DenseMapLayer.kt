@@ -1,9 +1,9 @@
 package com.seleneworlds.server.maps.layers
 
 import com.google.common.collect.HashBasedTable
-import com.google.common.collect.Table
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.server.data.Registries
 import com.seleneworlds.server.maps.MapChunk
 
@@ -68,7 +68,7 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
     override fun annotateTile(
         coordinate: Coordinate,
         key: String,
-        data: Map<Any, Any>?
+        data: SerializedMap?
     ) {
         getOrCreateChunk(coordinate).setAnnotation(coordinate, key, data)
     }
@@ -96,9 +96,9 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
 
     inner class DenseChunk(val start: Coordinate, val size: Int) : MapChunk {
         val tiles = IntArray(size * size)
-        val annotations = HashBasedTable.create<Coordinate, String, Map<Any, Any>>()
+        val annotations = HashBasedTable.create<Coordinate, String, SerializedMap>()
 
-        fun setAnnotation(coordinate: Coordinate, key: String, value: Map<Any, Any>?) {
+        fun setAnnotation(coordinate: Coordinate, key: String, value: SerializedMap?) {
             if (value != null) {
                 annotations.put(coordinate, key, value)
             } else {
@@ -154,7 +154,7 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
         collisionTags.remove(tagName)
     }
 
-    fun getAnnotations(coordinate: Coordinate): Map<String, Map<*, *>> {
+    fun getAnnotations(coordinate: Coordinate): Map<String, SerializedMap> {
         val chunk = getChunkOrNull(coordinate) ?: return emptyMap()
         return chunk.annotations.row(coordinate)
     }

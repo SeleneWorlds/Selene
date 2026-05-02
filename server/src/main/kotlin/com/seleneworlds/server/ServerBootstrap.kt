@@ -1,16 +1,13 @@
 package com.seleneworlds.server
 
-import com.fasterxml.jackson.databind.MapperFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.json.JsonMapper
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.fp.getOrElse
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.createdAtStart
@@ -41,6 +38,7 @@ import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.libraries.*
 import com.seleneworlds.common.network.*
 import com.seleneworlds.common.sounds.SoundRegistry
+import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.tiles.TileRegistry
 import com.seleneworlds.common.tiles.transitions.TransitionRegistry
@@ -81,10 +79,6 @@ import com.seleneworlds.server.sync.ChunkViewManager
 import com.seleneworlds.server.tiles.transitions.TransitionResolver
 import com.seleneworlds.server.world.World
 
-val objectMapper = JsonMapper.builder()
-    .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS).build()
-    .registerKotlinModule()
-
 @OptIn(ExperimentalHoplite::class)
 fun main(args: Array<String>) {
     ServerConfig.createDefault()
@@ -96,13 +90,10 @@ fun main(args: Array<String>) {
         singleOf(::SessionAuthentication)
         singleOf(::ServerHeartbeat) { bind<Disposable>() }
         single {
-            val objectMapper = get<ObjectMapper>()
+            val json = get<Json>()
             HttpClient(CIO) {
                 install(ContentNegotiation) {
-                    jackson {
-                        setConfig(objectMapper.serializationConfig)
-                        setConfig(objectMapper.deserializationConfig)
-                    }
+                    json(json)
                 }
             }
         }
@@ -168,7 +159,7 @@ fun main(args: Array<String>) {
         singleOf(::LoginQueue)
     }
     val dataModule = module {
-        single { objectMapper }.bind(ObjectMapper::class)
+        single { seleneJson }.bind(Json::class)
         singleOf(::TileRegistry)
         singleOf(::TransitionRegistry)
         singleOf(::EntityRegistry)

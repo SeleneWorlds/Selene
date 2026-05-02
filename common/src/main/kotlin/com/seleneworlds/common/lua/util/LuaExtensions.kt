@@ -16,6 +16,7 @@ import com.seleneworlds.common.grid.Grid
 import com.seleneworlds.common.util.ResolvableReference
 import com.seleneworlds.common.script.ScriptTrace
 import com.seleneworlds.common.observable.ObservableMap
+import com.seleneworlds.common.serialization.SerializedMap
 import java.util.*
 import kotlin.math.abs
 import kotlin.reflect.KClass
@@ -232,7 +233,7 @@ fun Lua.checkFunction(index: Int): LuaValue {
 
 fun <T : Any> Lua.toRegistry(index: Int, registry: Registry<T>): T? {
     if (isUserdata(index)) {
-        return toUserdata(index, registry.clazz)
+        return toUserdata(index, registry.dataType)
     }
     return toString(index)?.let { registry.get(it) }
 }
@@ -240,37 +241,109 @@ fun <T : Any> Lua.toRegistry(index: Int, registry: Registry<T>): T? {
 fun <T : Any> Lua.checkRegistry(index: Int, registry: Registry<T>): T {
     if (isUserdata(index)) {
         return when (val item = toAny(index)) {
-            is Identifier -> registry.get(item) ?: throwTypeError(index, registry.clazz)
-            else -> checkUserdata(index, registry.clazz)
+            is Identifier -> registry.get(item) ?: throwTypeError(index, registry.dataType)
+            else -> checkUserdata(index, registry.dataType)
         }
     }
-    return toRegistry(index, registry) ?: throwTypeError(index, registry.clazz)
+    return toRegistry(index, registry) ?: throwTypeError(index, registry.dataType)
 }
 
 fun Lua.toAny(index: Int): Any? {
     return when (type(index)) {
-        LuaType.STRING -> return toString(index)!!
-        LuaType.NUMBER -> return toNumber(index).let { if (it % 1.0 == 0.0) it.toInt() else it }
-        LuaType.BOOLEAN -> return toBoolean(index)
-        LuaType.TABLE -> return toAnyMap(index)
-        LuaType.FUNCTION -> return toFunction(index)
-        LuaType.USERDATA -> return toJavaObject(index)
+        LuaType.STRING -> toString(index)!!
+        LuaType.NUMBER -> toNumber(index).let { if (it % 1.0 == 0.0) it.toInt() else it }
+        LuaType.BOOLEAN -> toBoolean(index)
+        LuaType.TABLE -> toListOrMap(index)
+        LuaType.FUNCTION -> toFunction(index)
+        LuaType.USERDATA -> toJavaObject(index)
         else -> null
     }
 }
 
-fun Lua.toAnyMap(index: Int): Map<Any, Any>? {
-    if (isTable(index)) {
-        val map = mutableMapOf<Any, Any>()
+private inline fun <T> Lua.withRestoredStack(block: Lua.() -> T): T {
+    val originalTop = top
+    try {
+        return block()
+    } finally {
+        top = originalTop
+    }
+}
+
+private fun Lua.toListOrMap(index: Int): Any? {
+    if (!isTable(index)) {
+        return null
+    }
+
+    return withRestoredStack {
+        val entries = mutableMapOf<Any, Any?>()
+        var allStringKeys = true
+        var allPositiveIntKeys = true
+        var count = 0
+        var maxIndex = 0
         val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
         pushNil()
         while (next(absIndex) != 0) {
-            val key = toAny(-2)!!
-            val value = toAny(-1)!!
-            map[key] = value
+            val value = toAny(-1)
+            when {
+                isString(-2) -> {
+                    allPositiveIntKeys = false
+                    entries[toString(-2)!!] = value
+                }
+
+                isInteger(-2) -> {
+                    allStringKeys = false
+                    val key = toInteger(-2).toInt()
+                    if (key <= 0) {
+                        allPositiveIntKeys = false
+                    } else {
+                        entries[key] = value
+                        count++
+                        maxIndex = maxOf(maxIndex, key)
+                    }
+                }
+
+                else -> {
+                    allStringKeys = false
+                    allPositiveIntKeys = false
+                }
+            }
             pop(1)
         }
-        return map
+
+        when {
+            allStringKeys -> {
+                @Suppress("UNCHECKED_CAST")
+                entries as Map<String, Any?>
+            }
+
+            allPositiveIntKeys && count == maxIndex -> List(maxIndex) { entries[it + 1] }
+            allPositiveIntKeys -> {
+                @Suppress("UNCHECKED_CAST")
+                entries as Map<Int, Any?>
+            }
+            else -> throwError("Expected only string or positive integer keys in table")
+        }
+    }
+}
+
+fun Lua.toSerializedMap(index: Int): SerializedMap? {
+    if (isTable(index)) {
+        return withRestoredStack {
+            val map = mutableMapOf<String, Any?>()
+            val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
+            pushNil()
+            while (next(absIndex) != 0) {
+                val key = if (isString(-2)) {
+                    toString(-2)!!
+                } else {
+                    throwError("Expected only string keys in table, got ${type(-2)}")
+                }
+                val value = toAny(-1)
+                map[key] = value
+                pop(1)
+            }
+            map
+        }
     } else if (isUserdata(index)) {
         return toUserdata(index, ObservableMap::class)?.map
     }
@@ -278,8 +351,8 @@ fun Lua.toAnyMap(index: Int): Map<Any, Any>? {
     return null
 }
 
-fun Lua.checkAnyMap(index: Int): Map<Any, Any> {
-    return toAnyMap(index) ?: throwTypeError(index, LuaType.TABLE)
+fun Lua.checkSerializedMap(index: Int): Map<String, Any?> {
+    return toSerializedMap(index) ?: throwTypeError(index, LuaType.TABLE)
 }
 
 inline fun <reified TKey : Any, reified TValue : Any> Lua.toTypedMap(index: Int): Map<TKey, TValue>? {
@@ -292,23 +365,25 @@ fun <TKey : Any, TValue : Any> Lua.toTypedMap(
     valueClass: KClass<TValue>
 ): Map<TKey, TValue>? {
     if (isTable(index)) {
-        val map = mutableMapOf<TKey, TValue>()
-        val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
-        pushNil()
-        while (next(absIndex) != 0) {
-            val key = toAny(-2)!!
-            if (!keyClass.isInstance(key)) {
-                throwError("Expected only keys of type ${keyClass.simpleName} in table")
+        return withRestoredStack {
+            val map = mutableMapOf<TKey, TValue>()
+            val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
+            pushNil()
+            while (next(absIndex) != 0) {
+                val key = toAny(-2)!!
+                if (!keyClass.isInstance(key)) {
+                    throwError("Expected only keys of type ${keyClass.simpleName} in table")
+                }
+                val value = toAny(-1)!!
+                if (!valueClass.isInstance(value)) {
+                    throwError("Expected only values of type ${valueClass.simpleName} in table")
+                }
+                @Suppress("UNCHECKED_CAST")
+                map[key as TKey] = value as TValue
+                pop(1)
             }
-            val value = toAny(-1)!!
-            if (!valueClass.isInstance(value)) {
-                throwError("Expected only values of type ${valueClass.simpleName} in table")
-            }
-            @Suppress("UNCHECKED_CAST")
-            map[key as TKey] = value as TValue
-            pop(1)
+            map
         }
-        return map
     }
 
     return null

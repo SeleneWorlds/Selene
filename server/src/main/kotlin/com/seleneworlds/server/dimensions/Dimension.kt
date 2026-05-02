@@ -2,6 +2,7 @@ package com.seleneworlds.server.dimensions
 
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.server.cameras.viewer.DefaultViewer
 import com.seleneworlds.server.cameras.viewer.Viewer
@@ -48,7 +49,7 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
         return world.entityManager.getNearbyEntities(coordinate, this, range)
     }
 
-    fun getAnnotationAt(coordinate: Coordinate, key: String, viewer: Viewer = DefaultViewer): Map<*, *>? {
+    fun getAnnotationAt(coordinate: Coordinate, key: String, viewer: Viewer = DefaultViewer): SerializedMap? {
         val chunkView = world.chunkViewManager.atCoordinate(this, viewer, coordinate)
         return chunkView.getAnnotationAt(coordinate, key)
     }

@@ -13,7 +13,7 @@ import com.seleneworlds.common.util.ResolvableReference
 import kotlin.collections.set
 
 object ObservableMapLuaApi {
-    private fun getMapValue(container: Any?, key: Any): Any? {
+    private fun getMapValue(container: Any?, key: String): Any? {
         return when (container) {
             is Map<*, *> -> container[key]
             is ObservableMap -> container.map[key]
@@ -32,7 +32,7 @@ object ObservableMapLuaApi {
                 when (value) {
                     is MutableMap<*, *> -> {
                         @Suppress("UNCHECKED_CAST")
-                        lua.push(ObservableMap(value as MutableMap<Any, Any>), Lua.Conversion.NONE)
+                        lua.push(ObservableMap(value as MutableMap<String, Any?>), Lua.Conversion.NONE)
                     }
 
                     is ResolvableReference<*, *> -> {
@@ -63,7 +63,7 @@ object ObservableMapLuaApi {
         val observableMap = lua.checkUserdata<ObservableMap>(1)
         var result: Any? = observableMap.map
         for (index in 2..lua.top) {
-            val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
+            val key = lua.toString(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
             result = getMapValue(result, key)
             if (result == null) {
                 return lua.pushNil().let { 1 }
@@ -77,12 +77,12 @@ object ObservableMapLuaApi {
         val observableMap = lua.checkUserdata<ObservableMap>(1)
         var result: Any? = observableMap.map
         for (index in 2..lua.top) {
-            val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
+            val key = lua.toString(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
             result = getMapValue(result, key) ?: return lua.pushNil().let { 1 }
         }
         if (result !is LuaValue && result is Map<*, *>) {
             @Suppress("UNCHECKED_CAST")
-            lua.push(ObservableMap(result as MutableMap<Any, Any>), Lua.Conversion.NONE)
+            lua.push(ObservableMap(result as MutableMap<String, Any?>), Lua.Conversion.NONE)
         } else if (result is ResolvableReference<*, *>) {
             lua.push(result.resolve(), Lua.Conversion.NONE)
         } else {
@@ -96,7 +96,7 @@ object ObservableMapLuaApi {
         var container: Any? = observableMap.map
 
         for (index in 2..lua.top - 2) {
-            val key = lua.toAny(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
+            val key = lua.toString(index) ?: lua.throwTypeError(index, Lua.LuaType.STRING)
             val next = getMapValue(container, key)
                 ?: lua.throwError("Cannot set field, key [$key] does not exist")
             if (next !is Map<*, *> && next !is ObservableMap) {
@@ -105,12 +105,12 @@ object ObservableMapLuaApi {
             container = next
         }
 
-        val key = lua.toAny(-2) ?: lua.throwTypeError(-2, Lua.LuaType.STRING)
+        val key = lua.toString(-2) ?: lua.throwTypeError(-2, Lua.LuaType.STRING)
         val value = lua.toAny(-1)
 
         when (container) {
             is Map<*, *> -> {
-                @Suppress("UNCHECKED_CAST") val mutableMap = container as MutableMap<Any, Any>
+                @Suppress("UNCHECKED_CAST") val mutableMap = container as MutableMap<String, Any?>
                 if (value != null) {
                     mutableMap[key] = value
                 } else {
@@ -137,7 +137,7 @@ object ObservableMapLuaApi {
 
     private fun luaHasKey(lua: Lua): Int {
         val observableMap = lua.checkUserdata<ObservableMap>(1)
-        val key = lua.toAny(2) ?: lua.throwTypeError(2, Lua.LuaType.STRING)
+        val key = lua.toString(2) ?: lua.throwTypeError(2, Lua.LuaType.STRING)
         lua.push(observableMap.map.containsKey(key))
         return 1
     }
@@ -155,19 +155,15 @@ object ObservableMapLuaApi {
     val luaMeta = object: LuaMetatable {
         override fun luaGet(lua: Lua): Int {
             val map = lua.checkUserdata<ObservableMap>(1)
-            val key = when {
-                lua.isInteger(2) -> lua.toInteger(2).toInt()
-                lua.isString(2) -> lua.toString(2)!!
-                else -> return lua.pushError("Key must be a string or number, got ${lua.type(2)}")
-            }
-            if (key is String && luaMappings.has(key)) {
+            val key = lua.toString(2) ?: return lua.pushError("Key must be a string, got ${lua.type(2)}")
+            if (luaMappings.has(key)) {
                 return luaMappings.luaGet(lua)
             }
             val value = map[key]
             if (value != null) {
                 if (value !is LuaValue && value is Map<*, *>) {
                     @Suppress("UNCHECKED_CAST")
-                    lua.push(ObservableMap(value as MutableMap<Any, Any>), Lua.Conversion.NONE)
+                    lua.push(ObservableMap(value as MutableMap<String, Any?>), Lua.Conversion.NONE)
                 } else if (value !is LuaValue && value is Collection<*>) {
                     // TODO would be nice if we had an ObservableList counterpart for this
                     lua.throwError("Cannot directly access a table field of an observed map. Use Lookup(\"${key}\") instead to create a local copy.")
@@ -183,11 +179,7 @@ object ObservableMapLuaApi {
 
         override fun luaSet(lua: Lua): Int {
             val map = lua.checkUserdata<ObservableMap>(1)
-            val key = when {
-                lua.isInteger(2) -> lua.toInteger(2).toInt()
-                lua.isString(2) -> lua.toString(2)!!
-                else -> return lua.pushNil().let { 1 }
-            }
+            val key = lua.toString(2) ?: return lua.pushError("Key must be a string, got ${lua.type(2)}")
             val value = lua.toAny(3)
             if (value is IdResolvable<*, *>) {
                 map[key] = value.resolvableReference()

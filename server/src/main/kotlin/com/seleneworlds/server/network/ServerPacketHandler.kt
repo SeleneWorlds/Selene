@@ -1,21 +1,22 @@
 package com.seleneworlds.server.network
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import org.slf4j.Logger
 import com.seleneworlds.common.data.mappings.NameIdRegistry
 import com.seleneworlds.common.grid.Grid
-import com.seleneworlds.common.network.PayloadHandlerRegistry
 import com.seleneworlds.common.network.Packet
 import com.seleneworlds.common.network.PacketHandler
+import com.seleneworlds.common.network.PayloadHandlerRegistry
 import com.seleneworlds.common.network.packet.*
+import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.server.login.SessionAuthentication
 import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.players.PlayerEvents
+import kotlinx.serialization.json.Json
+import org.slf4j.Logger
 import java.util.*
 
 class ServerPacketHandler(
     private val logger: Logger,
-    private val objectMapper: ObjectMapper,
+    private val json: Json,
     private val nameIdRegistry: NameIdRegistry,
     private val payloadRegistry: PayloadHandlerRegistry<Player>,
     private val grid: Grid,
@@ -94,8 +95,12 @@ class ServerPacketHandler(
             context.enqueueWork {
                 val handler = payloadRegistry.getHandler(packet.payloadId)
                 if (handler != null) {
-                    val payload = objectMapper.readValue(packet.payload, Map::class.java)
-                    handler(player, payload)
+                    try {
+                        val payload = json.decodeFromString(SerializedMapSerializer, packet.payload)
+                        handler(player, payload)
+                    } catch (e: Exception) {
+                        logger.warn("Failed to handle custom payload {} from {}", packet.payloadId, context.address, e)
+                    }
                 }
             }
         }

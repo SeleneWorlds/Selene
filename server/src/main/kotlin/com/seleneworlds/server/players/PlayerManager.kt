@@ -1,6 +1,6 @@
 package com.seleneworlds.server.players
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.json.Json
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.ReferenceResolver
 import com.seleneworlds.server.dimensions.DimensionManager
@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 class PlayerManager(
     private val dimensionManager: DimensionManager,
     private val chunkViewManager: ChunkViewManager,
-    private val objectMapper: ObjectMapper,
+    private val json: Json,
     private val entityManager: EntityManager,
     private val mainThreadDispatcher: MainThreadDispatcher
 ) : ReferenceResolver<String, Player> {
@@ -38,7 +38,7 @@ class PlayerManager(
     }
 
     fun createSyncManager(player: Player): PlayerSyncManager {
-        return PlayerSyncManager(chunkViewManager, objectMapper, player, entityManager)
+        return PlayerSyncManager(chunkViewManager, json, player, entityManager)
     }
 
     override fun dereferencePersisted(id: String): Player? {

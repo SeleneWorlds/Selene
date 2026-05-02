@@ -3,6 +3,7 @@ package com.seleneworlds.server.maps.layers
 import com.seleneworlds.common.grid.ChunkWindow
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.server.cameras.viewer.DefaultViewer
 import com.seleneworlds.server.maps.tree.MapTree
 import com.seleneworlds.server.sync.ScopedChunkView
@@ -48,7 +49,7 @@ class MapTreeLayer(override val name: String, private val mapTree: MapTree) : Ma
     override fun annotateTile(
         coordinate: Coordinate,
         key: String,
-        data: Map<Any, Any>?
+        data: SerializedMap?
     ) {
     }
 
@@ -73,7 +74,7 @@ class MapTreeLayer(override val name: String, private val mapTree: MapTree) : Ma
         collisionTags.remove(tagName)
     }
 
-    fun getAnnotations(coordinate: Coordinate): Map<String, Map<*, *>> {
+    fun getAnnotations(coordinate: Coordinate): Map<String, SerializedMap> {
         val view = ScopedChunkView.create(mapTree, DefaultViewer, ChunkWindow.at(coordinate, 1))
         return view.getAnnotationsAt(coordinate)
     }

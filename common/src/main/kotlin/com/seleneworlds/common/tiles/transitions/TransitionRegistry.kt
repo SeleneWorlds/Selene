@@ -1,14 +1,15 @@
 package com.seleneworlds.common.tiles.transitions
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.json.Json
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.json.FileBasedRegistry
 
-class TransitionRegistry(objectMapper: ObjectMapper) : FileBasedRegistry<TransitionDefinition>(
-    objectMapper,
+class TransitionRegistry(json: Json) : FileBasedRegistry<TransitionDefinition>(
+    json,
     "common",
     "transitions",
-    TransitionDefinition::class
+    TransitionDefinition::class,
+    TransitionDefinition.serializer()
 ) {
     companion object {
         val IDENTIFIER = Identifier.withDefaultNamespace("transitions")

@@ -3,6 +3,7 @@ package com.seleneworlds.common.i18n
 import org.slf4j.Logger
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.Bundle
+import com.seleneworlds.common.serialization.SerializedMap
 import java.io.File
 import java.util.*
 
@@ -18,7 +19,7 @@ class Messages(
         return messages.getProperty(key)
     }
 
-    fun format(key: String, args: Map<String, Any>, locale: Locale? = null): String? {
+    fun format(key: String, args: SerializedMap, locale: Locale? = null): String? {
         val template = get(key, locale) ?: return null
         return template.replace(Regex("\\{\\s*([a-zA-Z_][a-zA-Z0-9_]*)\\s*}")) { match ->
             args[match.groupValues[1]]?.toString() ?: match.value
