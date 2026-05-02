@@ -5,6 +5,7 @@ import com.seleneworlds.common.data.BundleDrivenRegistry
 import com.seleneworlds.common.data.Registry
 import com.seleneworlds.common.util.Disposable
 import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributeView
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.ConcurrentHashMap
@@ -284,9 +285,10 @@ abstract class BundleWatcher(
 
     private fun readFileState(filePath: Path): FileState? {
         return try {
+            val fileAttributes = Files.readAttributes(filePath, BasicFileAttributes::class.java)
             FileState(
-                size = Files.size(filePath),
-                lastModifiedTime = Files.getLastModifiedTime(filePath)
+                size = fileAttributes.size(),
+                lastModifiedTime = fileAttributes.lastModifiedTime()
             )
         } catch (e: Exception) {
             logger.warn("Failed to read file state for: $filePath", e)
