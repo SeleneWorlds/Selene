@@ -6,8 +6,9 @@ import world.selene.common.event.Event
 import world.selene.common.lua.util.checkFunction
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.getCallerInfo
+import world.selene.common.script.ScriptTrace
 
-class LuaEventSink<T : Any>(private val event: Event<T>, private val factory: (LuaValue, LuaTrace) -> T) {
+class LuaEventSink<T : Any>(private val event: Event<T>, private val factory: (LuaValue, ScriptTrace) -> T) {
     companion object {
         /**
          * Connects a callback function to this signal.

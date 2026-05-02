@@ -5,7 +5,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import world.selene.client.entity.EntityApi
 import world.selene.common.lua.LuaManager
-import world.selene.common.lua.LuaTrace
+import world.selene.common.script.ScriptTrace
 import world.selene.common.lua.util.xpCall
 import world.selene.common.observable.ObservableMap
 
@@ -13,7 +13,7 @@ class ClientEntityLuaScript(
     private val module: String,
     private val luaManager: LuaManager,
     private val logger: Logger
-) : ClientEntityScript, LuaTrace {
+) : ClientEntityScript, ScriptTrace {
 
     override fun initialize(entity: EntityApi, data: ObservableMap): Boolean {
         return invokeIfPresent("Initialize") { lua ->
@@ -53,7 +53,7 @@ class ClientEntityLuaScript(
         }
     }
 
-    override fun luaTrace(): String {
+    override fun scriptTrace(): String {
         return "[client entity script \"$module\"]"
     }
 }

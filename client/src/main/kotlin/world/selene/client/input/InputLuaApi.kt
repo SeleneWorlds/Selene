@@ -3,7 +3,7 @@ package world.selene.client.input
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaModule
-import world.selene.common.lua.LuaTrace
+import world.selene.common.script.ScriptTrace
 import world.selene.common.lua.util.checkEnum
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.getCallerInfo
@@ -106,10 +106,10 @@ class InputLuaApi(private val api: InputApi) : LuaModule {
         )
     }
 
-    private fun createTrace(lua: Lua, input: String): LuaTrace {
+    private fun createTrace(lua: Lua, input: String): ScriptTrace {
         val registrationSite = lua.getCallerInfo()
-        return object : LuaTrace {
-            override fun luaTrace(): String {
+        return object : ScriptTrace {
+            override fun scriptTrace(): String {
                 return "[input \"$input\"] registered in $registrationSite"
             }
         }

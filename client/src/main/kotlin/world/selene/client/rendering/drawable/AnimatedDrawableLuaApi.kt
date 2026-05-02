@@ -3,7 +3,7 @@ package world.selene.client.rendering.drawable
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaEventSink
-import world.selene.common.lua.LuaTrace
+import world.selene.common.script.ScriptTrace
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.xpCall
 
@@ -57,7 +57,7 @@ object AnimatedDrawableLuaApi {
      */
     private fun luaGetAnimationCompleted(lua: Lua): Int {
         val self = lua.checkUserdata<AnimatedDrawableApi>(1)
-        val luaEventSink = LuaEventSink(self.animatedDrawable.animationCompleted) { callback: LuaValue, trace: LuaTrace ->
+        val luaEventSink = LuaEventSink(self.animatedDrawable.animationCompleted) { callback: LuaValue, trace: ScriptTrace ->
             AnimatedDrawable.AnimationCompleted {
                 val lua = callback.state()
                 lua.push(callback)

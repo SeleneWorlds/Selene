@@ -5,7 +5,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.client.game.ClientEvents
 import world.selene.common.lua.LuaEventSink
 import world.selene.common.lua.LuaModule
-import world.selene.common.lua.LuaTrace
+import world.selene.common.script.ScriptTrace
 import world.selene.common.lua.util.checkFloat
 import world.selene.common.lua.util.checkInt
 import world.selene.common.lua.util.register
@@ -17,7 +17,7 @@ import world.selene.common.lua.util.xpCall
 class CameraLuaApi(private val api: CameraApi) : LuaModule {
     override val name = "selene.camera"
 
-    val cameraCoordinateChanged = LuaEventSink(ClientEvents.CameraCoordinateChanged.EVENT) { callback: LuaValue, trace: LuaTrace ->
+    val cameraCoordinateChanged = LuaEventSink(ClientEvents.CameraCoordinateChanged.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         ClientEvents.CameraCoordinateChanged { coordinate ->
             val lua = callback.state()
             lua.push(callback)

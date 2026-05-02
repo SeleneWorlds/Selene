@@ -4,7 +4,7 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaEventSink
 import world.selene.common.lua.LuaModule
-import world.selene.common.lua.LuaTrace
+import world.selene.common.script.ScriptTrace
 import world.selene.common.lua.util.checkFunction
 import world.selene.common.lua.util.checkInt
 import world.selene.common.lua.util.checkType
@@ -21,21 +21,21 @@ import world.selene.common.util.Disposable
 class SchedulesLuaApi(private val api: SchedulesApi) : LuaModule, Disposable {
     override val name = "selene.schedules"
 
-    private val secondEvent = LuaEventSink(ScheduleEvents.Second.EVENT) { callback: LuaValue, trace: LuaTrace ->
+    private val secondEvent = LuaEventSink(ScheduleEvents.Second.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         ScheduleEvents.Second {
             val lua = callback.state()
             lua.push(callback)
             lua.xpCall(0, 0, trace)
         }
     }
-    private val minuteEvent = LuaEventSink(ScheduleEvents.Minute.EVENT) { callback: LuaValue, trace: LuaTrace ->
+    private val minuteEvent = LuaEventSink(ScheduleEvents.Minute.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         ScheduleEvents.Minute {
             val lua = callback.state()
             lua.push(callback)
             lua.xpCall(0, 0, trace)
         }
     }
-    private val hourEvent = LuaEventSink(ScheduleEvents.Hour.EVENT) { callback: LuaValue, trace: LuaTrace ->
+    private val hourEvent = LuaEventSink(ScheduleEvents.Hour.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         ScheduleEvents.Hour {
             val lua = callback.state()
             lua.push(callback)

@@ -3,7 +3,7 @@ package world.selene.common.jobs
 import org.slf4j.Logger
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.lua.LuaTrace
+import world.selene.common.script.ScriptTrace
 import world.selene.common.lua.util.CallerInfo
 import world.selene.common.lua.util.xpCall
 import world.selene.common.threading.MainThreadDispatcher
@@ -29,8 +29,8 @@ class SchedulesApi(
         val intervalMs: Int,
         val registrationSite: CallerInfo,
         var task: ScheduledFuture<*>? = null
-    ) : LuaTrace {
-        override fun luaTrace(): String {
+    ) : ScriptTrace {
+        override fun scriptTrace(): String {
             return "[timeout \"$name\", ${intervalMs}ms] scheduled at <$registrationSite>"
         }
     }
@@ -42,8 +42,8 @@ class SchedulesApi(
         val intervalMs: Int,
         val registrationSite: CallerInfo,
         var task: ScheduledFuture<*>? = null
-    ) : LuaTrace {
-        override fun luaTrace(): String {
+    ) : ScriptTrace {
+        override fun scriptTrace(): String {
             return "[interval \"$name\", ${intervalMs}ms] scheduled at <$registrationSite>"
         }
     }
@@ -150,7 +150,7 @@ class SchedulesApi(
         handler?.task?.cancel(false)
     }
 
-    private fun runCallback(callback: LuaValue, trace: LuaTrace, errorMessage: String) {
+    private fun runCallback(callback: LuaValue, trace: ScriptTrace, errorMessage: String) {
         mainThreadDispatcher.runOnMainThread {
             val callbackLua = callback.state()
             try {

@@ -3,7 +3,7 @@ package world.selene.server.lua
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaEventSink
 import world.selene.common.lua.LuaModule
-import world.selene.common.lua.LuaTrace
+import world.selene.common.script.ScriptTrace
 import world.selene.common.lua.util.xpCall
 
 /**
@@ -12,7 +12,7 @@ import world.selene.common.lua.util.xpCall
 class ServerLuaApi(private val api: ServerApi) : LuaModule {
     override val name = "selene.server"
 
-    val serverStarted = LuaEventSink(ServerEvents.ServerStarted.EVENT) { callback: LuaValue, trace: LuaTrace ->
+    val serverStarted = LuaEventSink(ServerEvents.ServerStarted.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         ServerEvents.ServerStarted {
             val lua = callback.state()
             lua.push(callback)
@@ -20,7 +20,7 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
         }
     }
 
-    val serverReloaded = LuaEventSink(ServerEvents.ServerReloaded.EVENT) { callback: LuaValue, trace: LuaTrace ->
+    val serverReloaded = LuaEventSink(ServerEvents.ServerReloaded.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         ServerEvents.ServerReloaded {
             val lua = callback.state()
             lua.push(callback)

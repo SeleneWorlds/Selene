@@ -2,7 +2,6 @@ package world.selene.client.network
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
-import party.iroiro.luajava.LuaException
 import world.selene.client.assets.RuntimeBundleUpdateManager
 import world.selene.client.camera.CameraManager
 import world.selene.client.controls.GridMovement
@@ -12,9 +11,7 @@ import world.selene.client.maps.ClientMap
 import world.selene.client.sounds.SoundManager
 import world.selene.common.entities.ComponentConfiguration
 import world.selene.common.data.mappings.NameIdRegistry
-import world.selene.common.lua.LuaManager
-import world.selene.common.network.LuaPayloadRegistry
-import world.selene.common.lua.util.xpCall
+import world.selene.common.network.PayloadHandlerRegistry
 import world.selene.common.network.Packet
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.packet.*
@@ -22,9 +19,8 @@ import world.selene.common.network.packet.*
 class ClientPacketHandler(
     private val logger: Logger,
     private val objectMapper: ObjectMapper,
-    private val luaManager: LuaManager,
     private val registries: Registries,
-    private val payloadRegistry: LuaPayloadRegistry,
+    private val payloadRegistry: PayloadHandlerRegistry<Unit>,
     private val nameIdRegistry: NameIdRegistry,
     private val clientMap: ClientMap,
     private val cameraManager: CameraManager,
@@ -165,17 +161,10 @@ class ClientPacketHandler(
 
             is CustomPayloadPacket -> {
                 context.enqueueWork {
-                    val handler = payloadRegistry.retrieveHandler(packet.payloadId)
+                    val handler = payloadRegistry.getHandler(packet.payloadId)
                     if (handler != null) {
-                        val lua = luaManager.lua
-                        handler.callback.push(lua)
                         val payload = objectMapper.readValue(packet.payload, Map::class.java)
-                        lua.push(payload)
-                        try {
-                            lua.xpCall(1, 0, handler)
-                        } catch (e: LuaException) {
-                            logger.error("Lua Error in Payload Handler", e)
-                        }
+                        handler(Unit, payload)
                     }
                 }
             }

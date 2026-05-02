@@ -14,7 +14,7 @@ import world.selene.common.grid.Coordinate
 import world.selene.common.grid.Direction
 import world.selene.common.grid.Grid
 import world.selene.common.util.ResolvableReference
-import world.selene.common.lua.LuaTrace
+import world.selene.common.script.ScriptTrace
 import world.selene.common.observable.ObservableMap
 import java.util.*
 import kotlin.math.abs
@@ -322,14 +322,14 @@ fun Lua.toLocale(index: Int): Locale? {
     }
 }
 
-fun Lua.xpCall(nArgs: Int, nResults: Int, trace: LuaTrace? = null) {
+fun Lua.xpCall(nArgs: Int, nResults: Int, trace: ScriptTrace? = null) {
     val base = top - nArgs
     pushErrorHandler()
     insert(base)
     xpCallWithErrorHandler(nArgs, nResults, base, trace)
 }
 
-fun Lua.xpCallWithErrorHandler(nArgs: Int, nResults: Int, errorHandler: Int, trace: LuaTrace? = null) {
+fun Lua.xpCallWithErrorHandler(nArgs: Int, nResults: Int, errorHandler: Int, trace: ScriptTrace? = null) {
     checkStack((nResults - nArgs - 1).coerceAtLeast(0))
     val code = luaNatives.lua_pcall(pointer, nArgs, nResults, errorHandler)
     remove(errorHandler)
@@ -340,7 +340,7 @@ fun Lua.xpCallWithErrorHandler(nArgs: Int, nResults: Int, errorHandler: Int, tra
 
     val message: String
     if (type(-1) === LuaType.STRING) {
-        message = toString(-1)!! + if (trace != null) "\n\t${trace.luaTrace()}" else ""
+        message = toString(-1)!! + if (trace != null) "\n\t${trace.scriptTrace()}" else ""
         pop(1)
     } else {
         message = "no error message available"

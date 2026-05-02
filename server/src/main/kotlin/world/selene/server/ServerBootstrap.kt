@@ -20,12 +20,10 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.logger.slf4jLogger
 import org.slf4j.LoggerFactory
-import world.selene.common.bundles.BundleDatabase
-import world.selene.common.bundles.BundleLoader
-import world.selene.common.bundles.BundleLocator
-import world.selene.common.bundles.ResourcesApi
-import world.selene.common.bundles.ResourcesLuaApi
-import world.selene.common.data.*
+import world.selene.common.bundles.*
+import world.selene.common.data.RegistriesApi
+import world.selene.common.data.RegistriesLuaApi
+import world.selene.common.data.RegistryProvider
 import world.selene.common.data.custom.CustomRegistries
 import world.selene.common.data.mappings.NameIdRegistry
 import world.selene.common.entities.EntityRegistry
@@ -38,19 +36,10 @@ import world.selene.common.i18n.I18nLuaApi
 import world.selene.common.i18n.Messages
 import world.selene.common.jobs.SchedulesApi
 import world.selene.common.jobs.SchedulesLuaApi
-import world.selene.common.lua.*
-import world.selene.common.lua.libraries.LuaDebugModule
-import world.selene.common.lua.libraries.LuaMathxModule
-import world.selene.common.lua.libraries.LuaOsModule
-import world.selene.common.lua.libraries.LuaPackageModule
-import world.selene.common.lua.libraries.LuaStringxModule
-import world.selene.common.lua.libraries.LuaTablexModule
-import world.selene.common.network.HttpApi
-import world.selene.common.network.HttpLuaApi
-import world.selene.common.network.LuaPayloadRegistry
-import world.selene.common.network.PacketFactory
-import world.selene.common.network.PacketHandler
-import world.selene.common.network.PacketRegistrations
+import world.selene.common.lua.LuaManager
+import world.selene.common.lua.LuaModule
+import world.selene.common.lua.libraries.*
+import world.selene.common.network.*
 import world.selene.common.sounds.SoundRegistry
 import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.tiles.TileRegistry
@@ -62,47 +51,36 @@ import world.selene.server.bundle.ServerBundleWatcher
 import world.selene.server.bundles.ClientBundleCache
 import world.selene.server.bundles.ServerBundleLocator
 import world.selene.server.collision.CollisionResolver
-import world.selene.server.config.ConfigApi
-import world.selene.server.config.ConfigLuaApi
-import world.selene.server.config.ScriptProperties
-import world.selene.server.config.ServerConfig
-import world.selene.server.config.SystemConfig
-import world.selene.server.heartbeat.ServerHeartbeat
-import world.selene.server.data.mappings.PersistentNameIdRegistry
+import world.selene.server.config.*
 import world.selene.server.data.Registries
 import world.selene.server.data.ServerCustomData
+import world.selene.server.data.mappings.PersistentNameIdRegistry
 import world.selene.server.dimensions.Dimension
 import world.selene.server.dimensions.DimensionManager
 import world.selene.server.dimensions.DimensionsApi
 import world.selene.server.dimensions.DimensionsLuaApi
-import world.selene.server.entities.Entity
-import world.selene.server.entities.EntityManager
 import world.selene.server.entities.EntitiesApi
 import world.selene.server.entities.EntitiesLuaApi
+import world.selene.server.entities.Entity
+import world.selene.server.entities.EntityManager
+import world.selene.server.heartbeat.ServerHeartbeat
 import world.selene.server.http.HttpServer
 import world.selene.server.login.LoginQueue
 import world.selene.server.login.SessionAuthentication
-import world.selene.server.lua.*
+import world.selene.server.lua.ServerApi
+import world.selene.server.lua.ServerLuaApi
 import world.selene.server.maps.ServerMapApi
 import world.selene.server.maps.ServerMapLuaApi
-import world.selene.server.tiles.transitions.TransitionResolver
-import world.selene.server.network.NetworkApi
-import world.selene.server.network.NetworkLuaApi
-import world.selene.server.network.NetworkServer
-import world.selene.server.network.NetworkServerImpl
-import world.selene.server.network.ServerPacketHandler
+import world.selene.server.network.*
+import world.selene.server.players.Player
+import world.selene.server.players.PlayerManager
 import world.selene.server.players.PlayersApi
 import world.selene.server.players.PlayersLuaApi
-import world.selene.server.players.PlayerManager
-import world.selene.server.saves.SavesLuaApi
-import world.selene.server.saves.MapTreeFormat
-import world.selene.server.saves.MapTreeFormatBinaryV1
-import world.selene.server.saves.MapTreeFormatJsonV1
-import world.selene.server.saves.SaveManager
-import world.selene.server.saves.SavesApi
+import world.selene.server.saves.*
 import world.selene.server.sounds.SoundsApi
 import world.selene.server.sounds.SoundsLuaApi
 import world.selene.server.sync.ChunkViewManager
+import world.selene.server.tiles.transitions.TransitionResolver
 import world.selene.server.world.World
 
 val objectMapper = JsonMapper.builder()
@@ -151,7 +129,7 @@ fun main(args: Array<String>) {
     }
     val luaModule = module {
         singleOf(::LuaManager)
-        singleOf(::LuaPayloadRegistry)
+        single { PayloadHandlerRegistry<Player>() }
         singleOf(::ServerCustomData)
         singleOf(::Messages)
         singleOf(::LuaDebugModule) { bind<LuaModule>() }

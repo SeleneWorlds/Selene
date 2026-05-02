@@ -1,9 +1,7 @@
 package world.selene.server.network
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import party.iroiro.luajava.value.LuaValue
-import world.selene.common.lua.util.CallerInfo
-import world.selene.common.network.LuaPayloadRegistry
+import world.selene.common.network.PayloadHandlerRegistry
 import world.selene.common.network.packet.CustomPayloadPacket
 import world.selene.server.entities.EntityApi
 import world.selene.server.players.Player
@@ -12,13 +10,12 @@ import world.selene.server.players.PlayerApi
 /**
  * Send and handle custom payloads.
  */
-@Suppress("SameReturnValue")
 class NetworkApi(
-    private val payloadRegistry: LuaPayloadRegistry,
+    private val payloadRegistry: PayloadHandlerRegistry<Player>,
     private val objectMapper: ObjectMapper
 ) {
-    fun handlePayload(payloadId: String, callback: LuaValue, registrationSite: CallerInfo) {
-        payloadRegistry.registerHandler(payloadId, callback, registrationSite)
+    fun handlePayload(payloadId: String, callback: (Player, Map<*, *>) -> Unit) {
+        payloadRegistry.registerHandler(payloadId, callback)
     }
 
     fun sendToPlayer(player: PlayerApi, payloadId: String, payload: Any?) {

@@ -1,7 +1,11 @@
 package world.selene.server.network
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
+import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.lua.ClosureTrace
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.util.checkFunction
 import world.selene.common.lua.util.checkString
@@ -9,13 +13,16 @@ import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.getCallerInfo
 import world.selene.common.lua.util.register
 import world.selene.common.lua.util.toAnyMap
+import world.selene.common.lua.util.xpCall
 import world.selene.server.entities.EntityApi
+import world.selene.server.players.Player
 import world.selene.server.players.PlayerApi
 
 /**
  * Send and handle custom payloads.
  */
 class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
+
     override val name = "selene.network"
 
     override fun register(table: LuaValue) {
@@ -27,7 +34,21 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
     }
 
     private fun luaHandlePayload(lua: Lua): Int {
-        api.handlePayload(lua.checkString(1), lua.checkFunction(2), lua.getCallerInfo())
+        val payloadId = lua.checkString(1)
+        val function = lua.checkFunction(2)
+        val trace = lua.getCallerInfo()
+        val callback: (Player, Map<*, *>) -> Unit = { player, payload ->
+            val lua = function.state()
+            function.push(lua)
+            lua.push(player, Lua.Conversion.NONE)
+            lua.push(payload)
+            try {
+                lua.xpCall(1, 0, ClosureTrace { "[payload \"$payloadId\"] registered in <$trace>" })
+            } catch (e: LuaException) {
+                logger.error("Lua Error in Payload Handler", e)
+            }
+        }
+        api.handlePayload(payloadId, callback)
         return 0
     }
 
@@ -51,5 +72,9 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
         val entities = lua.toList(1) ?: return lua.error(IllegalArgumentException("Expected list of entities"))
         api.sendToEntities(entities, lua.checkString(2), lua.toAnyMap(3))
         return 0
+    }
+
+    companion object {
+        val logger: Logger = LoggerFactory.getLogger(NetworkLuaApi::class.java)
     }
 }

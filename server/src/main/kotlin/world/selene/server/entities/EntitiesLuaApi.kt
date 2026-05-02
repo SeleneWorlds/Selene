@@ -5,7 +5,7 @@ import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaEventSink
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
-import world.selene.common.lua.LuaTrace
+import world.selene.common.script.ScriptTrace
 import world.selene.common.lua.util.checkInt
 import world.selene.common.lua.util.checkRegistry
 import world.selene.common.lua.util.register
@@ -22,7 +22,7 @@ class EntitiesLuaApi(
 ) : LuaModule {
     override val name = "selene.entities"
 
-    private val entitySteppedOnTile = LuaEventSink(EntityEvents.EntitySteppedOnTile.EVENT) { callback: LuaValue, trace: LuaTrace ->
+    private val entitySteppedOnTile = LuaEventSink(EntityEvents.EntitySteppedOnTile.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         EntityEvents.EntitySteppedOnTile { entity, coordinate ->
             val lua = callback.state()
             lua.push(callback)
@@ -31,7 +31,7 @@ class EntitiesLuaApi(
             lua.xpCall(2, 0, trace)
         }
     }
-    private val entitySteppedOffTile = LuaEventSink(EntityEvents.EntitySteppedOffTile.EVENT) { callback: LuaValue, trace: LuaTrace ->
+    private val entitySteppedOffTile = LuaEventSink(EntityEvents.EntitySteppedOffTile.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         EntityEvents.EntitySteppedOffTile { entity, coordinate ->
             val lua = callback.state()
             lua.push(callback)
