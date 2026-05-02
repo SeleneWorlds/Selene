@@ -5,13 +5,19 @@ import com.seleneworlds.common.data.BundleDrivenRegistry
 import com.seleneworlds.common.data.Registry
 import com.seleneworlds.common.util.Disposable
 import java.nio.file.*
-import java.security.MessageDigest
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
 data class WatchContext(
     val bundle: Bundle,
     val basePath: Path
+)
+
+private data class FileState(
+    val size: Long,
+    val lastModifiedTime: FileTime
 )
 
 abstract class BundleWatcher(
@@ -26,7 +32,7 @@ abstract class BundleWatcher(
 
     private val pendingUpdates = ConcurrentHashMap<String, MutableSet<String>>()
     private val pendingDeletes = ConcurrentHashMap<String, MutableSet<String>>()
-    private val fileHashes = ConcurrentHashMap<String, String>()
+    private val fileStates = ConcurrentHashMap<String, FileState>()
 
     fun findRegistryForFile(filePath: String): BundleDrivenRegistry? {
         val normalizedFilePath = filePath.replace('\\', '/')
@@ -80,15 +86,13 @@ abstract class BundleWatcher(
 
         try {
             val rootPath = bundleDir.toPath()
-            Files.walk(rootPath).use { stream ->
-                stream.filter { Files.isDirectory(it) }
-                    .forEach { dirPath ->
-                        registerDirectoryWatch(dirPath, bundle)
-                    }
+            registerDirectoryWatch(rootPath, bundle)
+            syncedBundleRoots.forEach { rootName ->
+                val watchedRootPath = rootPath.resolve(rootName)
+                if (Files.isDirectory(watchedRootPath)) {
+                    registerDirectoryTree(watchedRootPath, bundle)
+                }
             }
-
-            // Initialize file hashes for existing files
-            initializeFileHashes(bundle)
 
             logger.debug("Registered watch for bundle {} at {}", bundle.manifest.name, bundleDir)
         } catch (e: Exception) {
@@ -191,10 +195,8 @@ abstract class BundleWatcher(
         val fileName = event.context() as Path
         val filePath = context.basePath.resolve(fileName)
 
-        // Handle new directory creation - register it for watching
         if (kind == StandardWatchEventKinds.ENTRY_CREATE && Files.isDirectory(filePath)) {
-            logger.info("New directory created: {} - registering for watch", filePath)
-            registerDirectoryWatch(filePath, context.bundle)
+            handleDirectoryCreated(filePath, context.bundle)
             return
         }
 
@@ -223,42 +225,36 @@ abstract class BundleWatcher(
 
     private fun handleBundleContentFileModified(filePath: Path, bundle: Bundle) {
         val relativePath = bundle.dir.toPath().relativize(filePath).toString()
-        val fileKey = getFileHashKey(bundle, relativePath)
+        val fileKey = getFileStateKey(bundle, relativePath)
+        val currentState = readFileState(filePath) ?: return
+        val previousState = fileStates[fileKey]
 
-        // Calculate current hash and compare with stored hash
-        val currentHash = calculateFileHash(filePath)
-        val previousHash = fileHashes[fileKey]
-
-        // Only send update if hash actually changed
-        if (previousHash == null || currentHash != previousHash) {
-            fileHashes[fileKey] = currentHash
+        if (previousState == null || currentState != previousState) {
+            fileStates[fileKey] = currentState
             pendingUpdates.computeIfAbsent(bundle.manifest.name) { ConcurrentHashMap.newKeySet() }.add(relativePath)
             pendingDeletes[bundle.manifest.name]?.remove(relativePath)
-            logger.debug("File content actually changed: $relativePath (hash: ${currentHash.take(8)}...)")
+            logger.debug("File state changed: $relativePath")
         } else {
-            logger.debug("File content unchanged, ignoring update: $relativePath")
+            logger.debug("File state unchanged, ignoring update: $relativePath")
         }
     }
 
     private fun handleBundleContentFileCreated(filePath: Path, bundle: Bundle) {
         val relativePath = bundle.dir.toPath().relativize(filePath).toString()
-        val fileKey = getFileHashKey(bundle, relativePath)
-
-        // Calculate hash for new file
-        val currentHash = calculateFileHash(filePath)
-        fileHashes[fileKey] = currentHash
+        val fileKey = getFileStateKey(bundle, relativePath)
+        val currentState = readFileState(filePath) ?: return
+        fileStates[fileKey] = currentState
 
         pendingUpdates.computeIfAbsent(bundle.manifest.name) { ConcurrentHashMap.newKeySet() }.add(relativePath)
         pendingDeletes[bundle.manifest.name]?.remove(relativePath)
-        logger.debug("New file created: $relativePath (hash: ${currentHash.take(8)}...)")
+        logger.debug("New file created: $relativePath")
     }
 
     private fun handleBundleContentFileDeleted(filePath: Path, bundle: Bundle) {
         val relativePath = bundle.dir.toPath().relativize(filePath).toString()
-        val fileKey = getFileHashKey(bundle, relativePath)
+        val fileKey = getFileStateKey(bundle, relativePath)
 
-        // Remove hash for deleted file
-        fileHashes.remove(fileKey)
+        fileStates.remove(fileKey)
 
         pendingUpdates[bundle.manifest.name]?.remove(relativePath)
         pendingDeletes.computeIfAbsent(bundle.manifest.name) { ConcurrentHashMap.newKeySet() }.add(relativePath)
@@ -270,43 +266,73 @@ abstract class BundleWatcher(
         return syncedBundleContentFilePattern.containsMatchIn(relativePath.toString().replace('\\', '/'))
     }
 
-    private fun getFileHashKey(bundle: Bundle, relativePath: String): String {
+    private fun getFileStateKey(bundle: Bundle, relativePath: String): String {
         return "${bundle.manifest.name}:$relativePath"
     }
 
-    private fun initializeFileHashes(bundle: Bundle) {
-        try {
-            val bundleDir = bundle.dir.toPath()
-            var count = 0
-            Files.walk(bundleDir).use { stream ->
-                stream.filter { Files.isRegularFile(it) }
-                    .filter { isSyncedBundleContentFile(bundle, it) }
-                    .forEach { filePath ->
-                        val relativePath = bundleDir.relativize(filePath).toString()
-                        val fileKey = getFileHashKey(bundle, relativePath)
-                        val hash = calculateFileHash(filePath)
-                        fileHashes[fileKey] = hash
-                        count++
-                    }
-            }
-            logger.debug("Initialized hashes for ${count} files in bundle ${bundle.manifest.name}")
-        } catch (e: Exception) {
-            logger.error("Failed to initialize file hashes for bundle ${bundle.manifest.name}", e)
+    private fun handleDirectoryCreated(dirPath: Path, bundle: Bundle) {
+        if (!shouldWatchDirectory(bundle, dirPath)) {
+            logger.debug("Ignoring new directory outside watched bundle roots: {}", dirPath)
+            return
         }
+
+        logger.info("New directory created: {} - registering subtree for watch", dirPath)
+        registerDirectoryTree(dirPath, bundle)
     }
 
     abstract fun getRegistry(name: String): Registry<*>?
 
-    private fun calculateFileHash(filePath: Path): String {
+    private fun readFileState(filePath: Path): FileState? {
         return try {
-            val digest = MessageDigest.getInstance("SHA-256")
-            val bytes = Files.readAllBytes(filePath)
-            val hash = digest.digest(bytes)
-            hash.joinToString("") { "%02x".format(it) }
+            FileState(
+                size = Files.size(filePath),
+                lastModifiedTime = Files.getLastModifiedTime(filePath)
+            )
         } catch (e: Exception) {
-            logger.warn("Failed to calculate hash for file: $filePath", e)
-            ""
+            logger.warn("Failed to read file state for: $filePath", e)
+            null
         }
+    }
+
+    private fun registerDirectoryTree(rootPath: Path, bundle: Bundle) {
+        var fileCount = 0
+
+        Files.walkFileTree(rootPath, object : SimpleFileVisitor<Path>() {
+            override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+                if (!shouldWatchDirectory(bundle, dir)) {
+                    return FileVisitResult.SKIP_SUBTREE
+                }
+
+                registerDirectoryWatch(dir, bundle)
+                return FileVisitResult.CONTINUE
+            }
+
+            override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                if (attrs.isRegularFile && isSyncedBundleContentFile(bundle, file)) {
+                    val relativePath = bundle.dir.toPath().relativize(file).toString()
+                    val fileKey = getFileStateKey(bundle, relativePath)
+                    readFileState(file)?.let { fileStates[fileKey] = it }
+                    fileCount++
+                }
+                return FileVisitResult.CONTINUE
+            }
+        })
+
+        logger.debug("Registered {} existing files in watched subtree {}", fileCount, rootPath)
+    }
+
+    private fun shouldWatchDirectory(bundle: Bundle, dirPath: Path): Boolean {
+        val normalizedRelativePath = bundle.dir.toPath().relativize(dirPath).toString().replace('\\', '/')
+        if (normalizedRelativePath.isEmpty()) {
+            return true
+        }
+
+        val segments = normalizedRelativePath.split('/')
+        if (segments.any { it.startsWith(".") }) {
+            return false
+        }
+
+        return segments.first() in syncedBundleRoots
     }
 
     override fun dispose() {
@@ -314,6 +340,7 @@ abstract class BundleWatcher(
     }
 
     companion object {
+        private val syncedBundleRoots = setOf("common", "client")
         private val syncedBundleContentFilePattern = "^(?!.*/\\.|.*~$)(common|client)/.+".toRegex()
         private val registryFilePattern = "^(common|client)/data/[\\w-]+/([\\w-]+)/.*".toRegex()
     }
