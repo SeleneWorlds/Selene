@@ -77,12 +77,16 @@ class UIApi(
         }
     }
 
+    fun addToRoot(hud: HudApi) {
+        addToRoot(hud.delegate.actors)
+    }
+
     fun loadUI(
         xmlFilePath: String,
         i18nBundle: String,
         theme: ThemeApi?,
         actions: Map<String, (Any, Array<out Any>) -> Any?>
-    ): Pair<List<Actor>, Map<String, Actor>> {
+    ): HudApi {
         val parser = SeleneLmlParser.parser().skin(theme?.skin ?: ui.systemSkin)
 
         for ((actionName, actionFunction) in actions) {
@@ -116,7 +120,7 @@ class UIApi(
             }
         }
         actors.forEach { collectActorsByName(it) }
-        return actors.toList() to actorsByName
+        return Hud(actors.toList(), actorsByName).api
     }
 
     fun loadTheme(skinPath: String): ThemeApi {

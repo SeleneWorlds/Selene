@@ -16,6 +16,7 @@ import com.kotcrab.vis.ui.widget.VisImageButton
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import com.seleneworlds.client.rendering.visual2d.Visual2D
+import com.seleneworlds.client.ui.HudApi
 import com.seleneworlds.client.ui.ThemeApi
 import com.seleneworlds.client.ui.UIApi
 import com.seleneworlds.client.ui.drawable.DrawableDrawable
@@ -60,6 +61,7 @@ class UILuaApi(
         luaManager.defineMetatable(VisImageButton::class, VisImageButtonLuaMetatable.luaMeta)
         luaManager.defineMetatable(ProgressBar::class, ProgressBarLuaMetatable.luaMeta)
         luaManager.defineMetatable(ThemeApi::class, ThemeLuaApi(this).luaMeta)
+        luaManager.defineMetatable(HudApi::class, HudLuaApi.luaMeta)
         luaManager.defineMetatable(TextField.TextFieldClickListener::class, TextFieldClickListenerLuaMetatable.luaMeta)
     }
 
@@ -144,12 +146,15 @@ class UILuaApi(
 
     private fun luaAddToRoot(lua: Lua): Int {
         val actors = mutableListOf<Actor>()
-        if (lua.isTable(1)) {
+        if (lua.isUserdata(1) && lua.toUserdata<HudApi>(1) != null) {
+            api.addToRoot(lua.checkUserdata<HudApi>(1))
+        } else if (lua.isTable(1)) {
             actors += lua.toList(1)?.filterIsInstance<Actor>().orEmpty()
+            api.addToRoot(actors)
         } else if (lua.isUserdata(1)) {
             actors += lua.checkUserdata(1, Actor::class)
+            api.addToRoot(actors)
         }
-        api.addToRoot(actors)
         return 0
     }
 
@@ -187,15 +192,14 @@ class UILuaApi(
         }
 
         return try {
-            val (actors, actorsByName) = api.loadUI(
+            val hud = api.loadUI(
                 xmlFilePath = xmlFilePath,
                 i18nBundle = i18nBundle,
                 theme = theme,
                 actions = actions
             )
-            lua.push(actors, Lua.Conversion.FULL)
-            lua.push(actorsByName, Lua.Conversion.FULL)
-            2
+            lua.push(hud, Lua.Conversion.NONE)
+            1
         } catch (e: Exception) {
             lua.error(e)
         }
