@@ -20,7 +20,7 @@ import com.seleneworlds.client.rendering.visual2d.Visual2D
 import com.seleneworlds.client.ui.UIApi
 import com.seleneworlds.client.ui.drawable.DrawableDrawable
 import com.seleneworlds.client.ui.drawable.Visual2DDrawable
-import com.seleneworlds.common.script.ClosureTrace
+import com.seleneworlds.common.script.ConstantTrace
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.LuaModule
@@ -36,7 +36,6 @@ import com.seleneworlds.common.lua.util.getFieldString
 import com.seleneworlds.common.lua.util.getFieldUserdata
 import com.seleneworlds.common.lua.util.register
 import com.seleneworlds.common.lua.util.toAny
-import com.seleneworlds.common.lua.util.toSerializedMap
 import com.seleneworlds.common.lua.util.toTypedMap
 import com.seleneworlds.common.lua.util.toUserdata
 import com.seleneworlds.common.lua.util.xpCall
@@ -93,7 +92,7 @@ class UILuaApi(
                     callbackLua.xpCall(
                         2,
                         1,
-                        ClosureTrace { "[ui keyUp \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite" })
+                        ConstantTrace("[ui keyUp \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite"))
                     callbackLua.toBoolean(-1)
                 }
             },
@@ -106,7 +105,7 @@ class UILuaApi(
                     callbackLua.xpCall(
                         2,
                         1,
-                        ClosureTrace { "[ui keyDown \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite" })
+                        ConstantTrace("[ui keyDown \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite"))
                     callbackLua.toBoolean(-1)
                 }
             },
@@ -119,7 +118,7 @@ class UILuaApi(
                     callbackLua.xpCall(
                         2,
                         1,
-                        ClosureTrace { "[ui keyTyped \"$character\"] registered in $registrationSite" })
+                        ConstantTrace("[ui keyTyped \"$character\"] registered in $registrationSite"))
                     callbackLua.toBoolean(-1)
                 }
             }
@@ -183,7 +182,7 @@ class UILuaApi(
                         callbackLua.xpCall(
                             parameters.size + 1,
                             1,
-                            ClosureTrace { "[ui action \"$actionName\"] registered in $registrationSite" })
+                            ConstantTrace("[ui action \"$actionName\"] registered in $registrationSite"))
                         callbackLua.toAny(-1)
                     }
                 }
@@ -286,7 +285,11 @@ class UILuaApi(
                         callbackLua.push(actor, Lua.Conversion.NONE)
                         callbackLua.push(stageX)
                         callbackLua.push(stageY)
-                        callbackLua.xpCall(4, 1, ClosureTrace { "[drag listener] created in $registrationSite" })
+                        callbackLua.xpCall(
+                            4,
+                            1,
+                            ConstantTrace("[drag listener] created in $registrationSite")
+                        )
                         callbackLua.toBoolean(-1)
                     }
                 },
@@ -298,7 +301,11 @@ class UILuaApi(
                         callbackLua.push(actor, Lua.Conversion.NONE)
                         callbackLua.push(stageX)
                         callbackLua.push(stageY)
-                        callbackLua.xpCall(4, 0, ClosureTrace { "[drag listener] created in $registrationSite" })
+                        callbackLua.xpCall(
+                            4,
+                            0,
+                            ConstantTrace("[drag listener] created in $registrationSite")
+                        )
                     }
                 },
                 onEnd = lua.getFieldFunction(1, "onEnd")?.let { callback ->
@@ -309,7 +316,11 @@ class UILuaApi(
                         callbackLua.push(actor, Lua.Conversion.NONE)
                         callbackLua.push(stageX)
                         callbackLua.push(stageY)
-                        callbackLua.xpCall(4, 1, ClosureTrace { "[drag listener] created in $registrationSite" })
+                        callbackLua.xpCall(
+                            4,
+                            1,
+                            ConstantTrace("[drag listener] created in $registrationSite")
+                        )
                         callbackLua.toBoolean(-1)
                     }
                 }

@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
-import com.seleneworlds.common.script.ClosureTrace
+import com.seleneworlds.common.script.ConstantTrace
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.checkFunction
 import com.seleneworlds.common.lua.util.checkString
@@ -34,7 +34,7 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
             function.push(lua)
             lua.push(payload)
             try {
-                lua.xpCall(1, 0, ClosureTrace { "[payload \"$payloadId\"] registered in <$trace>" })
+                lua.xpCall(1, 0, ConstantTrace("[payload \"$payloadId\"] registered in <$trace>"))
             } catch (e: LuaException) {
                 logger.error("Lua Error in Payload Handler", e)
             }

@@ -2,7 +2,7 @@ package com.seleneworlds.server.entities
 
 import party.iroiro.luajava.Lua
 import com.seleneworlds.common.entities.ComponentConfiguration
-import com.seleneworlds.common.script.ClosureTrace
+import com.seleneworlds.common.script.ConstantTrace
 import com.seleneworlds.common.lua.LuaMappedMetatable
 import com.seleneworlds.common.lua.util.checkBoolean
 import com.seleneworlds.common.lua.util.checkCoordinate
@@ -235,7 +235,7 @@ object EntityLuaApi {
             callbackLua.push(callback)
             callbackLua.push(entity, Lua.Conversion.NONE)
             callbackLua.push(player.api, Lua.Conversion.NONE)
-            callbackLua.xpCall(2, 1, ClosureTrace { "[dynamic component \"$name\"] registered in $registrationSite" })
+            callbackLua.xpCall(2, 1, ConstantTrace("[dynamic component \"$name\"] registered in $registrationSite"))
             seleneJson.decodeFromJsonElement(
                 ComponentConfiguration.serializer(),
                 (callbackLua.toSerializedMap(-1) ?: emptyMap()).toJsonElement()

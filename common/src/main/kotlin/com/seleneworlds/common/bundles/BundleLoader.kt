@@ -1,7 +1,7 @@
 package com.seleneworlds.common.bundles
 
 import org.slf4j.Logger
-import com.seleneworlds.common.script.ClosureTrace
+import com.seleneworlds.common.script.ConstantTrace
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.libraries.LuaPackageModule
 import com.seleneworlds.common.lua.util.xpCall
@@ -156,10 +156,7 @@ class BundleLoader(
                     try {
                         val lua = luaManager.lua
                         lua.load(LuaManager.loadBuffer(scriptFile.readText()), bundle.getFileDebugName(scriptFile))
-                        lua.xpCall(
-                            0,
-                            1,
-                            ClosureTrace { "[entrypoint \"${entrypoint}\"] in bundle \"${bundle.manifest.name}\"" })
+                        lua.xpCall(0, 1, ConstantTrace("[entrypoint \"$entrypoint\"] in bundle \"${bundle.manifest.name}\""))
                     } catch (e: Exception) {
                         logger.error("Lua Error in Entrypoint", e)
                     }
