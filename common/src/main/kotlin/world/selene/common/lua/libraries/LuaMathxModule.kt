@@ -11,7 +11,6 @@ import world.selene.common.lua.util.register
  * Extended mathematical functions beyond standard Lua math library.
  * Registered as global "mathx" table.
  */
-@Suppress("SameReturnValue")
 class LuaMathxModule : LuaModule {
     override val name: String = "mathx"
     override val registerAsGlobal: Boolean = true

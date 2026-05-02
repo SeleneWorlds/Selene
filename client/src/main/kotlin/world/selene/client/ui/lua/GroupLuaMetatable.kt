@@ -5,7 +5,6 @@ import com.badlogic.gdx.scenes.scene2d.Group
 import party.iroiro.luajava.Lua
 import world.selene.common.lua.util.checkUserdata
 
-@Suppress("SameReturnValue")
 object GroupLuaMetatable {
     val luaMeta = ActorLuaMetatable.luaMeta.extend(Group::class) {
         callable(::luaAddChild)

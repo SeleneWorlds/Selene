@@ -13,14 +13,13 @@ import org.koin.mp.KoinPlatform.getKoin
 import world.selene.client.bundle.ClientBundleWatcher
 import world.selene.client.camera.CameraManager
 import world.selene.client.controls.GridMovement
+import world.selene.client.game.ClientEvents
 import world.selene.client.input.InputManager
-import world.selene.client.lua.ClientLuaSignals
 import world.selene.client.network.NetworkClient
 import world.selene.client.rendering.DebugRenderer
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.ui.UI
-import world.selene.common.bundles.BundleWatcher
 import world.selene.common.threading.MainThreadDispatcher
 import world.selene.common.util.Disposable
 
@@ -35,7 +34,6 @@ class SeleneApplicationListener(
     private val gridMovement: GridMovement,
     private val sceneRenderer: SceneRenderer,
     private val debugRenderer: DebugRenderer,
-    private val signals: ClientLuaSignals,
     private val bundleWatcher: ClientBundleWatcher,
     private val mainThreadDispatcher: MainThreadDispatcher
 ) : ApplicationListener {
@@ -64,7 +62,7 @@ class SeleneApplicationListener(
     override fun render() {
         mainThreadDispatcher.process()
 
-        signals.gamePreTick.emit()
+        ClientEvents.GamePreTick.EVENT.invoker().gamePreTick()
 
         networkClient.processWork()
         bundleWatcher.processPendingUpdates()

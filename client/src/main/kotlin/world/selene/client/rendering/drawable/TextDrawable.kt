@@ -6,6 +6,8 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout
 import com.badlogic.gdx.math.Rectangle
 
 class TextDrawable(private val font: BitmapFont, private val glyphLayout: GlyphLayout) : Drawable {
+    override val api = DrawableApi(this)
+
     override fun getBounds(
         x: Float,
         y: Float,

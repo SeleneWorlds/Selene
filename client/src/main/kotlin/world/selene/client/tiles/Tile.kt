@@ -3,7 +3,6 @@ package world.selene.client.tiles
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.utils.Pool
-import party.iroiro.luajava.Lua
 import world.selene.client.data.Registries
 import world.selene.client.grid.ClientGrid
 import world.selene.client.rendering.environment.Environment
@@ -14,10 +13,7 @@ import world.selene.client.rendering.visual.VisualCreationContext
 import world.selene.client.rendering.visual.VisualFactory
 import world.selene.common.data.RegistryReference
 import world.selene.common.grid.Coordinate
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.util.checkUserdata
+import world.selene.common.script.ExposedApi
 import world.selene.common.tiles.TileDefinition
 import kotlin.math.abs
 
@@ -26,9 +22,8 @@ class Tile(
     private val registries: Registries,
     private val visualFactory: VisualFactory,
     private val pool: TilePool
-) :
-    Pool.Poolable, Renderable,
-    LuaMetatableProvider {
+) : Pool.Poolable, Renderable, ExposedApi<TileApi> {
+    override val api = TileApi(this)
     var tileDefinition: RegistryReference<TileDefinition> = RegistryReference.unbound()
         set(value) {
             field.unsubscribeAll()
@@ -99,10 +94,6 @@ class Tile(
         targetOcclusionAlpha = 1f
     }
 
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
-
     fun updateVisual() {
         visual = tileDefinition.get()?.visual?.let {
             registries.visuals.getReference(it)
@@ -117,109 +108,5 @@ class Tile(
 
     override fun removedFromScene(scene: Scene) {
         pool.free(this)
-    }
-
-    @Suppress("SameReturnValue")
-    companion object {
-        /**
-         * Coordinate this tile is located at.
-         *
-         * ```property
-         * Coordinate: Coordinate
-         * ```
-         */
-        private fun luaGetCoordinate(lua: Lua): Int {
-            val tile = lua.checkUserdata<Tile>(1)
-            lua.push(tile.coordinate, Lua.Conversion.NONE)
-            return 1
-        }
-
-        /**
-         * Registry definition of this tile.
-         *
-         * ```property
-         * Definition: TileDefinition
-         * ```
-         */
-        private fun luaGetDefinition(lua: Lua): Int {
-            val tile = lua.checkUserdata<Tile>(1)
-            lua.push(tile.tileDefinition.get(), Lua.Conversion.NONE)
-            return 1
-        }
-
-        /**
-         * Visual used to render this tile.
-         *
-         * ```property
-         * Visual: Visual
-         * ```
-         */
-        private fun luaGetVisual(lua: Lua): Int {
-            val tile = lua.checkUserdata<Tile>(1)
-            lua.push(tile.visual, Lua.Conversion.NONE)
-            return 1
-        }
-
-        /**
-         * X coordinate of this tile in the grid.
-         *
-         * ```property
-         * X: number
-         * ```
-         */
-        private fun luaGetX(lua: Lua): Int {
-            val tile = lua.checkUserdata<Tile>(1)
-            lua.push(tile.x)
-            return 1
-        }
-
-        /**
-         * Y coordinate of this tile in the grid.
-         *
-         * ```property
-         * Y: number
-         * ```
-         */
-        private fun luaGetY(lua: Lua): Int {
-            val tile = lua.checkUserdata<Tile>(1)
-            lua.push(tile.y)
-            return 1
-        }
-
-        /**
-         * Z coordinate of this tile in the grid.
-         *
-         * ```property
-         * Z: number
-         * ```
-         */
-        private fun luaGetZ(lua: Lua): Int {
-            val tile = lua.checkUserdata<Tile>(1)
-            lua.push(tile.z)
-            return 1
-        }
-
-        /**
-         * Unique name of the registry definition of this tile.
-         *
-         * ```property
-         * Name: string
-         * ```
-         */
-        private fun luaGetName(lua: Lua): Int {
-            val tile = lua.checkUserdata<Tile>(1)
-            lua.push(tile.tileDefinition.identifier.toString())
-            return 1
-        }
-
-        val luaMeta = LuaMappedMetatable(Tile::class) {
-            getter(::luaGetCoordinate)
-            getter(::luaGetDefinition)
-            getter(::luaGetVisual)
-            getter(::luaGetX)
-            getter(::luaGetY)
-            getter(::luaGetZ)
-            getter(::luaGetName)
-        }
     }
 }

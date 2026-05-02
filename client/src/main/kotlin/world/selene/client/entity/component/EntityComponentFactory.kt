@@ -8,11 +8,17 @@ import world.selene.client.rendering.visual.ReloadableVisual
 import world.selene.client.rendering.visual.VisualCreationContext
 import world.selene.client.rendering.visual.VisualFactory
 import world.selene.client.rendering.visual.VisualRegistry
+import world.selene.client.script.ClientScriptProvider
 import world.selene.common.entities.ClientScriptComponentConfiguration
 import world.selene.common.entities.ComponentConfiguration
 import world.selene.common.entities.VisualComponentConfiguration
 
-class EntityComponentFactory(private val visualRegistry: VisualRegistry, private val visualFactory: VisualFactory, private val logger: Logger) {
+class EntityComponentFactory(
+    private val visualRegistry: VisualRegistry,
+    private val visualFactory: VisualFactory,
+    private val scriptProvider: ClientScriptProvider,
+    private val logger: Logger
+) {
     fun create(entity: Entity, configuration: ComponentConfiguration): EntityComponent? {
         return when (configuration) {
             is VisualComponentConfiguration -> {
@@ -33,7 +39,7 @@ class EntityComponentFactory(private val visualRegistry: VisualRegistry, private
                 )
             }
 
-            is ClientScriptComponentConfiguration -> ClientScriptComponent(configuration.script)
+            is ClientScriptComponentConfiguration -> ClientScriptComponent(scriptProvider.loadEntityScript(configuration.script))
             else -> throw IllegalArgumentException("Unknown component configuration: $configuration")
         }
     }

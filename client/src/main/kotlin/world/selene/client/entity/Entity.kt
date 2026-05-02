@@ -7,7 +7,6 @@ import com.badlogic.gdx.math.Vector3
 import com.badlogic.gdx.utils.Pool
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.LoggerFactory
-import party.iroiro.luajava.Lua
 import world.selene.client.controls.EntityMotion
 import world.selene.client.entity.component.EntityComponent
 import world.selene.client.entity.component.EntityComponentFactory
@@ -26,13 +25,7 @@ import world.selene.common.data.RegistryReference
 import world.selene.common.entities.ComponentConfiguration
 import world.selene.common.entities.EntityDefinition
 import world.selene.common.grid.Coordinate
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
-import world.selene.common.lua.util.checkCoordinate
-import world.selene.common.lua.util.checkString
-import world.selene.common.lua.util.checkUserdata
-import world.selene.common.lua.util.toAnyMap
+import world.selene.common.script.ExposedApi
 import world.selene.common.util.Disposable
 import java.util.*
 
@@ -43,9 +36,10 @@ class Entity(
     val grid: ClientGrid,
     val entityComponentFactory: EntityComponentFactory
 ) :
-    Pool.Poolable, Renderable, LuaMetatableProvider {
+    Pool.Poolable, Renderable, ExposedApi<EntityApi> {
 
     private val logger = LoggerFactory.getLogger(Entity::class.java)
+    override val api = EntityApi(this)
 
     var networkId: Int = 0
     var entityDefinition: RegistryReference<EntityDefinition> = RegistryReference.unbound()
@@ -272,12 +266,12 @@ class Entity(
         }
     }
 
-    private fun spawn() {
+    fun spawn() {
         removed = false
         map.addEntity(this)
     }
 
-    private fun despawn() {
+    fun despawn() {
         if (!removed) {
             map.removeEntity(this)
             removed = true
@@ -299,112 +293,11 @@ class Entity(
         this.scene = null
     }
 
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
-
     fun turnTo(facing: Float) {
         this.facing = facing
     }
 
     override fun toString(): String {
         return "Entity($networkId)"
-    }
-
-    @Suppress("SameReturnValue")
-    companion object {
-        /**
-         * Coordinate this entity is located at.
-         *
-         * ```property
-         * Coordinate: Coordinate
-         * ```
-         */
-        private fun luaGetCoordinate(lua: Lua): Int {
-            val self = lua.checkUserdata<Entity>(1)
-            lua.push(self.coordinate, Lua.Conversion.NONE)
-            return 1
-        }
-
-        /**
-         * Spawns the entity on the client map, making it visible.
-         *
-         * ```signatures
-         * Spawn()
-         * ```
-         */
-        private fun luaSpawn(lua: Lua): Int {
-            val self = lua.checkUserdata<Entity>(1)
-            self.spawn()
-            return 0
-        }
-
-        /**
-         * Despawns the entity from the client map, making it invisible.
-         *
-         * ```signatures
-         * Despawn()
-         * ```
-         */
-        private fun luaDespawn(lua: Lua): Int {
-            val self = lua.checkUserdata<Entity>(1)
-            self.despawn()
-            return 0
-        }
-
-        /**
-         * Sets the entity's coordinate and updates its position on the client.
-         *
-         * ```signatures
-         * SetCoordinate(coordinate: Coordinate)
-         * ```
-         */
-        private fun luaSetCoordinate(lua: Lua): Int {
-            val self = lua.checkUserdata<Entity>(1)
-            val (coordinate, _) = lua.checkCoordinate(2)
-            self.setCoordinateAndUpdate(coordinate)
-            return 0
-        }
-
-        /**
-         * Adds a component to the entity with the given configuration.
-         *
-         * ```signatures
-         * AddComponent(name: string, componentData: table)
-         * ```
-         */
-        private fun luaAddComponent(lua: Lua): Int {
-            val self = lua.checkUserdata<Entity>(1)
-            val componentName = lua.checkString(2)
-            val componentData = lua.toAnyMap(3)
-            val componentConfiguration =
-                self.objectMapper.convertValue(componentData, ComponentConfiguration::class.java)
-            self.addComponent(componentName, componentConfiguration)
-            return 0
-        }
-
-        /**
-         * Gets a component by name from the entity.
-         *
-         * ```signatures
-         * GetComponent(name: string) -> EntityComponent|nil
-         * ```
-         */
-        private fun luaGetComponent(lua: Lua): Int {
-            val self = lua.checkUserdata<Entity>(1)
-            val componentName = lua.checkString(2)
-            val component = self.components[componentName]
-            lua.push(component, Lua.Conversion.NONE)
-            return 1
-        }
-
-        val luaMeta = LuaMappedMetatable(Entity::class) {
-            getter(::luaGetCoordinate)
-            callable(::luaSpawn)
-            callable(::luaDespawn)
-            callable(::luaSetCoordinate)
-            callable(::luaAddComponent)
-            callable(::luaGetComponent)
-        }
     }
 }

@@ -23,7 +23,6 @@ import world.selene.server.config.ServerConfig
 import world.selene.server.data.mappings.PersistentNameIdRegistry
 import world.selene.server.heartbeat.ServerHeartbeat
 import world.selene.server.http.HttpServer
-import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.network.NetworkServer
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
@@ -47,7 +46,6 @@ class SeleneServer(
     entityRegistry: EntityRegistry,
     customRegistries: CustomRegistries,
     luaManager: LuaManager,
-    private val signals: ServerLuaSignals,
     private val config: ServerConfig,
     logger: Logger,
     private val mainThreadDispatcher: MainThreadDispatcher
@@ -82,8 +80,8 @@ class SeleneServer(
     }
 
     fun start() {
-        signals.serverStarted.emit()
-        signals.serverReloaded.emit()
+        ServerEvents.ServerStarted.EVENT.invoker().serverStarted()
+        ServerEvents.ServerReloaded.EVENT.invoker().serverReloaded()
 
         httpServer.start()
         networkServer.start(config.port)

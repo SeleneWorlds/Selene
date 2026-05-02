@@ -6,19 +6,14 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.kotcrab.vis.ui.widget.VisTextField
 import party.iroiro.luajava.Lua
-import world.selene.client.bundles.BundleFileResolver
-import world.selene.client.rendering.lua.LuaTexture
+import world.selene.client.rendering.texture.ScriptableTexture
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkType
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.getFieldString
 
-@Suppress("SameReturnValue")
-class SkinLuaMetatable(
-    private val bundleFileResolver: BundleFileResolver,
-    private val luaSkinUtils: LuaSkinUtils
-) {
+class SkinLuaMetatable(private val luaApi: UILuaApi) {
     val luaMeta = LuaMappedMetatable(Skin::class) {
         callable(::luaAddTexture)
         callable(::luaAddButtonStyle)
@@ -43,7 +38,7 @@ class SkinLuaMetatable(
         val name = lua.checkString(2)
         if (lua.isString(3)) {
             val texturePath = lua.checkString(3)
-            val textureFile = bundleFileResolver.resolve(texturePath)
+            val textureFile = luaApi.api.skinResolvers.resolveFile(texturePath)
             if (!textureFile.exists()) {
                 return lua.error(IllegalArgumentException("Texture file not found: $texturePath"))
             }
@@ -52,7 +47,7 @@ class SkinLuaMetatable(
             val region = TextureRegion(texture)
             skin.add(name, region)
         } else if (lua.isUserdata(3)) {
-            val texture = lua.checkUserdata<LuaTexture>(3).texture
+            val texture = lua.checkUserdata<ScriptableTexture>(3).texture
             val region = TextureRegion(texture)
             skin.add(name, region)
         }
@@ -69,7 +64,7 @@ class SkinLuaMetatable(
     private fun luaAddButtonStyle(lua: Lua): Int {
         val skin = lua.checkUserdata<Skin>(1)
         val styleName = lua.checkString(2)
-        val styles = luaSkinUtils.createButtonStyle(lua, 3, skin)
+        val styles = luaApi.createButtonStyle(lua, 3, skin)
         for (style in styles) {
             skin.add(styleName, style)
         }
@@ -90,14 +85,14 @@ class SkinLuaMetatable(
         lua.checkType(3, Lua.LuaType.TABLE)
 
         val font = lua.getFieldString(3, "font")?.let {
-            luaSkinUtils.resolveFont(skin, it)
+            luaApi.api.skinResolvers.resolveFont(skin, it)
         }
         val fontColor = lua.getFieldString(3, "fontColor")?.let {
-            luaSkinUtils.resolveColor(skin, it)
+            luaApi.api.skinResolvers.resolveColor(skin, it)
         } ?: Color.WHITE
         val labelStyle = Label.LabelStyle(font, fontColor)
         lua.getFieldString(3, "background")?.let {
-            labelStyle.background = luaSkinUtils.resolveDrawable(skin, it)
+            labelStyle.background = luaApi.api.skinResolvers.resolveDrawable(skin, it)
         }
         skin.add(styleName, labelStyle)
         return 0
@@ -113,7 +108,7 @@ class SkinLuaMetatable(
     private fun luaAddImageButtonStyle(lua: Lua): Int {
         val skin = lua.checkUserdata<Skin>(1)
         val styleName = lua.checkString(2)
-        val styles = luaSkinUtils.createImageButtonStyle(lua, 3, skin)
+        val styles = luaApi.createImageButtonStyle(lua, 3, skin)
         for (style in styles) {
             skin.add(styleName, style)
         }
@@ -134,55 +129,55 @@ class SkinLuaMetatable(
         lua.checkType(3, Lua.LuaType.TABLE)
 
         val font = lua.getFieldString(3, "font")?.let {
-            luaSkinUtils.resolveFont(skin, it)
+            luaApi.api.skinResolvers.resolveFont(skin, it)
         }
         val fontColor = lua.getFieldString(3, "fontColor")?.let {
-            luaSkinUtils.resolveColor(skin, it)
+            luaApi.api.skinResolvers.resolveColor(skin, it)
         } ?: Color.WHITE
         val cursor = lua.getFieldString(3, "cursor")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
+            luaApi.api.skinResolvers.resolveDrawable(skin, it)
         }
         val selection = lua.getFieldString(3, "selection")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
+            luaApi.api.skinResolvers.resolveDrawable(skin, it)
         }
         val background = lua.getFieldString(3, "background")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
+            luaApi.api.skinResolvers.resolveDrawable(skin, it)
         }
         val textFieldStyle = TextField.TextFieldStyle(font, fontColor, cursor, selection, background)
         val visTextFieldStyle = VisTextField.VisTextFieldStyle(font, fontColor, cursor, selection, background)
 
         lua.getFieldString(3, "focusedFontColor")?.let {
-            val color = luaSkinUtils.resolveColor(skin, it)
+            val color = luaApi.api.skinResolvers.resolveColor(skin, it)
             textFieldStyle.focusedFontColor = color
             visTextFieldStyle.focusedFontColor = color
         }
 
         lua.getFieldString(3, "disabledFontColor")?.let {
-            val color = luaSkinUtils.resolveColor(skin, it)
+            val color = luaApi.api.skinResolvers.resolveColor(skin, it)
             textFieldStyle.disabledFontColor = color
             visTextFieldStyle.disabledFontColor = color
         }
 
         lua.getFieldString(3, "focusedBackground")?.let {
-            val drawable = luaSkinUtils.resolveDrawable(skin, it)
+            val drawable = luaApi.api.skinResolvers.resolveDrawable(skin, it)
             textFieldStyle.focusedBackground = drawable
             visTextFieldStyle.focusedBackground = drawable
         }
 
         lua.getFieldString(3, "disabledBackground")?.let {
-            val drawable = luaSkinUtils.resolveDrawable(skin, it)
+            val drawable = luaApi.api.skinResolvers.resolveDrawable(skin, it)
             textFieldStyle.disabledBackground = drawable
             visTextFieldStyle.disabledBackground = drawable
         }
 
         lua.getFieldString(3, "messageFont")?.let {
-            val font = luaSkinUtils.resolveFont(skin, it)
+            val font = luaApi.api.skinResolvers.resolveFont(skin, it)
             textFieldStyle.messageFont = font
             visTextFieldStyle.messageFont = font
         }
 
         lua.getFieldString(3, "messageFontColor")?.let {
-            val color = luaSkinUtils.resolveColor(skin, it)
+            val color = luaApi.api.skinResolvers.resolveColor(skin, it)
             textFieldStyle.messageFontColor = color
             visTextFieldStyle.messageFontColor = color
         }
@@ -205,23 +200,23 @@ class SkinLuaMetatable(
         lua.checkType(3, Lua.LuaType.TABLE)
 
         val background = lua.getFieldString(3, "background")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
+            luaApi.api.skinResolvers.resolveDrawable(skin, it)
         }
         val hScroll = lua.getFieldString(3, "hScroll")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
+            luaApi.api.skinResolvers.resolveDrawable(skin, it)
         }
         val hScrollKnob = lua.getFieldString(3, "hScrollKnob")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
+            luaApi.api.skinResolvers.resolveDrawable(skin, it)
         }
         val vScroll = lua.getFieldString(3, "vScroll")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
+            luaApi.api.skinResolvers.resolveDrawable(skin, it)
         }
         val vScrollKnob = lua.getFieldString(3, "vScrollKnob")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
+            luaApi.api.skinResolvers.resolveDrawable(skin, it)
         }
         val scrollPaneStyle = ScrollPane.ScrollPaneStyle(background, hScroll, hScrollKnob, vScroll, vScrollKnob)
         lua.getFieldString(3, "corner")?.let {
-            val drawable = luaSkinUtils.resolveDrawable(skin, it)
+            val drawable = luaApi.api.skinResolvers.resolveDrawable(skin, it)
             scrollPaneStyle.corner = drawable
         }
         skin.add(styleName, scrollPaneStyle)
@@ -242,34 +237,34 @@ class SkinLuaMetatable(
         lua.checkType(3, Lua.LuaType.TABLE)
 
         val background = lua.getFieldString(3, "background")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
+            luaApi.api.skinResolvers.resolveDrawable(skin, it)
         }
         val knob = lua.getFieldString(3, "knob")?.let {
-            luaSkinUtils.resolveDrawable(skin, it)
+            luaApi.api.skinResolvers.resolveDrawable(skin, it)
         }
         val progressBarStyle = ProgressBar.ProgressBarStyle(background, knob)
         lua.getFieldString(3, "knobBefore")?.let {
-            val drawable = luaSkinUtils.resolveDrawable(skin, it)
+            val drawable = luaApi.api.skinResolvers.resolveDrawable(skin, it)
             progressBarStyle.knobBefore = drawable
         }
         lua.getFieldString(3, "knobAfter")?.let {
-            val drawable = luaSkinUtils.resolveDrawable(skin, it)
+            val drawable = luaApi.api.skinResolvers.resolveDrawable(skin, it)
             progressBarStyle.knobAfter = drawable
         }
         lua.getFieldString(3, "disabledBackground")?.let {
-            val drawable = luaSkinUtils.resolveDrawable(skin, it)
+            val drawable = luaApi.api.skinResolvers.resolveDrawable(skin, it)
             progressBarStyle.disabledBackground = drawable
         }
         lua.getFieldString(3, "disabledKnob")?.let {
-            val drawable = luaSkinUtils.resolveDrawable(skin, it)
+            val drawable = luaApi.api.skinResolvers.resolveDrawable(skin, it)
             progressBarStyle.disabledKnob = drawable
         }
         lua.getFieldString(3, "disabledKnobBefore")?.let {
-            val drawable = luaSkinUtils.resolveDrawable(skin, it)
+            val drawable = luaApi.api.skinResolvers.resolveDrawable(skin, it)
             progressBarStyle.disabledKnobBefore = drawable
         }
         lua.getFieldString(3, "disabledKnobAfter")?.let {
-            val drawable = luaSkinUtils.resolveDrawable(skin, it)
+            val drawable = luaApi.api.skinResolvers.resolveDrawable(skin, it)
             progressBarStyle.disabledKnobAfter = drawable
         }
         skin.add(styleName, progressBarStyle)

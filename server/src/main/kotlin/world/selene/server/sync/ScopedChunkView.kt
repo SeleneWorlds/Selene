@@ -2,18 +2,17 @@ package world.selene.server.sync
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBasedTable
-import party.iroiro.luajava.Lua
 import world.selene.common.grid.ChunkWindow
 import world.selene.common.grid.Coordinate
-import world.selene.common.lua.LuaMappedMetatable
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.LuaMetatableProvider
+import world.selene.common.script.ExposedApi
 import world.selene.server.cameras.viewer.Viewer
 import world.selene.server.dimensions.Dimension
 import world.selene.server.maps.layers.*
 import world.selene.server.maps.tree.MapTree
 
-class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
+class ScopedChunkView(val window: ChunkWindow) : ExposedApi<ScopedChunkViewApi> {
+
+    override val api = ScopedChunkViewApi(this)
 
     val backingLayers = mutableListOf<MapLayer>()
     val padding = 1
@@ -124,10 +123,6 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
         return additionalTiles.get(coordinate)
     }
 
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
-
     fun getAnnotationsAt(coordinate: Coordinate): Map<String, Map<*, *>> {
         return annotations.row(coordinate)
     }
@@ -149,9 +144,6 @@ class ScopedChunkView(val window: ChunkWindow) : LuaMetatableProvider {
                 }
             }
             return result
-        }
-
-        val luaMeta = LuaMappedMetatable(ScopedChunkView::class) {
         }
     }
 

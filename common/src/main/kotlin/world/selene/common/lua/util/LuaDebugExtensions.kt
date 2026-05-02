@@ -1,10 +1,15 @@
 package world.selene.common.lua.util
 
 import party.iroiro.luajava.Lua
+import world.selene.common.script.ScriptTrace
 
-data class CallerInfo(val source: String, val line: Int) {
+data class CallerInfo(val source: String, val line: Int) : ScriptTrace {
     override fun toString(): String {
         return "$source:$line"
+    }
+
+    override fun scriptTrace(): String {
+        return toString()
     }
 }
 

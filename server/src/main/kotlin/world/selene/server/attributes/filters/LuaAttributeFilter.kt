@@ -6,13 +6,13 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.util.CallerInfo
-import world.selene.common.lua.LuaTrace
+import world.selene.common.script.ScriptTrace
 import world.selene.common.lua.util.toAny
 import world.selene.common.lua.util.xpCall
 import world.selene.server.attributes.Attribute
 
 class LuaAttributeFilter<T : Any?>(val callback: LuaValue, val registrationSite: CallerInfo) : AttributeFilter<T>,
-    LuaTrace {
+    ScriptTrace {
     private val logger: Logger = LoggerFactory.getLogger(LuaAttributeFilter::class.java)
 
     override var enabled: Boolean = true
@@ -20,7 +20,7 @@ class LuaAttributeFilter<T : Any?>(val callback: LuaValue, val registrationSite:
     override fun apply(attribute: Attribute<T>, value: T): T {
         val lua = callback.state()
         lua.push(callback)
-        lua.push(attribute, Lua.Conversion.NONE)
+        lua.push(attribute.api, Lua.Conversion.NONE)
         lua.push(value, Lua.Conversion.FULL)
         try {
             lua.xpCall(2, 1, this)
@@ -32,7 +32,7 @@ class LuaAttributeFilter<T : Any?>(val callback: LuaValue, val registrationSite:
         }
     }
 
-    override fun luaTrace(): String {
+    override fun scriptTrace(): String {
         return "[attribute filter] registered in $registrationSite"
     }
 }

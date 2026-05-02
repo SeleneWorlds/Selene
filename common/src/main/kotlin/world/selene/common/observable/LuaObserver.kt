@@ -6,10 +6,10 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.util.CallerInfo
-import world.selene.common.lua.LuaTrace
+import world.selene.common.script.ScriptTrace
 import world.selene.common.lua.util.xpCall
 
-class LuaObserver<T>(val callback: LuaValue, val registrationSite: CallerInfo) : Observer<T>, LuaTrace {
+class LuaObserver<T>(val callback: LuaValue, val registrationSite: CallerInfo) : Observer<T>, ScriptTrace {
     private val logger: Logger = LoggerFactory.getLogger(LuaObserver::class.java)
 
     override fun notifyObserver(data: T) {
@@ -23,7 +23,7 @@ class LuaObserver<T>(val callback: LuaValue, val registrationSite: CallerInfo) :
         }
     }
 
-    override fun luaTrace(): String {
+    override fun scriptTrace(): String {
         return "[observer] registered in $registrationSite"
     }
 }

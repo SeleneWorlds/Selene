@@ -9,7 +9,7 @@ import world.selene.common.bundles.Bundle
 import world.selene.common.bundles.BundleDatabase
 import world.selene.common.data.*
 import world.selene.common.data.mappings.NameIdRegistry
-import world.selene.common.lua.LuaReferenceResolver
+import world.selene.common.util.ReferenceResolver
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -20,7 +20,7 @@ abstract class FileBasedRegistry<TData : Any>(
     val platform: String,
     override val name: String,
     private val dataClass: KClass<TData>
-) : Registry<TData>, BundleDrivenRegistry, LuaReferenceResolver<Identifier, TData>, CacheableRegistry {
+) : Registry<TData>, BundleDrivenRegistry, ReferenceResolver<Identifier, TData>, CacheableRegistry {
     protected val logger: Logger = LoggerFactory.getLogger("selene")
     protected val entries: MutableMap<Identifier, TData> = mutableMapOf()
     protected val idByIdentifier: MutableMap<Identifier, Int> = mutableMapOf()
@@ -243,7 +243,7 @@ abstract class FileBasedRegistry<TData : Any>(
         subscriptions[reference.identifier]?.remove(handler)
     }
 
-    override fun luaDereference(id: Identifier): TData? {
+    override fun dereferencePersisted(id: Identifier): TData? {
         return entries[id]
     }
 

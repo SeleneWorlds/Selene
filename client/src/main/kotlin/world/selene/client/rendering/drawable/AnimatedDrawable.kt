@@ -2,17 +2,17 @@ package world.selene.client.rendering.drawable
 
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
-import party.iroiro.luajava.Lua
-import world.selene.common.lua.LuaMetatable
-import world.selene.common.lua.Signal
-import world.selene.common.lua.util.checkUserdata
+import world.selene.common.event.EventFactory.arrayBackedEvent
 
 class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawable {
-    private var currentFrame = 0
-    private var elapsedTime = 0f
+    override val api = AnimatedDrawableApi(this)
+    var currentFrame = 0
+    var elapsedTime = 0f
     var speed = 1f
 
-    private val animationCompleted = Signal("AnimationCompleted")
+    val animationCompleted = arrayBackedEvent<AnimationCompleted> { listeners ->
+        AnimationCompleted { listeners.forEach { it.animationCompleted() } }
+    }
 
     override fun getBounds(
         x: Float,
@@ -30,7 +30,7 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
             elapsedTime -= frameDuration
             currentFrame = (currentFrame + 1) % frames.size
             if (currentFrame == 0) {
-                animationCompleted.emit()
+                animationCompleted.invoker().animationCompleted()
             }
         }
     }
@@ -59,10 +59,6 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
         frames.getOrNull(currentFrame)?.render(batch, x, y, originX, originY, width, height, scaleX, scaleY, rotation)
     }
 
-    override fun luaMetatable(lua: Lua): LuaMetatable {
-        return luaMeta
-    }
-
     fun withoutOffset(): AnimatedDrawable {
         return AnimatedDrawable(frames.map {
             if (it is TextureRegionDrawable) it.withoutOffset() else it
@@ -73,79 +69,7 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
         return "AnimatedDrawable(duration=$duration, speed=$speed, currentFrameIndex=$currentFrame, currentFrame=${frames.getOrNull(currentFrame)}, elapsedTime=$elapsedTime)"
     }
 
-    @Suppress("SameReturnValue")
-    companion object {
-        /**
-         * Current frame index of the animation.
-         *
-         * ```property
-         * CurrentFrame: number
-         * ```
-         */
-        private fun luaGetCurrentFrame(lua: Lua): Int {
-            val self = lua.checkUserdata<AnimatedDrawable>(1)
-            lua.push(self.currentFrame)
-            return 1
-        }
-
-        /**
-         * Time elapsed since the last frame in seconds.
-         *
-         * ```property
-         * ElapsedTime: number
-         * ```
-         */
-        private fun luaGetElapsedTime(lua: Lua): Int {
-            val self = lua.checkUserdata<AnimatedDrawable>(1)
-            lua.push(self.elapsedTime)
-            return 1
-        }
-
-        /**
-         * Duration of the full animation in seconds.
-         *
-         * ```property
-         * Duration: number
-         * ```
-         */
-        private fun luaGetDuration(lua: Lua): Int {
-            val self = lua.checkUserdata<AnimatedDrawable>(1)
-            lua.push(self.duration)
-            return 1
-        }
-
-        /**
-         * Emitted when the animation completes.
-         *
-         * ```property
-         * AnimationCompleted: Signal
-         * ```
-         */
-        private fun luaGetAnimationCompleted(lua: Lua): Int {
-            val self = lua.checkUserdata<AnimatedDrawable>(1)
-            lua.push(self.animationCompleted, Lua.Conversion.NONE)
-            return 1
-        }
-
-        /**
-         * Gets a new animated drawable without any offset.
-         *
-         * ```signatures
-         * WithoutOffset() -> AnimatedDrawable
-         * ```
-         */
-        private fun luaWithoutOffset(lua: Lua): Int {
-            val self = lua.checkUserdata<AnimatedDrawable>(1)
-            lua.push(self.withoutOffset(), Lua.Conversion.NONE)
-            return 1
-        }
-
-        val luaMeta = Drawable.luaMeta.extend(AnimatedDrawable::class) {
-            getter(::luaGetCurrentFrame)
-            getter(::luaGetElapsedTime)
-            getter(::luaGetDuration)
-            getter(::luaGetAnimationCompleted)
-            callable(::luaWithoutOffset)
-        }
+    fun interface AnimationCompleted {
+        fun animationCompleted()
     }
 }

@@ -2,28 +2,22 @@ package world.selene.server.network
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
-import party.iroiro.luajava.Lua
-import party.iroiro.luajava.LuaException
 import world.selene.common.data.mappings.NameIdRegistry
 import world.selene.common.grid.Grid
-import world.selene.common.lua.LuaManager
-import world.selene.common.network.LuaPayloadRegistry
-import world.selene.common.lua.util.xpCall
+import world.selene.common.network.PayloadHandlerRegistry
 import world.selene.common.network.Packet
 import world.selene.common.network.PacketHandler
 import world.selene.common.network.packet.*
 import world.selene.server.login.SessionAuthentication
-import world.selene.server.lua.ServerLuaSignals
 import world.selene.server.players.Player
+import world.selene.server.players.PlayerEvents
 import java.util.*
 
 class ServerPacketHandler(
     private val logger: Logger,
     private val objectMapper: ObjectMapper,
-    private val signals: ServerLuaSignals,
     private val nameIdRegistry: NameIdRegistry,
-    private val luaManager: LuaManager,
-    private val payloadRegistry: LuaPayloadRegistry,
+    private val payloadRegistry: PayloadHandlerRegistry<Player>,
     private val grid: Grid,
     private val sessionAuthentication: SessionAuthentication
 ) : PacketHandler<NetworkClient> {
@@ -69,10 +63,7 @@ class ServerPacketHandler(
         } else if (packet is FinalizeJoinPacket) {
             val player = (context as NetworkClientImpl).player
             player.connectionState = Player.ConnectionState.READY
-            signals.playerJoined.emit { lua ->
-                lua.push(player, Lua.Conversion.NONE)
-                1
-            }
+            PlayerEvents.PlayerJoined.EVENT.invoker().playerJoined(player.api)
         }
     }
 
@@ -101,18 +92,10 @@ class ServerPacketHandler(
             }
         } else if (packet is CustomPayloadPacket) {
             context.enqueueWork {
-                val handler = payloadRegistry.retrieveHandler(packet.payloadId)
+                val handler = payloadRegistry.getHandler(packet.payloadId)
                 if (handler != null) {
-                    val lua = luaManager.lua
-                    handler.callback.push(lua)
-                    lua.push(player, Lua.Conversion.NONE)
                     val payload = objectMapper.readValue(packet.payload, Map::class.java)
-                    lua.push(payload)
-                    try {
-                        lua.xpCall(2, 0, handler)
-                    } catch (e: LuaException) {
-                        logger.error("Lua Error in Payload Handler", e)
-                    }
+                    handler(player, payload)
                 }
             }
         }

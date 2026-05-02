@@ -2,9 +2,22 @@ package world.selene.common.lua
 
 import org.koin.mp.KoinPlatform.getKoin
 import party.iroiro.luajava.ClassPathLoader
+import party.iroiro.luajava.Lua
 import party.iroiro.luajava.lua54.Lua54
+import world.selene.common.data.Identifier
+import world.selene.common.data.IdentifierLuaApi
+import world.selene.common.data.RegistryObject
+import world.selene.common.data.RegistryObjectLuaApi
+import world.selene.common.data.custom.CustomRegistryObject
+import world.selene.common.data.custom.CustomRegistryObjectLuaApi
+import world.selene.common.grid.Coordinate
+import world.selene.common.grid.CoordinateLuaApi
 import world.selene.common.lua.libraries.LuaPackageModule
 import world.selene.common.lua.util.newTable
+import world.selene.common.observable.ObservableMap
+import world.selene.common.observable.ObservableMapLuaApi
+import world.selene.common.util.ResolvableReference
+import world.selene.common.util.ResolvableReferenceLuaApi
 import java.nio.Buffer
 import java.nio.ByteBuffer
 import kotlin.reflect.KClass
@@ -12,9 +25,16 @@ import kotlin.reflect.KClass
 class LuaManager(private val luaPackage: LuaPackageModule) {
 
     val lua = Lua54()
-    private val metatables = mutableMapOf<KClass<*>, LuaMetatable>()
 
     init {
+        defineMetatable(Coordinate::class, CoordinateLuaApi.luaMeta)
+        defineMetatable(Identifier::class, IdentifierLuaApi.luaMeta)
+        defineMetatable(RegistryObject::class, RegistryObjectLuaApi.luaMeta)
+        defineMetatable(CustomRegistryObject::class, CustomRegistryObjectLuaApi.luaMeta)
+        defineMetatable(LuaEventSink::class, LuaEventSink.luaMeta)
+        defineMetatable(ResolvableReference::class, ResolvableReferenceLuaApi.luaMeta)
+        defineMetatable(ObservableMap::class, ObservableMapLuaApi.luaMeta)
+
         // Default metatables of LuaJava are unsafe, we override them. Adds support for LuaMetatable interface too.
         secureClassMetatable()
         secureObjectMetatable()
@@ -69,7 +89,7 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
     }
 
     fun defineMetatable(clazz: KClass<*>, metatable: LuaMetatable) {
-        metatables[clazz] = metatable
+        registerMetatable(clazz, metatable)
     }
 
     private fun secureClassMetatable() {
@@ -87,12 +107,7 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         lua.getRegisteredMetatable("__jobject__")
         lua.push { lua ->
             val obj = lua.toJavaObject(1)!!
-            if (obj is LuaMetatable) {
-                return@push obj.luaGet(lua)
-            } else if (obj is LuaMetatableProvider) {
-                return@push obj.luaMetatable(lua).luaGet(lua)
-            }
-            val metatable = metatables[obj::class]
+            val metatable = findMetatable(lua, obj)
             if (metatable != null) {
                 return@push metatable.luaGet(lua)
             }
@@ -104,12 +119,7 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
 
         lua.push { lua ->
             val obj = lua.toJavaObject(-3)!!
-            if (obj is LuaMetatable) {
-                return@push obj.luaSet(lua)
-            } else if (obj is LuaMetatableProvider) {
-                return@push obj.luaMetatable(lua).luaSet(lua)
-            }
-            val metatable = metatables[obj::class]
+            val metatable = findMetatable(lua, obj)
             if (metatable != null) {
                 return@push metatable.luaSet(lua)
             }
@@ -121,14 +131,7 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
 
         lua.push {
             val obj = it.toJavaObject(-1)!!
-            if (obj is LuaMetatable) {
-                it.push(obj.luaToString(it))
-                return@push 1
-            } else if (obj is LuaMetatableProvider) {
-                it.push(obj.luaMetatable(it).luaToString(it))
-                return@push 1
-            }
-            val metatable = metatables[obj::class]
+            val metatable = findMetatable(it, obj)
             if (metatable != null) {
                 it.push(metatable.luaToString(it))
                 return@push 1
@@ -141,12 +144,7 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
 
         lua.push {
             val obj = it.toJavaObject(1)!!
-            if (obj is LuaMetatable) {
-                return@push obj.luaCall(lua)
-            } else if (obj is LuaMetatableProvider) {
-                return@push obj.luaMetatable(lua).luaCall(lua)
-            }
-            val metatable = metatables[obj::class]
+            val metatable = findMetatable(it, obj)
             if (metatable != null) {
                 return@push metatable.luaCall(lua)
             }
@@ -157,28 +155,14 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
 
         lua.push {
             val first = it.toJavaObject(1)!!
-            if (first is LuaMetatable) {
-                it.push(first.luaEquals(it))
-                return@push 1
-            } else if (first is LuaMetatableProvider) {
-                it.push(first.luaMetatable(it).luaEquals(it))
-                return@push 1
-            }
-            val metatable = metatables[first::class]
+            val metatable = findMetatable(it, first)
             if (metatable != null) {
                 it.push(metatable.luaEquals(it))
                 return@push 1
             }
 
             val second = it.toJavaObject(2)!!
-            if (second is LuaMetatable) {
-                it.push(second.luaEquals(it))
-                return@push 1
-            } else if (second is LuaMetatableProvider) {
-                it.push(second.luaMetatable(it).luaEquals(it))
-                return@push 1
-            }
-            val secondMetatable = metatables[second::class]
+            val secondMetatable = findMetatable(it, second)
             if (secondMetatable != null) {
                 it.push(secondMetatable.luaEquals(it))
                 return@push 1
@@ -193,6 +177,22 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
     }
 
     companion object {
+        private val metatables = mutableMapOf<KClass<*>, LuaMetatable>()
+
+        fun registerMetatable(clazz: KClass<*>, metatable: LuaMetatable) {
+            metatables[clazz] = metatable
+        }
+
+        fun findMetatable(lua: Lua, obj: Any): LuaMetatable? {
+            if (obj is LuaMetatableProvider) {
+                return obj.luaMetatable(lua)
+            }
+            if (obj is LuaMetatable) {
+                return obj
+            }
+            return metatables[obj::class] ?: metatables.entries.firstOrNull { (clazz, _) -> clazz.isInstance(obj) }?.value
+        }
+
         fun loadBuffer(script: String): Buffer {
             val bytes = script.toByteArray()
             val buffer = ByteBuffer.allocateDirect(bytes.size)

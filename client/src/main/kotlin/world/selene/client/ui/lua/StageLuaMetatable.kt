@@ -6,7 +6,6 @@ import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.util.checkFloat
 import world.selene.common.lua.util.checkUserdata
 
-@Suppress("SameReturnValue")
 object StageLuaMetatable {
     val luaMeta = LuaMappedMetatable(Stage::class) {
         callable(::luaHit)

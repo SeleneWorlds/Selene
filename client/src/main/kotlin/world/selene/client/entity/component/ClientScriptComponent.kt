@@ -1,53 +1,27 @@
 package world.selene.client.entity.component
 
-import org.koin.mp.KoinPlatform
-import party.iroiro.luajava.Lua
-import party.iroiro.luajava.LuaException
 import world.selene.client.entity.Entity
-import world.selene.common.lua.LuaManager
-import world.selene.common.lua.LuaTrace
+import world.selene.client.script.ClientEntityScript
 import world.selene.common.observable.ObservableMap
-import world.selene.common.lua.util.xpCall
 
-class ClientScriptComponent(val moduleName: String) : EntityComponent, TickableComponent,
-    LuaTrace {
-    private val luaManager: LuaManager by KoinPlatform.getKoin().inject()
+class ClientScriptComponent(
+    private val script: ClientEntityScript
+) : EntityComponent, TickableComponent {
     private var initialized = false
     private var enabled = true
     private val data = ObservableMap()
 
     override fun update(entity: Entity, delta: Float) {
         if (!enabled) return
-        val lua = luaManager.lua
-        lua.getGlobal("require")
-        lua.push(moduleName)
-        try {
-            lua.pCall(1, 1)
-        } catch (e: LuaException) {
-            e.printStackTrace()
-            enabled = false
-            return
-        }
         if (!initialized) {
-            lua.getField(-1, "Initialize")
-            if (lua.isFunction(-1)) {
-                lua.push(entity, Lua.Conversion.NONE)
-                lua.push(data, Lua.Conversion.NONE)
-                lua.xpCall(2, 0, this)
-            } else lua.pop(1)
+            if (!script.initialize(entity.api, data)) {
+                enabled = false
+                return
+            }
             initialized = true
         }
-        lua.getField(-1, "TickEntity")
-        if (lua.isFunction(-1)) {
-            lua.push(entity, Lua.Conversion.NONE)
-            lua.push(data, Lua.Conversion.NONE)
-            lua.push(delta)
-            lua.xpCall(3, 0, this)
-        } else lua.pop(1)
-        lua.pop(1)
-    }
-
-    override fun luaTrace(): String {
-        return "[client script component \"${moduleName}\"]"
+        if (!script.tick(entity.api, data, delta)) {
+            enabled = false
+        }
     }
 }

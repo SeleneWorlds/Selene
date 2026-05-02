@@ -3,11 +3,10 @@ package world.selene.client.maps
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
 import org.slf4j.Logger
-import party.iroiro.luajava.Lua
 import world.selene.client.data.Registries
 import world.selene.client.entity.Entity
 import world.selene.client.entity.EntityPool
-import world.selene.client.lua.ClientLuaSignals
+import world.selene.client.game.ClientEvents
 import world.selene.client.rendering.scene.Scene
 import world.selene.client.tiles.Tile
 import world.selene.client.tiles.TilePool
@@ -19,8 +18,7 @@ class ClientMap(
     private val tilePool: TilePool,
     private val entityPool: EntityPool,
     private val registries: Registries,
-    private val scene: Scene,
-    private val signals: ClientLuaSignals
+    private val scene: Scene
 ) {
     private val tiles = ArrayListMultimap.create<Coordinate, Tile>()
     private val entitiesByNetworkId = HashMap<Int, Entity>()
@@ -47,12 +45,7 @@ class ClientMap(
         additionalTiles.forEach { coordinate, tileId ->
             placeTile(coordinate, tileId)
         }
-        signals.mapChunkChanged.emit { lua ->
-            lua.push(Coordinate(x, y, z), Lua.Conversion.NONE)
-            lua.push(width)
-            lua.push(height)
-            3
-        }
+        ClientEvents.MapChunkChanged.EVENT.invoker().mapChunkChanged(Coordinate(x, y, z), width, height)
         scene.endBatch()
     }
 
@@ -158,12 +151,7 @@ class ClientMap(
             }
         }
 
-        signals.mapChunkChanged.emit { lua ->
-            lua.push(coordinate, Lua.Conversion.NONE)
-            lua.push(1) // width = 1 for single tile
-            lua.push(1) // height = 1 for single tile
-            3
-        }
+        ClientEvents.MapChunkChanged.EVENT.invoker().mapChunkChanged(coordinate, 1, 1)
     }
 
     fun removeChunk(x: Int, y: Int, z: Int, width: Int, height: Int) {

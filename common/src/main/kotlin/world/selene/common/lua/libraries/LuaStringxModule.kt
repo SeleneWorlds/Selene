@@ -10,7 +10,6 @@ import world.selene.common.lua.util.register
  * Extended string manipulation functions beyond standard Lua string library.
  * Registered as `stringx` global.
  */
-@Suppress("SameReturnValue")
 class LuaStringxModule : LuaModule {
     override val name: String = "stringx"
     override val registerAsGlobal: Boolean = true

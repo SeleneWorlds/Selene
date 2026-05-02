@@ -13,8 +13,8 @@ import world.selene.common.data.Registry
 import world.selene.common.grid.Coordinate
 import world.selene.common.grid.Direction
 import world.selene.common.grid.Grid
-import world.selene.common.lua.LuaReference
-import world.selene.common.lua.LuaTrace
+import world.selene.common.util.ResolvableReference
+import world.selene.common.script.ScriptTrace
 import world.selene.common.observable.ObservableMap
 import java.util.*
 import kotlin.math.abs
@@ -119,7 +119,7 @@ fun <T : Any> Lua.checkUserdata(index: Int, clazz: KClass<out T>): T {
         LuaType.USERDATA -> toJavaObject(index)!!
         else -> throwTypeError(index, clazz, type)
     }
-    if (clazz != LuaReference::class && value is LuaReference<*, *>) {
+    if (clazz != ResolvableReference::class && value is ResolvableReference<*, *>) {
         value = value.resolve() ?: throwError("Reference $value is invalid")
     }
     if (!clazz.isInstance(value)) {
@@ -142,7 +142,7 @@ fun <T : Any> Lua.toUserdata(index: Int, clazz: KClass<out T>): T? {
         LuaType.USERDATA -> toJavaObject(index)!!
         else -> null
     }
-    if (clazz != LuaReference::class && value is LuaReference<*, *>) {
+    if (clazz != ResolvableReference::class && value is ResolvableReference<*, *>) {
         value = value.resolve() ?: throwError("Reference $value is invalid")
     }
     if (!clazz.isInstance(value)) {
@@ -322,14 +322,14 @@ fun Lua.toLocale(index: Int): Locale? {
     }
 }
 
-fun Lua.xpCall(nArgs: Int, nResults: Int, trace: LuaTrace? = null) {
+fun Lua.xpCall(nArgs: Int, nResults: Int, trace: ScriptTrace? = null) {
     val base = top - nArgs
     pushErrorHandler()
     insert(base)
     xpCallWithErrorHandler(nArgs, nResults, base, trace)
 }
 
-fun Lua.xpCallWithErrorHandler(nArgs: Int, nResults: Int, errorHandler: Int, trace: LuaTrace? = null) {
+fun Lua.xpCallWithErrorHandler(nArgs: Int, nResults: Int, errorHandler: Int, trace: ScriptTrace? = null) {
     checkStack((nResults - nArgs - 1).coerceAtLeast(0))
     val code = luaNatives.lua_pcall(pointer, nArgs, nResults, errorHandler)
     remove(errorHandler)
@@ -340,7 +340,7 @@ fun Lua.xpCallWithErrorHandler(nArgs: Int, nResults: Int, errorHandler: Int, tra
 
     val message: String
     if (type(-1) === LuaType.STRING) {
-        message = toString(-1)!! + if (trace != null) "\n\t${trace.luaTrace()}" else ""
+        message = toString(-1)!! + if (trace != null) "\n\t${trace.scriptTrace()}" else ""
         pop(1)
     } else {
         message = "no error message available"
@@ -366,7 +366,6 @@ private fun Lua.getJavaCause(): Throwable? {
     return getGlobal(JAVA_CAUSE).let { toJavaObject(-1) }.also { pop(1) } as? Throwable
 }
 
-@Suppress("SameReturnValue")
 fun handleError(lua: Lua): Int {
     val message = lua.toString(1)
     lua.getGlobal("debug")

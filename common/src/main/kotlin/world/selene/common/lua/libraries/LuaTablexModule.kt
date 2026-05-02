@@ -14,7 +14,6 @@ import world.selene.common.lua.util.toAnyMap
  * Extended table manipulation functions beyond standard Lua table operations.
  * Registered as `tablex` global.
  */
-@Suppress("SameReturnValue")
 class LuaTablexModule : LuaModule {
     override val name: String = "tablex"
     override val registerAsGlobal: Boolean = true

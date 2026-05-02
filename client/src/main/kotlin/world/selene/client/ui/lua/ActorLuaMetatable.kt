@@ -12,7 +12,6 @@ import world.selene.common.lua.util.checkFloat
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 
-@Suppress("SameReturnValue")
 object ActorLuaMetatable {
     val luaMeta = LuaMappedMetatable(Actor::class) {
         getter(::luaGetStage)
