@@ -21,7 +21,9 @@ class AssetProvider(private val logger: Logger, private val assetStorage: AssetS
 
     fun loadTexture(texturePath: String): Texture? {
         try {
-            return assetStorage.loadSync<Texture>(texturePath)
+            return assetStorage.loadSync<Texture>(texturePath).also {
+                it.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest)
+            }
         } catch (e: AssetLoadingException) {
             logger.error("Failed to load texture $texturePath", e)
             return null
