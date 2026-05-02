@@ -8,6 +8,7 @@ import com.seleneworlds.client.grid.ClientGrid
 import com.seleneworlds.client.game.ClientEvents
 import com.seleneworlds.client.maps.ClientMap
 import com.seleneworlds.common.grid.Coordinate
+import kotlin.math.round
 
 class CameraManager(
     private val map: ClientMap,
@@ -38,8 +39,7 @@ class CameraManager(
             focusedEntity?.let { entity ->
                 val entityScreenX = grid.getScreenX(entity.position)
                 val entityScreenY = grid.getScreenY(entity.position)
-                camera.position.x = entityScreenX
-                camera.position.y = entityScreenY
+                setCameraPosition(entityScreenX, entityScreenY)
                 focusCoordinate = entity.coordinate
             }
         }
@@ -49,8 +49,7 @@ class CameraManager(
 
     fun focusCamera(coordinate: Coordinate) {
         focusCoordinate = coordinate
-        camera.position.x = grid.getScreenX(coordinate)
-        camera.position.y = grid.getScreenY(coordinate)
+        setCameraPosition(grid.getScreenX(coordinate), grid.getScreenY(coordinate))
         camera.update()
     }
 
@@ -76,9 +75,18 @@ class CameraManager(
     private fun applyViewport() {
         camera.viewportWidth = viewportWidth.toFloat()
         camera.viewportHeight = viewportHeight.toFloat()
-        camera.position.x = grid.getScreenX(focusCoordinate)
-        camera.position.y = grid.getScreenY(focusCoordinate)
+        setCameraPosition(grid.getScreenX(focusCoordinate), grid.getScreenY(focusCoordinate))
         camera.update()
+    }
+
+    private fun setCameraPosition(x: Float, y: Float) {
+        camera.position.x = snapToPixelGrid(x, viewportWidth)
+        camera.position.y = snapToPixelGrid(y, viewportHeight)
+    }
+
+    private fun snapToPixelGrid(value: Float, viewportSize: Int): Float {
+        val viewportOffset = if (viewportSize % 2 == 0) 0f else 0.5f
+        return round(value - viewportOffset) + viewportOffset
     }
 
     fun applyRenderViewport() {
