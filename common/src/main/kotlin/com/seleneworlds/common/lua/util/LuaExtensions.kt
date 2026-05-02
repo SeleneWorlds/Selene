@@ -253,7 +253,7 @@ fun Lua.toAny(index: Int): Any? {
         LuaType.STRING -> toString(index)!!
         LuaType.NUMBER -> toNumber(index).let { if (it % 1.0 == 0.0) it.toInt() else it }
         LuaType.BOOLEAN -> toBoolean(index)
-        LuaType.TABLE -> toSerializedMap(index)
+        LuaType.TABLE -> toListOrMap(index)
         LuaType.FUNCTION -> toFunction(index)
         LuaType.USERDATA -> toJavaObject(index)
         else -> null
@@ -266,6 +266,63 @@ private inline fun <T> Lua.withRestoredStack(block: Lua.() -> T): T {
         return block()
     } finally {
         top = originalTop
+    }
+}
+
+private fun Lua.toListOrMap(index: Int): Any? {
+    if (!isTable(index)) {
+        return null
+    }
+
+    return withRestoredStack {
+        val entries = mutableMapOf<Any, Any?>()
+        var allStringKeys = true
+        var allPositiveIntKeys = true
+        var count = 0
+        var maxIndex = 0
+        val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
+        pushNil()
+        while (next(absIndex) != 0) {
+            val value = toAny(-1)
+            when {
+                isString(-2) -> {
+                    allPositiveIntKeys = false
+                    entries[toString(-2)!!] = value
+                }
+
+                isInteger(-2) -> {
+                    allStringKeys = false
+                    val key = toInteger(-2).toInt()
+                    if (key <= 0) {
+                        allPositiveIntKeys = false
+                    } else {
+                        entries[key] = value
+                        count++
+                        maxIndex = maxOf(maxIndex, key)
+                    }
+                }
+
+                else -> {
+                    allStringKeys = false
+                    allPositiveIntKeys = false
+                }
+            }
+            pop(1)
+        }
+
+        when {
+            allStringKeys -> {
+                @Suppress("UNCHECKED_CAST")
+                entries as Map<String, Any?>
+            }
+
+            allPositiveIntKeys && count == maxIndex -> List(maxIndex) { entries[it + 1] }
+            allPositiveIntKeys -> {
+                @Suppress("UNCHECKED_CAST")
+                entries as Map<Int, Any?>
+            }
+            else -> throwError("Expected only string or positive integer keys in table")
+        }
     }
 }
 
