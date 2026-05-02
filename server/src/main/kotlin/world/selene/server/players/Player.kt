@@ -1,11 +1,11 @@
 package world.selene.server.players
 
-import world.selene.common.lua.*
 import world.selene.common.network.packet.SetCameraFollowEntityPacket
 import world.selene.common.network.packet.SetCameraPositionPacket
 import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.observable.ObservableMap
 import world.selene.common.grid.Coordinate
+import world.selene.common.util.IdResolvable
 import world.selene.common.util.ResolvableReference
 import world.selene.server.cameras.Camera
 import world.selene.server.dimensions.Dimension

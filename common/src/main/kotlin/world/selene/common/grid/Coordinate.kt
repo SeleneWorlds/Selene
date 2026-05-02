@@ -1,6 +1,5 @@
 package world.selene.common.grid
 
-import world.selene.common.lua.LuaMetatable
 import kotlin.math.sqrt
 
 /**

@@ -1,10 +1,10 @@
-package world.selene.server.lua
+package world.selene.server
 
 import party.iroiro.luajava.value.LuaValue
 import world.selene.common.lua.LuaEventSink
 import world.selene.common.lua.LuaModule
-import world.selene.common.script.ScriptTrace
 import world.selene.common.lua.util.xpCall
+import world.selene.common.script.ScriptTrace
 
 /**
  * Server management and server-related events.

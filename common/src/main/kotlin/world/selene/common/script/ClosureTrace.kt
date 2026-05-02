@@ -1,6 +1,4 @@
-package world.selene.common.lua
-
-import world.selene.common.script.ScriptTrace
+package world.selene.common.script
 
 data class ClosureTrace(val trace: () -> String) : ScriptTrace {
     override fun scriptTrace(): String {

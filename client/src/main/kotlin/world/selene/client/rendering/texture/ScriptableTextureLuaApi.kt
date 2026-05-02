@@ -1,4 +1,4 @@
-package world.selene.client.rendering.lua
+package world.selene.client.rendering.texture
 
 import com.badlogic.gdx.graphics.Color
 import party.iroiro.luajava.Lua

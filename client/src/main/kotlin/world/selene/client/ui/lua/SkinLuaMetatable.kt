@@ -6,7 +6,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.kotcrab.vis.ui.widget.VisTextField
 import party.iroiro.luajava.Lua
-import world.selene.client.rendering.lua.ScriptableTexture
+import world.selene.client.rendering.texture.ScriptableTexture
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkType

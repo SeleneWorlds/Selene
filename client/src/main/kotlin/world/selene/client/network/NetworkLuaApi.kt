@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.lua.ClosureTrace
+import world.selene.common.script.ClosureTrace
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.util.checkFunction
 import world.selene.common.lua.util.checkString

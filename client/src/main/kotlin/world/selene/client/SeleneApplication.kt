@@ -55,8 +55,8 @@ import world.selene.client.rendering.DebugRenderer
 import world.selene.client.rendering.SceneRenderer
 import world.selene.client.rendering.drawable.DrawableManager
 import world.selene.client.rendering.environment.Environment
-import world.selene.client.rendering.lua.TexturesApi
-import world.selene.client.rendering.lua.TexturesLuaApi
+import world.selene.client.rendering.texture.TexturesApi
+import world.selene.client.rendering.texture.TexturesLuaApi
 import world.selene.client.rendering.scene.Scene
 import world.selene.client.rendering.visual.VisualFactory
 import world.selene.client.rendering.visual.VisualRegistry

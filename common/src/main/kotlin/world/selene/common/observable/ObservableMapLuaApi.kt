@@ -2,7 +2,7 @@ package world.selene.common.observable
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import world.selene.common.lua.IdResolvable
+import world.selene.common.util.IdResolvable
 import world.selene.common.lua.LuaMetatable
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.pushError

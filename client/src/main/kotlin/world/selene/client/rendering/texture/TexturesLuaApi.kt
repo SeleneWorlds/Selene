@@ -1,4 +1,4 @@
-package world.selene.client.rendering.lua
+package world.selene.client.rendering.texture
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue

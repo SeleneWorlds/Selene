@@ -1,7 +1,7 @@
 package world.selene.common.bundles
 
 import org.slf4j.Logger
-import world.selene.common.lua.ClosureTrace
+import world.selene.common.script.ClosureTrace
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.libraries.LuaPackageModule
 import world.selene.common.lua.util.xpCall

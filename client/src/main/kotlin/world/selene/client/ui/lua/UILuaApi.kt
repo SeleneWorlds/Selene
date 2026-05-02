@@ -20,7 +20,7 @@ import world.selene.client.rendering.visual2d.Visual2D
 import world.selene.client.ui.UIApi
 import world.selene.client.ui.drawable.DrawableDrawable
 import world.selene.client.ui.drawable.Visual2DDrawable
-import world.selene.common.lua.ClosureTrace
+import world.selene.common.script.ClosureTrace
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.util.checkString

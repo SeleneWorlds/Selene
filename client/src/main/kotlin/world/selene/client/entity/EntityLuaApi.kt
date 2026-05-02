@@ -7,6 +7,7 @@ import world.selene.common.lua.util.checkCoordinate
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.toAnyMap
+import world.selene.common.script.ExposedApi
 
 object EntityLuaApi {
 
@@ -90,8 +91,9 @@ object EntityLuaApi {
     private fun luaGetComponent(lua: Lua): Int {
         val self = lua.checkUserdata<EntityApi>(1)
         val componentName = lua.checkString(2)
-        self.getLuaComponent(componentName)?.let {
-            lua.push(it, Lua.Conversion.NONE)
+        val component = self.getComponent(componentName)
+        if (component is ExposedApi<*>) {
+            lua.push(component.api, Lua.Conversion.NONE)
             return 1
         }
         return 0

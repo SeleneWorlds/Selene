@@ -1,4 +1,4 @@
-package world.selene.client.rendering.lua
+package world.selene.client.rendering.texture
 
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture

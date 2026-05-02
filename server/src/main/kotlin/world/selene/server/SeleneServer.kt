@@ -23,7 +23,6 @@ import world.selene.server.config.ServerConfig
 import world.selene.server.data.mappings.PersistentNameIdRegistry
 import world.selene.server.heartbeat.ServerHeartbeat
 import world.selene.server.http.HttpServer
-import world.selene.server.lua.ServerEvents
 import world.selene.server.network.NetworkServer
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread

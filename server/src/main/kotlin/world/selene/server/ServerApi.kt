@@ -1,4 +1,4 @@
-package world.selene.server.lua
+package world.selene.server
 
 import world.selene.common.observable.ObservableMap
 import world.selene.server.data.ServerCustomData

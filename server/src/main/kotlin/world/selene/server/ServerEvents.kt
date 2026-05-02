@@ -1,13 +1,13 @@
-package world.selene.server.lua
+package world.selene.server
 
-import world.selene.common.event.EventFactory.arrayBackedEvent
+import world.selene.common.event.EventFactory
 
 class ServerEvents {
     fun interface ServerStarted {
         fun serverStarted()
 
         companion object {
-            val EVENT = arrayBackedEvent<ServerStarted> { listeners ->
+            val EVENT = EventFactory.arrayBackedEvent<ServerStarted> { listeners ->
                 ServerStarted { listeners.forEach { it.serverStarted() } }
             }
         }
@@ -17,7 +17,7 @@ class ServerEvents {
         fun serverReloaded()
 
         companion object {
-            val EVENT = arrayBackedEvent<ServerReloaded> { listeners ->
+            val EVENT = EventFactory.arrayBackedEvent<ServerReloaded> { listeners ->
                 ServerReloaded { listeners.forEach { it.serverReloaded() } }
             }
         }

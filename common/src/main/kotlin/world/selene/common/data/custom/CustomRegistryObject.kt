@@ -3,11 +3,11 @@ package world.selene.common.data.custom
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.*
 import world.selene.common.util.asAny
-import world.selene.common.lua.*
 import world.selene.common.data.Identifier
 import world.selene.common.data.RegistryObject
 import world.selene.common.data.MetadataHolder
 import world.selene.common.data.Registry
+import world.selene.common.util.IdResolvable
 import world.selene.common.util.ResolvableReference
 
 class CustomRegistryObject(val customRegistry: CustomRegistry, override val identifier: Identifier, val element: JsonNode) :

@@ -2,7 +2,7 @@ package world.selene.server.entities
 
 import party.iroiro.luajava.Lua
 import world.selene.common.entities.ComponentConfiguration
-import world.selene.common.lua.ClosureTrace
+import world.selene.common.script.ClosureTrace
 import world.selene.common.lua.LuaMappedMetatable
 import world.selene.common.lua.util.checkBoolean
 import world.selene.common.lua.util.checkCoordinate

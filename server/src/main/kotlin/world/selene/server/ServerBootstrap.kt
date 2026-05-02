@@ -67,8 +67,6 @@ import world.selene.server.heartbeat.ServerHeartbeat
 import world.selene.server.http.HttpServer
 import world.selene.server.login.LoginQueue
 import world.selene.server.login.SessionAuthentication
-import world.selene.server.lua.ServerApi
-import world.selene.server.lua.ServerLuaApi
 import world.selene.server.maps.ServerMapApi
 import world.selene.server.maps.ServerMapLuaApi
 import world.selene.server.network.*

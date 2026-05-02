@@ -1,7 +1,7 @@
 package world.selene.server.players
 
 import world.selene.common.grid.Coordinate
-import world.selene.common.lua.IdResolvable
+import world.selene.common.util.IdResolvable
 import world.selene.common.util.ResolvableReference
 import world.selene.common.observable.ObservableMap
 import world.selene.server.dimensions.Dimension
