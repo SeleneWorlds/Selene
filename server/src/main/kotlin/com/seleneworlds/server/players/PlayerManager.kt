@@ -1,6 +1,7 @@
 package com.seleneworlds.server.players
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.ReferenceResolver
 import com.seleneworlds.server.dimensions.DimensionManager
 import com.seleneworlds.server.entities.EntityManager
@@ -13,7 +14,8 @@ class PlayerManager(
     private val dimensionManager: DimensionManager,
     private val chunkViewManager: ChunkViewManager,
     private val objectMapper: ObjectMapper,
-    private val entityManager: EntityManager
+    private val entityManager: EntityManager,
+    private val mainThreadDispatcher: MainThreadDispatcher
 ) : ReferenceResolver<String, Player> {
     private val _players = ConcurrentHashMap<NetworkClient, Player>()
     val players: Collection<Player> get() = _players.values
@@ -29,7 +31,9 @@ class PlayerManager(
         if (player != null) {
             val dimension = player.camera.dimension
             dimension?.syncManager?.playerSyncManagers?.remove(player.syncManager)
-            PlayerEvents.PlayerLeft.EVENT.invoker().playerLeft(player.api)
+            mainThreadDispatcher.runOnMainThread {
+                PlayerEvents.PlayerLeft.EVENT.invoker().playerLeft(player.api)
+            }
         }
     }
 

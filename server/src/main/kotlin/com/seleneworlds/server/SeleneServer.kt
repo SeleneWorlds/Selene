@@ -118,6 +118,7 @@ class SeleneServer(
     }
 
     private fun startMainEventLoop() {
+        mainThreadDispatcher.bindToCurrentThread()
         while (running.get()) {
             mainThreadDispatcher.process()
             networkServer.process()

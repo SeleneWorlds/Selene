@@ -1,5 +1,6 @@
 package com.seleneworlds.server.login
 
+import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.server.players.PlayerEvents
 
 enum class LoginQueueStatus {
@@ -13,7 +14,8 @@ data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var
 data class CompletedLogin(val token: String)
 
 class LoginQueue(
-    private val sessionAuth: SessionAuthentication
+    private val sessionAuth: SessionAuthentication,
+    private val mainThreadDispatcher: MainThreadDispatcher
 ) {
 
     private val entries = mutableMapOf<String, LoginQueueEntry>()
@@ -22,7 +24,9 @@ class LoginQueue(
         val entry = entries.getOrPut(userId) {
             LoginQueueEntry(userId, LoginQueueStatus.Pending, null)
         }
-        entry.status = PlayerEvents.PlayerQueued.EVENT.invoker().playerQueued(entry)
+        entry.status = mainThreadDispatcher.callOnMainThread {
+            PlayerEvents.PlayerQueued.EVENT.invoker().playerQueued(entry)
+        }
         return entry
     }
 
@@ -33,7 +37,9 @@ class LoginQueue(
     fun removeUser(userId: String) {
         val entry = entries.remove(userId)
         if (entry != null) {
-            PlayerEvents.PlayerDequeued.EVENT.invoker().playerDequeued(entry)
+            mainThreadDispatcher.runOnMainThread {
+                PlayerEvents.PlayerDequeued.EVENT.invoker().playerDequeued(entry)
+            }
         }
     }
 
