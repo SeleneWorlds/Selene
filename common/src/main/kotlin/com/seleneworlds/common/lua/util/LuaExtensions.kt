@@ -260,22 +260,33 @@ fun Lua.toAny(index: Int): Any? {
     }
 }
 
+private inline fun <T> Lua.withRestoredStack(block: Lua.() -> T): T {
+    val originalTop = top
+    try {
+        return block()
+    } finally {
+        top = originalTop
+    }
+}
+
 fun Lua.toSerializedMap(index: Int): SerializedMap? {
     if (isTable(index)) {
-        val map = mutableMapOf<String, Any?>()
-        val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
-        pushNil()
-        while (next(absIndex) != 0) {
-            val key = if (isString(-2)) {
-                toString(-2)!!
-            } else {
-                throwError("Expected only string keys in table, got ${type(-2)}")
+        return withRestoredStack {
+            val map = mutableMapOf<String, Any?>()
+            val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
+            pushNil()
+            while (next(absIndex) != 0) {
+                val key = if (isString(-2)) {
+                    toString(-2)!!
+                } else {
+                    throwError("Expected only string keys in table, got ${type(-2)}")
+                }
+                val value = toAny(-1)
+                map[key] = value
+                pop(1)
             }
-            val value = toAny(-1)
-            map[key] = value
-            pop(1)
+            map
         }
-        return map
     } else if (isUserdata(index)) {
         return toUserdata(index, ObservableMap::class)?.map
     }
@@ -297,23 +308,25 @@ fun <TKey : Any, TValue : Any> Lua.toTypedMap(
     valueClass: KClass<TValue>
 ): Map<TKey, TValue>? {
     if (isTable(index)) {
-        val map = mutableMapOf<TKey, TValue>()
-        val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
-        pushNil()
-        while (next(absIndex) != 0) {
-            val key = toAny(-2)!!
-            if (!keyClass.isInstance(key)) {
-                throwError("Expected only keys of type ${keyClass.simpleName} in table")
+        return withRestoredStack {
+            val map = mutableMapOf<TKey, TValue>()
+            val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
+            pushNil()
+            while (next(absIndex) != 0) {
+                val key = toAny(-2)!!
+                if (!keyClass.isInstance(key)) {
+                    throwError("Expected only keys of type ${keyClass.simpleName} in table")
+                }
+                val value = toAny(-1)!!
+                if (!valueClass.isInstance(value)) {
+                    throwError("Expected only values of type ${valueClass.simpleName} in table")
+                }
+                @Suppress("UNCHECKED_CAST")
+                map[key as TKey] = value as TValue
+                pop(1)
             }
-            val value = toAny(-1)!!
-            if (!valueClass.isInstance(value)) {
-                throwError("Expected only values of type ${valueClass.simpleName} in table")
-            }
-            @Suppress("UNCHECKED_CAST")
-            map[key as TKey] = value as TValue
-            pop(1)
+            map
         }
-        return map
     }
 
     return null
