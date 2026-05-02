@@ -68,6 +68,8 @@ import world.selene.client.rendering.scene.Scene
 import world.selene.client.sounds.SoundsApi
 import world.selene.client.sounds.SoundsLuaApi
 import world.selene.client.sounds.SoundManager
+import world.selene.client.script.ClientScriptProvider
+import world.selene.client.script.ClientLuaScriptProvider
 import world.selene.client.tiles.Tile
 import world.selene.client.tiles.TilePool
 import world.selene.client.ui.UI
@@ -213,6 +215,7 @@ class SeleneApplication(
             single { runtimeConfig }
             singleOf(::UI)
             singleOf(::MainThreadDispatcher)
+            singleOf(::ClientLuaScriptProvider) { bind<ClientScriptProvider>() }
             singleOf(::SeleneClient)
             singleOf(::RuntimeBundleUpdateManager) { bind<Disposable>() }
         }
