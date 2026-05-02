@@ -31,6 +31,10 @@ class BundleWatcherTest {
             assertEquals(watcher.awaitProcessedUpdate(), null, "server changes should not trigger bundle updates")
 
             Files.writeString(commonFile, "common-2")
+            assertEquals(watcher.awaitProcessedUpdate(), null, "first modify should establish baseline for existing files")
+
+            watcher.resetProcessedUpdates()
+            Files.writeString(commonFile, "common-3")
             val update = assertNotNull(watcher.awaitProcessedUpdate())
             assertEquals(setOf("common/assets/test/atlas.txt"), update.updatedFiles)
             assertTrue(update.deletedFiles.isEmpty())
@@ -38,7 +42,7 @@ class BundleWatcherTest {
     }
 
     @Test
-    fun suppressesModifyWhenFileMetadataDidNotChange() {
+    fun usesFirstModifyToEstablishBaselineForExistingFiles() {
         withWatcherBundle { bundle, watcher ->
             val filePath = writeFile(bundle.dir.toPath().resolve("common/assets/test/atlas.txt"), "content")
 
@@ -75,7 +79,7 @@ class BundleWatcherTest {
     }
 
     @Test
-    fun recursivelyRegistersNewDirectoriesAndSeedsExistingFiles() {
+    fun recursivelyRegistersNewDirectoriesAndEstablishesBaselineLazily() {
         withWatcherBundle { bundle, watcher ->
             bundle.dir.toPath().resolve("common").createDirectories()
 
@@ -100,7 +104,7 @@ class BundleWatcherTest {
                 watcher.processPendingUpdates()
                 assertTrue(
                     watcher.processedUpdates.isEmpty(),
-                    "existing files inside newly created directories should be seeded before later modifies"
+                    "existing files inside newly created directories should establish baseline on first modify"
                 )
 
                 Files.writeString(targetDir.resolve("nested/existing.txt"), "updated")

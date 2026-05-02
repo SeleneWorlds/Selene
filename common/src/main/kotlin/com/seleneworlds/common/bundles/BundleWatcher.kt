@@ -5,7 +5,6 @@ import com.seleneworlds.common.data.BundleDrivenRegistry
 import com.seleneworlds.common.data.Registry
 import com.seleneworlds.common.util.Disposable
 import java.nio.file.*
-import java.nio.file.attribute.BasicFileAttributeView
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.ConcurrentHashMap
@@ -81,7 +80,7 @@ abstract class BundleWatcher(
     private fun registerBundleWatch(bundle: Bundle) {
         val bundleDir = bundle.dir
         if (!bundleDir.exists()) {
-            logger.debug("Bundle directory does not exist: ${bundleDir.absolutePath}")
+            logger.error("Bundle directory does not exist: ${bundleDir.absolutePath}")
             return
         }
 
@@ -230,13 +229,15 @@ abstract class BundleWatcher(
         val currentState = readFileState(filePath) ?: return
         val previousState = fileStates[fileKey]
 
-        if (previousState == null || currentState != previousState) {
+        if (previousState == null) {
+            fileStates[fileKey] = currentState
+            return
+        }
+
+        if (currentState != previousState) {
             fileStates[fileKey] = currentState
             pendingUpdates.computeIfAbsent(bundle.manifest.name) { ConcurrentHashMap.newKeySet() }.add(relativePath)
             pendingDeletes[bundle.manifest.name]?.remove(relativePath)
-            logger.debug("File state changed: $relativePath")
-        } else {
-            logger.debug("File state unchanged, ignoring update: $relativePath")
         }
     }
 
@@ -297,7 +298,7 @@ abstract class BundleWatcher(
     }
 
     private fun registerDirectoryTree(rootPath: Path, bundle: Bundle) {
-        var fileCount = 0
+        var directoryCount = 0
 
         Files.walkFileTree(rootPath, object : SimpleFileVisitor<Path>() {
             override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
@@ -306,21 +307,12 @@ abstract class BundleWatcher(
                 }
 
                 registerDirectoryWatch(dir, bundle)
-                return FileVisitResult.CONTINUE
-            }
-
-            override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-                if (attrs.isRegularFile && isSyncedBundleContentFile(bundle, file)) {
-                    val relativePath = bundle.dir.toPath().relativize(file).toString()
-                    val fileKey = getFileStateKey(bundle, relativePath)
-                    readFileState(file)?.let { fileStates[fileKey] = it }
-                    fileCount++
-                }
+                directoryCount++
                 return FileVisitResult.CONTINUE
             }
         })
 
-        logger.debug("Registered {} existing files in watched subtree {}", fileCount, rootPath)
+        logger.debug("Registered {} directories in watched subtree {}", directoryCount, rootPath)
     }
 
     private fun shouldWatchDirectory(bundle: Bundle, dirPath: Path): Boolean {
