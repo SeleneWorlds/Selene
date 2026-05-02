@@ -74,6 +74,7 @@ class MapTree(val registries: Registries) : ExposedApi<MapTreeApi> {
             data: SerializedMap?
         ) {
             baseLayer.annotateTile(coordinate, key, data)
+            notifyListeners(coordinate)
         }
 
         override fun addVisibilityTag(tagName: String) {

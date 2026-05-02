@@ -36,7 +36,7 @@ class ObservableMap(val map: MutableMap<String, Any?> = mutableMapOf()) : Observ
         return ObservableMap(deepCopyMap(map))
     }
 
-    private fun deepCopyMap(original: MutableMap<String, Any?>): MutableMap<String, Any?> {
+    private fun deepCopyMap(original: Map<String, Any?>): MutableMap<String, Any?> {
         val copy = mutableMapOf<String, Any?>()
         for ((key, value) in original) {
             copy[key] = deepCopyValue(value)
@@ -47,9 +47,14 @@ class ObservableMap(val map: MutableMap<String, Any?> = mutableMapOf()) : Observ
     private fun deepCopyValue(value: Any?): Any? {
         return when (value) {
             is ObservableMap -> value.deepCopy()
-            is MutableMap<*, *> -> {
-                @Suppress("UNCHECKED_CAST")
-                deepCopyMap(value as MutableMap<String, Any?>)
+            is Map<*, *> -> {
+                val copy = mutableMapOf<String, Any?>()
+                for ((key, entry) in value) {
+                    val stringKey = key as? String
+                        ?: throw IllegalArgumentException("ObservableMap only supports string keys")
+                    copy[stringKey] = deepCopyValue(entry)
+                }
+                copy
             }
 
             is MutableList<*> -> {

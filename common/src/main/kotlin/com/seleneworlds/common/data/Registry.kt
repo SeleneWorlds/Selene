@@ -4,7 +4,7 @@ import com.seleneworlds.common.data.mappings.NameIdRegistry
 import kotlin.reflect.KClass
 
 interface Registry<TData : Any> {
-    val clazz: KClass<TData>
+    val dataType: KClass<TData>
     val name: String
     fun get(id: Int): TData?
     fun getIdentifier(id: Int): Identifier?

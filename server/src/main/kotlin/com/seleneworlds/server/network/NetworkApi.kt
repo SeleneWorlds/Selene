@@ -29,10 +29,10 @@ class NetworkApi(
         )
     }
 
-    fun sendToPlayers(players: List<*>, payloadId: String, payload: SerializedMap) {
+    fun sendToPlayers(players: List<PlayerApi>, payloadId: String, payload: SerializedMap) {
         val packet = CustomPayloadPacket(payloadId, json.encodeToString(SerializedMapSerializer, payload))
         players.forEach { player ->
-            (player as? Player)?.client?.send(packet)
+            player.delegate.client.send(packet)
         }
     }
 

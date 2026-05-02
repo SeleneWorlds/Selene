@@ -86,7 +86,7 @@ class SchedulesLuaApi(private val api: SchedulesApi) : LuaModule, Disposable {
             val lua = callback.state()
             try {
                 lua.push(callback)
-                lua.xpCall(0, 0, ConstantTrace("[timeout \"$name\", ${intervalMs}ms] scheduled at <$trace>"))
+                lua.xpCall(0, 0, ConstantTrace("[interval \"$name\", ${intervalMs}ms] scheduled at <$trace>"))
             } catch (e: LuaException) {
                 logger.error("Lua error in interval", e)
             }

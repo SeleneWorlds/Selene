@@ -1,17 +1,17 @@
 package com.seleneworlds.server.network
 
-import kotlinx.serialization.json.Json
-import org.slf4j.Logger
 import com.seleneworlds.common.data.mappings.NameIdRegistry
 import com.seleneworlds.common.grid.Grid
-import com.seleneworlds.common.network.PayloadHandlerRegistry
 import com.seleneworlds.common.network.Packet
 import com.seleneworlds.common.network.PacketHandler
+import com.seleneworlds.common.network.PayloadHandlerRegistry
 import com.seleneworlds.common.network.packet.*
 import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.server.login.SessionAuthentication
 import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.players.PlayerEvents
+import kotlinx.serialization.json.Json
+import org.slf4j.Logger
 import java.util.*
 
 class ServerPacketHandler(
@@ -95,8 +95,12 @@ class ServerPacketHandler(
             context.enqueueWork {
                 val handler = payloadRegistry.getHandler(packet.payloadId)
                 if (handler != null) {
-                    val payload = json.decodeFromString(SerializedMapSerializer, packet.payload)
-                    handler(player, payload)
+                    try {
+                        val payload = json.decodeFromString(SerializedMapSerializer, packet.payload)
+                        handler(player, payload)
+                    } catch (e: Exception) {
+                        logger.warn("Failed to handle custom payload {} from {}", packet.payloadId, context.address, e)
+                    }
                 }
             }
         }

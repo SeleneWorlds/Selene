@@ -179,7 +179,7 @@ object ObservableMapLuaApi {
 
         override fun luaSet(lua: Lua): Int {
             val map = lua.checkUserdata<ObservableMap>(1)
-            val key = lua.toString(2) ?: return lua.pushNil().let { 1 }
+            val key = lua.toString(2) ?: return lua.pushError("Key must be a string, got ${lua.type(2)}")
             val value = lua.toAny(3)
             if (value is IdResolvable<*, *>) {
                 map[key] = value.resolvableReference()

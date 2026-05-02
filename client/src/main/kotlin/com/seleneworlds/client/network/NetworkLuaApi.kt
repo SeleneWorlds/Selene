@@ -8,6 +8,7 @@ import party.iroiro.luajava.value.LuaValue
 import com.seleneworlds.common.script.ConstantTrace
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.checkFunction
+import com.seleneworlds.common.lua.util.checkSerializedMap
 import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.getCallerInfo
 import com.seleneworlds.common.lua.util.register
@@ -44,7 +45,7 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
     }
 
     private fun luaSendToServer(lua: Lua): Int {
-        api.sendToServer(lua.checkString(1), lua.toSerializedMap(2) ?: emptyMap())
+        api.sendToServer(lua.checkString(1), if (!lua.isNil(2)) lua.checkSerializedMap(2) else emptyMap())
         return 0
     }
 

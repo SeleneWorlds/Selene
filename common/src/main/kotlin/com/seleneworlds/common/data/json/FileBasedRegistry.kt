@@ -21,7 +21,7 @@ abstract class FileBasedRegistry<TData : Any>(
     val json: Json,
     val platform: String,
     override val name: String,
-    private val dataClass: KClass<TData>,
+    override val dataType: KClass<TData>,
     private val serializer: KSerializer<TData>? = null
 ) : Registry<TData>, BundleDrivenRegistry, ReferenceResolver<Identifier, TData>, CacheableRegistry {
     protected val logger: Logger = LoggerFactory.getLogger("selene")
@@ -38,7 +38,6 @@ abstract class FileBasedRegistry<TData : Any>(
         _cacheKey++
     }
 
-    override val clazz: KClass<TData> = dataClass
     override fun get(id: Int): TData? = entriesById[id]
     override fun getId(identifier: Identifier): Int = idByIdentifier[identifier] ?: -1
     override fun get(identifier: Identifier): TData? = entries[identifier]

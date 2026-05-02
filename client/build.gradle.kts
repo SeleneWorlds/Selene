@@ -33,6 +33,10 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+tasks.test {
+    useJUnitPlatform()
+}
+
 tasks.register("generateLibrariesJson") {
     description = "Generates libraries.json with runtime classpath dependencies"
     group = "build"

@@ -1,22 +1,13 @@
 package com.seleneworlds.server.entities
 
-import party.iroiro.luajava.Lua
 import com.seleneworlds.common.entities.ComponentConfiguration
-import com.seleneworlds.common.script.ConstantTrace
 import com.seleneworlds.common.lua.LuaMappedMetatable
-import com.seleneworlds.common.lua.util.checkBoolean
-import com.seleneworlds.common.lua.util.checkCoordinate
-import com.seleneworlds.common.lua.util.checkDirection
-import com.seleneworlds.common.lua.util.checkString
-import com.seleneworlds.common.lua.util.checkUserdata
-import com.seleneworlds.common.lua.util.getCallerInfo
-import com.seleneworlds.common.lua.util.toAny
-import com.seleneworlds.common.lua.util.toSerializedMap
-import com.seleneworlds.common.lua.util.toUserdata
-import com.seleneworlds.common.lua.util.xpCall
+import com.seleneworlds.common.lua.util.*
+import com.seleneworlds.common.script.ConstantTrace
 import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.serialization.toJsonElement
 import com.seleneworlds.server.dimensions.DimensionApi
+import party.iroiro.luajava.Lua
 
 object EntityLuaApi {
 
@@ -236,10 +227,14 @@ object EntityLuaApi {
             callbackLua.push(entity, Lua.Conversion.NONE)
             callbackLua.push(player.api, Lua.Conversion.NONE)
             callbackLua.xpCall(2, 1, ConstantTrace("[dynamic component \"$name\"] registered in $registrationSite"))
-            seleneJson.decodeFromJsonElement(
-                ComponentConfiguration.serializer(),
-                (callbackLua.toSerializedMap(-1) ?: emptyMap()).toJsonElement()
-            )
+            try {
+                seleneJson.decodeFromJsonElement(
+                    ComponentConfiguration.serializer(),
+                    (callbackLua.toSerializedMap(-1) ?: emptyMap()).toJsonElement()
+                )
+            } finally {
+                callbackLua.pop(1)
+            }
         }
         return 0
     }

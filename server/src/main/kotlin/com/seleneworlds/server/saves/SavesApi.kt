@@ -30,6 +30,8 @@ class SavesApi(val saveManager: SaveManager, val serverConfig: ServerConfig) {
         val saveFile = File(serverConfig.savePath, path)
         if (savable is MapTreeApi) {
             saveManager.save(saveFile, savable.mapTree)
+        } else {
+            saveManager.save(saveFile, savable)
         }
     }
 

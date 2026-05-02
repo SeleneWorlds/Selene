@@ -361,15 +361,17 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
                 writeByte(7); writeByte(value.toInt())
             }
 
-            else -> {
-                writeByte(0); writeString(value.toString())
+            is String -> {
+                writeByte(0); writeString(value)
             }
+
+            else -> throw RuntimeException("Unsupported annotation value type: ${value::class.qualifiedName}")
         }
     }
 
     private fun ByteBuffer.readAny(): Any? {
-        val type = this.get().toInt()
-        return when (type) {
+        return when (val type = this.get().toInt()) {
+            0 -> readString()
             1 -> this.int
             2 -> this.float
             3 -> this.get().toInt() == 1
@@ -378,7 +380,7 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
             6 -> this.short
             7 -> this.get()
             8 -> null
-            else -> readString()
+            else -> throw RuntimeException("Unsupported annotation value type tag: $type")
         }
     }
 

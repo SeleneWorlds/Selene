@@ -233,7 +233,7 @@ fun Lua.checkFunction(index: Int): LuaValue {
 
 fun <T : Any> Lua.toRegistry(index: Int, registry: Registry<T>): T? {
     if (isUserdata(index)) {
-        return toUserdata(index, registry.clazz)
+        return toUserdata(index, registry.dataType)
     }
     return toString(index)?.let { registry.get(it) }
 }
@@ -241,11 +241,11 @@ fun <T : Any> Lua.toRegistry(index: Int, registry: Registry<T>): T? {
 fun <T : Any> Lua.checkRegistry(index: Int, registry: Registry<T>): T {
     if (isUserdata(index)) {
         return when (val item = toAny(index)) {
-            is Identifier -> registry.get(item) ?: throwTypeError(index, registry.clazz)
-            else -> checkUserdata(index, registry.clazz)
+            is Identifier -> registry.get(item) ?: throwTypeError(index, registry.dataType)
+            else -> checkUserdata(index, registry.dataType)
         }
     }
-    return toRegistry(index, registry) ?: throwTypeError(index, registry.clazz)
+    return toRegistry(index, registry) ?: throwTypeError(index, registry.dataType)
 }
 
 fun Lua.toAny(index: Int): Any? {
