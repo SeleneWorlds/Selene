@@ -80,10 +80,10 @@ class UIApi(
     fun loadUI(
         xmlFilePath: String,
         i18nBundle: String,
-        skin: Skin?,
+        theme: ThemeApi?,
         actions: Map<String, (Any, Array<out Any>) -> Any?>
     ): Pair<List<Actor>, Map<String, Actor>> {
-        val parser = SeleneLmlParser.parser().skin(skin ?: ui.systemSkin)
+        val parser = SeleneLmlParser.parser().skin(theme?.skin ?: ui.systemSkin)
 
         for ((actionName, actionFunction) in actions) {
             parser.action(actionName, object : ParameterizedActorConsumer<Any?, Any> {
@@ -119,25 +119,25 @@ class UIApi(
         return actors.toList() to actorsByName
     }
 
-    fun loadSkin(skinPath: String): Skin {
+    fun loadTheme(skinPath: String): ThemeApi {
         val skinFile = bundleFileResolver.resolve(skinPath)
         if (!skinFile.exists()) {
             throw IllegalArgumentException("Skin file not found: $skinPath")
         }
-        return Skin(skinFile)
+        return ThemeApi(Skin(skinFile))
     }
 
-    fun createSkin(): Skin {
+    fun createTheme(): ThemeApi {
         val font = BitmapFont()
-        return Skin().apply {
+        return ThemeApi(Skin().apply {
             add("default", font)
             add("default", Label.LabelStyle(font, Color.WHITE))
             add("hidden", ImageButton.ImageButtonStyle())
-        }
+        })
     }
 
     fun createContainer(
-        skin: Skin,
+        theme: ThemeApi,
         child: Actor?,
         background: String?,
         width: Float?,
@@ -145,7 +145,7 @@ class UIApi(
     ): Container<Actor> {
         val container = Container<Actor>(child)
         background?.let {
-            container.background = skinResolvers.resolveDrawable(skin, it)
+            container.background = skinResolvers.resolveDrawable(theme, it)
         }
         width?.let {
             container.width(it)
@@ -156,8 +156,8 @@ class UIApi(
         return container
     }
 
-    fun createLabel(skin: Skin, style: String, text: String, wrap: Boolean): Label {
-        val labelStyle = skin.get(style, Label.LabelStyle::class.java)
+    fun createLabel(theme: ThemeApi, style: String, text: String, wrap: Boolean): Label {
+        val labelStyle = theme.skin.get(style, Label.LabelStyle::class.java)
         val label = Label(text, labelStyle)
         label.wrap = wrap
         return label

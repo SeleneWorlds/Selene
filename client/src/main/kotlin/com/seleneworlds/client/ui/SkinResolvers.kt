@@ -36,6 +36,10 @@ class SkinResolvers(private val bundleFileResolver: BundleFileResolver) {
         }
     }
 
+    fun resolveDrawable(theme: ThemeApi?, path: String): Drawable? {
+        return resolveDrawable(theme?.skin, path)
+    }
+
     fun resolveColor(skin: Skin, colorString: String): Color {
         return when {
             colorString.startsWith("#") -> {
