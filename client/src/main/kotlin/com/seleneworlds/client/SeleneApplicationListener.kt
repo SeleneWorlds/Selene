@@ -15,6 +15,7 @@ import com.seleneworlds.client.camera.CameraManager
 import com.seleneworlds.client.controls.GridMovement
 import com.seleneworlds.client.game.ClientEvents
 import com.seleneworlds.client.input.InputManager
+import com.seleneworlds.client.input.SystemInputProcessor
 import com.seleneworlds.client.network.NetworkClient
 import com.seleneworlds.client.rendering.DebugRenderer
 import com.seleneworlds.client.rendering.SceneRenderer
@@ -50,6 +51,7 @@ class SeleneApplicationListener(
         markerTexture = Texture("icon_16.png")
         systemFont = BitmapFont()
 
+        inputMultiplexer.addProcessor(SystemInputProcessor())
         inputMultiplexer.addProcessor(ui.stage)
         inputMultiplexer.addProcessor(inputManager)
         Gdx.input.inputProcessor = inputMultiplexer
