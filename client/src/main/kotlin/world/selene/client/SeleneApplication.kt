@@ -71,9 +71,9 @@ import world.selene.client.sounds.SoundsLuaApi
 import world.selene.client.tiles.Tile
 import world.selene.client.tiles.TilePool
 import world.selene.client.ui.UI
-import world.selene.client.ui.lua.LuaSkinUtils
+import world.selene.client.ui.SkinResolvers
 import world.selene.client.ui.lua.SkinLuaMetatable
-import world.selene.client.ui.lua.UIApi
+import world.selene.client.ui.UIApi
 import world.selene.client.ui.lua.UILuaApi
 import world.selene.common.bundles.*
 import world.selene.common.data.RegistriesApi
@@ -134,7 +134,7 @@ class SeleneApplication(
             singleOf(::LuaManager)
             single { PayloadHandlerRegistry<Unit>() }
             singleOf(::Messages)
-            singleOf(::LuaSkinUtils)
+            singleOf(::SkinResolvers)
             singleOf(::SkinLuaMetatable)
             singleOf(::LuaDebugModule) { bind<LuaModule>() }
             singleOf(::LuaOsModule) { bind<LuaModule>() }
