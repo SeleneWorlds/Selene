@@ -15,7 +15,7 @@ class TexturesLuaApi(private val api: TexturesApi) : LuaModule {
     override val name = "selene.textures"
 
     override fun initialize(luaManager: LuaManager) {
-        luaManager.defineMetatable(ScriptableTexture::class, ScriptableTexture.luaMeta)
+        luaManager.defineMetatable(ScriptableTexture::class, ScriptableTextureLuaApi.luaMeta)
     }
 
     override fun register(table: LuaValue) {
