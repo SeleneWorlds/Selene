@@ -2,6 +2,7 @@ package world.selene.server.dimensions
 
 import world.selene.common.tiles.TileDefinition
 import world.selene.common.grid.Coordinate
+import world.selene.common.script.ExposedApi
 import world.selene.server.cameras.viewer.DefaultViewer
 import world.selene.server.cameras.viewer.Viewer
 import world.selene.server.data.Registries
@@ -12,8 +13,8 @@ import world.selene.server.tiles.TransientTile
 import world.selene.server.sync.DimensionSyncManager
 import world.selene.server.world.World
 
-class Dimension(val registries: Registries, val world: World) : MapTreeListener {
-    val api = DimensionApi(this)
+class Dimension(val registries: Registries, val world: World) : MapTreeListener, ExposedApi<DimensionApi> {
+    override val api = DimensionApi(this)
     var mapTree: MapTree = MapTree(registries).also { it.addListener(this) }
         set(value) {
             field.removeListener(this)

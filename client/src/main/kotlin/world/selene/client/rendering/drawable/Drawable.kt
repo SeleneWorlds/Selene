@@ -2,9 +2,10 @@ package world.selene.client.rendering.drawable
 
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
+import world.selene.common.script.ExposedApi
 
-interface Drawable {
-    val api: DrawableApi
+interface Drawable : ExposedApi<DrawableApi> {
+    override val api: DrawableApi
     fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle
     fun update(delta: Float)
     fun render(batch: Batch, x: Float, y: Float)

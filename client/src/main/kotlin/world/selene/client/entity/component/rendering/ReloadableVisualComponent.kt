@@ -6,11 +6,12 @@ import world.selene.client.entity.component.EntityComponent
 import world.selene.client.entity.component.TickableComponent
 import world.selene.client.entity.Entity
 import world.selene.client.rendering.visual.ReloadableVisual
+import world.selene.common.script.ExposedApi
 import world.selene.common.util.Disposable
 
 class ReloadableVisualComponent(val visual: ReloadableVisual, override val positioner: ComponentPositioner) : EntityComponent,
-    TickableComponent, RenderableComponent, Disposable, IsoComponent {
-    val api = ReloadableVisualComponentApi(this)
+    TickableComponent, RenderableComponent, Disposable, IsoComponent, ExposedApi<ReloadableVisualComponentApi> {
+    override val api = ReloadableVisualComponentApi(this)
     var red = 1f
     var green = 1f
     var blue = 1f

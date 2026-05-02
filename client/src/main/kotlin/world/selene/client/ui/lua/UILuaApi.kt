@@ -21,6 +21,7 @@ import world.selene.client.ui.UIApi
 import world.selene.client.ui.drawable.DrawableDrawable
 import world.selene.client.ui.drawable.Visual2DDrawable
 import world.selene.common.script.ClosureTrace
+import world.selene.common.script.ExposedApi
 import world.selene.common.lua.LuaManager
 import world.selene.common.lua.LuaModule
 import world.selene.common.lua.util.checkString
@@ -44,8 +45,8 @@ import world.selene.common.lua.util.xpCall
  * Load, skin and manipulate UIs.
  */
 class UILuaApi(
-    val api: UIApi
-) : LuaModule {
+    override val api: UIApi
+) : LuaModule, ExposedApi<UIApi> {
     override val name = "selene.ui.lml"
 
     override fun initialize(luaManager: LuaManager) {

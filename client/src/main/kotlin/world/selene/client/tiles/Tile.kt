@@ -13,6 +13,7 @@ import world.selene.client.rendering.visual.VisualCreationContext
 import world.selene.client.rendering.visual.VisualFactory
 import world.selene.common.data.RegistryReference
 import world.selene.common.grid.Coordinate
+import world.selene.common.script.ExposedApi
 import world.selene.common.tiles.TileDefinition
 import kotlin.math.abs
 
@@ -21,8 +22,8 @@ class Tile(
     private val registries: Registries,
     private val visualFactory: VisualFactory,
     private val pool: TilePool
-) : Pool.Poolable, Renderable {
-    val api = TileApi(this)
+) : Pool.Poolable, Renderable, ExposedApi<TileApi> {
+    override val api = TileApi(this)
     var tileDefinition: RegistryReference<TileDefinition> = RegistryReference.unbound()
         set(value) {
             field.unsubscribeAll()

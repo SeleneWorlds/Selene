@@ -6,10 +6,11 @@ import world.selene.client.entity.component.EntityComponent
 import world.selene.client.entity.component.TickableComponent
 import world.selene.client.entity.Entity
 import world.selene.client.rendering.visual2d.iso.IsoVisual
+import world.selene.common.script.ExposedApi
 
 class IsoVisualComponent(val visual: IsoVisual, override val positioner: ComponentPositioner) : EntityComponent,
-    TickableComponent, RenderableComponent, IsoComponent {
-    val api = IsoVisualComponentApi(this)
+    TickableComponent, RenderableComponent, IsoComponent, ExposedApi<IsoVisualComponentApi> {
+    override val api = IsoVisualComponentApi(this)
     var red = 1f
     var green = 1f
     var blue = 1f

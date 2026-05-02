@@ -5,6 +5,7 @@ import world.selene.common.network.packet.SetCameraPositionPacket
 import world.selene.common.network.packet.SetControlledEntityPacket
 import world.selene.common.observable.ObservableMap
 import world.selene.common.grid.Coordinate
+import world.selene.common.script.ExposedApi
 import world.selene.common.util.IdResolvable
 import world.selene.common.util.ResolvableReference
 import world.selene.server.cameras.Camera
@@ -18,7 +19,7 @@ class Player(
     val dimensionManager: DimensionManager,
     private val playerManager: PlayerManager,
     val client: NetworkClient
-) : IdResolvable<String, Player> {
+) : IdResolvable<String, Player>, ExposedApi<PlayerApi> {
 
     enum class ConnectionState {
         PENDING_AUTHENTICATION,
@@ -27,7 +28,7 @@ class Player(
         DISCONNECTED
     }
 
-    val api = PlayerApi(this)
+    override val api = PlayerApi(this)
 
     var connectionState: ConnectionState = ConnectionState.PENDING_AUTHENTICATION
     var userId: String? = null

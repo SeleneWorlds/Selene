@@ -6,10 +6,11 @@ import world.selene.client.entity.component.EntityComponent
 import world.selene.client.entity.component.TickableComponent
 import world.selene.client.entity.Entity
 import world.selene.client.rendering.visual2d.Visual2D
+import world.selene.common.script.ExposedApi
 
 class Visual2DComponent(val visual: Visual2D, override val positioner: ComponentPositioner) : EntityComponent,
-    TickableComponent, RenderableComponent {
-    val api = Visual2DComponentApi(this)
+    TickableComponent, RenderableComponent, ExposedApi<Visual2DComponentApi> {
+    override val api = Visual2DComponentApi(this)
     var red = 1f
     var green = 1f
     var blue = 1f

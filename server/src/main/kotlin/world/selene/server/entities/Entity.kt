@@ -6,6 +6,7 @@ import world.selene.common.entities.EntityDefinition
 import world.selene.common.grid.Direction
 import world.selene.common.network.packet.EntityAnimationPacket
 import world.selene.common.observable.ObservableMap
+import world.selene.common.script.ExposedApi
 import world.selene.common.grid.Coordinate
 import world.selene.common.util.IdResolvable
 import world.selene.common.util.ResolvableReference
@@ -17,8 +18,8 @@ import world.selene.server.maps.layers.MapLayer
 import world.selene.server.players.Player
 import world.selene.server.world.World
 
-class Entity(val registries: Registries, val world: World) : IdResolvable<Int, Entity> {
-    val api = EntityApi(this)
+class Entity(val registries: Registries, val world: World) : IdResolvable<Int, Entity>, ExposedApi<EntityApi> {
+    override val api = EntityApi(this)
     val impassable: Boolean = true
     var networkId: Int = -1
     var entityDefinition: RegistryReference<EntityDefinition> = RegistryReference.unbound()

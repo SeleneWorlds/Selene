@@ -25,6 +25,7 @@ import world.selene.common.data.RegistryReference
 import world.selene.common.entities.ComponentConfiguration
 import world.selene.common.entities.EntityDefinition
 import world.selene.common.grid.Coordinate
+import world.selene.common.script.ExposedApi
 import world.selene.common.util.Disposable
 import java.util.*
 
@@ -35,10 +36,10 @@ class Entity(
     val grid: ClientGrid,
     val entityComponentFactory: EntityComponentFactory
 ) :
-    Pool.Poolable, Renderable {
+    Pool.Poolable, Renderable, ExposedApi<EntityApi> {
 
     private val logger = LoggerFactory.getLogger(Entity::class.java)
-    val api = EntityApi(this)
+    override val api = EntityApi(this)
 
     var networkId: Int = 0
     var entityDefinition: RegistryReference<EntityDefinition> = RegistryReference.unbound()

@@ -2,11 +2,13 @@ package world.selene.server.attributes
 
 import world.selene.common.observable.Observable
 import world.selene.common.observable.Observer
+import world.selene.common.script.ExposedApi
 import world.selene.server.attributes.filters.AttributeFilter
 
-class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : Observable<AttributeApi> {
+class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : Observable<AttributeApi>,
+    ExposedApi<AttributeApi> {
     @Suppress("UNCHECKED_CAST")
-    val api = AttributeApi(this as Attribute<Any?>)
+    override val api = AttributeApi(this as Attribute<Any?>)
     val observers = mutableListOf<Observer<AttributeApi>>()
     val constraints = mutableListOf<AttributeFilter<T>>()
     val constraintsByName = mutableMapOf<String, AttributeFilter<T>>()

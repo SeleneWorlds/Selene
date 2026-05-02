@@ -4,14 +4,15 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBasedTable
 import world.selene.common.grid.ChunkWindow
 import world.selene.common.grid.Coordinate
+import world.selene.common.script.ExposedApi
 import world.selene.server.cameras.viewer.Viewer
 import world.selene.server.dimensions.Dimension
 import world.selene.server.maps.layers.*
 import world.selene.server.maps.tree.MapTree
 
-class ScopedChunkView(val window: ChunkWindow) {
+class ScopedChunkView(val window: ChunkWindow) : ExposedApi<ScopedChunkViewApi> {
 
-    val api = ScopedChunkViewApi(this)
+    override val api = ScopedChunkViewApi(this)
 
     val backingLayers = mutableListOf<MapLayer>()
     val padding = 1
