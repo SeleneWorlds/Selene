@@ -55,9 +55,12 @@ class SeleneApplicationListener(
         inputMultiplexer.addProcessor(ui.stage)
         inputMultiplexer.addProcessor(inputManager)
         Gdx.input.inputProcessor = inputMultiplexer
+
+        cameraManager.resize(Gdx.graphics.width, Gdx.graphics.height)
     }
 
     override fun resize(width: Int, height: Int) {
+        cameraManager.resize(width, height)
         ui.resize(width, height)
     }
 
@@ -77,13 +80,16 @@ class SeleneApplicationListener(
 
         ScreenUtils.clear(0f, 0f, 0f, 0f)
 
+        cameraManager.applyRenderViewport()
         spriteBatch.projectionMatrix = cameraManager.camera.combined
         spriteBatch.begin()
         sceneRenderer.render(spriteBatch)
         spriteBatch.end()
 
+        Gdx.gl.glViewport(0, 0, Gdx.graphics.width, Gdx.graphics.height)
         ui.render()
 
+        cameraManager.applyRenderViewport()
         debugRenderer.render(cameraManager.camera.combined)
 
         if (Vector2.Zero.x != 0f || Vector2.Zero.y != 0f) {

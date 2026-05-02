@@ -18,6 +18,6 @@ class CameraApi(
     }
 
     fun screenToWorld(x: Float, y: Float): Vector3 {
-        return cameraManager.camera.unproject(Vector3(x, y, 0f))
+        return cameraManager.unproject(x, y)
     }
 }

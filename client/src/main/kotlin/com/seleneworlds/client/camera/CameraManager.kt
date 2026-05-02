@@ -3,6 +3,7 @@ package com.seleneworlds.client.camera
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.math.Rectangle
+import com.badlogic.gdx.math.Vector3
 import com.seleneworlds.client.grid.ClientGrid
 import com.seleneworlds.client.game.ClientEvents
 import com.seleneworlds.client.maps.ClientMap
@@ -23,10 +24,11 @@ class CameraManager(
                 ClientEvents.CameraCoordinateChanged.EVENT.invoker().cameraCoordinateChanged(field)
             }
         }
-    var viewportOffsetX = 0
-    var viewportOffsetY = 0
+    var viewportX = 0
+    var viewportY = 0
     var viewportWidth = camera.viewportWidth.toInt()
     var viewportHeight = camera.viewportHeight.toInt()
+    private var hasCustomViewport = false
 
     private var focusedEntityNetworkId: Int = -1
     val focusedEntity get() = map.getEntityByNetworkId(focusedEntityNetworkId)
@@ -36,8 +38,8 @@ class CameraManager(
             focusedEntity?.let { entity ->
                 val entityScreenX = grid.getScreenX(entity.position)
                 val entityScreenY = grid.getScreenY(entity.position)
-                camera.position.x = entityScreenX + viewportOffsetX
-                camera.position.y = entityScreenY + viewportOffsetY
+                camera.position.x = entityScreenX
+                camera.position.y = entityScreenY
                 focusCoordinate = entity.coordinate
             }
         }
@@ -47,20 +49,54 @@ class CameraManager(
 
     fun focusCamera(coordinate: Coordinate) {
         focusCoordinate = coordinate
-        camera.position.x = grid.getScreenX(coordinate) + viewportOffsetX
-        camera.position.y = grid.getScreenY(coordinate) + viewportOffsetY
+        camera.position.x = grid.getScreenX(coordinate)
+        camera.position.y = grid.getScreenY(coordinate)
         camera.update()
     }
 
     fun setViewport(x: Int, y: Int, width: Int, height: Int) {
-        // TODO x and y are currently not respected, viewport always starts at 0,0
+        hasCustomViewport = true
+        viewportX = x
+        viewportY = y
         viewportWidth = width
         viewportHeight = height
-        viewportOffsetX = (Gdx.graphics.width - width) / 2
-        viewportOffsetY = -(Gdx.graphics.height - height) / 2
-        camera.position.x = grid.getScreenX(focusCoordinate) + viewportOffsetX
-        camera.position.y = grid.getScreenY(focusCoordinate) + viewportOffsetY
+        applyViewport()
+    }
+
+    fun resize(width: Int, height: Int) {
+        if (!hasCustomViewport) {
+            viewportX = 0
+            viewportY = 0
+            viewportWidth = width
+            viewportHeight = height
+        }
+        applyViewport()
+    }
+
+    private fun applyViewport() {
+        camera.viewportWidth = viewportWidth.toFloat()
+        camera.viewportHeight = viewportHeight.toFloat()
+        camera.position.x = grid.getScreenX(focusCoordinate)
+        camera.position.y = grid.getScreenY(focusCoordinate)
         camera.update()
+    }
+
+    fun applyRenderViewport() {
+        Gdx.gl.glViewport(viewportX, getViewportBottom(), viewportWidth, viewportHeight)
+    }
+
+    fun unproject(screenX: Float, screenY: Float): Vector3 {
+        return camera.unproject(
+            Vector3(screenX, screenY, 0f),
+            viewportX.toFloat(),
+            getViewportBottom().toFloat(),
+            viewportWidth.toFloat(),
+            viewportHeight.toFloat()
+        )
+    }
+
+    private fun getViewportBottom(): Int {
+        return Gdx.graphics.height - viewportY - viewportHeight
     }
 
     fun focusEntity(networkId: Int) {
