@@ -32,6 +32,12 @@ dependencies {
     api(libs.guava)
 
     api(libs.bundles.ktor.client)
+
+    testImplementation(kotlin("test"))
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 publishing {
