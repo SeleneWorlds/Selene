@@ -9,6 +9,7 @@ import world.selene.common.lua.util.getCallerInfo
 import world.selene.common.lua.util.throwTypeError
 import world.selene.common.lua.util.toAny
 import world.selene.common.observable.Observable
+import world.selene.common.observable.ObservableLuaApi
 import world.selene.server.attributes.filters.AttributeFilter
 import world.selene.server.attributes.filters.LuaAttributeFilter
 
@@ -90,7 +91,7 @@ object AttributeLuaApi {
         return 0
     }
 
-    val luaMeta = Observable.luaMeta.extend(AttributeApi::class) {
+    val luaMeta = ObservableLuaApi.luaMeta.extend(AttributeApi::class) {
         getter(::luaGetName)
         getter(::luaGetValue)
         setter(::luaSetValue)

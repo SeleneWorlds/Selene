@@ -14,6 +14,8 @@ import world.selene.common.grid.Coordinate
 import world.selene.common.grid.CoordinateLuaApi
 import world.selene.common.lua.libraries.LuaPackageModule
 import world.selene.common.lua.util.newTable
+import world.selene.common.observable.ObservableMap
+import world.selene.common.observable.ObservableMapLuaApi
 import world.selene.common.util.ResolvableReference
 import java.nio.Buffer
 import java.nio.ByteBuffer
@@ -30,6 +32,7 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         defineMetatable(CustomRegistryObject::class, CustomRegistryObjectLuaApi.luaMeta)
         defineMetatable(LuaEventSink::class, LuaEventSink.luaMeta)
         defineMetatable(ResolvableReference::class, ResolvableReference.luaMeta)
+        defineMetatable(ObservableMap::class, ObservableMapLuaApi.luaMeta)
 
         // Default metatables of LuaJava are unsafe, we override them. Adds support for LuaMetatable interface too.
         secureClassMetatable()
