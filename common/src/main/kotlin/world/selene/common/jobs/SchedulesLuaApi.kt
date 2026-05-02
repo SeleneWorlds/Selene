@@ -1,18 +1,14 @@
 package world.selene.common.jobs
 
+import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
+import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
+import world.selene.common.lua.ClosureTrace
 import world.selene.common.lua.LuaEventSink
 import world.selene.common.lua.LuaModule
+import world.selene.common.lua.util.*
 import world.selene.common.script.ScriptTrace
-import world.selene.common.lua.util.checkFunction
-import world.selene.common.lua.util.checkInt
-import world.selene.common.lua.util.checkType
-import world.selene.common.lua.util.getCallerInfo
-import world.selene.common.lua.util.getFieldBoolean
-import world.selene.common.lua.util.getFieldString
-import world.selene.common.lua.util.register
-import world.selene.common.lua.util.xpCall
 import world.selene.common.util.Disposable
 
 /**
@@ -57,13 +53,17 @@ class SchedulesLuaApi(private val api: SchedulesApi) : LuaModule, Disposable {
         val intervalMs = lua.checkInt(1)
         val callback = lua.checkFunction(2)
         if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
-
-        val timeoutId = api.setTimeout(
-            intervalMs = intervalMs,
-            callback = callback,
-            name = lua.getFieldString(3, "name"),
-            registrationSite = lua.getCallerInfo()
-        )
+        val name = lua.getFieldString(3, "name")
+        val trace = lua.getCallerInfo()
+        val timeoutId = api.setTimeout(intervalMs) {
+            val lua = callback.state()
+            try {
+                lua.push(callback)
+                lua.xpCall(0, 0, ClosureTrace { "[timeout \"$name\", ${intervalMs}ms] scheduled at <$trace>" })
+            } catch (e: LuaException) {
+                logger.error("Lua error in timeout", e)
+            }
+        }
         lua.push(timeoutId)
         return 1
     }
@@ -77,14 +77,20 @@ class SchedulesLuaApi(private val api: SchedulesApi) : LuaModule, Disposable {
         val intervalMs = lua.checkInt(1)
         val callback = lua.checkFunction(2)
         if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
-
+        val name = lua.getFieldString(3, "name")
+        val trace = lua.getCallerInfo()
         val intervalId = api.setInterval(
             intervalMs = intervalMs,
-            callback = callback,
-            name = lua.getFieldString(3, "name"),
-            immediate = lua.getFieldBoolean(3, "immediate") ?: false,
-            registrationSite = lua.getCallerInfo()
-        )
+            immediate = lua.getFieldBoolean(3, "immediate") ?: false
+        ) {
+            val lua = callback.state()
+            try {
+                lua.push(callback)
+                lua.xpCall(0, 0, ClosureTrace { "[timeout \"$name\", ${intervalMs}ms] scheduled at <$trace>" })
+            } catch (e: LuaException) {
+                logger.error("Lua error in interval", e)
+            }
+        }
         lua.push(intervalId)
         return 1
     }
@@ -96,5 +102,9 @@ class SchedulesLuaApi(private val api: SchedulesApi) : LuaModule, Disposable {
 
     override fun dispose() {
         api.dispose()
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(SchedulesApi::class.java)
     }
 }
