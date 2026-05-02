@@ -40,7 +40,7 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
         val callback: (Player, Map<*, *>) -> Unit = { player, payload ->
             val lua = function.state()
             function.push(lua)
-            lua.push(player, Lua.Conversion.NONE)
+            lua.push(player.api, Lua.Conversion.NONE)
             lua.push(payload)
             try {
                 lua.xpCall(1, 0, ClosureTrace { "[payload \"$payloadId\"] registered in <$trace>" })
