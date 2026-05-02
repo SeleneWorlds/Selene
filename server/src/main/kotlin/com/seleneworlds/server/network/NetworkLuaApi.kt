@@ -43,7 +43,7 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
             lua.push(player.api, Lua.Conversion.NONE)
             lua.push(payload)
             try {
-                lua.xpCall(1, 0, ClosureTrace { "[payload \"$payloadId\"] registered in <$trace>" })
+                lua.xpCall(2, 0, ClosureTrace { "[payload \"$payloadId\"] registered in <$trace>" })
             } catch (e: LuaException) {
                 logger.error("Lua Error in Payload Handler", e)
             }
