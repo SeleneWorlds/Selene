@@ -15,7 +15,6 @@ import world.selene.server.tiles.TransientTileLuaApi
 /**
  * Create new map layer trees.
  */
-@Suppress("SameReturnValue")
 class ServerMapLuaApi(private val api: ServerMapApi) : LuaModule {
     override val name = "selene.map"
 

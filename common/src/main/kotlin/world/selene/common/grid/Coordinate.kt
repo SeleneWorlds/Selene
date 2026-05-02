@@ -23,7 +23,6 @@ data class Coordinate(val x: Int, val y: Int, val z: Int) {
         return Coordinate(x, y, z + 1)
     }
 
-    @Suppress("SameReturnValue")
     companion object {
         val Zero = Coordinate(0, 0, 0)
     }

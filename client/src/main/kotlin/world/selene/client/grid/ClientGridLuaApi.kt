@@ -9,7 +9,6 @@ import world.selene.common.lua.util.register
 /**
  * Defining and looking up directions.
  */
-@Suppress("SameReturnValue")
 class ClientGridLuaApi(private val api: ClientGridApi) : GridLuaApi(api) {
     override val name = "selene.grid"
 

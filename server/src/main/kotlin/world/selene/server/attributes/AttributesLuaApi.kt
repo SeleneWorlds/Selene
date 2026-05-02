@@ -13,7 +13,6 @@ import world.selene.common.lua.util.throwTypeError
 /**
  * Create common attribute filters.
  */
-@Suppress("SameReturnValue")
 class AttributesLuaApi(private val api: AttributesApi) : LuaModule {
     override val name = "selene.attributes"
 

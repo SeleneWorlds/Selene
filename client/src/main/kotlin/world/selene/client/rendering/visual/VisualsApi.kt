@@ -5,7 +5,6 @@ import world.selene.common.data.Identifier
 /**
  * Create visuals from visual definitions.
  */
-@Suppress("SameReturnValue")
 class VisualsApi(
     private val visualRegistry: VisualRegistry,
     private val visualFactory: VisualFactory

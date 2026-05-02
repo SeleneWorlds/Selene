@@ -10,7 +10,6 @@ import world.selene.common.lua.util.register
 /**
  * Lookup properties configured in the `script.properties` file.
  */
-@Suppress("SameReturnValue")
 class ConfigLuaApi(private val api: ConfigApi) : LuaModule {
     override val name = "selene.config"
 

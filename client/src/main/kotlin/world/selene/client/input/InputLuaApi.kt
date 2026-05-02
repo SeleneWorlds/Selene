@@ -13,7 +13,6 @@ import world.selene.common.lua.util.xpCall
 /**
  * Handle input for keyboard and mouse events.
  */
-@Suppress("SameReturnValue")
 class InputLuaApi(private val api: InputApi) : LuaModule {
     override val name = "selene.input"
 

@@ -13,7 +13,6 @@ import world.selene.server.login.LoginQueueEntryLuaApi
 /**
  * Player management and player-related events.
  */
-@Suppress("SameReturnValue")
 class PlayersLuaApi(private val api: PlayersApi) : LuaModule {
     override val name = "selene.players"
 

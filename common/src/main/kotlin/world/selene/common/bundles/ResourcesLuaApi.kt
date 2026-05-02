@@ -9,7 +9,6 @@ import world.selene.common.lua.util.register
 /**
  * Lookup bundle resource files.
  */
-@Suppress("SameReturnValue")
 class ResourcesLuaApi(private val api: ResourcesApi) : LuaModule {
     override val name = "selene.resources"
 

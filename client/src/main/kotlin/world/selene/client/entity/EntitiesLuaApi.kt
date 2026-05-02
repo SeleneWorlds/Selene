@@ -20,7 +20,6 @@ import world.selene.common.lua.util.register
 /**
  * Create and lookup entities.
  */
-@Suppress("SameReturnValue")
 class EntitiesLuaApi(
     private val api: EntitiesApi,
     private val registries: Registries

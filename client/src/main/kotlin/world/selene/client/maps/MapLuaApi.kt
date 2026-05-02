@@ -16,7 +16,6 @@ import world.selene.common.lua.util.xpCall
 /**
  * Lookup tiles on the map.
  */
-@Suppress("SameReturnValue")
 class MapLuaApi(
     private val api: MapApi
 ) : LuaModule {

@@ -10,7 +10,6 @@ import world.selene.server.world.World
 /**
  * Play local, positional or global sounds.
  */
-@Suppress("SameReturnValue")
 class SoundsApi(
     private val registries: Registries,
     private val world: World

@@ -6,7 +6,6 @@ import party.iroiro.luajava.Lua
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 
-@Suppress("SameReturnValue")
 object VisImageButtonLuaMetatable {
     val luaMeta = ActorLuaMetatable.luaMeta.extend(VisImageButton::class) {
         callable(::luaSetStyle)

@@ -366,7 +366,6 @@ private fun Lua.getJavaCause(): Throwable? {
     return getGlobal(JAVA_CAUSE).let { toJavaObject(-1) }.also { pop(1) } as? Throwable
 }
 
-@Suppress("SameReturnValue")
 fun handleError(lua: Lua): Int {
     val message = lua.toString(1)
     lua.getGlobal("debug")

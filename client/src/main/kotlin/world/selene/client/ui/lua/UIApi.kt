@@ -33,7 +33,6 @@ import world.selene.common.lua.util.xpCall
 /**
  * Load, skin and manipulate UIs.
  */
-@Suppress("SameReturnValue")
 class UIApi(
     private val ui: UI,
     private val bundleFileResolver: BundleFileResolver,

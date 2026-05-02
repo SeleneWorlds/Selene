@@ -6,7 +6,6 @@ import com.badlogic.gdx.graphics.Texture
 /**
  * Create and manipulate textures.
  */
-@Suppress("SameReturnValue")
 class TexturesApi {
     fun createTexture(width: Int, height: Int, formatName: String = "RGBA8888"): ScriptableTexture {
         val format = when (formatName) {

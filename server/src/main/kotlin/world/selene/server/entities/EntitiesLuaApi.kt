@@ -15,7 +15,6 @@ import world.selene.server.data.Registries
 /**
  * Create or lookup entities.
  */
-@Suppress("SameReturnValue")
 class EntitiesLuaApi(
     private val api: EntitiesApi,
     private val registries: Registries

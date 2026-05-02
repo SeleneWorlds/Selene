@@ -11,7 +11,6 @@ import world.selene.common.lua.util.toTypedMap
 /**
  * Localize messages.
  */
-@Suppress("SameReturnValue")
 class I18nLuaApi(private val api: I18nApi) : LuaModule {
     override val name = "selene.i18n"
 

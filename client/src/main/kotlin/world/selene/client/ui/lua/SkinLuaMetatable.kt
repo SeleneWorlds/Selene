@@ -14,7 +14,6 @@ import world.selene.common.lua.util.checkType
 import world.selene.common.lua.util.checkUserdata
 import world.selene.common.lua.util.getFieldString
 
-@Suppress("SameReturnValue")
 class SkinLuaMetatable(
     private val bundleFileResolver: BundleFileResolver,
     private val luaSkinUtils: LuaSkinUtils

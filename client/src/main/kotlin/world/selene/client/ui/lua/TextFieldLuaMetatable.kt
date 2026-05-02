@@ -5,7 +5,6 @@ import party.iroiro.luajava.Lua
 import world.selene.common.lua.util.checkString
 import world.selene.common.lua.util.checkUserdata
 
-@Suppress("SameReturnValue")
 object TextFieldLuaMetatable {
     val luaMeta = ActorLuaMetatable.luaMeta.extend(TextField::class) {
         getter(::luaGetInputListener)

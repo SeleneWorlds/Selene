@@ -10,7 +10,6 @@ import world.selene.common.util.Disposable
 /**
  * Make HTTP web requests.
  */
-@Suppress("SameReturnValue")
 class HttpApi(
     private val httpClient: HttpClient
 ) : Disposable {

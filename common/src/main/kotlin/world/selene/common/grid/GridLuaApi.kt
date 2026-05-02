@@ -11,7 +11,6 @@ import world.selene.common.lua.util.register
 /**
  * Define and lookup directions.
  */
-@Suppress("SameReturnValue")
 open class GridLuaApi(private val api: GridApi) : LuaModule {
     override val name = "selene.grid"
 
