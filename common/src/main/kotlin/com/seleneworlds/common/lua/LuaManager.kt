@@ -52,7 +52,7 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         lua.pop(1)
 
         // Load standard libraries, but only those that are safe
-        val libraries = setOf("string", "math", "table")
+        val libraries = setOf("string", "math", "table", "coroutine")
         lua.push(luaPackage.packageLoaded)
         libraries.forEach {
             lua.openLibrary(it)
