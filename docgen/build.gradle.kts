@@ -28,12 +28,12 @@ dependencies {
 }
 
 application {
-    mainClass.set("world.selene.analyzer.LuaModuleAnalyzerKt")
+    mainClass.set("com.seleneworlds.analyzer.LuaModuleAnalyzerKt")
 }
 
 tasks.register<JavaExec>("analyzeLuaModules") {
     group = "analysis"
     description = "Analyzes all LuaModule implementations and generates JSON report"
     classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("world.selene.analyzer.LuaModuleAnalyzerKt")
+    mainClass.set("com.seleneworlds.analyzer.LuaModuleAnalyzerKt")
 }

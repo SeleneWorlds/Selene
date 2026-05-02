@@ -1,0 +1,303 @@
+package com.seleneworlds.client.entity
+
+import com.badlogic.gdx.graphics.g2d.Batch
+import com.badlogic.gdx.math.Rectangle
+import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.math.Vector3
+import com.badlogic.gdx.utils.Pool
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.slf4j.LoggerFactory
+import com.seleneworlds.client.controls.EntityMotion
+import com.seleneworlds.client.entity.component.EntityComponent
+import com.seleneworlds.client.entity.component.EntityComponentFactory
+import com.seleneworlds.client.entity.component.TickableComponent
+import com.seleneworlds.client.entity.component.rendering.IsoComponent
+import com.seleneworlds.client.entity.component.rendering.RenderableComponent
+import com.seleneworlds.client.grid.ClientGrid
+import com.seleneworlds.client.maps.ClientMap
+import com.seleneworlds.client.rendering.animator.AnimatorController
+import com.seleneworlds.client.rendering.animator.DefaultHumanoidAnimator
+import com.seleneworlds.client.rendering.animator.StateMachineAnimatorController
+import com.seleneworlds.client.rendering.environment.Environment
+import com.seleneworlds.client.rendering.scene.Renderable
+import com.seleneworlds.client.rendering.scene.Scene
+import com.seleneworlds.common.data.RegistryReference
+import com.seleneworlds.common.entities.ComponentConfiguration
+import com.seleneworlds.common.entities.EntityDefinition
+import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.script.ExposedApi
+import com.seleneworlds.common.util.Disposable
+import java.util.*
+
+class Entity(
+    val objectMapper: ObjectMapper,
+    val pool: EntityPool,
+    val map: ClientMap,
+    val grid: ClientGrid,
+    val entityComponentFactory: EntityComponentFactory
+) :
+    Pool.Poolable, Renderable, ExposedApi<EntityApi> {
+
+    private val logger = LoggerFactory.getLogger(Entity::class.java)
+    override val api = EntityApi(this)
+
+    var networkId: Int = 0
+    var entityDefinition: RegistryReference<EntityDefinition> = RegistryReference.unbound()
+        set(value) {
+            field.unsubscribeAll()
+            field = value
+            value.subscribe { def ->
+                components.values.forEach { processRemovedComponent(it) }
+                components.clear()
+                tickableComponents.clear()
+                renderableComponents.clear()
+                def?.components?.forEach {
+                    addComponent(it.key, it.value)
+                }
+            }
+        }
+
+    var scene: Scene? = null
+    var removed: Boolean = false
+
+    val components = mutableMapOf<String, EntityComponent>()
+    val tickableComponents = mutableListOf<TickableComponent>()
+    val renderableComponents = mutableListOf<RenderableComponent>()
+
+    val lastRenderBounds = Rectangle()
+
+    var processingComponents = false
+    val componentsToBeAdded = mutableSetOf<EntityComponent>()
+    val componentsToBeRemoved = mutableSetOf<EntityComponent>()
+
+    val motionQueue: ArrayDeque<EntityMotion> = ArrayDeque()
+    var animator: AnimatorController =
+        StateMachineAnimatorController().configure(DefaultHumanoidAnimator(grid)::configure)
+
+    override var coordinate: Coordinate = Coordinate.Zero
+        private set(value) {
+            val prev = field
+            field = value
+            if (prev != value && !removed) {
+                map.entityMoved(this, prev)
+            }
+        }
+
+    var facing: Float = 0f
+    val direction get() = grid.getDirection(facing)
+    override var sortLayerOffset: Int = 0
+    override val sortLayer: Int get() = grid.getSortLayer(position, sortLayerOffset)
+    override var localSortLayer: Int = 0
+
+    val position: Vector3 = Vector3(coordinate.x.toFloat(), coordinate.y.toFloat(), coordinate.z.toFloat())
+
+    val screenX get() = grid.getScreenX(position)
+    val screenY get() = grid.getScreenY(position)
+
+    /**
+     * Moves the entity to the target position over the given duration.
+     * If skipQueue is true, clears the queue before adding the new motion.
+     */
+    fun move(target: Coordinate, duration: Float, facing: Float, skipQueue: Boolean = false) {
+        this.facing = facing
+        if (skipQueue) {
+            motionQueue.clear()
+        }
+        val latestTarget = motionQueue.lastOrNull()?.end ?: this.coordinate
+        if (latestTarget != target) {
+            motionQueue.add(EntityMotion(latestTarget, target, duration))
+        }
+    }
+
+    fun getMotion(): EntityMotion? {
+        return motionQueue.firstOrNull()
+    }
+
+    fun isInMotion(): Boolean {
+        return motionQueue.isNotEmpty()
+    }
+
+    override fun update(delta: Float) {
+        // Handle motion queue
+        if (motionQueue.isNotEmpty()) {
+            val motion = motionQueue.first()
+            motion.timePassed += delta
+            val t = (motion.timePassed / motion.duration).coerceAtMost(1f)
+            // Interpolate smooth position
+            position.x = motion.start.x + (motion.end.x - motion.start.x) * t
+            position.y = motion.start.y + (motion.end.y - motion.start.y) * t
+            position.z = motion.start.z + (motion.end.z - motion.start.z) * t
+            // Only update grid coordinate once halfway
+            if (t >= 0.5f) {
+                coordinate = motion.end
+            }
+            if (motion.timePassed >= motion.duration) {
+                // Snap to end and remove motion
+                position.x = motion.end.x.toFloat()
+                position.y = motion.end.y.toFloat()
+                position.z = motion.end.z.toFloat()
+                motionQueue.removeFirst()
+            }
+            scene?.updateSorting(this)
+        }
+
+        animator.update(this, delta)
+
+        processComponents {
+            tickableComponents.forEach { component ->
+                component.update(this, delta)
+            }
+        }
+    }
+
+    private inline fun processComponents(runnable: () -> Unit) {
+        processingComponents = true
+        runnable()
+        processingComponents = false
+        for (component in componentsToBeAdded) {
+            processAddedComponent(component)
+        }
+        componentsToBeAdded.clear()
+        for (component in componentsToBeRemoved) {
+            processRemovedComponent(component)
+        }
+        componentsToBeRemoved.clear()
+    }
+
+    private val tmpDisplayPos = Vector2()
+    private val tmpRenderRectangle = Rectangle()
+    override fun render(batch: Batch, environment: Environment) {
+        lastRenderBounds.set(0f, 0f, 0f, 0f)
+        processComponents {
+            renderableComponents.forEach { component ->
+                tmpDisplayPos.set(screenX, screenY + environment.getSurfaceOffset(coordinate))
+                component.positioner.applyPositioning(this, tmpDisplayPos)
+                batch.color.set(environment.getColor(coordinate))
+                component.render(this, batch, tmpDisplayPos.x, tmpDisplayPos.y)
+                if (component is IsoComponent) {
+                    environment.applySurfaceOffset(coordinate, component.surfaceHeight)
+                }
+                component.getBounds(tmpDisplayPos.x, tmpDisplayPos.y, tmpRenderRectangle)
+                if (lastRenderBounds.width == 0f) {
+                    lastRenderBounds.set(tmpRenderRectangle)
+                } else {
+                    lastRenderBounds.merge(tmpRenderRectangle)
+                }
+            }
+        }
+    }
+
+    override fun reset() {
+        networkId = 0
+        motionQueue.clear()
+        coordinate = Coordinate.Zero
+        facing = 0f
+        localSortLayer = 0
+        entityDefinition = RegistryReference.unbound()
+        processingComponents = false
+        removed = false
+        componentsToBeAdded.clear()
+        componentsToBeRemoved.clear()
+        position.set(0f, 0f, 0f)
+    }
+
+    fun setCoordinateAndUpdate(coordinate: Coordinate) {
+        if (this.coordinate != coordinate) {
+            this.coordinate = coordinate
+            position.x = coordinate.x.toFloat()
+            position.y = coordinate.y.toFloat()
+            position.z = coordinate.z.toFloat()
+            scene?.updateSorting(this)
+        }
+    }
+
+    fun addComponent(name: String, componentConfiguration: ComponentConfiguration) {
+        val component = entityComponentFactory.create(this, componentConfiguration)
+        if (component != null) {
+            addComponent(name, component)
+        } else {
+            logger.error("Failed to create component $name for entity $this")
+        }
+    }
+
+    fun addComponent(name: String, component: EntityComponent) {
+        val prev = components.put(name, component)
+        if (processingComponents) {
+            prev?.let {
+                componentsToBeAdded.remove(it)
+                componentsToBeRemoved.add(it)
+            }
+            componentsToBeRemoved.remove(component)
+            componentsToBeAdded.add(component)
+        } else {
+            prev?.let { processRemovedComponent(it) }
+            processAddedComponent(component)
+        }
+    }
+
+    private fun computeSortLayerOffset(): Int {
+        return renderableComponents.asSequence().mapNotNull { it as? IsoComponent }.maxOfOrNull { it.sortLayerOffset }
+            ?: 0
+    }
+
+    private fun processAddedComponent(component: EntityComponent) {
+        if (component is TickableComponent) {
+            tickableComponents.add(component)
+        }
+        if (component is RenderableComponent) {
+            renderableComponents.add(component)
+        }
+        val prevSortLayerOffset = sortLayerOffset
+        sortLayerOffset = computeSortLayerOffset()
+        if (prevSortLayerOffset != sortLayerOffset) {
+            scene?.updateSorting(this)
+        }
+    }
+
+    private fun processRemovedComponent(component: EntityComponent) {
+        if (component is TickableComponent) {
+            tickableComponents.remove(component)
+        }
+        if (component is RenderableComponent) {
+            renderableComponents.remove(component)
+        }
+        if (component is Disposable) {
+            component.dispose()
+        }
+    }
+
+    fun spawn() {
+        removed = false
+        map.addEntity(this)
+    }
+
+    fun despawn() {
+        if (!removed) {
+            map.removeEntity(this)
+            removed = true
+        }
+    }
+
+    fun hasTag(tag: String): Boolean {
+        return entityDefinition.tags.contains(tag)
+    }
+
+    override fun addedToScene(scene: Scene) {
+        this.scene = scene
+    }
+
+    override fun removedFromScene(scene: Scene) {
+        if (this.scene != null) {
+            pool.free(this)
+        }
+        this.scene = null
+    }
+
+    fun turnTo(facing: Float) {
+        this.facing = facing
+    }
+
+    override fun toString(): String {
+        return "Entity($networkId)"
+    }
+}

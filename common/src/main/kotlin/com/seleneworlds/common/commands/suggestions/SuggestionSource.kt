@@ -1,0 +1,3 @@
+package com.seleneworlds.common.commands.suggestions
+
+interface SuggestionSource

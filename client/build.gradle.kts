@@ -8,7 +8,7 @@ plugins {
 }
 
 application {
-    mainClass.set("world.selene.client.ClientBootstrapKt")
+    mainClass.set("com.seleneworlds.client.ClientBootstrapKt")
 }
 
 dependencies {
@@ -94,14 +94,14 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJ
     mergeServiceFiles()
     manifest {
         attributes(
-            "Main-Class" to "world.selene.client.ClientBootstrapKt"
+            "Main-Class" to "com.seleneworlds.client.ClientBootstrapKt"
         )
     }
 }
 
 tasks.withType<Jar> {
     manifest {
-        attributes["Main-Class"] = "world.selene.client.ClientBootstrapKt"
+        attributes["Main-Class"] = "com.seleneworlds.client.ClientBootstrapKt"
     }
 }
 

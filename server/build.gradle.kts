@@ -8,7 +8,7 @@ plugins {
 }
 
 application {
-    mainClass.set("world.selene.server.ServerBootstrapKt")
+    mainClass.set("com.seleneworlds.server.ServerBootstrapKt")
 }
 
 dependencies {
@@ -83,14 +83,14 @@ tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJ
     mergeServiceFiles()
     manifest {
         attributes(
-            "Main-Class" to "world.selene.server.ServerBootstrapKt"
+            "Main-Class" to "com.seleneworlds.server.ServerBootstrapKt"
         )
     }
 }
 
 tasks.withType<Jar> {
     manifest {
-        attributes["Main-Class"] = "world.selene.server.ServerBootstrapKt"
+        attributes["Main-Class"] = "com.seleneworlds.server.ServerBootstrapKt"
     }
 }
 
