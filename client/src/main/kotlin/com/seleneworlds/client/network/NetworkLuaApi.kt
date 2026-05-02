@@ -11,7 +11,7 @@ import com.seleneworlds.common.lua.util.checkFunction
 import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.getCallerInfo
 import com.seleneworlds.common.lua.util.register
-import com.seleneworlds.common.lua.util.toAnyMap
+import com.seleneworlds.common.lua.util.toSerializedMap
 import com.seleneworlds.common.lua.util.xpCall
 
 /**
@@ -44,7 +44,7 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
     }
 
     private fun luaSendToServer(lua: Lua): Int {
-        api.sendToServer(lua.checkString(1), lua.toAnyMap(2))
+        api.sendToServer(lua.checkString(1), lua.toSerializedMap(2) ?: emptyMap())
         return 0
     }
 

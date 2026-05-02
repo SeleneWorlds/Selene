@@ -1,6 +1,7 @@
 package com.seleneworlds.server.maps.tree
 
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.server.data.Registries
@@ -70,7 +71,7 @@ class MapTree(val registries: Registries) : ExposedApi<MapTreeApi> {
         override fun annotateTile(
             coordinate: Coordinate,
             key: String,
-            data: Map<Any, Any>?
+            data: SerializedMap?
         ) {
             baseLayer.annotateTile(coordinate, key, data)
         }
@@ -175,7 +176,7 @@ class MapTree(val registries: Registries) : ExposedApi<MapTreeApi> {
         notifyListeners(coordinate)
     }
 
-    fun annotateTile(coordinate: Coordinate, key: String, data: Map<Any, Any>?, layerName: String? = null) {
+    fun annotateTile(coordinate: Coordinate, key: String, data: SerializedMap?, layerName: String? = null) {
         val layer = getLayer(layerName ?: "default")
         layer.annotateTile(coordinate, key, data)
     }

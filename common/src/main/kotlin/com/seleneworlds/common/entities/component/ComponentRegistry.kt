@@ -1,14 +1,15 @@
 package com.seleneworlds.common.entities.component
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.json.Json
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.json.FileBasedRegistry
 
-class ComponentRegistry(objectMapper: ObjectMapper) : FileBasedRegistry<ComponentDefinition>(
-    objectMapper,
+class ComponentRegistry(json: Json) : FileBasedRegistry<ComponentDefinition>(
+    json,
     "common",
     "components",
-    ComponentDefinition::class
+    ComponentDefinition::class,
+    ComponentDefinition.serializer()
 ) {
     companion object {
         val IDENTIFIER = Identifier.withDefaultNamespace( "components")

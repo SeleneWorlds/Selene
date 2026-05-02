@@ -8,7 +8,7 @@ import com.seleneworlds.common.lua.util.checkType
 import com.seleneworlds.common.lua.util.checkUserdata
 import com.seleneworlds.common.lua.util.register
 import com.seleneworlds.common.lua.util.throwTypeError
-import com.seleneworlds.common.lua.util.toAnyMap
+import com.seleneworlds.common.lua.util.toSerializedMap
 
 /**
  * Extended table manipulation functions beyond standard Lua table operations.
@@ -35,7 +35,7 @@ class LuaTablexModule : LuaModule {
      * ```
      */
     private fun luaObservable(lua: Lua): Int {
-        val data = lua.toAnyMap(1) as MutableMap?
+        val data = lua.toSerializedMap(1)?.toMutableMap()
         lua.push(ObservableMap(data ?: mutableMapOf()), Lua.Conversion.NONE)
         return 1
     }

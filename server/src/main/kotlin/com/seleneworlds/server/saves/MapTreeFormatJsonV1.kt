@@ -1,9 +1,13 @@
 package com.seleneworlds.server.saves
 
-import com.fasterxml.jackson.annotation.JsonSubTypes
-import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.NullableSerializedMapSerializer
+import com.seleneworlds.common.serialization.SerializedMap
+import com.seleneworlds.common.serialization.SerializedMapSerializer
+import com.seleneworlds.common.serialization.decodeFromFile
 import com.seleneworlds.server.data.Registries
 import com.seleneworlds.server.maps.layers.ChunkedMapLayer
 import com.seleneworlds.server.maps.layers.DenseMapLayer
@@ -16,19 +20,26 @@ import com.seleneworlds.server.maps.layers.SparseTilesReplacement
 import com.seleneworlds.server.maps.tree.MapTree
 import java.io.File
 
-class MapTreeFormatJsonV1(private val registries: Registries, private val objectMapper: ObjectMapper) : MapTreeFormat {
+class MapTreeFormatJsonV1(private val registries: Registries, private val json: Json) : MapTreeFormat {
 
+    @Serializable
     data class MapTreeFileHeader(val version: Int)
+    @Serializable
     data class MapTreeFileLayer(val chunks: List<MapTreeFileChunk>)
 
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-    @JsonSubTypes(
-        JsonSubTypes.Type(value = MapTreeFileDenseChunk::class, name = "dense"),
-        JsonSubTypes.Type(value = MapTreeFileSparseChunk::class, name = "sparse"),
-        JsonSubTypes.Type(value = MapTreeFileUnknownChunk::class, name = "unknown")
+    @Serializable
+    sealed interface MapTreeFileChunk
+    @Serializable
+    data class MapTreeFileAnnotation(
+        val x: Int,
+        val y: Int,
+        val z: Int,
+        val key: String,
+        @Serializable(with = SerializedMapSerializer::class)
+        val data: SerializedMap
     )
-    interface MapTreeFileChunk
-    data class MapTreeFileAnnotation(val x: Int, val y: Int, val z: Int, val key: String, val data: Map<Any, Any>)
+    @Serializable
+    @SerialName("dense")
     data class MapTreeFileDenseChunk(
         val x: Int,
         val y: Int,
@@ -61,6 +72,8 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
         }
     }
 
+    @Serializable
+    @SerialName("sparse")
     data class MapTreeFileSparseChunk(
         val x: Int,
         val y: Int,
@@ -68,22 +81,24 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
         val operations: List<MapTreeFileSparseOperation>
     ) : MapTreeFileChunk
 
+    @Serializable
+    @SerialName("unknown")
     object MapTreeFileUnknownChunk : MapTreeFileChunk
 
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
-    @JsonSubTypes(
-        JsonSubTypes.Type(value = MapTreeFileSparseAddOperation::class, name = "add"),
-        JsonSubTypes.Type(value = MapTreeFileSparseRemoveOperation::class, name = "remove"),
-        JsonSubTypes.Type(value = MapTreeFileSparseReplaceOperation::class, name = "replace"),
-        JsonSubTypes.Type(value = MapTreeFileSparseSwapOperation::class, name = "swap")
-    )
+    @Serializable
     sealed interface MapTreeFileSparseOperation
+    @Serializable
+    @SerialName("add")
     data class MapTreeFileSparseAddOperation(val x: Int, val y: Int, val z: Int, val tileId: Int) :
         MapTreeFileSparseOperation
 
+    @Serializable
+    @SerialName("remove")
     data class MapTreeFileSparseRemoveOperation(val x: Int, val y: Int, val z: Int, val tileId: Int) :
         MapTreeFileSparseOperation
 
+    @Serializable
+    @SerialName("replace")
     data class MapTreeFileSparseReplaceOperation(
         val x: Int,
         val y: Int,
@@ -91,6 +106,8 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
         val tileId: Int
     ) : MapTreeFileSparseOperation
 
+    @Serializable
+    @SerialName("swap")
     data class MapTreeFileSparseSwapOperation(
         val x: Int,
         val y: Int,
@@ -99,19 +116,23 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
         val newTileId: Int
     ) : MapTreeFileSparseOperation
 
+    @Serializable
+    @SerialName("annotation")
     data class MapTreeFileSparseAnnotationOperation(
         val x: Int,
         val y: Int,
         val z: Int,
         val key: String,
-        val data: Map<Any, Any>?
+        @Serializable(with = NullableSerializedMapSerializer::class)
+        val data: SerializedMap?
     ) : MapTreeFileSparseOperation
 
+    @Serializable
     data class MapTreeFile(val header: MapTreeFileHeader, val layers: List<MapTreeFileLayer>)
 
     override fun load(file: File): MapTree {
         val result = MapTree(registries)
-        val mapTreeFile = objectMapper.readValue(file, MapTreeFile::class.java)
+        val mapTreeFile = json.decodeFromFile(MapTreeFile.serializer(), file)
         for (layer in mapTreeFile.layers) {
             for (chunk in layer.chunks) {
                 when (chunk) {
@@ -275,7 +296,7 @@ class MapTreeFormatJsonV1(private val registries: Registries, private val object
                 }
             }
         )
-        objectMapper.writeValue(file, output)
+        file.writeText(json.encodeToString(MapTreeFile.serializer(), output))
     }
 
     companion object {

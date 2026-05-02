@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBasedTable
 import com.seleneworlds.common.grid.ChunkWindow
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.server.cameras.viewer.Viewer
 import com.seleneworlds.server.dimensions.Dimension
@@ -20,7 +21,7 @@ class ScopedChunkView(val window: ChunkWindow) : ExposedApi<ScopedChunkViewApi> 
     val paddedHeight = window.height + padding * 2
     val baseTiles = IntArray(paddedWidth * paddedHeight) { 0 }
     val additionalTiles: ArrayListMultimap<Coordinate, Int> = ArrayListMultimap.create()
-    val annotations = HashBasedTable.create<Coordinate, String, Map<*, *>>()
+    val annotations = HashBasedTable.create<Coordinate, String, SerializedMap>()
 
     fun addAdditionalTileFirst(coordinate: Coordinate, tileId: Int) {
         if (window.contains(coordinate)) {
@@ -123,11 +124,11 @@ class ScopedChunkView(val window: ChunkWindow) : ExposedApi<ScopedChunkViewApi> 
         return additionalTiles.get(coordinate)
     }
 
-    fun getAnnotationsAt(coordinate: Coordinate): Map<String, Map<*, *>> {
+    fun getAnnotationsAt(coordinate: Coordinate): Map<String, SerializedMap> {
         return annotations.row(coordinate)
     }
 
-    fun getAnnotationAt(coordinate: Coordinate, key: String): Map<*, *>? {
+    fun getAnnotationAt(coordinate: Coordinate, key: String): SerializedMap? {
         return annotations.get(coordinate, key)
     }
 

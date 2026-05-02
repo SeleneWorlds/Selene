@@ -36,7 +36,7 @@ import com.seleneworlds.common.lua.util.getFieldString
 import com.seleneworlds.common.lua.util.getFieldUserdata
 import com.seleneworlds.common.lua.util.register
 import com.seleneworlds.common.lua.util.toAny
-import com.seleneworlds.common.lua.util.toAnyMap
+import com.seleneworlds.common.lua.util.toSerializedMap
 import com.seleneworlds.common.lua.util.toTypedMap
 import com.seleneworlds.common.lua.util.toUserdata
 import com.seleneworlds.common.lua.util.xpCall
@@ -146,7 +146,7 @@ class UILuaApi(
     private fun luaAddToRoot(lua: Lua): Int {
         val actors = mutableListOf<Actor>()
         if (lua.isTable(1)) {
-            lua.toAnyMap(1)?.values?.forEach { actor ->
+            lua.toSerializedMap(1)?.values?.forEach { actor ->
                 if (actor is Actor) {
                     actors += actor
                 }

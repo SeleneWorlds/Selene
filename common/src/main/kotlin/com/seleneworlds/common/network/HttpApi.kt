@@ -15,7 +15,7 @@ class HttpApi(
 ) : Disposable {
     data class HttpResult(val status: Int, val body: String, val success: Boolean)
 
-    fun post(url: String, body: Any?, headers: Map<String, Any> = emptyMap()): HttpResult {
+    fun post(url: String, body: Any?, headers: Map<String, Any?> = emptyMap()): HttpResult {
         try {
             val response = runBlocking {
                 httpClient.post(url) {

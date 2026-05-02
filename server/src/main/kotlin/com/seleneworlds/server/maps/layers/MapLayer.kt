@@ -2,6 +2,7 @@ package com.seleneworlds.server.maps.layers
 
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 
 interface MapLayer {
     val name: String
@@ -12,7 +13,7 @@ interface MapLayer {
     fun swapTile(coordinate: Coordinate, tileDef: TileDefinition, newTileDef: TileDefinition): Boolean
     fun removeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean
     fun resetTile(coordinate: Coordinate)
-    fun annotateTile(coordinate: Coordinate, key: String, data: Map<Any, Any>?)
+    fun annotateTile(coordinate: Coordinate, key: String, data: SerializedMap?)
     fun addVisibilityTag(tagName: String)
     fun removeVisibilityTag(tagName: String)
     fun addCollisionTag(tagName: String)

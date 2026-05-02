@@ -5,8 +5,7 @@ import party.iroiro.luajava.value.LuaValue
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.register
-import com.seleneworlds.common.lua.util.toAnyMap
-import com.seleneworlds.common.lua.util.toTypedMap
+import com.seleneworlds.common.lua.util.toSerializedMap
 import com.seleneworlds.common.util.Disposable
 
 /**
@@ -21,8 +20,8 @@ class HttpLuaApi(private val api: HttpApi) : LuaModule, Disposable {
 
     private fun luaPost(lua: Lua): Int {
         val url = lua.checkString(1)
-        val body = if (lua.isString(2)) lua.checkString(2) else lua.toAnyMap(2)
-        val headers = lua.toTypedMap<String, Any>(3) ?: emptyMap()
+        val body = if (lua.isString(2)) lua.checkString(2) else lua.toSerializedMap(2)
+        val headers = lua.toSerializedMap(3) ?: emptyMap()
         val result = api.post(url, body, headers)
 
         lua.createTable(0, 3)

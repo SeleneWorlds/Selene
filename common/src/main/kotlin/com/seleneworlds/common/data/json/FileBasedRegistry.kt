@@ -1,14 +1,16 @@
 package com.seleneworlds.common.data.json
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.common.collect.HashBasedTable
 import com.google.common.collect.Table
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import com.seleneworlds.common.bundles.Bundle
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.data.*
 import com.seleneworlds.common.data.mappings.NameIdRegistry
+import com.seleneworlds.common.serialization.decodeFromFile
 import com.seleneworlds.common.util.ReferenceResolver
 import java.io.File
 import java.nio.file.Files
@@ -16,10 +18,11 @@ import java.nio.file.Path
 import kotlin.reflect.KClass
 
 abstract class FileBasedRegistry<TData : Any>(
-    val objectMapper: ObjectMapper,
+    val json: Json,
     val platform: String,
     override val name: String,
-    private val dataClass: KClass<TData>
+    private val dataClass: KClass<TData>,
+    private val serializer: KSerializer<TData>? = null
 ) : Registry<TData>, BundleDrivenRegistry, ReferenceResolver<Identifier, TData>, CacheableRegistry {
     protected val logger: Logger = LoggerFactory.getLogger("selene")
     protected val entries: MutableMap<Identifier, TData> = mutableMapOf()
@@ -101,7 +104,8 @@ abstract class FileBasedRegistry<TData : Any>(
     }
 
     protected open fun loadEntryFromFile(path: Path, identifier: Identifier): TData? {
-        val data = objectMapper.readValue(path.toFile(), dataClass.java)
+        val serializer = serializer ?: error("No serializer configured for registry $name")
+        val data = json.decodeFromFile(serializer, path)
 
         @Suppress("UNCHECKED_CAST")
         return data.also {
@@ -208,6 +212,9 @@ abstract class FileBasedRegistry<TData : Any>(
 
     private fun addToMetadataLookup(identifier: Identifier, metadataHolder: MetadataHolder) {
         metadataHolder.metadata.forEach { (key, value) ->
+            if (value == null) {
+                return@forEach
+            }
             val list = metadataLookupTable.get(key, value)
             if (list != null) {
                 list.add(identifier)
@@ -219,6 +226,9 @@ abstract class FileBasedRegistry<TData : Any>(
 
     private fun removeFromMetadataLookup(identifier: Identifier, metadataHolder: MetadataHolder) {
         metadataHolder.metadata.forEach { (key, value) ->
+            if (value == null) {
+                return@forEach
+            }
             val identifierList = metadataLookupTable.get(key, value)
             if (identifierList != null) {
                 identifierList.remove(identifier)

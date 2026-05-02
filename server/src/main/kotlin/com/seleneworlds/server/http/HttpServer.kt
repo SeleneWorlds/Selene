@@ -2,7 +2,6 @@ package com.seleneworlds.server.http
 
 import com.auth0.jwk.JwkProviderBuilder
 import io.ktor.http.*
-import io.ktor.serialization.jackson.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
@@ -11,6 +10,7 @@ import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.serialization.kotlinx.json.*
 import java.util.*
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.server.bundles.ClientBundleCache
@@ -54,7 +54,7 @@ class HttpServer(
                 }
             }
             install(ContentNegotiation) {
-                jackson()
+                json()
             }
             routing {
                 get("/") {
@@ -93,7 +93,7 @@ class HttpServer(
                 }
                 authenticate("session", optional = config.insecureMode) {
                     get("/bundles") {
-                        call.respond(bundleDatabase.loadedBundles.associateBy { it.manifest.name }
+                        val bundles = bundleDatabase.loadedBundles.associateBy { it.manifest.name }
                             .filter { clientBundleCache.hasClientSide(it.value.dir) }
                             .mapValues { (_, value) ->
                                 mapOf(
@@ -102,7 +102,8 @@ class HttpServer(
                                     "allow_shared_cache" to value.manifest.name.startsWith("@"),
                                     "variants" to listOf("clientZip")
                                 )
-                            })
+                            }
+                        call.respond(bundles)
                     }
                     get("/bundles/{bundleName}/clientZip") {
                         val bundleName = call.parameters["bundleName"] ?: return@get
@@ -171,13 +172,11 @@ class HttpServer(
                             null
                         }
 
-                        call.respond(
-                            mapOf(
-                                "status" to queueStatus.status.name,
-                                "message" to queueStatus.message,
-                                "token" to completedLogin?.token
-                            )
-                        )
+                        call.respond(mapOf(
+                            "status" to queueStatus.status.name,
+                            "message" to queueStatus.message,
+                            "token" to completedLogin?.token
+                        ))
                     }
                     post("/leave") {
                         val principal = call.principal<SeleneUser>()!!

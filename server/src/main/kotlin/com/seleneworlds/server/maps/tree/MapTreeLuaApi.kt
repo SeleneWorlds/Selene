@@ -2,10 +2,10 @@ package com.seleneworlds.server.maps.tree
 
 import party.iroiro.luajava.Lua
 import com.seleneworlds.common.lua.LuaMappedMetatable
-import com.seleneworlds.common.lua.util.checkAnyMap
 import com.seleneworlds.common.lua.util.checkBoolean
 import com.seleneworlds.common.lua.util.checkCoordinate
 import com.seleneworlds.common.lua.util.checkRegistry
+import com.seleneworlds.common.lua.util.checkSerializedMap
 import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.checkUserdata
 
@@ -122,7 +122,7 @@ object MapTreeLuaApi {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val key = lua.checkString(index + 1)
-        val data = lua.checkAnyMap(index + 2)
+        val data = lua.checkSerializedMap(index + 2)
         val layerName = lua.toString(index + 3)
         mapTree.annotateTile(coordinate, key, data, layerName)
         return 0

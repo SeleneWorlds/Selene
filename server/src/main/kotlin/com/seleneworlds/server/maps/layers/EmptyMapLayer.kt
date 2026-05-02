@@ -2,6 +2,7 @@ package com.seleneworlds.server.maps.layers
 
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 
 object EmptyMapLayer : MapLayer, BaseMapLayer {
     override val name: String = "empty"
@@ -34,7 +35,7 @@ object EmptyMapLayer : MapLayer, BaseMapLayer {
     override fun annotateTile(
         coordinate: Coordinate,
         key: String,
-        data: Map<Any, Any>?
+        data: SerializedMap?
     ) {
     }
 

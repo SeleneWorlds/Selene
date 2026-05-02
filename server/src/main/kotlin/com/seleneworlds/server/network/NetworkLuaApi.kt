@@ -12,7 +12,7 @@ import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.checkUserdata
 import com.seleneworlds.common.lua.util.getCallerInfo
 import com.seleneworlds.common.lua.util.register
-import com.seleneworlds.common.lua.util.toAnyMap
+import com.seleneworlds.common.lua.util.toSerializedMap
 import com.seleneworlds.common.lua.util.xpCall
 import com.seleneworlds.server.entities.EntityApi
 import com.seleneworlds.server.players.Player
@@ -53,24 +53,24 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
     }
 
     private fun luaSendToPlayer(lua: Lua): Int {
-        api.sendToPlayer(lua.checkUserdata<PlayerApi>(1), lua.checkString(2), lua.toAnyMap(3))
+        api.sendToPlayer(lua.checkUserdata<PlayerApi>(1), lua.checkString(2), lua.toSerializedMap(3) ?: emptyMap())
         return 0
     }
 
     private fun luaSendToPlayers(lua: Lua): Int {
         val players = lua.toList(1) ?: return lua.error(IllegalArgumentException("Expected list of players"))
-        api.sendToPlayers(players, lua.checkString(2), lua.toAnyMap(3))
+        api.sendToPlayers(players, lua.checkString(2), lua.toSerializedMap(3) ?: emptyMap())
         return 0
     }
 
     private fun luaSendToEntity(lua: Lua): Int {
-        api.sendToEntity(lua.checkUserdata<EntityApi>(1), lua.checkString(2), lua.toAnyMap(3))
+        api.sendToEntity(lua.checkUserdata<EntityApi>(1), lua.checkString(2), lua.toSerializedMap(3) ?: emptyMap())
         return 0
     }
 
     private fun luaSendToEntities(lua: Lua): Int {
         val entities = lua.toList(1) ?: return lua.error(IllegalArgumentException("Expected list of entities"))
-        api.sendToEntities(entities, lua.checkString(2), lua.toAnyMap(3))
+        api.sendToEntities(entities, lua.checkString(2), lua.toSerializedMap(3) ?: emptyMap())
         return 0
     }
 

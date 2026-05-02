@@ -5,6 +5,7 @@ import com.seleneworlds.common.script.ClosureTrace
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.libraries.LuaPackageModule
 import com.seleneworlds.common.lua.util.xpCall
+import com.seleneworlds.common.serialization.SerializedMap
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
@@ -109,7 +110,7 @@ class BundleLoader(
                         is String -> preload to StandardCharsets.UTF_8
                         is Map<*, *> -> {
                             @Suppress("UNCHECKED_CAST")
-                            val preloadMap = preload as Map<String, Any>
+                            val preloadMap = preload as SerializedMap
                             val file = preloadMap["file"] as? String
                                 ?: throw IllegalArgumentException("Preload object must have 'file' field")
                             val enc = (preloadMap["encoding"] as? String)?.let { Charset.forName(it) }

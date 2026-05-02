@@ -11,11 +11,12 @@ import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.checkUserdata
 import com.seleneworlds.common.lua.util.getCallerInfo
 import com.seleneworlds.common.lua.util.toAny
-import com.seleneworlds.common.lua.util.toAnyMap
+import com.seleneworlds.common.lua.util.toSerializedMap
 import com.seleneworlds.common.lua.util.toUserdata
 import com.seleneworlds.common.lua.util.xpCall
+import com.seleneworlds.common.serialization.seleneJson
+import com.seleneworlds.common.serialization.toJsonElement
 import com.seleneworlds.server.dimensions.DimensionApi
-import com.seleneworlds.server.objectMapper
 
 object EntityLuaApi {
 
@@ -235,7 +236,10 @@ object EntityLuaApi {
             callbackLua.push(entity, Lua.Conversion.NONE)
             callbackLua.push(player.api, Lua.Conversion.NONE)
             callbackLua.xpCall(2, 1, ClosureTrace { "[dynamic component \"$name\"] registered in $registrationSite" })
-            objectMapper.convertValue(callbackLua.toAnyMap(-1), ComponentConfiguration::class.java)
+            seleneJson.decodeFromJsonElement(
+                ComponentConfiguration.serializer(),
+                (callbackLua.toSerializedMap(-1) ?: emptyMap()).toJsonElement()
+            )
         }
         return 0
     }

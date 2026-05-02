@@ -16,6 +16,7 @@ import com.seleneworlds.common.grid.Grid
 import com.seleneworlds.common.util.ResolvableReference
 import com.seleneworlds.common.script.ScriptTrace
 import com.seleneworlds.common.observable.ObservableMap
+import com.seleneworlds.common.serialization.SerializedMap
 import java.util.*
 import kotlin.math.abs
 import kotlin.reflect.KClass
@@ -252,21 +253,25 @@ fun Lua.toAny(index: Int): Any? {
         LuaType.STRING -> return toString(index)!!
         LuaType.NUMBER -> return toNumber(index).let { if (it % 1.0 == 0.0) it.toInt() else it }
         LuaType.BOOLEAN -> return toBoolean(index)
-        LuaType.TABLE -> return toAnyMap(index)
+        LuaType.TABLE -> return toSerializedMap(index)
         LuaType.FUNCTION -> return toFunction(index)
         LuaType.USERDATA -> return toJavaObject(index)
         else -> null
     }
 }
 
-fun Lua.toAnyMap(index: Int): Map<Any, Any>? {
+fun Lua.toSerializedMap(index: Int): SerializedMap? {
     if (isTable(index)) {
-        val map = mutableMapOf<Any, Any>()
+        val map = mutableMapOf<String, Any?>()
         val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
         pushNil()
         while (next(absIndex) != 0) {
-            val key = toAny(-2)!!
-            val value = toAny(-1)!!
+            val key = if (isString(-2)) {
+                toString(-2)!!
+            } else {
+                throwError("Expected only string keys in table, got ${type(-2)}")
+            }
+            val value = toAny(-1)
             map[key] = value
             pop(1)
         }
@@ -278,8 +283,8 @@ fun Lua.toAnyMap(index: Int): Map<Any, Any>? {
     return null
 }
 
-fun Lua.checkAnyMap(index: Int): Map<Any, Any> {
-    return toAnyMap(index) ?: throwTypeError(index, LuaType.TABLE)
+fun Lua.checkSerializedMap(index: Int): Map<String, Any?> {
+    return toSerializedMap(index) ?: throwTypeError(index, LuaType.TABLE)
 }
 
 inline fun <reified TKey : Any, reified TValue : Any> Lua.toTypedMap(index: Int): Map<TKey, TValue>? {

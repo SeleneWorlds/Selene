@@ -2,6 +2,7 @@ import java.time.Instant
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     application
     `maven-publish`
     alias(libs.plugins.shadow)

@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     `maven-publish`
 }
 
@@ -7,7 +8,7 @@ dependencies {
     api(project.dependencies.platform(libs.koin.bom))
     api(libs.bundles.koin)
 
-    api(libs.bundles.jackson)
+    api(libs.kotlinx.serialization.json)
 
     api(libs.netty.all)
 

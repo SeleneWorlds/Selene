@@ -1,14 +1,15 @@
 package com.seleneworlds.client.rendering.visual
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.json.Json
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.json.FileBasedRegistry
 
-class VisualRegistry(objectMapper: ObjectMapper) : FileBasedRegistry<VisualDefinition>(
-    objectMapper,
+class VisualRegistry(json: Json) : FileBasedRegistry<VisualDefinition>(
+    json,
     "client",
     "visuals",
     VisualDefinition::class,
+    VisualDefinition.serializer(),
 ) {
     companion object {
         val IDENTIFIER = Identifier.withDefaultNamespace("visuals")

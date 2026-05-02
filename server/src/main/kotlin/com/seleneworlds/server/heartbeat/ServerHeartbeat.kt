@@ -18,6 +18,7 @@ import java.time.Duration
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.milliseconds
 
 class ServerHeartbeat(
     private val config: ServerConfig,
@@ -52,7 +53,7 @@ class ServerHeartbeat(
             heartbeatJob = scope.launch {
                 while (running.get()) {
                     sendHeartbeat()
-                    delay(heartbeatInterval.toMillis())
+                    delay(heartbeatInterval.toMillis().milliseconds)
                 }
             }
         }

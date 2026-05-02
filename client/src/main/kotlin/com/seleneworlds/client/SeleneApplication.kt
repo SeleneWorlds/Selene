@@ -3,14 +3,14 @@ package com.seleneworlds.client
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.ApplicationListener
 import com.badlogic.gdx.InputMultiplexer
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.sksamuel.hoplite.ExperimentalHoplite
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.serialization.jackson.*
+import io.ktor.serialization.kotlinx.json.*
 import ktx.assets.async.AssetStorage
 import ktx.async.MainDispatcher
+import kotlinx.serialization.json.Json
 import org.koin.core.context.startKoin
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.factoryOf
@@ -93,6 +93,7 @@ import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.libraries.*
 import com.seleneworlds.common.network.*
 import com.seleneworlds.common.sounds.SoundRegistry
+import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.tiles.TileRegistry
 import com.seleneworlds.common.util.Disposable
@@ -174,19 +175,16 @@ class SeleneApplication(
         }
         val httpModule = module {
             single {
-                val objectMapper = get<ObjectMapper>()
+                val json = get<Json>()
                 HttpClient(CIO) {
                     install(ContentNegotiation) {
-                        jackson {
-                            setConfig(objectMapper.serializationConfig)
-                            setConfig(objectMapper.deserializationConfig)
-                        }
+                        json(json)
                     }
                 }
             }
         }
         val dataModule = module {
-            single { objectMapper }.bind(ObjectMapper::class)
+            single { seleneJson }.bind(Json::class)
             singleOf(::TileRegistry)
             singleOf(::EntityRegistry)
             singleOf(::ComponentRegistry)

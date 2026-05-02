@@ -6,7 +6,7 @@ import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.register
 import com.seleneworlds.common.lua.util.toLocale
-import com.seleneworlds.common.lua.util.toTypedMap
+import com.seleneworlds.common.lua.util.toSerializedMap
 
 /**
  * Localize messages.
@@ -31,7 +31,7 @@ class I18nLuaApi(private val api: I18nApi) : LuaModule {
     }
 
     private fun luaFormat(lua: Lua): Int {
-        val value = api.format(lua.checkString(1), lua.toTypedMap<String, Any>(2) ?: emptyMap(), lua.toLocale(3))
+        val value = api.format(lua.checkString(1), lua.toSerializedMap(2) ?: emptyMap(), lua.toLocale(3))
         if (value != null) {
             lua.push(value)
         } else {

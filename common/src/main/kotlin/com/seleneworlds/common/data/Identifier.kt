@@ -1,15 +1,14 @@
 package com.seleneworlds.common.data
 
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.JsonSerializer
-import com.fasterxml.jackson.databind.SerializerProvider
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
-@JsonSerialize(using = Identifier.Companion.Serializer::class)
-@JsonDeserialize(using = Identifier.Companion.Deserializer::class)
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+
+@Serializable(with = Identifier.Companion.Serializer::class)
 data class Identifier(val namespace: String, val path: String) : Comparable<Identifier> {
 
     companion object {
@@ -30,26 +29,16 @@ data class Identifier(val namespace: String, val path: String) : Comparable<Iden
             }
         }
 
-        /**
-         * Jackson serializer for Identifier - converts to string format "namespace:path"
-         */
-        class Serializer : JsonSerializer<Identifier>() {
-            override fun serialize(value: Identifier, gen: JsonGenerator, serializers: SerializerProvider) {
-                gen.writeString(value.toString())
-            }
-        }
+        object Serializer : KSerializer<Identifier> {
+            override val descriptor: SerialDescriptor =
+                PrimitiveSerialDescriptor("Identifier", PrimitiveKind.STRING)
 
-        /**
-         * Jackson deserializer for Identifier - parses string format "namespace:path"
-         */
-        class Deserializer : JsonDeserializer<Identifier>() {
-            override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Identifier {
-                val value = p.valueAsString ?: throw ctxt.weirdStringException(
-                    null,
-                    Identifier::class.java,
-                    "Identifier cannot be null"
-                )
-                return parse(value)
+            override fun serialize(encoder: Encoder, value: Identifier) {
+                encoder.encodeString(value.toString())
+            }
+
+            override fun deserialize(decoder: Decoder): Identifier {
+                return parse(decoder.decodeString())
             }
         }
     }

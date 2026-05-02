@@ -3,6 +3,7 @@ package com.seleneworlds.server.maps.layers
 import com.seleneworlds.common.data.RegistryReference
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.server.maps.MapChunk
 
 class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
@@ -49,7 +50,7 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
     override fun annotateTile(
         coordinate: Coordinate,
         key: String,
-        data: Map<Any, Any>?
+        data: SerializedMap?
     ) {
         val chunk = getOrCreateChunk(coordinate)
         chunk.addOperation(coordinate, SparseTileAnnotation(coordinate, key, data))
@@ -116,5 +117,5 @@ class SparseTilesReplacement(val coordinate: Coordinate, val tileDef: RegistryRe
 class SparseTileSwap(val coordinate: Coordinate, val oldTileDef: RegistryReference<TileDefinition>, val newTileDef: RegistryReference<TileDefinition>) :
     SparseOperation
 
-class SparseTileAnnotation(val coordinate: Coordinate, val key: String, val data: Map<Any, Any>?) :
+class SparseTileAnnotation(val coordinate: Coordinate, val key: String, val data: SerializedMap?) :
     SparseOperation

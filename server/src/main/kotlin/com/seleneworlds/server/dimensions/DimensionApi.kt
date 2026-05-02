@@ -1,6 +1,7 @@
 package com.seleneworlds.server.dimensions
 
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.server.cameras.viewer.DefaultViewer
 import com.seleneworlds.server.cameras.viewer.Viewer
 import com.seleneworlds.server.entities.EntityApi
@@ -30,7 +31,7 @@ class DimensionApi(val dimension: Dimension) {
         return TransientTile(tileDef.asReference, dimension, coordinate).api
     }
 
-    fun annotateTile(coordinate: Coordinate, key: String, data: Map<Any, Any>?, layerName: String?) {
+    fun annotateTile(coordinate: Coordinate, key: String, data: SerializedMap?, layerName: String?) {
         dimension.mapTree.annotateTile(coordinate, key, data, layerName)
     }
 
@@ -52,7 +53,7 @@ class DimensionApi(val dimension: Dimension) {
         return tiles
     }
 
-    fun getAnnotationAt(coordinate: Coordinate, key: String, viewer: Viewer = DefaultViewer): Map<*, *>? {
+    fun getAnnotationAt(coordinate: Coordinate, key: String, viewer: Viewer = DefaultViewer): SerializedMap? {
         return dimension.getAnnotationAt(coordinate, key, viewer)
     }
 

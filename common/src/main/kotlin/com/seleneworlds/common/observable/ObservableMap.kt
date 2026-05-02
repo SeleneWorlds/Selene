@@ -1,6 +1,6 @@
 package com.seleneworlds.common.observable
 
-class ObservableMap(val map: MutableMap<Any, Any> = mutableMapOf()) : Observable<ObservableMap> {
+class ObservableMap(val map: MutableMap<String, Any?> = mutableMapOf()) : Observable<ObservableMap> {
 
     private var observers: MutableList<Observer<ObservableMap>>? = null
 
@@ -16,15 +16,15 @@ class ObservableMap(val map: MutableMap<Any, Any> = mutableMapOf()) : Observable
         observers?.forEach { it.notifyObserver(data) }
     }
 
-    operator fun get(key: Any): Any? {
+    operator fun get(key: String): Any? {
         return map[key]
     }
 
-    operator fun set(key: Any, value: Any) {
+    operator fun set(key: String, value: Any?) {
         map[key] = value
     }
 
-    fun remove(key: Any) {
+    fun remove(key: String) {
         map.remove(key)
     }
 
@@ -36,41 +36,33 @@ class ObservableMap(val map: MutableMap<Any, Any> = mutableMapOf()) : Observable
         return ObservableMap(deepCopyMap(map))
     }
 
-    private fun deepCopyMap(original: MutableMap<Any, Any>): MutableMap<Any, Any> {
-        val copy = mutableMapOf<Any, Any>()
+    private fun deepCopyMap(original: MutableMap<String, Any?>): MutableMap<String, Any?> {
+        val copy = mutableMapOf<String, Any?>()
         for ((key, value) in original) {
             copy[key] = deepCopyValue(value)
         }
         return copy
     }
 
-    private fun deepCopyValue(value: Any): Any {
+    private fun deepCopyValue(value: Any?): Any? {
         return when (value) {
             is ObservableMap -> value.deepCopy()
             is MutableMap<*, *> -> {
                 @Suppress("UNCHECKED_CAST")
-                deepCopyMap(value as MutableMap<Any, Any>)
+                deepCopyMap(value as MutableMap<String, Any?>)
             }
 
             is MutableList<*> -> {
-                @Suppress("UNCHECKED_CAST")
-                (value as MutableList<Any>).map { deepCopyValue(it) }.toMutableList()
+                value.map { deepCopyValue(it) }.toMutableList()
             }
 
-            is List<*> -> {
-                @Suppress("UNCHECKED_CAST")
-                (value as List<Any>).map { deepCopyValue(it) }
-            }
+            is List<*> -> value.map { deepCopyValue(it) }
 
             is MutableSet<*> -> {
-                @Suppress("UNCHECKED_CAST")
-                (value as MutableSet<Any>).map { deepCopyValue(it) }.toMutableSet()
+                value.map { deepCopyValue(it) }.toMutableSet()
             }
 
-            is Set<*> -> {
-                @Suppress("UNCHECKED_CAST")
-                (value as Set<Any>).map { deepCopyValue(it) }.toSet()
-            }
+            is Set<*> -> value.map { deepCopyValue(it) }.toSet()
 
             else -> value
         }

@@ -1,6 +1,7 @@
 package com.seleneworlds.server.saves
 
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.server.data.Registries
 import com.seleneworlds.server.maps.layers.ChunkedMapLayer
 import com.seleneworlds.server.maps.layers.DenseMapLayer
@@ -326,8 +327,12 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
         return String(bytes, StandardCharsets.UTF_8)
     }
 
-    private fun RandomAccessFile.writeAny(value: Any) {
+    private fun RandomAccessFile.writeAny(value: Any?) {
         when (value) {
+            null -> {
+                writeByte(8)
+            }
+
             is Int -> {
                 writeByte(1); writeInt(value)
             }
@@ -362,7 +367,7 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
         }
     }
 
-    private fun ByteBuffer.readAny(): Any {
+    private fun ByteBuffer.readAny(): Any? {
         val type = this.get().toInt()
         return when (type) {
             1 -> this.int
@@ -372,23 +377,24 @@ class MapTreeFormatBinaryV1(private val registries: Registries) : MapTreeFormat 
             5 -> this.long
             6 -> this.short
             7 -> this.get()
+            8 -> null
             else -> readString()
         }
     }
 
-    private fun RandomAccessFile.writeMap(map: Map<Any, Any>) {
+    private fun RandomAccessFile.writeMap(map: SerializedMap) {
         writeInt(map.size)
         map.forEach { (key, value) ->
-            writeAny(key)
+            writeString(key)
             writeAny(value)
         }
     }
 
-    private fun ByteBuffer.readMap(): Map<Any, Any> {
+    private fun ByteBuffer.readMap(): SerializedMap {
         val size = this.int
-        val map = mutableMapOf<Any, Any>()
+        val map = mutableMapOf<String, Any?>()
         repeat(size) {
-            val key = readAny()
+            val key = readString()
             val value = readAny()
             map[key] = value
         }

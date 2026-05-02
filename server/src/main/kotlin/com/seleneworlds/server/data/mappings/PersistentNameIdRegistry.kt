@@ -1,16 +1,18 @@
 package com.seleneworlds.server.data.mappings
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.Json
 import org.slf4j.Logger
 import com.seleneworlds.common.data.mappings.NameIdRegistry
 import com.seleneworlds.common.data.Registry
+import com.seleneworlds.common.serialization.decodeFromFile
 import com.seleneworlds.server.config.ServerConfig
 import java.io.File
 import kotlin.collections.iterator
 
 class PersistentNameIdRegistry(
-    private val objectMapper: ObjectMapper,
+    private val json: Json,
     private val config: ServerConfig,
     private val logger: Logger
 ) : NameIdRegistry() {
@@ -34,7 +36,12 @@ class PersistentNameIdRegistry(
                 val scopeMap = serializedMappings.getOrPut(cell.rowKey) { mutableMapOf() }
                 scopeMap[cell.columnKey] = cell.value
             }
-            objectMapper.writeValue(mappingsFile, serializedMappings)
+            mappingsFile.writeText(
+                json.encodeToString(
+                    MapSerializer(String.serializer(), MapSerializer(String.serializer(), Int.serializer())),
+                    serializedMappings
+                )
+            )
             logger.info("Saved id mappings to ${mappingsFile.absolutePath}")
         } catch (e: Exception) {
             logger.error("Failed to save id mappings", e)
@@ -44,8 +51,10 @@ class PersistentNameIdRegistry(
     fun load() {
         try {
             if (!mappingsFile.exists()) return
-            val serializedMappings =
-                objectMapper.readValue(mappingsFile, object : TypeReference<Map<String, Map<String, Int>>>() {})
+            val serializedMappings = json.decodeFromFile(
+                MapSerializer(String.serializer(), MapSerializer(String.serializer(), Int.serializer())),
+                mappingsFile
+            )
             clearAll()
             for ((scope, nameToId) in serializedMappings) {
                 for ((name, id) in nameToId) {
