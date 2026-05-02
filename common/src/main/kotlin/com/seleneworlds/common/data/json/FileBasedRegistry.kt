@@ -147,7 +147,15 @@ abstract class FileBasedRegistry<TData : Any>(
         path: String
     ) {
         val identifier = filePathToIdentifier(path) ?: return
-        val data = loadEntryFromFile(bundle.dir.toPath().resolve(path), identifier)
+        val data = try {
+            loadEntryFromFile(bundle.dir.toPath().resolve(path), identifier)
+        } catch (e: Exception) {
+            logger.error(
+                "Failed to hot reload registry entry $identifier in ${this.name} from bundle ${bundle.manifest.name}: $path",
+                e
+            )
+            null
+        }
         if (data != null) {
             val oldEntry = entries.put(identifier, data)
             if (oldEntry is RegistryObject<*> && data is RegistryObject<*>) {

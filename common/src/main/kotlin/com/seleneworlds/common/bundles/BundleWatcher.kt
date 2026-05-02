@@ -123,11 +123,31 @@ abstract class BundleWatcher(
         val bundle = bundleDatabase.getBundle(bundleId)
         if (bundle != null) {
             for (filePath in updatedFiles) {
-                findRegistryForFile(filePath)?.bundleFileUpdated(bundleDatabase, bundle, filePath)
+                val registry = findRegistryForFile(filePath) ?: continue
+                try {
+                    registry.bundleFileUpdated(bundleDatabase, bundle, filePath)
+                } catch (e: Exception) {
+                    logger.error(
+                        "Failed to process updated registry file {} for bundle {}",
+                        filePath,
+                        bundleId,
+                        e
+                    )
+                }
             }
 
             for (filePath in deletedFiles) {
-                findRegistryForFile(filePath)?.bundleFileRemoved(bundleDatabase, bundle, filePath)
+                val registry = findRegistryForFile(filePath) ?: continue
+                try {
+                    registry.bundleFileRemoved(bundleDatabase, bundle, filePath)
+                } catch (e: Exception) {
+                    logger.error(
+                        "Failed to process removed registry file {} for bundle {}",
+                        filePath,
+                        bundleId,
+                        e
+                    )
+                }
             }
         }
     }
