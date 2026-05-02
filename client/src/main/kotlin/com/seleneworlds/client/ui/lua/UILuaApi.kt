@@ -145,11 +145,7 @@ class UILuaApi(
     private fun luaAddToRoot(lua: Lua): Int {
         val actors = mutableListOf<Actor>()
         if (lua.isTable(1)) {
-            lua.toSerializedMap(1)?.values?.forEach { actor ->
-                if (actor is Actor) {
-                    actors += actor
-                }
-            }
+            actors += lua.toList(1)?.filterIsInstance<Actor>().orEmpty()
         } else if (lua.isUserdata(1)) {
             actors += lua.checkUserdata(1, Actor::class)
         }
