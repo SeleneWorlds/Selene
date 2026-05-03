@@ -1,51 +1,41 @@
 package com.seleneworlds.client.ui.lua
 
 import com.badlogic.gdx.Input
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.Stage
-import com.badlogic.gdx.scenes.scene2d.ui.Button
-import com.badlogic.gdx.scenes.scene2d.ui.Container
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton
-import com.badlogic.gdx.scenes.scene2d.ui.Label
-import com.badlogic.gdx.scenes.scene2d.ui.ProgressBar
-import com.badlogic.gdx.scenes.scene2d.ui.TextField
-import com.badlogic.gdx.scenes.scene2d.ui.VerticalGroup
+import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.kotcrab.vis.ui.widget.VisImageButton
-import party.iroiro.luajava.Lua
-import party.iroiro.luajava.value.LuaValue
+import com.seleneworlds.client.game.ClientEvents
 import com.seleneworlds.client.rendering.visual2d.Visual2D
 import com.seleneworlds.client.ui.HudApi
 import com.seleneworlds.client.ui.ThemeApi
+import com.seleneworlds.client.ui.ThemeDefinition
 import com.seleneworlds.client.ui.UIApi
 import com.seleneworlds.client.ui.drawable.DrawableDrawable
 import com.seleneworlds.client.ui.drawable.Visual2DDrawable
-import com.seleneworlds.common.script.ConstantTrace
-import com.seleneworlds.common.script.ExposedApi
+import com.seleneworlds.common.lua.LuaEventSink
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.LuaModule
-import com.seleneworlds.common.lua.util.checkString
-import com.seleneworlds.common.lua.util.checkType
-import com.seleneworlds.common.lua.util.checkUserdata
-import com.seleneworlds.common.lua.util.getCallerInfo
-import com.seleneworlds.common.lua.util.getField
-import com.seleneworlds.common.lua.util.getFieldBoolean
-import com.seleneworlds.common.lua.util.getFieldFloat
-import com.seleneworlds.common.lua.util.getFieldFunction
-import com.seleneworlds.common.lua.util.getFieldString
-import com.seleneworlds.common.lua.util.getFieldUserdata
-import com.seleneworlds.common.lua.util.register
-import com.seleneworlds.common.lua.util.toAny
-import com.seleneworlds.common.lua.util.toTypedMap
-import com.seleneworlds.common.lua.util.toUserdata
-import com.seleneworlds.common.lua.util.xpCall
+import com.seleneworlds.common.lua.util.*
+import com.seleneworlds.common.script.ConstantTrace
+import com.seleneworlds.common.script.ExposedApi
+import com.seleneworlds.common.serialization.seleneJson
+import com.seleneworlds.common.serialization.toJsonElement
+import com.seleneworlds.common.threading.MainThreadDispatcher
+import ktx.async.schedule
+import party.iroiro.luajava.Lua
+import party.iroiro.luajava.value.LuaValue
+import java.util.concurrent.CompletableFuture
 
 /**
  * Load, skin and manipulate UIs.
  */
 class UILuaApi(
-    override val api: UIApi
+    override val api: UIApi,
+    private val mainThreadDispatcher: MainThreadDispatcher
 ) : LuaModule, ExposedApi<UIApi> {
     override val name = "selene.ui.lml"
 
@@ -78,7 +68,15 @@ class UILuaApi(
         table.register("CreateButtonStyle", ::luaCreateButtonStyle)
         table.register("AddInputProcessor", ::luaAddInputProcessor)
         table.register("CreateDragListener", ::luaCreateDragListener)
+        table.register("CreateAtlas", ::luaCreateAtlas)
         table.set("Root", api.bundlesRoot)
+        table.set("Setup", setup)
+    }
+
+    private fun luaCreateAtlas(lua: Lua): Int {
+        val textures = lua.checkSerializedMap(1)
+        lua.push(api.createAtlas(textures), Lua.Conversion.NONE)
+        return 1
     }
 
     private fun luaAddInputProcessor(lua: Lua): Int {
@@ -94,7 +92,8 @@ class UILuaApi(
                     callbackLua.xpCall(
                         2,
                         1,
-                        ConstantTrace("[ui keyUp \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite"))
+                        ConstantTrace("[ui keyUp \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite")
+                    )
                     callbackLua.toBoolean(-1)
                 }
             },
@@ -107,7 +106,8 @@ class UILuaApi(
                     callbackLua.xpCall(
                         2,
                         1,
-                        ConstantTrace("[ui keyDown \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite"))
+                        ConstantTrace("[ui keyDown \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite")
+                    )
                     callbackLua.toBoolean(-1)
                 }
             },
@@ -120,7 +120,8 @@ class UILuaApi(
                     callbackLua.xpCall(
                         2,
                         1,
-                        ConstantTrace("[ui keyTyped \"$character\"] registered in $registrationSite"))
+                        ConstantTrace("[ui keyTyped \"$character\"] registered in $registrationSite")
+                    )
                     callbackLua.toBoolean(-1)
                 }
             }
@@ -183,7 +184,8 @@ class UILuaApi(
                         callbackLua.xpCall(
                             parameters.size + 1,
                             1,
-                            ConstantTrace("[ui action \"$actionName\"] registered in $registrationSite"))
+                            ConstantTrace("[ui action \"$actionName\"] registered in $registrationSite")
+                        )
                         callbackLua.toAny(-1)
                     }
                 }
@@ -191,27 +193,28 @@ class UILuaApi(
             lua.pop(1)
         }
 
-        return try {
-            val hud = api.loadUI(
-                xmlFilePath = xmlFilePath,
-                i18nBundle = i18nBundle,
-                theme = theme,
-                actions = actions
-            )
-            lua.push(hud, Lua.Conversion.NONE)
-            1
-        } catch (e: Exception) {
-            lua.error(e)
-        }
+
+        lua.push(api.loadUI(
+            xmlFilePath = xmlFilePath,
+            i18nBundle = i18nBundle,
+            theme = theme,
+            actions = actions
+        ), Lua.Conversion.NONE)
+        return 1
     }
 
     private fun luaLoadTheme(lua: Lua): Int {
-        return try {
-            lua.push(api.loadTheme(lua.checkString(1)), Lua.Conversion.NONE)
-            1
-        } catch (e: Exception) {
-            lua.error(e)
+        val atlas = if (lua.isUserdata(2)) lua.checkUserdata<TextureAtlas>(2) else null
+        if (lua.isString(1)) {
+            lua.push(api.loadTheme(lua.checkString(2), atlas), Lua.Conversion.NONE)
+            return 1
         }
+        val themeData = seleneJson.decodeFromJsonElement(
+            ThemeDefinition.serializer(),
+            (lua.toSerializedMap(1) ?: emptyMap()).toJsonElement()
+        )
+        lua.push(api.loadTheme(themeData, atlas), Lua.Conversion.NONE)
+        return 1
     }
 
     private fun luaCreateTheme(lua: Lua): Int {
@@ -446,5 +449,9 @@ class UILuaApi(
                 else -> null
             }
         }
+    }
+
+    val setup = LuaEventSink(ClientEvents.SetupUI.EVENT) { callback, trace ->
+        ClientEvents.SetupUI { callback.runCoroutine(mainThreadDispatcher, trace) }
     }
 }

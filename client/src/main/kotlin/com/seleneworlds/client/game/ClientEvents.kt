@@ -4,6 +4,16 @@ import com.seleneworlds.common.event.EventFactory
 import com.seleneworlds.common.grid.Coordinate
 
 class ClientEvents {
+    fun interface SetupUI {
+        fun setupUI()
+
+        companion object {
+            val EVENT = EventFactory.arrayBackedEvent<SetupUI> { listeners ->
+                SetupUI { listeners.forEach { it.setupUI() } }
+            }
+        }
+    }
+
     fun interface GamePreTick {
         fun gamePreTick()
 

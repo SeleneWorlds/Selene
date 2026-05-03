@@ -1,20 +1,19 @@
 package com.seleneworlds.client.ui
 
 import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
+import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.InputEvent
-import com.badlogic.gdx.scenes.scene2d.ui.Container
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton
-import com.badlogic.gdx.scenes.scene2d.ui.Label
-import com.badlogic.gdx.scenes.scene2d.ui.Skin
-import com.badlogic.gdx.scenes.scene2d.ui.Stack
+import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.badlogic.gdx.utils.I18NBundle
 import com.kotcrab.vis.ui.widget.Draggable
 import com.seleneworlds.client.bundles.BundleFileResolver
 import com.seleneworlds.client.ui.lml.SeleneLmlParser
-import kotlin.collections.iterator
+import java.util.concurrent.CompletableFuture
 
 /**
  * Load, skin and manipulate UIs.
@@ -86,7 +85,7 @@ class UIApi(
         i18nBundle: String,
         theme: ThemeApi?,
         actions: Map<String, (Any, Array<out Any>) -> Any?>
-    ): HudApi {
+    ): CompletableFuture<HudApi> {
         val parser = SeleneLmlParser.parser().skin(theme?.skin ?: ui.systemSkin)
 
         for ((actionName, actionFunction) in actions) {
@@ -120,15 +119,28 @@ class UIApi(
             }
         }
         actors.forEach { collectActorsByName(it) }
-        return Hud(actors.toList(), actorsByName).api
+        val hud = Hud(actors.toList(), actorsByName).api
+        return CompletableFuture.completedFuture(hud);
     }
 
-    fun loadTheme(skinPath: String): ThemeApi {
+    fun loadTheme(skinPath: String, atlas: TextureAtlas?): CompletableFuture<ThemeApi> {
         val skinFile = bundleFileResolver.resolve(skinPath)
         if (!skinFile.exists()) {
             throw IllegalArgumentException("Skin file not found: $skinPath")
         }
-        return ThemeApi(Skin(skinFile))
+        val theme = ThemeApi(atlas?.let { Skin(skinFile, it) } ?: Skin(skinFile))
+        return CompletableFuture.completedFuture(theme)
+    }
+
+    fun loadTheme(themeDefinition: ThemeDefinition, atlas: TextureAtlas?): CompletableFuture<ThemeApi> {
+        val skin = atlas?.let { Skin(it) } ?: Skin()
+        val font = BitmapFont()
+        skin.add("default", font)
+        skin.add("default", Label.LabelStyle(font, Color.WHITE))
+        skin.add("hidden", ImageButton.ImageButtonStyle())
+        themeDefinition.applyToSkin(skin, skinResolvers)
+        val theme = ThemeApi(skin)
+        return CompletableFuture.completedFuture(theme)
     }
 
     fun createTheme(): ThemeApi {
@@ -193,5 +205,14 @@ class UIApi(
                 return true
             }
         }
+    }
+
+    fun createAtlas(textures: Map<String, Any?>): CompletableFuture<TextureAtlas> {
+        val atlas = TextureAtlas()
+        textures.entries.forEach { (name, path) ->
+            val textureFile = bundleFileResolver.resolve(path.toString())
+            atlas.addRegion(name, TextureRegion(Texture(textureFile)))
+        }
+        return CompletableFuture.completedFuture(atlas)
     }
 }
