@@ -55,7 +55,7 @@ object ActorLuaMetatable {
      */
     private fun luaGetName(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
-        lua.push(actor.name)
+        actor.name?.let(lua::push) ?: lua.pushNil()
         return 1
     }
 
