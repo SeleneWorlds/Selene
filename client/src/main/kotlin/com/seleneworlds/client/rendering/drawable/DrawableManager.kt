@@ -8,6 +8,7 @@ import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.util.Disposable
 
 class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
+    private val defaultFont = BitmapFont()
     private val cache = mutableMapOf<Pair<String, DrawableOptions>, Drawable>()
     private val animatedDrawables = mutableMapOf<Identifier, AnimatedDrawable>()
 
@@ -51,10 +52,9 @@ class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
     }
 
     fun getTextDrawable(text: String, options: TextDrawableOptions): TextDrawable {
-        val font = BitmapFont()
         return TextDrawable(
-            font,
-            GlyphLayout(font, text, Color.WHITE, options.maxWidth, options.horizontalAlign, options.wrap)
+            defaultFont,
+            GlyphLayout(defaultFont, text, Color.WHITE, options.maxWidth, options.horizontalAlign, options.wrap)
         )
     }
 
