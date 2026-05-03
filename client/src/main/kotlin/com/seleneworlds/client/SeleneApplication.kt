@@ -94,6 +94,7 @@ import com.seleneworlds.common.lua.libraries.*
 import com.seleneworlds.common.network.*
 import com.seleneworlds.common.sounds.SoundRegistry
 import com.seleneworlds.common.serialization.seleneJson
+import com.seleneworlds.common.tasks.TaskLuaApi
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.tiles.TileRegistry
 import com.seleneworlds.common.util.Disposable
@@ -142,6 +143,7 @@ class SeleneApplication(
             singleOf(::LuaMathxModule) { bind<LuaModule>() }
             singleOf(::LuaStringxModule) { bind<LuaModule>() }
             singleOf(::LuaTablexModule) { bind<LuaModule>() }
+            singleOf(::TaskLuaApi) { bind<LuaModule>() }
             singleOf(::UILuaApi) { bind<LuaModule>() }
             singleOf(::VisualsLuaApi) { bind<LuaModule>() }
             singleOf(::NetworkLuaApi) { bind<LuaModule>() }
