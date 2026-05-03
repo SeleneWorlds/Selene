@@ -334,6 +334,7 @@ private fun Lua.toListOrMap(index: Int): Any? {
 
 private fun normalizeLuaValue(value: Any?): Any? {
     return when (value) {
+        is LuaValue -> value
         is Map<*, *> -> normalizeLuaMap(value)
         is Collection<*> -> value.map(::normalizeLuaValue)
         else -> value
