@@ -23,7 +23,8 @@ class NetworkClientImpl(
     override fun poll(): Packet? = incomingPackets.poll()
 
     override fun enqueueWork(runnable: Runnable) {
-        // TODO Currently just runs immediately.
+        // TODO Currently just runs immediately, but process runs on the MainThread too.
+        //      We should start running some things off-thread and be more explicit about when we want to run on main, at which point this needs to be implemented properly
         runnable.run()
     }
 

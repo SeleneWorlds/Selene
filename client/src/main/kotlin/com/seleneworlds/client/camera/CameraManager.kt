@@ -156,7 +156,6 @@ class CameraManager(
     }
 
     fun isRegionVisible(left: Float, right: Float, bottom: Float, top: Float): Boolean {
-        // TODO Could be further optimized by culling into the actual viewport area as set view setViewport
         val camLeft = camera.position.x - camera.viewportWidth / 2f
         val camRight = camera.position.x + camera.viewportWidth / 2f
         val camBottom = camera.position.y - camera.viewportHeight / 2f

@@ -2,15 +2,15 @@ package com.seleneworlds.client.rendering.visual2d
 
 import com.seleneworlds.client.rendering.visual.VisualDefinition
 
-class DrawableVisual2DApi(val visual: DrawableVisual2D) : Visual2DApi {
+class DrawableVisual2DApi(override val delegate: DrawableVisual2D) : Visual2DApi {
 
-    fun getDrawable() = visual.drawable.api
+    fun getDrawable() = delegate.drawable.api
 
     fun getDefinition(): VisualDefinition {
-        return visual.visualDefinition
+        return delegate.visualDefinition
     }
 
     override fun getMetadata(key: String): Any? {
-        return visual.metadata[key]
+        return delegate.metadata[key]
     }
 }

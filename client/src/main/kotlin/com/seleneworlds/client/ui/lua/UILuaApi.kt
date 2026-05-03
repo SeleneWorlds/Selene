@@ -9,7 +9,8 @@ import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.kotcrab.vis.ui.widget.VisImageButton
 import com.seleneworlds.client.game.ClientEvents
-import com.seleneworlds.client.rendering.visual2d.Visual2D
+import com.seleneworlds.client.rendering.drawable.DrawableApi
+import com.seleneworlds.client.rendering.visual2d.Visual2DApi
 import com.seleneworlds.client.ui.HudApi
 import com.seleneworlds.client.ui.ThemeApi
 import com.seleneworlds.client.ui.ThemeDefinition
@@ -438,8 +439,8 @@ class UILuaApi(
                 Lua.LuaType.STRING -> api.skinResolvers.resolveDrawable(theme, toString(-1)!!)
                 Lua.LuaType.USERDATA -> {
                     when (val value = toJavaObject(-1)) {
-                        is Visual2D -> Visual2DDrawable(value)
-                        is com.seleneworlds.client.rendering.drawable.Drawable -> DrawableDrawable(value)
+                        is Visual2DApi -> Visual2DDrawable(value.delegate)
+                        is DrawableApi -> DrawableDrawable(value.drawable)
                         else -> null
                     }
                 }

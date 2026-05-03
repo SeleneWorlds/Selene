@@ -2,15 +2,15 @@ package com.seleneworlds.client.rendering.visual2d.iso
 
 import com.seleneworlds.client.rendering.visual.IsoVisualApi
 
-class DynamicDrawableIsoVisualApi(val visual: DynamicDrawableIsoVisual) : IsoVisualApi {
+class DynamicDrawableIsoVisualApi(override val delegate: DynamicDrawableIsoVisual) : IsoVisualApi {
 
-    fun getDrawable() = visual.drawable.api
+    fun getDrawable() = delegate.drawable.api
 
     override fun getSurfaceHeight(): Float {
-        return visual.surfaceHeight
+        return delegate.surfaceHeight
     }
 
     override fun getMetadata(key: String): Any? {
-        return visual.metadata[key]
+        return delegate.metadata[key]
     }
 }
