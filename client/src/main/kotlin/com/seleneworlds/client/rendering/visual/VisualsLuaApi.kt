@@ -24,7 +24,7 @@ import com.seleneworlds.common.lua.util.register
  * Create visuals from visual definitions.
  */
 class VisualsLuaApi(private val api: VisualsApi) : LuaModule {
-    override val name = "selene.visuals"
+    override val name = "selene.visuals.internal"
 
     override fun initialize(luaManager: LuaManager) {
         luaManager.defineMetatable(ReloadableVisualApi::class, ReloadableVisualLuaApi.luaMeta)

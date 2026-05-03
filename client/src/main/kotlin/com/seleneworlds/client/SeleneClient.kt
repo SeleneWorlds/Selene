@@ -61,6 +61,7 @@ class SeleneClient(
         luaManager.lua.set("SELENE_IS_SERVER", false)
         luaManager.loadModules()
         luaManager.loadInternalLuaModule("selene.ui.coroutine")
+        luaManager.loadInternalLuaModule("selene.visuals")
         val bundles = bundleLoader.loadBundles(runtimeConfig.bundles.keys)
         tileRegistry.load(bundleDatabase)
         componentRegistry.load(bundleDatabase)
