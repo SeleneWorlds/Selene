@@ -72,7 +72,6 @@ import com.seleneworlds.client.tiles.Tile
 import com.seleneworlds.client.tiles.TilePool
 import com.seleneworlds.client.ui.UI
 import com.seleneworlds.client.ui.SkinResolvers
-import com.seleneworlds.client.ui.lua.SkinLuaMetatable
 import com.seleneworlds.client.ui.UIApi
 import com.seleneworlds.client.ui.lua.UILuaApi
 import com.seleneworlds.common.bundles.*
@@ -136,7 +135,6 @@ class SeleneApplication(
             single { PayloadHandlerRegistry<Unit>() }
             singleOf(::Messages)
             singleOf(::SkinResolvers)
-            singleOf(::SkinLuaMetatable)
             singleOf(::LuaDebugModule) { bind<LuaModule>() }
             singleOf(::LuaOsModule) { bind<LuaModule>() }
             singleOf(::LuaPackageModule) { bind<LuaModule>() }

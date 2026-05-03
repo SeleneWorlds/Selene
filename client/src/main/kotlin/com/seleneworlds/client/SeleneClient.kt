@@ -6,6 +6,7 @@ import org.slf4j.Logger
 import com.seleneworlds.client.config.ClientRuntimeConfig
 import com.seleneworlds.client.bundle.ClientBundleWatcher
 import com.seleneworlds.client.config.ClientConfig
+import com.seleneworlds.client.game.ClientEvents
 import com.seleneworlds.client.sounds.AudioRegistry
 import com.seleneworlds.client.rendering.visual.VisualRegistry
 import com.seleneworlds.client.network.NetworkClient
@@ -59,6 +60,7 @@ class SeleneClient(
         luaManager.lua.set("SELENE_IS_CLIENT", true)
         luaManager.lua.set("SELENE_IS_SERVER", false)
         luaManager.loadModules()
+        luaManager.loadInternalLuaModule("selene.ui.coroutine")
         val bundles = bundleLoader.loadBundles(runtimeConfig.bundles.keys)
         tileRegistry.load(bundleDatabase)
         componentRegistry.load(bundleDatabase)
@@ -70,6 +72,7 @@ class SeleneClient(
         customRegistries.loadCustomRegistries(bundleDatabase, "common")
         customRegistries.loadCustomRegistries(bundleDatabase, "client")
         bundleLoader.loadBundleEntrypoints(bundles, listOf("common/", "client/", "init.lua"))
+        ClientEvents.SetupUI.EVENT.invoker().setupUI()
         (networkClient as NetworkClientImpl).packetHandler = packetHandler
         if (config.hotReload) {
             bundleWatcher.startWatching()

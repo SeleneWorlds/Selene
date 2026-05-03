@@ -1,20 +1,20 @@
 package com.seleneworlds.client.ui
 
 import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
+import com.badlogic.gdx.graphics.g2d.TextureAtlas
+import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.InputEvent
-import com.badlogic.gdx.scenes.scene2d.ui.Container
-import com.badlogic.gdx.scenes.scene2d.ui.ImageButton
-import com.badlogic.gdx.scenes.scene2d.ui.Label
-import com.badlogic.gdx.scenes.scene2d.ui.Skin
-import com.badlogic.gdx.scenes.scene2d.ui.Stack
+import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.badlogic.gdx.utils.I18NBundle
 import com.kotcrab.vis.ui.widget.Draggable
+import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.bundles.BundleFileResolver
 import com.seleneworlds.client.ui.lml.SeleneLmlParser
-import kotlin.collections.iterator
+import com.seleneworlds.common.threading.Awaitable
 
 /**
  * Load, skin and manipulate UIs.
@@ -22,7 +22,8 @@ import kotlin.collections.iterator
 class UIApi(
     private val ui: UI,
     private val bundleFileResolver: BundleFileResolver,
-    val skinResolvers: SkinResolvers
+    val skinResolvers: SkinResolvers,
+    private val assetProvider: AssetProvider
 ) {
     val bundlesRoot: Stack = ui.bundlesRoot
 
@@ -77,13 +78,17 @@ class UIApi(
         }
     }
 
+    fun addToRoot(hud: HudApi) {
+        addToRoot(hud.delegate.actors)
+    }
+
     fun loadUI(
         xmlFilePath: String,
         i18nBundle: String,
-        skin: Skin?,
+        theme: ThemeApi?,
         actions: Map<String, (Any, Array<out Any>) -> Any?>
-    ): Pair<List<Actor>, Map<String, Actor>> {
-        val parser = SeleneLmlParser.parser().skin(skin ?: ui.systemSkin)
+    ): Awaitable<HudApi> {
+        val parser = SeleneLmlParser.parser().skin(theme?.skin ?: ui.systemSkin)
 
         for ((actionName, actionFunction) in actions) {
             parser.action(actionName, object : ParameterizedActorConsumer<Any?, Any> {
@@ -116,28 +121,41 @@ class UIApi(
             }
         }
         actors.forEach { collectActorsByName(it) }
-        return actors.toList() to actorsByName
+        val hud = Hud(actors.toList(), actorsByName).api
+        return Awaitable.completed(hud)
     }
 
-    fun loadSkin(skinPath: String): Skin {
+    fun loadTheme(skinPath: String, atlas: TextureAtlas?): Awaitable<ThemeApi> {
         val skinFile = bundleFileResolver.resolve(skinPath)
         if (!skinFile.exists()) {
             throw IllegalArgumentException("Skin file not found: $skinPath")
         }
-        return Skin(skinFile)
+        val theme = ThemeApi(atlas?.let { Skin(skinFile, it) } ?: Skin(skinFile), assetProvider)
+        return Awaitable.completed(theme)
     }
 
-    fun createSkin(): Skin {
+    fun loadTheme(themeDefinition: ThemeDefinition, atlas: TextureAtlas?): Awaitable<ThemeApi> {
+        val skin = atlas?.let { Skin(it) } ?: Skin()
         val font = BitmapFont()
-        return Skin().apply {
+        skin.add("default", font)
+        skin.add("default", Label.LabelStyle(font, Color.WHITE))
+        skin.add("hidden", ImageButton.ImageButtonStyle())
+        themeDefinition.applyToSkin(skin, skinResolvers)
+        val theme = ThemeApi(skin, assetProvider)
+        return Awaitable.completed(theme)
+    }
+
+    fun createTheme(): ThemeApi {
+        val font = BitmapFont()
+        return ThemeApi(Skin().apply {
             add("default", font)
             add("default", Label.LabelStyle(font, Color.WHITE))
             add("hidden", ImageButton.ImageButtonStyle())
-        }
+        }, assetProvider)
     }
 
     fun createContainer(
-        skin: Skin,
+        theme: ThemeApi,
         child: Actor?,
         background: String?,
         width: Float?,
@@ -145,7 +163,7 @@ class UIApi(
     ): Container<Actor> {
         val container = Container<Actor>(child)
         background?.let {
-            container.background = skinResolvers.resolveDrawable(skin, it)
+            container.background = skinResolvers.resolveDrawable(theme, it)
         }
         width?.let {
             container.width(it)
@@ -156,8 +174,8 @@ class UIApi(
         return container
     }
 
-    fun createLabel(skin: Skin, style: String, text: String, wrap: Boolean): Label {
-        val labelStyle = skin.get(style, Label.LabelStyle::class.java)
+    fun createLabel(theme: ThemeApi, style: String, text: String, wrap: Boolean): Label {
+        val labelStyle = theme.skin.get(style, Label.LabelStyle::class.java)
         val label = Label(text, labelStyle)
         label.wrap = wrap
         return label
@@ -189,5 +207,18 @@ class UIApi(
                 return true
             }
         }
+    }
+
+    fun createAtlas(textures: Map<String, Any?>): Awaitable<TextureAtlas> {
+        val atlas = TextureAtlas()
+        textures.entries.forEach { (name, path) ->
+            if (path is String) {
+                val textureFile = bundleFileResolver.resolve(path)
+                atlas.addRegion(name, TextureRegion(Texture(textureFile)))
+            } else {
+                throw IllegalArgumentException("Invalid texture value for $name: $path")
+            }
+        }
+        return Awaitable.completed(atlas)
     }
 }

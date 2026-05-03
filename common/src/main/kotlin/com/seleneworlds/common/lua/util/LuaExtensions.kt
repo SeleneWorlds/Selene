@@ -13,6 +13,8 @@ import com.seleneworlds.common.data.Registry
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.grid.Direction
 import com.seleneworlds.common.grid.Grid
+import com.seleneworlds.common.threading.Awaitable
+import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.ResolvableReference
 import com.seleneworlds.common.script.ScriptTrace
 import com.seleneworlds.common.observable.ObservableMap
@@ -229,6 +231,59 @@ fun Lua.toFunction(index: Int): LuaValue? {
 
 fun Lua.checkFunction(index: Int): LuaValue {
     return toFunction(index) ?: throwTypeError(index, LuaType.FUNCTION)
+}
+
+fun LuaValue.runCoroutine(
+    mainThreadDispatcher: MainThreadDispatcher,
+    trace: ScriptTrace,
+    vararg args: Any?
+) {
+    val thread = state().newThread()
+    push(thread)
+    try {
+        thread.resumeCoroutine(mainThreadDispatcher, trace, *args)
+    } catch (e: Exception) {
+        thread.close()
+        throw e
+    }
+}
+
+private fun Lua.resumeCoroutine(
+    mainThreadDispatcher: MainThreadDispatcher,
+    trace: ScriptTrace,
+    vararg args: Any?
+) {
+    for (arg in args) {
+        if (arg == null) {
+            pushNil()
+        } else {
+            push(arg, Lua.Conversion.FULL)
+        }
+    }
+
+    val yielded = resume(args.size)
+    if (!yielded) {
+        close()
+        return
+    }
+
+    val future = checkUserdata<Awaitable<*>>(-1)
+    pop(1)
+    future.whenComplete { result, throwable ->
+        mainThreadDispatcher.runOnMainThread {
+            if (throwable != null) {
+                close()
+                throw IllegalStateException("$trace: yielded future completed exceptionally", throwable)
+            }
+
+            try {
+                resumeCoroutine(mainThreadDispatcher, trace, result)
+            } catch (e: Exception) {
+                close()
+                throw e
+            }
+        }
+    }
 }
 
 fun <T : Any> Lua.toRegistry(index: Int, registry: Registry<T>): T? {

@@ -40,19 +40,11 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         secureObjectMetatable()
 
         luaPackage.initializeEarly(lua)
-
-        // bit32 was removed from this version of Lua, we provide a polyfill from classpath
         lua.setExternalLoader(ClassPathLoader())
-        lua.push(luaPackage.packageLoaded)
-        lua.loadExternal("bit32")
-        lua.pCall(0, 1)
-        lua.pushValue(-1)
-        lua.setGlobal("bit32")
-        lua.setField(-2, "bit32")
-        lua.pop(1)
+        loadInternalLuaModule("bit32")
 
         // Load standard libraries, but only those that are safe
-        val libraries = setOf("string", "math", "table")
+        val libraries = setOf("string", "math", "table", "coroutine")
         lua.push(luaPackage.packageLoaded)
         libraries.forEach {
             lua.openLibrary(it)
@@ -69,6 +61,17 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         // Reset _G to make sure it doesn't leak access to anything we don't want
         lua.newTable()
         lua.setGlobal("_G")
+    }
+
+    fun loadInternalLuaModule(module: String) {
+        // bit32 was removed from this version of Lua, we provide a polyfill from classpath
+        lua.push(luaPackage.packageLoaded)
+        lua.loadExternal(module)
+        lua.pCall(0, 1)
+        lua.pushValue(-1)
+        lua.setGlobal(module)
+        lua.setField(-2, module)
+        lua.pop(1)
     }
 
     fun loadModules() {

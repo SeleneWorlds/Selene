@@ -7,6 +7,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.Layout
 import com.kotcrab.vis.ui.widget.LinkLabel
 import com.kotcrab.vis.ui.widget.VisTextField
 import party.iroiro.luajava.Lua
+import com.seleneworlds.client.ui.ThemeApi
 import com.seleneworlds.common.lua.LuaMappedMetatable
 import com.seleneworlds.common.lua.util.checkFloat
 import com.seleneworlds.common.lua.util.checkString
@@ -139,48 +140,48 @@ object ActorLuaMetatable {
      * Sets the style of the actor using a skin and style name.
      *
      * ```signatures
-     * SetStyle(skin: Skin, styleName: string)
+     * SetStyle(theme: ThemeApi, styleName: string)
      * ```
      */
     private fun luaSetStyle(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
-        val skin = lua.checkUserdata<Skin>(2)
+        val theme = lua.checkUserdata<ThemeApi>(2)
         val style = lua.checkString(3)
         when (actor) {
             is VisTextField -> {
-                actor.style = skin.get(style, VisTextField.VisTextFieldStyle::class.java)
+                actor.style = theme.skin.get(style, VisTextField.VisTextFieldStyle::class.java)
             }
 
             is LinkLabel -> {
-                actor.style = skin.get(style, LinkLabel.LinkLabelStyle::class.java)
+                actor.style = theme.skin.get(style, LinkLabel.LinkLabelStyle::class.java)
             }
 
             is Label -> {
-                actor.style = skin.get(style, Label.LabelStyle::class.java)
+                actor.style = theme.skin.get(style, Label.LabelStyle::class.java)
             }
 
             is SelectBox<*> -> {
-                actor.style = skin.get(style, SelectBox.SelectBoxStyle::class.java)
+                actor.style = theme.skin.get(style, SelectBox.SelectBoxStyle::class.java)
             }
 
             is Slider -> {
-                actor.style = skin.get(style, Slider.SliderStyle::class.java)
+                actor.style = theme.skin.get(style, Slider.SliderStyle::class.java)
             }
 
             is ProgressBar -> {
-                actor.style = skin.get(style, ProgressBar.ProgressBarStyle::class.java)
+                actor.style = theme.skin.get(style, ProgressBar.ProgressBarStyle::class.java)
             }
 
             is TextField -> {
-                actor.style = skin.get(style, TextField.TextFieldStyle::class.java)
+                actor.style = theme.skin.get(style, TextField.TextFieldStyle::class.java)
             }
 
             is List<*> -> {
-                actor.style = skin.get(style, List.ListStyle::class.java)
+                actor.style = theme.skin.get(style, List.ListStyle::class.java)
             }
 
             is Touchpad -> {
-                actor.style = skin.get(style, Touchpad.TouchpadStyle::class.java)
+                actor.style = theme.skin.get(style, Touchpad.TouchpadStyle::class.java)
             }
         }
         return 0
