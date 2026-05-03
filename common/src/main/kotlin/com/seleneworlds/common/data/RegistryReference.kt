@@ -55,6 +55,11 @@ sealed interface RegistryReference<T : Any> {
             }
             subscriptions.clear()
         }
+
+        override fun toString(): String {
+            return "ByIdentifier(identifier=$identifier, registry=$registry)"
+        }
+
     }
 
     object Unbound : RegistryReference<Any> {

@@ -109,4 +109,9 @@ class Tile(
     override fun removedFromScene(scene: Scene) {
         pool.free(this)
     }
+
+    override fun toString(): String {
+        return "Tile(x=$x, y=$y, z=$z, tileDefinition=$tileDefinition)"
+    }
+
 }

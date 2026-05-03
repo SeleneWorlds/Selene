@@ -34,4 +34,9 @@ class TileApi(val tile: Tile) {
     fun getName(): String {
         return tile.tileDefinition.identifier.toString()
     }
+
+    override fun toString(): String {
+        return "TileApi(${tile})"
+    }
+
 }

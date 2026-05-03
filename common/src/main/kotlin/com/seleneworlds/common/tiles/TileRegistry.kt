@@ -14,4 +14,8 @@ class TileRegistry(json: Json) : FileBasedRegistry<TileDefinition>(
     companion object {
         val IDENTIFIER = Identifier.withDefaultNamespace("tiles")
     }
+
+    override fun toString(): String {
+        return "TileRegistry"
+    }
 }
