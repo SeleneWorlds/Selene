@@ -8,15 +8,9 @@ import com.seleneworlds.common.threading.Awaitable
 
 class ThemeApi(
     internal val skin: Skin,
-    private val skinResolvers: SkinResolvers,
     private val assetProvider: AssetProvider
 ) {
     fun addTexture(name: String, texturePath: String): Awaitable<Void?> {
-        val textureFile = skinResolvers.resolveFile(texturePath)
-        if (!textureFile.exists()) {
-            return Awaitable.failed(IllegalArgumentException("Texture file not found: $texturePath"))
-        }
-
         val future = Awaitable<Void?>()
         assetProvider.loadTextureAsync(texturePath).invokeOnCompletion { error ->
             if (error != null) {
