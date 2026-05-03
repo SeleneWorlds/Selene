@@ -45,7 +45,7 @@ data class VariantsVisualDefinition(
 @SerialName("animated")
 data class AnimatedVisualDefinition(
     val textures: List<String>,
-    val duration: Float = 1f / 30f,
+    val duration: Float = 1f,
     val offsetX: Float = 0f,
     val offsetY: Float = 0f,
     val surfaceOffsetY: Float = 0f,
