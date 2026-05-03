@@ -14,7 +14,7 @@ import com.kotcrab.vis.ui.widget.Draggable
 import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.bundles.BundleFileResolver
 import com.seleneworlds.client.ui.lml.SeleneLmlParser
-import java.util.concurrent.CompletableFuture
+import com.seleneworlds.common.threading.Awaitable
 
 /**
  * Load, skin and manipulate UIs.
@@ -87,7 +87,7 @@ class UIApi(
         i18nBundle: String,
         theme: ThemeApi?,
         actions: Map<String, (Any, Array<out Any>) -> Any?>
-    ): CompletableFuture<HudApi> {
+    ): Awaitable<HudApi> {
         val parser = SeleneLmlParser.parser().skin(theme?.skin ?: ui.systemSkin)
 
         for ((actionName, actionFunction) in actions) {
@@ -122,19 +122,19 @@ class UIApi(
         }
         actors.forEach { collectActorsByName(it) }
         val hud = Hud(actors.toList(), actorsByName).api
-        return CompletableFuture.completedFuture(hud);
+        return Awaitable.completed(hud)
     }
 
-    fun loadTheme(skinPath: String, atlas: TextureAtlas?): CompletableFuture<ThemeApi> {
+    fun loadTheme(skinPath: String, atlas: TextureAtlas?): Awaitable<ThemeApi> {
         val skinFile = bundleFileResolver.resolve(skinPath)
         if (!skinFile.exists()) {
             throw IllegalArgumentException("Skin file not found: $skinPath")
         }
         val theme = ThemeApi(atlas?.let { Skin(skinFile, it) } ?: Skin(skinFile), skinResolvers, assetProvider)
-        return CompletableFuture.completedFuture(theme)
+        return Awaitable.completed(theme)
     }
 
-    fun loadTheme(themeDefinition: ThemeDefinition, atlas: TextureAtlas?): CompletableFuture<ThemeApi> {
+    fun loadTheme(themeDefinition: ThemeDefinition, atlas: TextureAtlas?): Awaitable<ThemeApi> {
         val skin = atlas?.let { Skin(it) } ?: Skin()
         val font = BitmapFont()
         skin.add("default", font)
@@ -142,7 +142,7 @@ class UIApi(
         skin.add("hidden", ImageButton.ImageButtonStyle())
         themeDefinition.applyToSkin(skin, skinResolvers)
         val theme = ThemeApi(skin, skinResolvers, assetProvider)
-        return CompletableFuture.completedFuture(theme)
+        return Awaitable.completed(theme)
     }
 
     fun createTheme(): ThemeApi {
@@ -209,12 +209,12 @@ class UIApi(
         }
     }
 
-    fun createAtlas(textures: Map<String, Any?>): CompletableFuture<TextureAtlas> {
+    fun createAtlas(textures: Map<String, Any?>): Awaitable<TextureAtlas> {
         val atlas = TextureAtlas()
         textures.entries.forEach { (name, path) ->
             val textureFile = bundleFileResolver.resolve(path.toString())
             atlas.addRegion(name, TextureRegion(Texture(textureFile)))
         }
-        return CompletableFuture.completedFuture(atlas)
+        return Awaitable.completed(atlas)
     }
 }

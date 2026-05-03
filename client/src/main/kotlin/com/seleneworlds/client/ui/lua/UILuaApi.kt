@@ -25,10 +25,8 @@ import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.serialization.toJsonElement
 import com.seleneworlds.common.threading.MainThreadDispatcher
-import ktx.async.schedule
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import java.util.concurrent.CompletableFuture
 
 /**
  * Load, skin and manipulate UIs.

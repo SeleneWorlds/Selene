@@ -13,13 +13,13 @@ import com.seleneworlds.common.data.Registry
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.grid.Direction
 import com.seleneworlds.common.grid.Grid
+import com.seleneworlds.common.threading.Awaitable
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.ResolvableReference
 import com.seleneworlds.common.script.ScriptTrace
 import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.serialization.SerializedMap
 import java.util.*
-import java.util.concurrent.CompletableFuture
 import kotlin.math.abs
 import kotlin.reflect.KClass
 
@@ -267,7 +267,7 @@ private fun Lua.resumeCoroutine(
         return
     }
 
-    val future = checkUserdata<CompletableFuture<*>>(-1)
+    val future = checkUserdata<Awaitable<*>>(-1)
     pop(1)
     future.whenComplete { result, throwable ->
         mainThreadDispatcher.runOnMainThread {
