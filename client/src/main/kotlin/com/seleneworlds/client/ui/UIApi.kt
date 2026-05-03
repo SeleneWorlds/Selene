@@ -15,6 +15,7 @@ import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.bundles.BundleFileResolver
 import com.seleneworlds.client.ui.lml.SeleneLmlParser
 import com.seleneworlds.common.threading.Awaitable
+import org.slf4j.LoggerFactory
 
 /**
  * Load, skin and manipulate UIs.
@@ -189,20 +190,32 @@ class UIApi(
         return object : Draggable.DragListener {
             override fun onStart(draggable: Draggable, actor: Actor, stageX: Float, stageY: Float): Boolean {
                 if (onStart != null) {
-                    return onStart(draggable, actor, stageX, stageY)
+                    return try {
+                        onStart(draggable, actor, stageX, stageY)
+                    } catch (t: Throwable) {
+                        logger.error("Error in onStart drag listener", t).let { true }
+                    }
                 }
                 return true
             }
 
             override fun onDrag(draggable: Draggable, actor: Actor, stageX: Float, stageY: Float) {
                 if (onDrag != null) {
-                    onDrag(draggable, actor, stageX, stageY)
+                    try {
+                        onDrag(draggable, actor, stageX, stageY)
+                    } catch (t: Throwable) {
+                        logger.error("Error in onDrag drag listener", t)
+                    }
                 }
             }
 
             override fun onEnd(draggable: Draggable, actor: Actor, stageX: Float, stageY: Float): Boolean {
                 if (onEnd != null) {
-                    return onEnd(draggable, actor, stageX, stageY)
+                    return try {
+                        onEnd(draggable, actor, stageX, stageY)
+                    } catch (t: Throwable) {
+                        logger.error("Error in onEnd drag listener", t).let { true }
+                    }
                 }
                 return true
             }
@@ -220,5 +233,9 @@ class UIApi(
             }
         }
         return Awaitable.completed(atlas)
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(UIApi::class.java)
     }
 }
