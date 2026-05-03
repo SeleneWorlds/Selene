@@ -11,6 +11,7 @@ import com.badlogic.gdx.scenes.scene2d.InputEvent
 import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.badlogic.gdx.utils.I18NBundle
 import com.kotcrab.vis.ui.widget.Draggable
+import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.bundles.BundleFileResolver
 import com.seleneworlds.client.ui.lml.SeleneLmlParser
 import java.util.concurrent.CompletableFuture
@@ -21,7 +22,8 @@ import java.util.concurrent.CompletableFuture
 class UIApi(
     private val ui: UI,
     private val bundleFileResolver: BundleFileResolver,
-    val skinResolvers: SkinResolvers
+    val skinResolvers: SkinResolvers,
+    private val assetProvider: AssetProvider
 ) {
     val bundlesRoot: Stack = ui.bundlesRoot
 
@@ -128,7 +130,7 @@ class UIApi(
         if (!skinFile.exists()) {
             throw IllegalArgumentException("Skin file not found: $skinPath")
         }
-        val theme = ThemeApi(atlas?.let { Skin(skinFile, it) } ?: Skin(skinFile), skinResolvers)
+        val theme = ThemeApi(atlas?.let { Skin(skinFile, it) } ?: Skin(skinFile), skinResolvers, assetProvider)
         return CompletableFuture.completedFuture(theme)
     }
 
@@ -139,7 +141,7 @@ class UIApi(
         skin.add("default", Label.LabelStyle(font, Color.WHITE))
         skin.add("hidden", ImageButton.ImageButtonStyle())
         themeDefinition.applyToSkin(skin, skinResolvers)
-        val theme = ThemeApi(skin, skinResolvers)
+        val theme = ThemeApi(skin, skinResolvers, assetProvider)
         return CompletableFuture.completedFuture(theme)
     }
 
@@ -149,7 +151,7 @@ class UIApi(
             add("default", font)
             add("default", Label.LabelStyle(font, Color.WHITE))
             add("hidden", ImageButton.ImageButtonStyle())
-        }, skinResolvers)
+        }, skinResolvers, assetProvider)
     }
 
     fun createContainer(
