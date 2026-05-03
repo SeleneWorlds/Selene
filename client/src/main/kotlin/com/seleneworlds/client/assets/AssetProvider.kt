@@ -20,17 +20,6 @@ class AssetProvider(private val logger: Logger, private val assetStorage: AssetS
     private val assetSubscriptions = ConcurrentHashMap<String, MutableSet<(String) -> Unit>>()
     private val reloadListeners = CopyOnWriteArrayList<AssetReloadListener>()
 
-    fun loadTexture(texturePath: String): Texture? {
-        try {
-            return assetStorage.loadSync<Texture>(texturePath).also {
-                it.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest)
-            }
-        } catch (e: AssetLoadingException) {
-            logger.error("Failed to load texture $texturePath", e)
-            return null
-        }
-    }
-
     fun loadTextureAsync(texturePath: String): Deferred<Texture> {
         return assetStorage.loadAsync<Texture>(texturePath).also { deferred ->
             deferred.invokeOnCompletion { error ->
