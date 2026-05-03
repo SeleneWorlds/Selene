@@ -3,7 +3,9 @@ package com.seleneworlds.common.data.json
 import com.google.common.collect.HashBasedTable
 import com.google.common.collect.Table
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import com.seleneworlds.common.bundles.Bundle
@@ -65,32 +67,10 @@ abstract class FileBasedRegistry<TData : Any>(
             if (baseDataDir.exists() && baseDataDir.isDirectory) {
                 try {
                     val namespaceDirs = baseDataDir.listFiles {
-                        it.isDirectory && File(it, name).isDirectory
+                        it.isDirectory && (File(it, name).isDirectory || File(it, "$name.json").isFile)
                     } ?: emptyArray()
                     for (namespaceDir in namespaceDirs) {
-                        val namespace = namespaceDir.name
-                        val registryDir = File(namespaceDir, name)
-                        val registryDirPath = registryDir.toPath()
-                        Files.walk(registryDirPath).use { stream ->
-                            stream.filter { path -> Files.isRegularFile(path) && path.toString().endsWith(".json") }
-                                .forEach { path ->
-                                    try {
-                                        val relativePath = registryDirPath.relativize(path)
-                                        val entryName =
-                                            relativePath.toString().removeSuffix(".json")
-                                                .replace(File.separatorChar, '/')
-                                        val identifier = Identifier(namespace, entryName)
-
-                                        val data = loadEntryFromFile(path, identifier)
-                                        if (data != null) {
-                                            entries[identifier] = data
-                                            (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
-                                        }
-                                    } catch (e: Exception) {
-                                        logger.error("Failed to load $path from bundle ${bundle.manifest.name}", e)
-                                    }
-                                }
-                        }
+                        loadNamespaceEntries(bundle, namespaceDir)
                     }
                 } catch (e: Exception) {
                     logger.error("Failed to walk directory tree $baseDataDir for bundle ${bundle.manifest.name}", e)
@@ -102,15 +82,72 @@ abstract class FileBasedRegistry<TData : Any>(
         notifyRegistryReloaded()
     }
 
-    protected open fun loadEntryFromFile(path: Path, identifier: Identifier): TData? {
-        val serializer = serializer ?: error("No serializer configured for registry $name")
-        val data = json.decodeFromFile(serializer, path)
+    private fun loadNamespaceEntries(bundle: Bundle, namespaceDir: File) {
+        val namespace = namespaceDir.name
+        val registryBundleFile = File(namespaceDir, "$name.json")
+        if (registryBundleFile.isFile) {
+            try {
+                loadEntriesFromBundleFile(registryBundleFile.toPath(), namespace)
+            } catch (e: Exception) {
+                logger.error("Failed to load $registryBundleFile from bundle ${bundle.manifest.name}", e)
+            }
+            return
+        }
 
+        val registryDir = File(namespaceDir, name)
+        if (!registryDir.isDirectory) {
+            return
+        }
+
+        val registryDirPath = registryDir.toPath()
+        Files.walk(registryDirPath).use { stream ->
+            stream.filter { path -> Files.isRegularFile(path) && path.toString().endsWith(".json") }
+                .forEach { path ->
+                    try {
+                        val relativePath = registryDirPath.relativize(path)
+                        val entryName =
+                            relativePath.toString().removeSuffix(".json")
+                                .replace(File.separatorChar, '/')
+                        val identifier = Identifier(namespace, entryName)
+
+                        loadEntryFromFile(path, identifier)?.let { storeLoadedEntry(identifier, it) }
+                    } catch (e: Exception) {
+                        logger.error("Failed to load $path from bundle ${bundle.manifest.name}", e)
+                    }
+                }
+        }
+    }
+
+    private fun loadEntriesFromBundleFile(path: Path, namespace: String) {
+        val registryFile = json.decodeFromFile(RegistryFile.serializer(JsonElement.serializer()), path)
+        for ((entryName, element) in registryFile.entries) {
+            val identifier = Identifier(namespace, entryName)
+            storeLoadedEntry(identifier, loadEntryFromElement(element, identifier))
+        }
+    }
+
+    protected open fun loadEntryFromFile(path: Path, identifier: Identifier): TData? {
+        val element = json.decodeFromFile(JsonElement.serializer(), path)
+        return loadEntryFromElement(element, identifier)
+    }
+
+    protected open fun loadEntryFromElement(element: JsonElement, identifier: Identifier): TData {
+        val serializer = serializer ?: error("No serializer configured for registry $name")
+        val data = json.decodeFromJsonElement(serializer, element)
+        return adoptLoadedEntry(identifier, data)
+    }
+
+    protected fun adoptLoadedEntry(identifier: Identifier, data: TData): TData {
         @Suppress("UNCHECKED_CAST")
         return data.also {
             (it as? RegistryAdoptedObject<TData>)?.registry = this@FileBasedRegistry
             (it as? RegistryAdoptedObject<*>)?.identifier = identifier
         }
+    }
+
+    private fun storeLoadedEntry(identifier: Identifier, data: TData) {
+        entries[identifier] = data
+        (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
     }
 
     override fun registryPopulated(mappings: NameIdRegistry, throwOnMissingId: Boolean) {
@@ -149,7 +186,17 @@ abstract class FileBasedRegistry<TData : Any>(
         bundle: Bundle,
         path: String
     ) {
+        if (isBundleRegistryFile(path)) {
+            load(bundleDatabase)
+            logger.info("Reloaded registry ${this.name} due to merged bundle update: $path")
+            return
+        }
+
         val identifier = filePathToIdentifier(path) ?: return
+        if (hasMergedRegistryFile(bundle, identifier.namespace)) {
+            logger.debug("Ignoring per-entry update {} because {}.json is authoritative", path, this.name)
+            return
+        }
         val data = try {
             loadEntryFromFile(bundle.dir.toPath().resolve(path), identifier)
         } catch (e: Exception) {
@@ -192,7 +239,17 @@ abstract class FileBasedRegistry<TData : Any>(
         bundle: Bundle,
         path: String
     ) {
+        if (isBundleRegistryFile(path)) {
+            load(bundleDatabase)
+            logger.info("Reloaded registry ${this.name} due to merged bundle removal: $path")
+            return
+        }
+
         val identifier = filePathToIdentifier(path) ?: return
+        if (hasMergedRegistryFile(bundle, identifier.namespace)) {
+            logger.debug("Ignoring per-entry removal {} because {}.json is authoritative", path, this.name)
+            return
+        }
         val removedEntry = entries.remove(identifier)
         (removedEntry as? RegistryObject<*>)?.let {
             entriesById.remove(it.id)
@@ -302,7 +359,17 @@ abstract class FileBasedRegistry<TData : Any>(
         }
     }
 
+    private fun hasMergedRegistryFile(bundle: Bundle, namespace: String): Boolean {
+        return bundle.dir.toPath().resolve("$platform/data/$namespace/$name.json").toFile().isFile
+    }
+
+    private fun isBundleRegistryFile(path: String): Boolean {
+        val matchResult = registryBundleJsonPattern.matchEntire(path.replace('\\', '/')) ?: return false
+        return matchResult.groupValues[1] == platform && matchResult.groupValues[3] == name
+    }
+
     companion object {
         private val registryJsonPattern = "(common|server|client)/data/([\\w-]+)/([\\w-]+)/(.+)\\.json".toRegex()
+        private val registryBundleJsonPattern = "(common|server|client)/data/([\\w-]+)/([\\w-]+)\\.json".toRegex()
     }
 }

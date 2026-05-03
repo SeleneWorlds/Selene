@@ -336,6 +336,6 @@ abstract class BundleWatcher(
     companion object {
         private val syncedBundleRoots = setOf("common", "client")
         private val syncedBundleContentFilePattern = "^(?!.*/\\.|.*~$)(common|client)/.+".toRegex()
-        private val registryFilePattern = "^(common|client)/data/[\\w-]+/([\\w-]+)/.*".toRegex()
+        private val registryFilePattern = "^(common|client)/data/[\\w-]+/([\\w-]+)(?:/.*|\\.json)$".toRegex()
     }
 }

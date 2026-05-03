@@ -1,6 +1,12 @@
 package com.seleneworlds.common.bundles
 
 import org.slf4j.helpers.NOPLogger
+import com.seleneworlds.common.data.BundleDrivenRegistry
+import com.seleneworlds.common.data.Identifier
+import com.seleneworlds.common.data.Registry
+import com.seleneworlds.common.data.RegistryReference
+import com.seleneworlds.common.data.RegistryReloadListener
+import com.seleneworlds.common.data.mappings.NameIdRegistry
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -13,6 +19,7 @@ import kotlin.io.path.writeText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalPathApi::class)
@@ -119,6 +126,20 @@ class BundleWatcherTest {
         }
     }
 
+    @Test
+    fun resolvesMergedRegistryFilesToTheirRegistry() {
+        val registry = TestRegistry()
+        val watcher = object : RecordingBundleWatcher(BundleDatabase()) {
+            override fun getRegistry(name: String): Registry<*>? = if (name == "tiles") registry else null
+        }
+
+        val directoryRegistry: BundleDrivenRegistry? = watcher.findRegistryForFile("common/data/example/tiles/path/to/entry.json")
+        val mergedRegistry: BundleDrivenRegistry? = watcher.findRegistryForFile("common/data/example/tiles.json")
+
+        assertSame(registry, directoryRegistry)
+        assertSame(registry, mergedRegistry)
+    }
+
     private fun withWatcherBundle(block: (Bundle, RecordingBundleWatcher) -> Unit) {
         val rootDir = createTempDirectory("bundle-watcher-test")
         val bundle = Bundle(BundleManifest(name = rootDir.name), rootDir.toFile())
@@ -149,12 +170,12 @@ class BundleWatcherTest {
         method.invoke(watcher, filePath, bundle)
     }
 
-    private class RecordingBundleWatcher(bundleDatabase: BundleDatabase) :
+    private open class RecordingBundleWatcher(bundleDatabase: BundleDatabase) :
         BundleWatcher(NOPLogger.NOP_LOGGER, bundleDatabase) {
 
         val processedUpdates = mutableListOf<ProcessedUpdate>()
 
-        override fun getRegistry(name: String) = null
+        override fun getRegistry(name: String): Registry<*>? = null
 
         override fun processPendingBundleUpdates(
             bundleId: String,
@@ -208,4 +229,23 @@ class BundleWatcherTest {
         val updatedFiles: Set<String>,
         val deletedFiles: Set<String>
     )
+
+    private class TestRegistry : Registry<Any>, BundleDrivenRegistry {
+        override val dataType = Any::class
+        override val name = "tiles"
+        override fun get(id: Int): Any? = null
+        override fun getIdentifier(id: Int): Identifier? = null
+        override fun get(identifier: Identifier): Any? = null
+        override fun getId(identifier: Identifier): Int = -1
+        override fun getAll(): Map<Identifier, Any> = emptyMap()
+        override fun findByMetadata(key: String, value: Any): Pair<Identifier, Any>? = null
+        override fun registryPopulated(mappings: NameIdRegistry, throwOnMissingId: Boolean) = Unit
+        override fun subscribe(reference: RegistryReference<Any>, handler: (Any?) -> Unit) = Unit
+        override fun unsubscribe(reference: RegistryReference<Any>, handler: (Any?) -> Unit) = Unit
+        override fun addReloadListener(listener: RegistryReloadListener<Any>) = Unit
+        override fun removeReloadListener(listener: RegistryReloadListener<Any>) = Unit
+        override fun load(bundleDatabase: BundleDatabase) = Unit
+        override fun bundleFileUpdated(bundleDatabase: BundleDatabase, bundle: Bundle, path: String) = Unit
+        override fun bundleFileRemoved(bundleDatabase: BundleDatabase, bundle: Bundle, path: String) = Unit
+    }
 }
