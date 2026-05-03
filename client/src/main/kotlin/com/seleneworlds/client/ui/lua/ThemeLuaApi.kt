@@ -1,8 +1,6 @@
 package com.seleneworlds.client.ui.lua
 
 import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.kotcrab.vis.ui.widget.VisTextField
 import party.iroiro.luajava.Lua
@@ -27,7 +25,7 @@ class ThemeLuaApi(private val luaApi: UILuaApi) {
 
     /**
      * Adds a texture to the theme by name and path or LuaTexture object.
-     * Throws error if texture file is not found.
+     * Returns a future so Lua coroutines can yield on it.
      *
      * ```signatures
      * AddTexture(name: string, texturePath: string)
@@ -38,21 +36,13 @@ class ThemeLuaApi(private val luaApi: UILuaApi) {
         val theme = lua.checkUserdata<ThemeApi>(1)
         val name = lua.checkString(2)
         if (lua.isString(3)) {
-            val texturePath = lua.checkString(3)
-            val textureFile = luaApi.api.skinResolvers.resolveFile(texturePath)
-            if (!textureFile.exists()) {
-                return lua.error(IllegalArgumentException("Texture file not found: $texturePath"))
-            }
-
-            val texture = Texture(textureFile)
-            val region = TextureRegion(texture)
-            theme.skin.add(name, region)
+            lua.push(theme.addTexture(name, lua.checkString(3)), Lua.Conversion.NONE)
+            return 1
         } else if (lua.isUserdata(3)) {
-            val texture = lua.checkUserdata<ScriptableTexture>(3).texture
-            val region = TextureRegion(texture)
-            theme.skin.add(name, region)
+            lua.push(theme.addTexture(name, lua.checkUserdata<ScriptableTexture>(3)), Lua.Conversion.NONE)
+            return 1
         }
-        return 0
+        return lua.error(IllegalArgumentException("Expected texture path string or ScriptableTexture for AddTexture"))
     }
 
     /**

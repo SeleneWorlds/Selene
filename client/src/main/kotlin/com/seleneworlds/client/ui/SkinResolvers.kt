@@ -2,7 +2,6 @@ package com.seleneworlds.client.ui
 
 import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
@@ -13,26 +12,12 @@ import com.seleneworlds.client.bundles.BundleFileResolver
 class SkinResolvers(private val bundleFileResolver: BundleFileResolver) {
 
     fun resolveFont(skin: Skin, fontName: String): BitmapFont {
-        skin.optional(fontName, BitmapFont::class.java)?.let { return it }
-
-        val fontFile = bundleFileResolver.resolve(fontName)
-        if (fontFile.exists()) {
-            return BitmapFont(fontFile)
-        } else {
-            throw IllegalArgumentException("Font not found in skin or file system: $fontName")
-        }
+        return skin.optional(fontName, BitmapFont::class.java)
     }
 
     fun resolveDrawable(skin: Skin?, path: String): Drawable? {
-        skin?.optional(path, TextureRegion::class.java)?.let {
+        return skin?.optional(path, TextureRegion::class.java)?.let {
             return TextureRegionDrawable(it)
-        }
-
-        val textureFile = bundleFileResolver.resolve(path)
-        return if (textureFile.exists()) {
-            TextureRegionDrawable(TextureRegion(Texture(textureFile)))
-        } else {
-            null
         }
     }
 

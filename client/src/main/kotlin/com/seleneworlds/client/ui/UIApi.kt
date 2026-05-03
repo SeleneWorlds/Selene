@@ -128,7 +128,7 @@ class UIApi(
         if (!skinFile.exists()) {
             throw IllegalArgumentException("Skin file not found: $skinPath")
         }
-        val theme = ThemeApi(atlas?.let { Skin(skinFile, it) } ?: Skin(skinFile))
+        val theme = ThemeApi(atlas?.let { Skin(skinFile, it) } ?: Skin(skinFile), skinResolvers)
         return CompletableFuture.completedFuture(theme)
     }
 
@@ -139,7 +139,7 @@ class UIApi(
         skin.add("default", Label.LabelStyle(font, Color.WHITE))
         skin.add("hidden", ImageButton.ImageButtonStyle())
         themeDefinition.applyToSkin(skin, skinResolvers)
-        val theme = ThemeApi(skin)
+        val theme = ThemeApi(skin, skinResolvers)
         return CompletableFuture.completedFuture(theme)
     }
 
@@ -149,7 +149,7 @@ class UIApi(
             add("default", font)
             add("default", Label.LabelStyle(font, Color.WHITE))
             add("hidden", ImageButton.ImageButtonStyle())
-        })
+        }, skinResolvers)
     }
 
     fun createContainer(
