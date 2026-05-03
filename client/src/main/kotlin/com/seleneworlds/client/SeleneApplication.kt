@@ -74,6 +74,7 @@ import com.seleneworlds.client.ui.UI
 import com.seleneworlds.client.ui.SkinResolvers
 import com.seleneworlds.client.ui.UIApi
 import com.seleneworlds.client.ui.lua.UILuaApi
+import com.seleneworlds.client.window.WindowManager
 import com.seleneworlds.common.bundles.*
 import com.seleneworlds.common.data.RegistriesApi
 import com.seleneworlds.common.data.RegistriesLuaApi
@@ -201,6 +202,7 @@ class SeleneApplication(
             singleOf(::ClientLuaScriptProvider) { bind<ClientScriptProvider>() }
             singleOf(::SeleneClient)
             singleOf(::RuntimeBundleUpdateManager) { bind<Disposable>() }
+            singleOf(::WindowManager)
         }
         val gdxModule = module {
             singleOf(::SeleneApplicationListener) { bind<ApplicationListener>() }

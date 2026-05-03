@@ -21,6 +21,7 @@ import com.seleneworlds.client.rendering.DebugRenderer
 import com.seleneworlds.client.rendering.SceneRenderer
 import com.seleneworlds.client.rendering.drawable.DrawableManager
 import com.seleneworlds.client.ui.UI
+import com.seleneworlds.client.window.WindowManager
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.Disposable
 
@@ -36,7 +37,8 @@ class SeleneApplicationListener(
     private val sceneRenderer: SceneRenderer,
     private val debugRenderer: DebugRenderer,
     private val bundleWatcher: ClientBundleWatcher,
-    private val mainThreadDispatcher: MainThreadDispatcher
+    private val mainThreadDispatcher: MainThreadDispatcher,
+    private val windowManager: WindowManager
 ) : ApplicationListener {
 
     lateinit var systemFont: BitmapFont
@@ -51,7 +53,7 @@ class SeleneApplicationListener(
         markerTexture = Texture("icon_16.png")
         systemFont = BitmapFont()
 
-        inputMultiplexer.addProcessor(SystemInputProcessor())
+        inputMultiplexer.addProcessor(SystemInputProcessor(windowManager))
         inputMultiplexer.addProcessor(ui.stage)
         inputMultiplexer.addProcessor(inputManager)
         Gdx.input.inputProcessor = inputMultiplexer

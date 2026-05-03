@@ -3,19 +3,18 @@ package com.seleneworlds.client.input
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.InputAdapter
+import com.seleneworlds.client.window.WindowManager
 
-class SystemInputProcessor : InputAdapter() {
-
-    private var wasFullscreen = false
-    private var windowedWidth = 1024
-    private var windowedHeight = 768
+class SystemInputProcessor(
+    private val windowManager: WindowManager
+) : InputAdapter() {
 
     override fun keyDown(keycode: Int): Boolean {
         if (!isFullscreenToggle(keycode)) {
             return false
         }
 
-        toggleFullscreen()
+        windowManager.toggleFullscreen()
         return true
     }
 
@@ -25,19 +24,5 @@ class SystemInputProcessor : InputAdapter() {
         }
 
         return Gdx.input.isKeyPressed(Input.Keys.ALT_LEFT) || Gdx.input.isKeyPressed(Input.Keys.ALT_RIGHT)
-    }
-
-    private fun toggleFullscreen() {
-        val graphics = Gdx.graphics
-        if (wasFullscreen) {
-            graphics.setWindowedMode(windowedWidth, windowedHeight)
-            wasFullscreen = false
-            return
-        }
-
-        windowedWidth = graphics.width
-        windowedHeight = graphics.height
-        graphics.displayMode?.let { graphics.setFullscreenMode(it) }
-        wasFullscreen = true
     }
 }
