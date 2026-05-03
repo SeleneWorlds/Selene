@@ -1,5 +1,6 @@
 package com.seleneworlds.client.entity.component.rendering
 
+import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
 import com.seleneworlds.client.entity.component.EntityComponent
@@ -42,10 +43,10 @@ class ReloadableVisualComponent(val visual: ReloadableVisual, override val posit
         y: Float
     ) {
         if (red != 1f || green != 1f || blue != 1f || alpha != 1f) {
-            batch.color.mul(red, green, blue, alpha)
+            batch.setColor(red, green, blue, alpha)
         }
         visual.render(batch, x, y)
-        batch.color.set(1f, 1f, 1f, 1f)
+        batch.color = Color.WHITE
     }
 
     override fun toString(): String {
