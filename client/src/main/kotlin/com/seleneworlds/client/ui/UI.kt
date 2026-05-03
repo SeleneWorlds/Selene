@@ -41,11 +41,14 @@ class UI {
 
     fun render() {
         stage.act(Gdx.graphics.deltaTime)
+        stage.viewport.apply()
         stage.draw()
     }
 
-    fun resize(width: Int, height: Int) {
-        stage.viewport.update(width, height, true)
+    fun resize(logicalWidth: Int, logicalHeight: Int, viewportX: Int, viewportY: Int, viewportWidth: Int, viewportHeight: Int) {
+        stage.viewport.setScreenBounds(viewportX, Gdx.graphics.height - viewportY - viewportHeight, viewportWidth, viewportHeight)
+        stage.viewport.setWorldSize(logicalWidth.toFloat(), logicalHeight.toFloat())
+        stage.viewport.apply(true)
     }
 
     fun dispose() {

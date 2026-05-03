@@ -58,15 +58,17 @@ class SeleneApplicationListener(
         inputMultiplexer.addProcessor(inputManager)
         Gdx.input.inputProcessor = inputMultiplexer
 
-        cameraManager.resize(Gdx.graphics.width, Gdx.graphics.height)
+        windowManager.updateWindowSize(Gdx.graphics.width, Gdx.graphics.height)
+        applyWindowLayout()
     }
 
     override fun resize(width: Int, height: Int) {
-        cameraManager.resize(width, height)
-        ui.resize(width, height)
+        windowManager.updateWindowSize(width, height)
+        applyWindowLayout()
     }
 
     override fun render() {
+        applyWindowLayout()
         mainThreadDispatcher.process()
 
         ClientEvents.GamePreTick.EVENT.invoker().gamePreTick()
@@ -88,7 +90,6 @@ class SeleneApplicationListener(
         sceneRenderer.render(spriteBatch)
         spriteBatch.end()
 
-        Gdx.gl.glViewport(0, 0, Gdx.graphics.width, Gdx.graphics.height)
         ui.render()
 
         cameraManager.applyRenderViewport()
@@ -113,5 +114,18 @@ class SeleneApplicationListener(
         networkClient.disconnect()
 
         getKoin().getAll<Disposable>().forEach { it.dispose() }
+    }
+
+    private fun applyWindowLayout() {
+        val viewport = windowManager.viewport
+        cameraManager.resize(viewport)
+        ui.resize(
+            logicalWidth = viewport.logicalWidth,
+            logicalHeight = viewport.logicalHeight,
+            viewportX = viewport.screenX,
+            viewportY = viewport.screenY,
+            viewportWidth = viewport.screenWidth,
+            viewportHeight = viewport.screenHeight
+        )
     }
 }

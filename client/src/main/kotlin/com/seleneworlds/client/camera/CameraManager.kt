@@ -7,8 +7,10 @@ import com.badlogic.gdx.math.Vector3
 import com.seleneworlds.client.grid.ClientGrid
 import com.seleneworlds.client.game.ClientEvents
 import com.seleneworlds.client.maps.ClientMap
+import com.seleneworlds.client.window.WindowViewport
 import com.seleneworlds.common.grid.Coordinate
 import kotlin.math.round
+import kotlin.math.roundToInt
 
 class CameraManager(
     private val map: ClientMap,
@@ -29,7 +31,21 @@ class CameraManager(
     var viewportY = 0
     var viewportWidth = camera.viewportWidth.toInt()
     var viewportHeight = camera.viewportHeight.toInt()
+    private var logicalViewportWidth = camera.viewportWidth.toInt()
+    private var logicalViewportHeight = camera.viewportHeight.toInt()
+    private var customViewportX = 0
+    private var customViewportY = 0
+    private var customViewportWidth = camera.viewportWidth.toInt()
+    private var customViewportHeight = camera.viewportHeight.toInt()
     private var hasCustomViewport = false
+    private var windowViewport = WindowViewport(
+        logicalWidth = camera.viewportWidth.toInt(),
+        logicalHeight = camera.viewportHeight.toInt(),
+        screenX = 0,
+        screenY = 0,
+        screenWidth = camera.viewportWidth.toInt(),
+        screenHeight = camera.viewportHeight.toInt()
+    )
 
     private var focusedEntityNetworkId: Int = -1
     val focusedEntity get() = map.getEntityByNetworkId(focusedEntityNetworkId)
@@ -55,33 +71,57 @@ class CameraManager(
 
     fun setViewport(x: Int, y: Int, width: Int, height: Int) {
         hasCustomViewport = true
-        viewportX = x
-        viewportY = y
-        viewportWidth = width
-        viewportHeight = height
-        applyViewport()
+        customViewportX = x
+        customViewportY = y
+        customViewportWidth = width
+        customViewportHeight = height
+        resize(windowViewport)
     }
 
-    fun resize(width: Int, height: Int) {
-        if (!hasCustomViewport) {
-            viewportX = 0
-            viewportY = 0
-            viewportWidth = width
-            viewportHeight = height
+    fun resize(windowViewport: WindowViewport) {
+        this.windowViewport = windowViewport
+        if (hasCustomViewport) {
+            logicalViewportWidth = customViewportWidth
+            logicalViewportHeight = customViewportHeight
+
+            val screenLeft = windowViewport.screenX + scaleLogicalX(customViewportX, windowViewport)
+            val screenTop = windowViewport.screenY + scaleLogicalY(customViewportY, windowViewport)
+            val screenRight = windowViewport.screenX + scaleLogicalX(customViewportX + customViewportWidth, windowViewport)
+            val screenBottom = windowViewport.screenY + scaleLogicalY(customViewportY + customViewportHeight, windowViewport)
+
+            viewportX = screenLeft
+            viewportY = screenTop
+            viewportWidth = screenRight - screenLeft
+            viewportHeight = screenBottom - screenTop
+        } else {
+            viewportX = windowViewport.screenX
+            viewportY = windowViewport.screenY
+            viewportWidth = windowViewport.screenWidth
+            viewportHeight = windowViewport.screenHeight
+            logicalViewportWidth = windowViewport.logicalWidth
+            logicalViewportHeight = windowViewport.logicalHeight
         }
         applyViewport()
     }
 
+    private fun scaleLogicalX(value: Int, windowViewport: WindowViewport): Int {
+        return (value.toFloat() * windowViewport.screenWidth.toFloat() / windowViewport.logicalWidth.toFloat()).roundToInt()
+    }
+
+    private fun scaleLogicalY(value: Int, windowViewport: WindowViewport): Int {
+        return (value.toFloat() * windowViewport.screenHeight.toFloat() / windowViewport.logicalHeight.toFloat()).roundToInt()
+    }
+
     private fun applyViewport() {
-        camera.viewportWidth = viewportWidth.toFloat()
-        camera.viewportHeight = viewportHeight.toFloat()
+        camera.viewportWidth = logicalViewportWidth.toFloat()
+        camera.viewportHeight = logicalViewportHeight.toFloat()
         setCameraPosition(grid.getScreenX(focusCoordinate), grid.getScreenY(focusCoordinate))
         camera.update()
     }
 
     private fun setCameraPosition(x: Float, y: Float) {
-        camera.position.x = snapToPixelGrid(x, viewportWidth)
-        camera.position.y = snapToPixelGrid(y, viewportHeight)
+        camera.position.x = snapToPixelGrid(x, logicalViewportWidth)
+        camera.position.y = snapToPixelGrid(y, logicalViewportHeight)
     }
 
     private fun snapToPixelGrid(value: Float, viewportSize: Int): Float {
