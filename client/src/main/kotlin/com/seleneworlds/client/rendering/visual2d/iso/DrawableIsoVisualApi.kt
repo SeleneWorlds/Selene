@@ -14,4 +14,8 @@ class DrawableIsoVisualApi(val visual: DrawableIsoVisual) : IsoVisualApi {
     override fun getSurfaceHeight(): Float {
         return visual.surfaceHeight
     }
+
+    override fun getMetadata(key: String): Any? {
+        return visual.metadata[key]
+    }
 }

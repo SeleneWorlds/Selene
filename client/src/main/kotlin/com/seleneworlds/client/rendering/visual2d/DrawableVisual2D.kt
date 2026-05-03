@@ -4,11 +4,12 @@ import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
 import com.seleneworlds.client.rendering.drawable.Drawable
 import com.seleneworlds.client.rendering.visual.VisualDefinition
+import com.seleneworlds.common.data.MetadataHolder
 
 class DrawableVisual2D(
     val visualDefinition: VisualDefinition,
     override val drawable: Drawable
-) : Visual2D, DrawableVisual {
+) : Visual2D, DrawableVisual, MetadataHolder by visualDefinition {
     override val api = DrawableVisual2DApi(this)
     var shouldUpdate = true
 
@@ -33,4 +34,5 @@ class DrawableVisual2D(
     override fun toString(): String {
         return "DrawableVisual2D(visual=${visualDefinition.identifier})"
     }
+
 }

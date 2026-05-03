@@ -1,12 +1,17 @@
 package com.seleneworlds.client.rendering.visual
 
 import com.seleneworlds.client.rendering.visual2d.DrawableVisual
+import com.seleneworlds.common.data.MetadataHolder
 
-class ReloadableVisualApi(val visual: ReloadableVisual) : IsoVisualApi {
+class ReloadableVisualApi(val delegate: ReloadableVisual) : IsoVisualApi {
 
-    fun getDrawable() = (visual.visual as? DrawableVisual)?.drawable?.api
+    fun getDrawable() = (delegate.visual as? DrawableVisual)?.drawable?.api
 
     override fun getSurfaceHeight(): Float {
-        return visual.surfaceHeight
+        return delegate.surfaceHeight
+    }
+
+    override fun getMetadata(key: String): Any? {
+        return (delegate.visual as? MetadataHolder)?.metadata[key]
     }
 }

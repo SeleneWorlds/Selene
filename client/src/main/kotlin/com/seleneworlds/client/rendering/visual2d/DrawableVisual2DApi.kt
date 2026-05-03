@@ -9,4 +9,8 @@ class DrawableVisual2DApi(val visual: DrawableVisual2D) : Visual2DApi {
     fun getDefinition(): VisualDefinition {
         return visual.visualDefinition
     }
+
+    override fun getMetadata(key: String): Any? {
+        return visual.metadata[key]
+    }
 }

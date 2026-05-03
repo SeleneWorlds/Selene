@@ -1,7 +1,7 @@
 package com.seleneworlds.client.rendering.visual2d.iso
 
 import party.iroiro.luajava.Lua
-import com.seleneworlds.common.lua.LuaMappedMetatable
+import com.seleneworlds.client.rendering.visual2d.Visual2DLuaApi
 import com.seleneworlds.common.lua.util.checkUserdata
 
 object DynamicDrawableIsoVisualLuaApi {
@@ -32,7 +32,7 @@ object DynamicDrawableIsoVisualLuaApi {
         return 1
     }
 
-    val luaMeta = LuaMappedMetatable(DynamicDrawableIsoVisualApi::class) {
+    val luaMeta = Visual2DLuaApi.luaMeta.extend(DynamicDrawableIsoVisualApi::class) {
         getter(::luaGetSurfaceHeight)
         getter(::luaGetDrawable)
     }

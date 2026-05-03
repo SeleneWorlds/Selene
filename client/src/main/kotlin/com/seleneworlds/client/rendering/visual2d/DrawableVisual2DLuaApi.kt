@@ -32,7 +32,7 @@ object DrawableVisual2DLuaApi {
         return 1
     }
 
-    val luaMeta = LuaMappedMetatable(DrawableVisual2DApi::class) {
+    val luaMeta = Visual2DLuaApi.luaMeta.extend(DrawableVisual2DApi::class) {
         getter(::luaGetDrawable)
         getter(::luaGetDefinition)
     }
