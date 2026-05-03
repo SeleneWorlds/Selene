@@ -329,55 +329,36 @@ private fun Lua.toListOrMap(index: Int): Any? {
         return null
     }
 
-    return withRestoredStack {
-        val entries = mutableMapOf<Any, Any?>()
-        var allStringKeys = true
-        var allPositiveIntKeys = true
-        var count = 0
-        var maxIndex = 0
-        val absIndex = (this as AbstractLua).toAbsoluteIndex(index)
-        pushNil()
-        while (next(absIndex) != 0) {
-            val value = toAny(-1)
-            when {
-                isString(-2) -> {
-                    allPositiveIntKeys = false
-                    entries[toString(-2)!!] = value
-                }
+    return normalizeLuaValue(toObject(index))
+}
 
-                isInteger(-2) -> {
-                    allStringKeys = false
-                    val key = toInteger(-2).toInt()
-                    if (key <= 0) {
-                        allPositiveIntKeys = false
-                    } else {
-                        entries[key] = value
-                        count++
-                        maxIndex = maxOf(maxIndex, key)
-                    }
-                }
+private fun normalizeLuaValue(value: Any?): Any? {
+    return when (value) {
+        is Map<*, *> -> normalizeLuaMap(value)
+        is Collection<*> -> value.map(::normalizeLuaValue)
+        else -> value
+    }
+}
 
-                else -> {
-                    allStringKeys = false
-                    allPositiveIntKeys = false
-                }
-            }
-            pop(1)
+private fun normalizeLuaMap(value: Map<*, *>): Any {
+    val entries = value.entries.associate { it.key to normalizeLuaValue(it.value) }
+    return when {
+        entries.keys.all { it is String } -> {
+            @Suppress("UNCHECKED_CAST")
+            entries as Map<String, Any?>
         }
 
-        when {
-            allStringKeys -> {
-                @Suppress("UNCHECKED_CAST")
-                entries as Map<String, Any?>
+        entries.keys.all { it is Number && it.toInt().toDouble() == it.toDouble() && it.toInt() > 0 } -> {
+            val indexedEntries = entries.mapKeys { (key, _) -> (key as Number).toInt() }
+            val maxIndex = indexedEntries.keys.maxOrNull() ?: 0
+            if (indexedEntries.size == maxIndex) {
+                List(maxIndex) { index -> indexedEntries[index + 1] }
+            } else {
+                indexedEntries
             }
-
-            allPositiveIntKeys && count == maxIndex -> List(maxIndex) { entries[it + 1] }
-            allPositiveIntKeys -> {
-                @Suppress("UNCHECKED_CAST")
-                entries as Map<Int, Any?>
-            }
-            else -> throwError("Expected only string or positive integer keys in table")
         }
+
+        else -> throw IllegalArgumentException("Expected only string or positive integer keys in table")
     }
 }
 
