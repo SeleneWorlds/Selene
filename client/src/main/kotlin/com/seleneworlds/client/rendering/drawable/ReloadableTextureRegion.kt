@@ -14,14 +14,14 @@ class ReloadableTextureRegion(
     private var pendingTextureLoad: Deferred<*>? = null
     private var appliedTexture: Int? = null
 
-    val reloadCallback = ::reload
+    val reloadCallback = { _: String -> reload() }
 
     init {
-        reload(texturePath)
+        reload()
         assetProvider.subscribeToAssetChanges(texturePath, reloadCallback)
     }
 
-    fun reload(texturePath: String) {
+    fun reload() {
         pendingTextureLoad = assetProvider.loadTextureAsync(texturePath)
         appliedTexture = null
         setRegion(assetProvider.missingTexture)

@@ -174,6 +174,7 @@ class ThemeLuaApi(private val luaApi: UILuaApi) {
         }
 
         theme.skin.add(styleName, textFieldStyle)
+        theme.skin.add(styleName, visTextFieldStyle)
         return 0
     }
 

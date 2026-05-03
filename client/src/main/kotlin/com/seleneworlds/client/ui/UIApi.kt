@@ -212,8 +212,12 @@ class UIApi(
     fun createAtlas(textures: Map<String, Any?>): Awaitable<TextureAtlas> {
         val atlas = TextureAtlas()
         textures.entries.forEach { (name, path) ->
-            val textureFile = bundleFileResolver.resolve(path.toString())
-            atlas.addRegion(name, TextureRegion(Texture(textureFile)))
+            if (path is String) {
+                val textureFile = bundleFileResolver.resolve(path)
+                atlas.addRegion(name, TextureRegion(Texture(textureFile)))
+            } else {
+                throw IllegalArgumentException("Invalid texture value for $name: $path")
+            }
         }
         return Awaitable.completed(atlas)
     }

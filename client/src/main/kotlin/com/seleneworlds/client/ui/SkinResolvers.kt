@@ -1,18 +1,17 @@
 package com.seleneworlds.client.ui
 
-import com.badlogic.gdx.files.FileHandle
 import com.badlogic.gdx.graphics.Color
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable
-import com.seleneworlds.client.bundles.BundleFileResolver
 
-class SkinResolvers(private val bundleFileResolver: BundleFileResolver) {
+class SkinResolvers {
 
     fun resolveFont(skin: Skin, fontName: String): BitmapFont {
         return skin.optional(fontName, BitmapFont::class.java)
+            ?: throw IllegalArgumentException("Font not found in skin: $fontName")
     }
 
     fun resolveDrawable(skin: Skin?, path: String): Drawable? {
@@ -47,7 +46,4 @@ class SkinResolvers(private val bundleFileResolver: BundleFileResolver) {
         }
     }
 
-    fun resolveFile(path: String): FileHandle {
-        return bundleFileResolver.resolve(path)
-    }
 }

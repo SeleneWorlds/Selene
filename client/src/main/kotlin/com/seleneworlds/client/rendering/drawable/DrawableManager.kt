@@ -63,7 +63,9 @@ class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
         animatedDrawables.values.forEach { it.update(delta) }
     }
 
-    override fun dispose() {}
+    override fun dispose() {
+        defaultFont.dispose()
+    }
 
     fun clearSharedIdentifier(identifier: Identifier) {
         animatedDrawables.remove(identifier)

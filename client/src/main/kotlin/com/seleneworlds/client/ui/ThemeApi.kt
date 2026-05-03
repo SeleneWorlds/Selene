@@ -13,19 +13,23 @@ class ThemeApi(
     fun addTexture(name: String, texturePath: String): Awaitable<Void?> {
         val future = Awaitable<Void?>()
         assetProvider.loadTextureAsync(texturePath).invokeOnCompletion { error ->
-            if (error != null) {
-                future.reject(error)
-                return@invokeOnCompletion
-            }
+            try {
+                if (error != null) {
+                    future.reject(error)
+                    return@invokeOnCompletion
+                }
 
-            val texture = assetProvider.getLoadedTexture(texturePath)
-            if (texture == null) {
-                future.reject(IllegalStateException("Texture failed to load: $texturePath"))
-                return@invokeOnCompletion
-            }
+                val texture = assetProvider.getLoadedTexture(texturePath)
+                if (texture == null) {
+                    future.reject(IllegalStateException("Texture failed to load: $texturePath"))
+                    return@invokeOnCompletion
+                }
 
-            skin.add(name, TextureRegion(texture))
-            future.resolve(null)
+                skin.add(name, TextureRegion(texture))
+                future.resolve(null)
+            } catch (t: Throwable) {
+                future.reject(t)
+            }
         }
         return future
     }

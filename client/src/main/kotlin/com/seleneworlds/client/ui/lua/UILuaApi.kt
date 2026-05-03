@@ -204,7 +204,7 @@ class UILuaApi(
     private fun luaLoadTheme(lua: Lua): Int {
         val atlas = if (lua.isUserdata(2)) lua.checkUserdata<TextureAtlas>(2) else null
         if (lua.isString(1)) {
-            lua.push(api.loadTheme(lua.checkString(2), atlas), Lua.Conversion.NONE)
+            lua.push(api.loadTheme(lua.checkString(1), atlas), Lua.Conversion.NONE)
             return 1
         }
         val themeData = seleneJson.decodeFromJsonElement(
