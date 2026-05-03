@@ -152,7 +152,7 @@ object ObservableMapLuaApi {
         callable(::luaHasKey)
     }
 
-    val luaMeta = object: LuaMetatable {
+    val luaMeta = object : LuaMetatable {
         override fun luaGet(lua: Lua): Int {
             val map = lua.checkUserdata<ObservableMap>(1)
             val key = lua.toString(2) ?: return lua.pushError("Key must be a string, got ${lua.type(2)}")
@@ -189,6 +189,11 @@ object ObservableMapLuaApi {
                 map.remove(key)
             }
             return 0
+        }
+
+        override fun luaToString(lua: Lua): String {
+            val map = lua.checkUserdata<ObservableMap>(1)
+            return map.toString()
         }
     }
 }
