@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
 import com.seleneworlds.client.rendering.drawable.Drawable
 import com.seleneworlds.client.rendering.visual.VisualDefinition
+import com.seleneworlds.common.threading.Awaitable
 import com.seleneworlds.common.data.MetadataHolder
 
 class DrawableVisual2D(
@@ -12,6 +13,10 @@ class DrawableVisual2D(
 ) : Visual2D, DrawableVisual, MetadataHolder by visualDefinition {
     override val api = DrawableVisual2DApi(this)
     var shouldUpdate = true
+
+    override fun initialize(): Awaitable<Void?> {
+        return drawable.initialize()
+    }
 
     override fun update(delta: Float) {
         if (shouldUpdate) {

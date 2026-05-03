@@ -5,6 +5,7 @@ import com.badlogic.gdx.math.Rectangle
 import com.seleneworlds.client.rendering.visual.VisualDefinition
 import com.seleneworlds.client.rendering.drawable.Drawable
 import com.seleneworlds.client.rendering.visual2d.DrawableVisual
+import com.seleneworlds.common.threading.Awaitable
 import com.seleneworlds.common.data.MetadataHolder
 
 class DrawableIsoVisual(
@@ -15,6 +16,11 @@ class DrawableIsoVisual(
 ) : IsoVisual, DrawableVisual, MetadataHolder by visualDefinition {
     override val api = DrawableIsoVisualApi(this)
     var shouldUpdate = true
+
+    override fun initialize(): Awaitable<Void?> {
+        return drawable.initialize()
+    }
+
     override fun update(delta: Float) {
         if (shouldUpdate) {
             drawable.update(delta)

@@ -3,6 +3,7 @@ package com.seleneworlds.client.rendering.drawable
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Rectangle
+import com.seleneworlds.common.threading.Awaitable
 
 class TextureRegionDrawable(
     val textureRegion: TextureRegion,
@@ -14,6 +15,10 @@ class TextureRegionDrawable(
 
     private val resolvedOffsetX: Float
         get() = if (centerOnRegionWidth) offsetX - textureRegion.regionWidth / 2f else offsetX
+
+    override fun initialize(): Awaitable<Void?> {
+        return (textureRegion as? ReloadableTextureRegion)?.initialize() ?: Awaitable.completed(null)
+    }
 
     override fun update(delta: Float) {
         (textureRegion as? ReloadableTextureRegion)?.update()

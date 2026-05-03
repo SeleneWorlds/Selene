@@ -3,6 +3,7 @@ package com.seleneworlds.client.rendering.drawable
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
 import com.seleneworlds.common.event.EventFactory.arrayBackedEvent
+import com.seleneworlds.common.threading.Awaitable
 
 class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawable {
     override val api = AnimatedDrawableApi(this)
@@ -20,6 +21,10 @@ class AnimatedDrawable(val frames: List<Drawable>, val duration: Float) : Drawab
         outRect: Rectangle
     ): Rectangle {
         return frames.getOrNull(currentFrame)?.getBounds(x, y, outRect) ?: outRect.also { it.set(x, y, 0f, 0f) }
+    }
+
+    override fun initialize(): Awaitable<Void?> {
+        return Awaitable.allOf(*frames.map { it.initialize() }.toTypedArray())
     }
 
     override fun update(delta: Float) {

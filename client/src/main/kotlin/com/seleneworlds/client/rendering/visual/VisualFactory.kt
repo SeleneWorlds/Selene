@@ -1,6 +1,7 @@
 package com.seleneworlds.client.rendering.visual
 
 import com.seleneworlds.client.rendering.animator.DrawableAnimator
+import com.seleneworlds.client.rendering.drawable.AnimatedDrawable
 import com.seleneworlds.client.rendering.drawable.AnimatedDrawableOptions
 import com.seleneworlds.client.rendering.drawable.DrawableManager
 import com.seleneworlds.client.rendering.drawable.DrawableOptions
@@ -8,6 +9,7 @@ import com.seleneworlds.client.rendering.drawable.TextDrawableOptions
 import com.seleneworlds.client.rendering.visual2d.DrawableVisual2D
 import com.seleneworlds.client.rendering.visual2d.iso.DrawableIsoVisual
 import com.seleneworlds.client.rendering.visual2d.iso.DynamicDrawableIsoVisual
+import com.seleneworlds.common.threading.Awaitable
 
 class VisualFactory(private val drawableManager: DrawableManager) {
 
@@ -60,6 +62,7 @@ class VisualFactory(private val drawableManager: DrawableManager) {
             is AnimatorVisualDefinition -> {
                 val animationController = context.animatorController ?: return null
                 val drawableAnimator = DrawableAnimator(animationController)
+                val animations = mutableListOf<AnimatedDrawable>()
                 visualDef.animations.forEach { (animationName, frames) ->
                     val options = AnimatedDrawableOptions(
                         duration = frames.duration ?: (1f / 30f)
@@ -73,11 +76,14 @@ class VisualFactory(private val drawableManager: DrawableManager) {
                         )
                     }
                     val drawable = drawableManager.getAnimatedDrawable(drawableFrames, options)
+                    animations.add(drawable)
                     drawableAnimator.addAnimation(animationName, drawable)
                 }
+                val initializeAwaitable = Awaitable.allOf(*animations.map { it.initialize() }.toTypedArray())
                 DynamicDrawableIsoVisual(
                     visualDef,
                     drawableAnimator::drawable,
+                    initializeAwaitable,
                     visualDef.sortLayerOffset,
                     visualDef.surfaceOffsetY
                 )

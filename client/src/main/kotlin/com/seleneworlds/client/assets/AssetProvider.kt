@@ -10,10 +10,15 @@ import ktx.assets.async.AssetStorage
 import org.slf4j.Logger
 import com.seleneworlds.client.rendering.drawable.ReloadableTextureRegion
 import com.seleneworlds.common.util.Disposable
+import com.seleneworlds.common.threading.MainThreadDispatcher
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
-class AssetProvider(private val logger: Logger, private val assetStorage: AssetStorage) : Disposable {
+class AssetProvider(
+    private val logger: Logger,
+    private val assetStorage: AssetStorage,
+    private val mainThreadDispatcher: MainThreadDispatcher
+) : Disposable {
 
     val missingTexture = TextureRegion(Texture(1, 1, Pixmap.Format.RGBA8888))
 
@@ -46,7 +51,7 @@ class AssetProvider(private val logger: Logger, private val assetStorage: AssetS
         flipX: Boolean = false,
         flipY: Boolean = false
     ): ReloadableTextureRegion {
-        return ReloadableTextureRegion(this, texturePath, flipX, flipY)
+        return ReloadableTextureRegion(this, mainThreadDispatcher, texturePath, flipX, flipY)
     }
 
     fun subscribeToAssetChanges(assetPath: String, callback: (String) -> Unit) {

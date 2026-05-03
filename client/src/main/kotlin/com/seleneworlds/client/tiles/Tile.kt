@@ -99,7 +99,9 @@ class Tile(
             registries.visuals.getReference(it)
         }?.let {
             val context = VisualCreationContext(coordinate)
-            ReloadableVisual.Instance(visualFactory, it, context)
+            ReloadableVisual.Instance(visualFactory, it, context).also { visual ->
+                visual.initialize()
+            }
         } ?: ReloadableVisual.None
     }
 

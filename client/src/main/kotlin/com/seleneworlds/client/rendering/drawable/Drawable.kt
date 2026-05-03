@@ -3,10 +3,12 @@ package com.seleneworlds.client.rendering.drawable
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.math.Rectangle
 import com.seleneworlds.common.script.ExposedApi
+import com.seleneworlds.common.threading.Awaitable
 
 interface Drawable : ExposedApi<DrawableApi> {
     override val api: DrawableApi
     fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle
+    fun initialize(): Awaitable<Void?> = Awaitable.completed(null)
     fun update(delta: Float)
     fun render(batch: Batch, x: Float, y: Float)
     fun render(batch: Batch, x: Float, y: Float, width: Float, height: Float)
@@ -28,6 +30,8 @@ interface Drawable : ExposedApi<DrawableApi> {
         ): Rectangle {
             return outRect.set(x, y, 0f, 0f)
         }
+
+        override fun initialize(): Awaitable<Void?> = Awaitable.completed(null)
 
         override fun update(delta: Float) = Unit
 

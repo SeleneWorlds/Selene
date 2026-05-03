@@ -12,8 +12,7 @@ class VisualsApi(
 ) {
     fun create(identifier: Identifier): Awaitable<ReloadableVisualApi> {
         val visualDef = requireNotNull(visualRegistry.get(identifier)) { "Visual not found: $identifier" }
-        return Awaitable.completed(
-            ReloadableVisual.Instance(visualFactory, visualDef.asReference, VisualCreationContext()).api
-        )
+        val visual = ReloadableVisual.Instance(visualFactory, visualDef.asReference, VisualCreationContext())
+        return Awaitable.from(visual.initialize().thenApply { visual.api })
     }
 }

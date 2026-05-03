@@ -5,6 +5,7 @@ import com.badlogic.gdx.math.Rectangle
 import com.seleneworlds.client.rendering.visual2d.Visual2D
 import com.seleneworlds.client.rendering.visual2d.iso.IsoVisual
 import com.seleneworlds.common.data.RegistryReference
+import com.seleneworlds.common.threading.Awaitable
 
 sealed interface ReloadableVisual : IsoVisual {
     val visual: Visual?
@@ -12,6 +13,7 @@ sealed interface ReloadableVisual : IsoVisual {
     override val sortLayerOffset: Int
     override val surfaceHeight: Float
 
+    override fun initialize(): Awaitable<Void?>
     fun dispose()
     override fun update(delta: Float)
     override fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle
@@ -24,11 +26,36 @@ sealed interface ReloadableVisual : IsoVisual {
     ) : ReloadableVisual {
         override var visual: Visual? = null
         override val api = ReloadableVisualApi(this)
+        private var initializeAwaitable: Awaitable<Void?>? = null
 
-        init {
+        private fun bindReference() {
             reference.subscribe {
                 visual = if (it != null) visualFactory.createVisual(it, context) else null
+                visual?.takeIf { initializeAwaitable != null }?.initialize()
             }
+        }
+
+        override fun initialize(): Awaitable<Void?> {
+            initializeAwaitable?.let { return it }
+
+            val future = Awaitable<Void?>()
+            initializeAwaitable = future
+            bindReference()
+
+            val visual = visual
+            if (visual == null) {
+                future.resolve(null)
+            } else {
+                visual.initialize().whenComplete { _, throwable ->
+                    if (throwable != null) {
+                        future.reject(throwable)
+                    } else {
+                        future.resolve(null)
+                    }
+                }
+            }
+
+            return future
         }
 
         override fun update(delta: Float) {
@@ -63,6 +90,7 @@ sealed interface ReloadableVisual : IsoVisual {
         override val api = ReloadableVisualApi(this)
         override val sortLayerOffset: Int = 0
         override val surfaceHeight: Float = 0f
+        override fun initialize(): Awaitable<Void?> = Awaitable.completed(null)
         override fun getBounds(
             x: Float,
             y: Float,

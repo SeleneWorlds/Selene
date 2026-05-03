@@ -27,5 +27,13 @@ class Awaitable<T> : CompletableFuture<T>() {
                 }
             }
         }
+
+        fun allOf(vararg stages: CompletionStage<*>): Awaitable<Void?> {
+            return if (stages.isEmpty()) {
+                completed(null)
+            } else {
+                from(CompletableFuture.allOf(*stages.map { it.toCompletableFuture() }.toTypedArray()))
+            }
+        }
     }
 }

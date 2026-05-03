@@ -35,7 +35,9 @@ class EntityComponentFactory(
                         visualFactory,
                         visualDef.asReference,
                         context
-                    ), positioner
+                    ).also { visual ->
+                        visual.initialize()
+                    }, positioner
                 )
             }
 
