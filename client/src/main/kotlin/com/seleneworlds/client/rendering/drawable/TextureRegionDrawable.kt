@@ -4,12 +4,23 @@ import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Rectangle
 
-class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float, val offsetY: Float) : Drawable {
+class TextureRegionDrawable(
+    val textureRegion: TextureRegion,
+    val offsetX: Float,
+    val offsetY: Float,
+    private val centerOnRegionWidth: Boolean = false
+) : Drawable {
     override val api = TextureRegionDrawableApi(this)
 
-    override fun update(delta: Float) = Unit
+    private val resolvedOffsetX: Float
+        get() = if (centerOnRegionWidth) offsetX - textureRegion.regionWidth / 2f else offsetX
+
+    override fun update(delta: Float) {
+        (textureRegion as? ReloadableTextureRegion)?.update()
+    }
+
     override fun render(batch: Batch, x: Float, y: Float) {
-        batch.draw(textureRegion, x + offsetX, y + offsetY)
+        batch.draw(textureRegion, x + resolvedOffsetX, y + offsetY)
     }
 
     override fun render(
@@ -19,7 +30,7 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
         width: Float,
         height: Float
     ) {
-        batch.draw(textureRegion, x + offsetX, y + offsetY, width, height)
+        batch.draw(textureRegion, x + resolvedOffsetX, y + offsetY, width, height)
     }
 
     override fun render(
@@ -29,12 +40,12 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
         scaleX: Float, scaleY: Float,
         rotation: Float
     ) {
-        batch.draw(textureRegion, x + offsetX, y + offsetY, originX, originY, width, height, scaleX, scaleY, rotation)
+        batch.draw(textureRegion, x + resolvedOffsetX, y + offsetY, originX, originY, width, height, scaleX, scaleY, rotation)
     }
 
     override fun getBounds(x: Float, y: Float, outRect: Rectangle): Rectangle {
         outRect.set(
-            x + offsetX,
+            x + resolvedOffsetX,
             y + offsetY,
             textureRegion.regionWidth.toFloat(),
             textureRegion.regionHeight.toFloat()
@@ -47,6 +58,6 @@ class TextureRegionDrawable(val textureRegion: TextureRegion, val offsetX: Float
     }
 
     override fun toString(): String {
-        return "TextureRegionDrawable(texture=${textureRegion.texture}, offsetX=$offsetX, offsetY=$offsetY)"
+        return "TextureRegionDrawable(texture=${textureRegion.texture}, offsetX=$offsetX, offsetY=$offsetY, centerOnRegionWidth=$centerOnRegionWidth)"
     }
 }

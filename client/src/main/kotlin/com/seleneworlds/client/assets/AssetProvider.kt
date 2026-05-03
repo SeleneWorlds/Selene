@@ -3,6 +3,7 @@ package com.seleneworlds.client.assets
 import com.badlogic.gdx.graphics.Pixmap
 import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.TextureRegion
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.runBlocking
 import ktx.assets.async.AssetLoadingException
 import ktx.assets.async.AssetStorage
@@ -27,6 +28,27 @@ class AssetProvider(private val logger: Logger, private val assetStorage: AssetS
         } catch (e: AssetLoadingException) {
             logger.error("Failed to load texture $texturePath", e)
             return null
+        }
+    }
+
+    fun loadTextureAsync(texturePath: String): Deferred<Texture> {
+        return assetStorage.loadAsync<Texture>(texturePath).also { deferred ->
+            deferred.invokeOnCompletion { error ->
+                if (error != null) {
+                    logger.error("Failed to load texture $texturePath", error)
+                }
+            }
+        }
+    }
+
+    fun getLoadedTexture(texturePath: String): Texture? {
+        return try {
+            assetStorage.getOrNull<Texture>(texturePath)?.also {
+                it.setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest)
+            }
+        } catch (e: AssetLoadingException) {
+            logger.error("Failed to access texture $texturePath", e)
+            null
         }
     }
 

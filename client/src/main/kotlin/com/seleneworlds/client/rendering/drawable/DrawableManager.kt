@@ -18,8 +18,7 @@ class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
     private fun createDrawable(texture: String, options: DrawableOptions): Drawable {
         val textureRegion = assetProvider.loadReloadableTextureRegion(texture, options.flipX, options.flipY)
         // TODO Test textures currently have their offsets configured with a center origin
-        val hackyOffsetX = options.offsetX - textureRegion.regionWidth / 2f
-        return TextureRegionDrawable(textureRegion, hackyOffsetX, options.offsetY)
+        return TextureRegionDrawable(textureRegion, options.offsetX, options.offsetY, centerOnRegionWidth = true)
     }
 
     fun getDrawable(texture: String, options: DrawableOptions): Drawable? {
@@ -60,6 +59,7 @@ class DrawableManager(private val assetProvider: AssetProvider) : Disposable {
     }
 
     fun update(delta: Float) {
+        cache.values.forEach { it.update(delta) }
         animatedDrawables.values.forEach { it.update(delta) }
     }
 
