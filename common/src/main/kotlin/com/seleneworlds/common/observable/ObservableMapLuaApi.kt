@@ -188,7 +188,7 @@ object ObservableMapLuaApi {
             } else {
                 map.remove(key)
             }
-            return 1
+            return 0
         }
     }
 }
