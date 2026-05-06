@@ -18,10 +18,10 @@ object EntityLuaApi {
         return 1
     }
 
-    @Deprecated("Use getCustomData(Identifier) instead.")
-    private fun getLegacyCustomData(lua: Lua): Int {
-        val entity = lua.checkUserdata<EntityApi>(1)
-        lua.push(entity.getCustomData(), Lua.Conversion.NONE)
+    private fun getCustomDataMap(lua: Lua): Int {
+        val api = lua.checkUserdata<EntityApi>(1)
+        val identifier = lua.checkIdentifier(2)
+        lua.push(api.getCustomDataMap(identifier), Lua.Conversion.NONE)
         return 1
     }
 
@@ -327,6 +327,7 @@ object EntityLuaApi {
         callable(::hasTag)
         callable(::playAnimation)
         callable(::getCustomData)
+        callable(::getCustomDataMap)
         callable(::setCustomData)
     }
 

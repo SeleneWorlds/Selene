@@ -2,17 +2,22 @@ package com.seleneworlds.server.players
 
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.util.IdResolvable
 import com.seleneworlds.common.util.ResolvableReference
-import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.server.dimensions.Dimension
 import com.seleneworlds.server.entities.EntityApi
 
 class PlayerApi(val delegate: Player) : IdResolvable<String, Player> {
 
-
     fun getCustomData(identifier: Identifier): Any? {
         return delegate.customData[identifier.toString()]
+    }
+
+    fun getCustomDataMap(identifier: Identifier): ObservableMap {
+        val key = identifier.toString()
+        val value = delegate.customData[key]
+        return value as? ObservableMap ?: ObservableMap().also { delegate.customData[key] = it }
     }
 
     fun setCustomData(identifier: Identifier, value: Any?) {

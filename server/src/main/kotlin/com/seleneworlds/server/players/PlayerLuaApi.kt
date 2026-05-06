@@ -15,6 +15,13 @@ object PlayerLuaApi {
         return 1
     }
 
+    private fun getCustomDataMap(lua: Lua): Int {
+        val api = lua.checkUserdata<PlayerApi>(1)
+        val identifier = lua.checkIdentifier(2)
+        lua.push(api.getCustomDataMap(identifier), Lua.Conversion.NONE)
+        return 1
+    }
+
     private fun setCustomData(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
         val identifier = lua.checkIdentifier(2)
@@ -181,6 +188,7 @@ object PlayerLuaApi {
 
     val luaMeta = LuaMappedMetatable(PlayerApi::class) {
         callable(::getCustomData)
+        callable(::getCustomDataMap)
         callable(::setCustomData)
         callable(::getIdleTime)
         callable(::getUserId)

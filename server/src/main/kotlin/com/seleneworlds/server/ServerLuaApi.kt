@@ -8,6 +8,7 @@ import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.*
 import com.seleneworlds.common.lua.util.xpCall
 import com.seleneworlds.common.script.ScriptTrace
+import com.seleneworlds.server.entities.EntityApi
 
 /**
  * Server management and server-related events.
@@ -18,6 +19,13 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
     private fun getCustomData(lua: Lua): Int {
         val identifier = lua.checkIdentifier(1)
         lua.push(api.getCustomData(identifier), Lua.Conversion.SEMI)
+        return 1
+    }
+
+    private fun getCustomDataMap(lua: Lua): Int {
+        val api = lua.checkUserdata<EntityApi>(1)
+        val identifier = lua.checkIdentifier(2)
+        lua.push(api.getCustomDataMap(identifier), Lua.Conversion.NONE)
         return 1
     }
 
@@ -46,6 +54,7 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
 
     override fun register(table: LuaValue) {
         table.register("getCustomData", this::getCustomData)
+        table.register("getCustomDataMap", this::getCustomDataMap)
         table.register("setCustomData", this::setCustomData)
         table.set("serverStarted", serverStarted)
         table.set("serverReloaded", serverReloaded)

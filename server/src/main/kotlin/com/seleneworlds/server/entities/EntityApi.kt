@@ -6,9 +6,9 @@ import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.entities.EntityDefinition
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.grid.Direction
+import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.util.IdResolvable
 import com.seleneworlds.common.util.ResolvableReference
-import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.server.attributes.Attribute
 import com.seleneworlds.server.attributes.AttributeApi
 import com.seleneworlds.server.cameras.viewer.Viewer
@@ -24,13 +24,14 @@ class EntityApi(val entity: Entity) : IdResolvable<Int, Entity> {
         return entity.networkId
     }
 
-    @Deprecated("Use getCustomData(Identifier) instead.")
-    fun getCustomData(): ObservableMap {
-        return entity.customData
-    }
-
     fun getCustomData(identifier: Identifier): Any? {
         return entity.customData[identifier.toString()]
+    }
+
+    fun getCustomDataMap(identifier: Identifier): ObservableMap {
+        val key = identifier.toString()
+        val value = entity.customData[key]
+        return value as? ObservableMap ?: ObservableMap().also { entity.customData[key] = it }
     }
 
     fun setCustomData(identifier: Identifier, value: Any?) {
@@ -203,4 +204,5 @@ class EntityApi(val entity: Entity) : IdResolvable<Int, Entity> {
     override fun resolvableReference(): ResolvableReference<Int, Entity> {
         return entity.resolvableReference()
     }
+
 }
