@@ -18,6 +18,12 @@ dependencies {
     implementation(libs.bundles.ktor.server)
 
     implementation(libs.jline)
+
+    testImplementation(kotlin("test"))
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.register("generateLibrariesJson") {

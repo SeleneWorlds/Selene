@@ -1,5 +1,6 @@
 package com.seleneworlds.common.serialization
 
+import com.seleneworlds.common.observable.ObservableMap
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -54,6 +55,7 @@ fun Any?.toJsonElement(): JsonElement = when (this) {
     is Float -> JsonPrimitive(this)
     is Double -> JsonPrimitive(this)
     is Boolean -> JsonPrimitive(this)
+    is ObservableMap -> this.map.toJsonElement()
     is Map<*, *> -> buildJsonObject {
         for ((key, value) in this@toJsonElement) {
             val stringKey = key as? String

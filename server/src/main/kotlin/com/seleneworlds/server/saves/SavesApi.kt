@@ -48,6 +48,6 @@ class SavesApi(val saveManager: SaveManager, val serverConfig: ServerConfig) {
         if (loaded is ExposedApi<*>) {
             return loaded.api
         }
-        return null
+        return loaded
     }
 }
