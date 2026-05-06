@@ -63,7 +63,6 @@ class EntityApi(val entity: Entity) : IdResolvable<Int, Entity> {
 
     fun getMap(): MapTreeApi? {
         return entity.map?.api
-
     }
 
     fun getCollisionViewer(): Viewer {
@@ -82,8 +81,10 @@ class EntityApi(val entity: Entity) : IdResolvable<Int, Entity> {
     }
 
     fun despawn() {
+        val oldDimension = entity.dimension
         entity.world.entityManager.onEntityDespawned(entity)
         entity.despawn()
+        oldDimension?.syncManager?.entityRemoved(entity)
     }
 
     fun remove() {

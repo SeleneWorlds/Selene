@@ -34,6 +34,10 @@ class DimensionSyncManager {
         updateEntityWatches(entity)
     }
 
+    fun entityRemoved(entity: Entity) {
+        updateEntityWatches(entity)
+    }
+
     fun entityTurned(entity: Entity, direction: Direction) {
         sendToAllWatching(entity.networkId, TurnEntityPacket(entity.networkId, direction.angle))
     }
