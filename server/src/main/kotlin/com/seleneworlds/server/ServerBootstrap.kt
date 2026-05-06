@@ -61,6 +61,7 @@ import com.seleneworlds.server.dimensions.DimensionsLuaApi
 import com.seleneworlds.server.entities.EntitiesApi
 import com.seleneworlds.server.entities.EntitiesLuaApi
 import com.seleneworlds.server.entities.Entity
+import com.seleneworlds.server.entities.component.EntityComponentFactory
 import com.seleneworlds.server.entities.EntityManager
 import com.seleneworlds.server.heartbeat.ServerHeartbeat
 import com.seleneworlds.server.http.HttpServer
@@ -73,6 +74,8 @@ import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.players.PlayerManager
 import com.seleneworlds.server.players.PlayersApi
 import com.seleneworlds.server.players.PlayersLuaApi
+import com.seleneworlds.server.script.ServerLuaScriptProvider
+import com.seleneworlds.server.script.ServerScriptProvider
 import com.seleneworlds.server.saves.*
 import com.seleneworlds.server.sounds.SoundsApi
 import com.seleneworlds.server.sounds.SoundsLuaApi
@@ -119,6 +122,7 @@ fun main(args: Array<String>) {
     }
     val luaModule = module {
         singleOf(::LuaManager)
+        singleOf(::ServerLuaScriptProvider) { bind<ServerScriptProvider>() }
         single { PayloadHandlerRegistry<Player>() }
         singleOf(::ServerCustomData)
         singleOf(::Messages)
@@ -177,6 +181,7 @@ fun main(args: Array<String>) {
         singleOf(::SaveManager)
         singleOf(::DimensionManager)
         singleOf(::EntityManager)
+        singleOf(::EntityComponentFactory)
         singleOf(::PlayerManager)
         singleOf(::ChunkViewManager)
         singleOf(::TransitionResolver)

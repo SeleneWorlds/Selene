@@ -39,3 +39,7 @@ data class VisualComponentConfiguration(
 @Serializable
 @SerialName("client_script")
 data class ClientScriptComponentConfiguration(val script: String) : ComponentConfiguration
+
+@Serializable
+@SerialName("server_script")
+data class ServerScriptComponentConfiguration(val script: String) : ComponentConfiguration

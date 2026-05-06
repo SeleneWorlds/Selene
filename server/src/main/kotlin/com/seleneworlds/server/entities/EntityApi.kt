@@ -78,9 +78,11 @@ class EntityApi(val entity: Entity) : IdResolvable<Int, Entity> {
         val targetDimension = dimension ?: entity.world.dimensionManager.getOrCreateDimension(0)
         entity.dimension = targetDimension
         targetDimension.syncManager.entityAdded(entity)
+        entity.world.entityManager.onEntitySpawned(entity)
     }
 
     fun despawn() {
+        entity.world.entityManager.onEntityDespawned(entity)
         entity.despawn()
     }
 

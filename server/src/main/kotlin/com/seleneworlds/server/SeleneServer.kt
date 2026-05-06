@@ -21,6 +21,7 @@ import com.seleneworlds.server.bundle.ServerBundleWatcher
 import com.seleneworlds.server.bundles.ClientBundleCache
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.data.mappings.PersistentNameIdRegistry
+import com.seleneworlds.server.entities.EntityManager
 import com.seleneworlds.server.heartbeat.ServerHeartbeat
 import com.seleneworlds.server.http.HttpServer
 import com.seleneworlds.server.network.NetworkServer
@@ -34,6 +35,7 @@ class SeleneServer(
     private val networkServer: com.seleneworlds.server.network.NetworkServer,
     private val serverHeartbeat: com.seleneworlds.server.heartbeat.ServerHeartbeat,
     private val bundleWatcher: com.seleneworlds.server.bundle.ServerBundleWatcher,
+    private val entityManager: EntityManager,
     packetRegistrations: PacketRegistrations,
     clientBundleCache: com.seleneworlds.server.bundles.ClientBundleCache,
     bundleLoader: BundleLoader,
@@ -119,7 +121,11 @@ class SeleneServer(
 
     private fun startMainEventLoop() {
         mainThreadDispatcher.bindToCurrentThread()
+        var lastTick = System.nanoTime()
         while (running.get()) {
+            val now = System.nanoTime()
+            entityManager.update((now - lastTick) / 1_000_000_000f)
+            lastTick = now
             mainThreadDispatcher.process()
             networkServer.process()
             bundleWatcher.processPendingUpdates()

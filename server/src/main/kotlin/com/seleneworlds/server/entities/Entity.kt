@@ -10,6 +10,9 @@ import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.util.IdResolvable
 import com.seleneworlds.common.util.ResolvableReference
+import com.seleneworlds.server.entities.component.EntityComponent
+import com.seleneworlds.server.entities.component.EntityComponentFactory
+import com.seleneworlds.server.entities.component.TickableComponent
 import com.seleneworlds.server.attributes.Attribute
 import com.seleneworlds.server.cameras.viewer.Viewer
 import com.seleneworlds.server.data.Registries
@@ -18,7 +21,11 @@ import com.seleneworlds.server.maps.layers.MapLayer
 import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.world.World
 
-class Entity(val registries: Registries, val world: World) : IdResolvable<Int, Entity>, ExposedApi<EntityApi> {
+class Entity(
+    val registries: Registries,
+    val world: World,
+    private val entityComponentFactory: EntityComponentFactory
+) : IdResolvable<Int, Entity>, ExposedApi<EntityApi> {
     override val api = EntityApi(this)
     val impassable: Boolean = true
     var networkId: Int = -1
@@ -31,6 +38,8 @@ class Entity(val registries: Registries, val world: World) : IdResolvable<Int, E
     val customData = ObservableMap()
     val attributes = mutableMapOf<String, Attribute<*>>()
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
+    val components = mutableMapOf<String, EntityComponent>()
+    val tickableComponents = mutableListOf<TickableComponent>()
 
     val transient get() = networkId == -1
 
@@ -73,6 +82,28 @@ class Entity(val registries: Registries, val world: World) : IdResolvable<Int, E
             }
         }
         return components
+    }
+
+    fun loadComponents(entityDefinition: EntityDefinition) {
+        components.clear()
+        tickableComponents.clear()
+        entityDefinition.components.forEach { (name, configuration) ->
+            addComponent(name, configuration)
+        }
+    }
+
+    fun update(delta: Float) {
+        tickableComponents.forEach { component ->
+            component.update(this, delta)
+        }
+    }
+
+    private fun addComponent(name: String, componentConfiguration: ComponentConfiguration) {
+        val component = entityComponentFactory.create(this, componentConfiguration) ?: return
+        components[name] = component
+        if (component is TickableComponent) {
+            tickableComponents.add(component)
+        }
     }
 
     fun turnTo(facing: Direction) {

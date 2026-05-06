@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class EntityManager : ReferenceResolver<Int, Entity> {
     private val entities = mutableMapOf<Int, Entity>()
+    private val activeTickingEntities = linkedSetOf<Entity>()
     private val nextId = AtomicInteger(1)
 
     private fun nextEntityId(): Int = nextId.getAndIncrement()
@@ -18,6 +19,7 @@ class EntityManager : ReferenceResolver<Int, Entity> {
     }
 
     fun removeEntity(entity: Entity) {
+        deactivateEntity(entity)
         entities.remove(entity.networkId)
     }
 
@@ -37,6 +39,7 @@ class EntityManager : ReferenceResolver<Int, Entity> {
         val entity = getKoin().get<Entity>()
         entity.networkId = nextEntityId()
         entity.entityDefinition = entityDefinition.asReference
+        entity.loadComponents(entityDefinition)
         addEntity(entity)
         return entity
     }
@@ -45,7 +48,28 @@ class EntityManager : ReferenceResolver<Int, Entity> {
         val entity = getKoin().get<Entity>()
         entity.networkId = -1
         entity.entityDefinition = entityDefinition.asReference
+        entity.loadComponents(entityDefinition)
         return entity
+    }
+
+    fun onEntitySpawned(entity: Entity) {
+        if (entity.tickableComponents.isNotEmpty()) {
+            activeTickingEntities.add(entity)
+        }
+    }
+
+    fun onEntityDespawned(entity: Entity) {
+        deactivateEntity(entity)
+    }
+
+    fun update(delta: Float) {
+        activeTickingEntities.toList().forEach { entity ->
+            if (entity.dimension == null || entity.tickableComponents.isEmpty()) {
+                activeTickingEntities.remove(entity)
+                return@forEach
+            }
+            entity.update(delta)
+        }
     }
 
     override fun dereferencePersisted(id: Int): Entity? {
@@ -54,5 +78,9 @@ class EntityManager : ReferenceResolver<Int, Entity> {
 
     fun getEntityByNetworkId(networkId: Int): Entity? {
         return entities[networkId]
+    }
+
+    private fun deactivateEntity(entity: Entity) {
+        activeTickingEntities.remove(entity)
     }
 }

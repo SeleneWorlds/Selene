@@ -11,6 +11,7 @@ import com.seleneworlds.client.rendering.visual.VisualRegistry
 import com.seleneworlds.client.script.ClientScriptProvider
 import com.seleneworlds.common.entities.ClientScriptComponentConfiguration
 import com.seleneworlds.common.entities.ComponentConfiguration
+import com.seleneworlds.common.entities.ServerScriptComponentConfiguration
 import com.seleneworlds.common.entities.VisualComponentConfiguration
 
 class EntityComponentFactory(
@@ -42,6 +43,7 @@ class EntityComponentFactory(
             }
 
             is ClientScriptComponentConfiguration -> ClientScriptComponent(scriptProvider.loadEntityScript(configuration.script))
+            is ServerScriptComponentConfiguration -> null
             else -> throw IllegalArgumentException("Unknown component configuration: $configuration")
         }
     }
