@@ -1,5 +1,6 @@
 package com.seleneworlds.server.players
 
+import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.util.IdResolvable
 import com.seleneworlds.common.util.ResolvableReference
@@ -9,8 +10,13 @@ import com.seleneworlds.server.entities.EntityApi
 
 class PlayerApi(val delegate: Player) : IdResolvable<String, Player> {
 
-    fun getCustomData(): ObservableMap {
-        return delegate.customData
+
+    fun getCustomData(identifier: Identifier): Any? {
+        return delegate.customData[identifier.toString()]
+    }
+
+    fun setCustomData(identifier: Identifier, value: Any?) {
+        delegate.customData[identifier.toString()] = value
     }
 
     fun getIdleTime(): Int {

@@ -14,7 +14,7 @@ object LoginQueueEntryLuaApi {
      * UserId: string
      * ```
      */
-    private fun luaGetUserId(lua: Lua): Int {
+    private fun getUserId(lua: Lua): Int {
         val entry = lua.checkUserdata<LoginQueueEntry>(1)
         lua.push(entry.userId)
         return 1
@@ -27,7 +27,7 @@ object LoginQueueEntryLuaApi {
      * Status: string
      * ```
      */
-    private fun luaGetStatus(lua: Lua): Int {
+    private fun getStatus(lua: Lua): Int {
         val entry = lua.checkUserdata<LoginQueueEntry>(1)
         lua.push(entry.status, Lua.Conversion.NONE)
         return 1
@@ -40,7 +40,7 @@ object LoginQueueEntryLuaApi {
      * Message: string|nil
      * ```
      */
-    private fun luaGetMessage(lua: Lua): Int {
+    private fun getMessage(lua: Lua): Int {
         val entry = lua.checkUserdata<LoginQueueEntry>(1)
         lua.push(entry.message, Lua.Conversion.FULL)
         return 1
@@ -53,7 +53,7 @@ object LoginQueueEntryLuaApi {
      * Notify(message: string)
      * ```
      */
-    private fun luaNotify(lua: Lua): Int {
+    private fun notify(lua: Lua): Int {
         val entry = lua.checkUserdata<LoginQueueEntry>(1)
         entry.message = lua.checkString(2)
         return 0
@@ -66,7 +66,7 @@ object LoginQueueEntryLuaApi {
      * Accept()
      * ```
      */
-    private fun luaAccept(lua: Lua): Int {
+    private fun accept(lua: Lua): Int {
         val entry = lua.checkUserdata<LoginQueueEntry>(1)
         entry.status = LoginQueueStatus.Accepted
         return 0
@@ -79,7 +79,7 @@ object LoginQueueEntryLuaApi {
      * Reject(message: string)
      * ```
      */
-    private fun luaReject(lua: Lua): Int {
+    private fun reject(lua: Lua): Int {
         val entry = lua.checkUserdata<LoginQueueEntry>(1)
         entry.status = LoginQueueStatus.Rejected
         entry.message = lua.checkString(2)
@@ -87,12 +87,12 @@ object LoginQueueEntryLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(LoginQueueEntry::class) {
-        getter(::luaGetUserId)
-        getter(::luaGetStatus)
-        getter(::luaGetMessage)
-        callable(::luaNotify)
-        callable(::luaAccept)
-        callable(::luaReject)
+        callable(::getUserId)
+        callable(::getStatus)
+        callable(::getMessage)
+        callable(::notify)
+        callable(::accept)
+        callable(::reject)
     }
 
 }

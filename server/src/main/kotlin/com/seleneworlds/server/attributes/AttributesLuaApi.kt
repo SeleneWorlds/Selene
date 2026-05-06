@@ -21,11 +21,11 @@ class AttributesLuaApi(private val api: AttributesApi) : LuaModule {
     }
 
     override fun register(table: LuaValue) {
-        table.register("ClampFilter", this::luaClampFilter)
-        table.register("MathOpFilter", this::luaMathOpFilter)
+        table.register("clampFilter", this::clampFilter)
+        table.register("mathOpFilter", this::mathOpFilter)
     }
 
-    private fun luaClampFilter(lua: Lua): Int {
+    private fun clampFilter(lua: Lua): Int {
         val min = when (lua.type(1)) {
             Lua.LuaType.NUMBER -> lua.checkInt(1)
             Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeApi>(1)
@@ -40,7 +40,7 @@ class AttributesLuaApi(private val api: AttributesApi) : LuaModule {
         return 1
     }
 
-    private fun luaMathOpFilter(lua: Lua): Int {
+    private fun mathOpFilter(lua: Lua): Int {
         val value = when (lua.type(1)) {
             Lua.LuaType.NUMBER -> lua.checkInt(1)
             Lua.LuaType.USERDATA -> lua.checkUserdata<AttributeApi>(1)

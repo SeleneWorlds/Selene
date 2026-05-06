@@ -17,7 +17,7 @@ class DimensionsLuaApi(private val api: DimensionsApi) : LuaModule {
     }
 
     override fun register(table: LuaValue) {
-        table.register("GetDefault", this::luaGetDefault)
+        table.register("getDefault", this::getDefault)
     }
 
     /**
@@ -27,7 +27,7 @@ class DimensionsLuaApi(private val api: DimensionsApi) : LuaModule {
      * GetDefault() -> Dimension
      * ```
      */
-    private fun luaGetDefault(lua: Lua): Int {
+    private fun getDefault(lua: Lua): Int {
         lua.push(api.getDefault(), Lua.Conversion.NONE)
         return 1
     }

@@ -14,17 +14,17 @@ class RegistriesLuaApi(private val api: RegistriesApi) : LuaModule {
     override val name = "selene.registries"
 
     override fun register(table: LuaValue) {
-        table.register("FindAll", this::luaFindAll)
-        table.register("FindByMetadata", this::luaFindByMetadata)
-        table.register("FindByName", this::luaFindByName)
+        table.register("findAll", this::findAll)
+        table.register("findByMetadata", this::findByMetadata)
+        table.register("findByName", this::findByName)
     }
 
-    private fun luaFindAll(lua: Lua): Int {
+    private fun findAll(lua: Lua): Int {
         lua.push(api.findAll(lua.checkString(1)), Lua.Conversion.FULL)
         return 1
     }
 
-    private fun luaFindByMetadata(lua: Lua): Int {
+    private fun findByMetadata(lua: Lua): Int {
         val value = lua.toAny(3) ?: return lua.error(IllegalArgumentException("Value must not be nil"))
         val found = api.findByMetadata(lua.checkString(1), lua.checkString(2), value)
         if (found != null) {
@@ -35,7 +35,7 @@ class RegistriesLuaApi(private val api: RegistriesApi) : LuaModule {
         return 1
     }
 
-    private fun luaFindByName(lua: Lua): Int {
+    private fun findByName(lua: Lua): Int {
         val element = api.findByName(lua.checkString(1), lua.checkString(2))
         if (element != null) {
             lua.push(element, Lua.Conversion.NONE)

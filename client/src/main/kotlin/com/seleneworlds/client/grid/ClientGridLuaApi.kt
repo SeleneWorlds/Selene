@@ -14,10 +14,10 @@ class ClientGridLuaApi(private val api: ClientGridApi) : GridLuaApi(api) {
 
     override fun register(table: LuaValue) {
         super.register(table)
-        table.register("ScreenToCoordinate", this::luaScreenToCoordinate)
+        table.register("screenToCoordinate", this::screenToCoordinate)
     }
 
-    private fun luaScreenToCoordinate(lua: Lua): Int {
+    private fun screenToCoordinate(lua: Lua): Int {
         val x = lua.checkFloat(1)
         val y = lua.checkFloat(2)
         val z = if (lua.isNumber(3)) lua.toInteger(3).toInt() else 0

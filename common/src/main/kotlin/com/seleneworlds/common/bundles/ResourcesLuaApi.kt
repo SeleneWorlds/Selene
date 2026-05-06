@@ -13,22 +13,22 @@ class ResourcesLuaApi(private val api: ResourcesApi) : LuaModule {
     override val name = "selene.resources"
 
     override fun register(table: LuaValue) {
-        table.register("ListFiles", this::luaListFiles)
-        table.register("LoadAsString", this::luaLoadAsString)
-        table.register("FileExists", this::luaFileExists)
+        table.register("listFiles", this::listFiles)
+        table.register("loadAsString", this::loadAsString)
+        table.register("fileExists", this::fileExists)
     }
 
-    private fun luaListFiles(lua: Lua): Int {
+    private fun listFiles(lua: Lua): Int {
         lua.push(api.listFiles(lua.checkString(1), lua.checkString(2)), Lua.Conversion.FULL)
         return 1
     }
 
-    private fun luaLoadAsString(lua: Lua): Int {
+    private fun loadAsString(lua: Lua): Int {
         lua.push(api.loadAsString(lua.checkString(1)))
         return 1
     }
 
-    private fun luaFileExists(lua: Lua): Int {
+    private fun fileExists(lua: Lua): Int {
         lua.push(api.fileExists(lua.checkString(1)))
         return 1
     }

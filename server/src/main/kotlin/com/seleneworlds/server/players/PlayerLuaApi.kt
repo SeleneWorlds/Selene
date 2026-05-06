@@ -1,26 +1,26 @@
 package com.seleneworlds.server.players
 
-import party.iroiro.luajava.Lua
 import com.seleneworlds.common.lua.LuaMappedMetatable
-import com.seleneworlds.common.lua.util.checkCoordinate
-import com.seleneworlds.common.lua.util.checkUserdata
-import com.seleneworlds.common.lua.util.toUserdata
+import com.seleneworlds.common.lua.util.*
 import com.seleneworlds.server.dimensions.DimensionApi
 import com.seleneworlds.server.entities.EntityApi
+import party.iroiro.luajava.Lua
 
 object PlayerLuaApi {
 
-    /**
-     * Observable map for storing data on this player.
-     *
-     * ```property
-     * CustomData: ObservableMap
-     * ```
-     */
-    private fun luaGetCustomData(lua: Lua): Int {
+    private fun getCustomData(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
-        lua.push(player.getCustomData(), Lua.Conversion.NONE)
+        val identifier = lua.checkIdentifier(2)
+        lua.push(player.getCustomData(identifier), Lua.Conversion.FULL)
         return 1
+    }
+
+    private fun setCustomData(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        val identifier = lua.checkIdentifier(2)
+        val value = lua.toObject(3)
+        player.setCustomData(identifier, value)
+        return 0
     }
 
     /**
@@ -30,7 +30,7 @@ object PlayerLuaApi {
      * IdleTime: number
      * ```
      */
-    private fun luaGetIdleTime(lua: Lua): Int {
+    private fun getIdleTime(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
         lua.push(player.getIdleTime())
         return 1
@@ -43,7 +43,7 @@ object PlayerLuaApi {
      * UserId: string
      * ```
      */
-    private fun luaGetUserId(lua: Lua): Int {
+    private fun getUserId(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
         lua.push(player.getUserId(), Lua.Conversion.FULL)
         return 1
@@ -56,7 +56,7 @@ object PlayerLuaApi {
      * LocaleString: string
      * ```
      */
-    private fun luaGetLocaleString(lua: Lua): Int {
+    private fun getLocale(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
         lua.push(player.getLocaleString())
         return 1
@@ -69,7 +69,7 @@ object PlayerLuaApi {
      * LanguageString: string
      * ```
      */
-    private fun luaGetLanguageString(lua: Lua): Int {
+    private fun getLanguage(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
         lua.push(player.getLanguageString())
         return 1
@@ -82,9 +82,9 @@ object PlayerLuaApi {
      * ControlledEntity: Entity|nil
      * ```
      */
-    private fun luaGetControlledEntity(lua: Lua): Int {
-        val player = lua.checkUserdata<PlayerApi>(1)
-        lua.push(player.getControlledEntity(), Lua.Conversion.NONE)
+    private fun getControlledEntity(lua: Lua): Int {
+        val api = lua.checkUserdata<PlayerApi>(1)
+        lua.push(api.getControlledEntity(), Lua.Conversion.NONE)
         return 1
     }
 
@@ -93,9 +93,9 @@ object PlayerLuaApi {
      * ControlledEntity: Entity
      * ```
      */
-    private fun luaSetControlledEntity(lua: Lua): Int {
+    private fun setControlledEntity(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
-        player.setControlledEntity(lua.checkUserdata<EntityApi>(3))
+        player.setControlledEntity(lua.checkUserdata<EntityApi>(2))
         return 0
     }
 
@@ -106,7 +106,7 @@ object PlayerLuaApi {
      * CameraEntity: Entity|nil
      * ```
      */
-    private fun luaGetCameraEntity(lua: Lua): Int {
+    private fun getCameraEntity(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
         lua.push(player.getCameraEntity(), Lua.Conversion.NONE)
         return 1
@@ -117,9 +117,9 @@ object PlayerLuaApi {
      * CameraEntity: Entity
      * ```
      */
-    private fun luaSetCameraEntity(lua: Lua): Int {
+    private fun setCameraEntity(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
-        player.setCameraEntity(lua.checkUserdata<EntityApi>(3))
+        player.setCameraEntity(lua.checkUserdata<EntityApi>(2))
         return 0
     }
 
@@ -130,7 +130,7 @@ object PlayerLuaApi {
      * SetCameraToFollowControlledEntity()
      * ```
      */
-    private fun luaSetCameraToFollowControlledEntity(lua: Lua): Int {
+    private fun setCameraToFollowControlledEntity(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
         player.setCameraToFollowControlledEntity()
         return 0
@@ -143,7 +143,7 @@ object PlayerLuaApi {
      * SetCameraToFollowTarget()
      * ```
      */
-    private fun luaSetCameraToFollowTarget(lua: Lua): Int {
+    private fun setCameraToFollowTarget(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
         player.setCameraToFollowTarget()
         return 0
@@ -156,7 +156,7 @@ object PlayerLuaApi {
      * SetCameraToCoordinate(coordinate: Coordinate, dimension: Dimension|nil)
      * ```
      */
-    private fun luaSetCameraToCoordinate(lua: Lua): Int {
+    private fun setCameraToCoordinate(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val dimension = lua.toUserdata<DimensionApi>(index + 1)
@@ -173,26 +173,27 @@ object PlayerLuaApi {
      * Ref() -> LuaReference
      * ```
      */
-    private fun luaRef(lua: Lua): Int {
+    private fun ref(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
         lua.push(player.delegate.resolvableReference(), Lua.Conversion.NONE)
         return 1
     }
 
     val luaMeta = LuaMappedMetatable(PlayerApi::class) {
-        getter(::luaGetCustomData)
-        getter(::luaGetIdleTime)
-        getter(::luaGetUserId)
-        getter(::luaGetLocaleString, "Locale")
-        getter(::luaGetLanguageString, "Language")
-        getter(::luaGetControlledEntity)
-        setter(::luaSetControlledEntity)
-        getter(::luaGetCameraEntity)
-        setter(::luaSetCameraEntity)
-        callable(::luaSetCameraToFollowControlledEntity)
-        callable(::luaSetCameraToFollowTarget)
-        callable(::luaSetCameraToCoordinate)
-        callable(::luaRef)
+        callable(::getCustomData)
+        callable(::setCustomData)
+        callable(::getIdleTime)
+        callable(::getUserId)
+        callable(::getLocale)
+        callable(::getLanguage)
+        callable(::getControlledEntity)
+        callable(::setControlledEntity)
+        callable(::getCameraEntity)
+        callable(::setCameraEntity)
+        callable(::setCameraToFollowControlledEntity)
+        callable(::setCameraToFollowTarget)
+        callable(::setCameraToCoordinate)
+        callable(::ref)
     }
 
 }

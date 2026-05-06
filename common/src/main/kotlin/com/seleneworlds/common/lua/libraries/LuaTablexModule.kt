@@ -15,9 +15,9 @@ class LuaTablexModule : LuaModule {
     override val registerAsGlobal: Boolean = true
 
     override fun register(table: LuaValue) {
-        table.register("observable", this::luaObservable)
-        table.register("find", this::luaFind)
-        table.register("tostring", this::luaToString)
+        table.register("observable", this::observable)
+        table.register("find", this::find)
+        table.register("tostring", this::toString)
     }
 
     /**
@@ -30,7 +30,7 @@ class LuaTablexModule : LuaModule {
      * observable(data: table) -> ObservableMap
      * ```
      */
-    private fun luaObservable(lua: Lua): Int {
+    private fun observable(lua: Lua): Int {
         val data = if (lua.isTable(1)) lua.checkSerializedMap(1).toMutableMap() else mutableMapOf()
         lua.push(ObservableMap(data), Lua.Conversion.NONE)
         return 1
@@ -44,7 +44,7 @@ class LuaTablexModule : LuaModule {
      * find(tbl: table, value: any) -> any|nil
      * ```
      */
-    private fun luaFind(lua: Lua): Int {
+    private fun find(lua: Lua): Int {
         lua.checkType(1, Lua.LuaType.TABLE)
         lua.top = 2
 
@@ -79,7 +79,7 @@ class LuaTablexModule : LuaModule {
      * tostring(tbl: table|ObservableMap) -> string
      * ```
      */
-    private fun luaToString(lua: Lua): Int {
+    private fun toString(lua: Lua): Int {
         if (lua.isNil(1)) {
             lua.push("nil")
             return 1

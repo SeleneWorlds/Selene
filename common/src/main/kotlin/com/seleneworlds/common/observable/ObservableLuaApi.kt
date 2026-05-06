@@ -15,7 +15,7 @@ object ObservableLuaApi {
      * Subscribe(observer: Observer) -> Observer
      * ```
      */
-    private fun luaSubscribe(lua: Lua): Int {
+    private fun subscribe(lua: Lua): Int {
         val observable = lua.checkUserdata<Observable<Any>>(1)
         val registrationSite = lua.getCallerInfo()
         val observer = when (lua.type(2)) {
@@ -35,7 +35,7 @@ object ObservableLuaApi {
      * Unsubscribe(observer: Observer)
      * ```
      */
-    private fun luaUnsubscribe(lua: Lua): Int {
+    private fun unsubscribe(lua: Lua): Int {
         val observable = lua.checkUserdata<Observable<Any>>(1)
         val observer = lua.checkUserdata<Observer<Any>>(2)
         observable.unsubscribe(observer)
@@ -50,7 +50,7 @@ object ObservableLuaApi {
      * NotifyObservers(data: any)
      * ```
      */
-    private fun luaNotifyObservers(lua: Lua): Int {
+    private fun notifyObservers(lua: Lua): Int {
         val observable = lua.checkUserdata<Observable<Any>>(1)
         val data = lua.toAny(2) ?: observable
         observable.notifyObservers(data)
@@ -58,8 +58,8 @@ object ObservableLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(Observable::class) {
-        callable(::luaSubscribe)
-        callable(::luaUnsubscribe)
-        callable(::luaNotifyObservers)
+        callable(::subscribe)
+        callable(::unsubscribe)
+        callable(::notifyObservers)
     }
 }

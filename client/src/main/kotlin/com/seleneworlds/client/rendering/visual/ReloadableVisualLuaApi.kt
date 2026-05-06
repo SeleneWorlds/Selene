@@ -2,7 +2,6 @@ package com.seleneworlds.client.rendering.visual
 
 import party.iroiro.luajava.Lua
 import com.seleneworlds.client.rendering.visual2d.Visual2DLuaApi
-import com.seleneworlds.common.lua.LuaMappedMetatable
 import com.seleneworlds.common.lua.util.checkUserdata
 
 object ReloadableVisualLuaApi {
@@ -14,7 +13,7 @@ object ReloadableVisualLuaApi {
      * SurfaceHeight: number
      * ```
      */
-    private fun luaGetSurfaceHeight(lua: Lua): Int {
+    private fun getSurfaceHeight(lua: Lua): Int {
         val self = lua.checkUserdata<ReloadableVisualApi>(1)
         lua.push(self.getSurfaceHeight())
         return 1
@@ -27,7 +26,7 @@ object ReloadableVisualLuaApi {
      * Drawable: DrawableApi
      * ```
      */
-    private fun luaGetDrawable(lua: Lua): Int {
+    private fun getDrawable(lua: Lua): Int {
         val self = lua.checkUserdata<ReloadableVisualApi>(1)
         self.getDrawable()?.let {
             lua.push(it, Lua.Conversion.NONE)
@@ -36,7 +35,7 @@ object ReloadableVisualLuaApi {
     }
 
     val luaMeta = Visual2DLuaApi.luaMeta.extend(ReloadableVisualApi::class) {
-        getter(::luaGetSurfaceHeight)
-        getter(::luaGetDrawable)
+        callable(::getSurfaceHeight)
+        callable(::getDrawable)
     }
 }

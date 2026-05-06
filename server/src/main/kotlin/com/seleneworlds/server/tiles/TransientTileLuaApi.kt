@@ -16,7 +16,7 @@ object TransientTileLuaApi {
      * Definition: TileDefinition
      * ```
      */
-    private fun luaGetDefinition(lua: Lua): Int {
+    private fun getDefinition(lua: Lua): Int {
         val tile = lua.checkUserdata<TransientTileApi>(1)
         lua.push(tile.getDefinition().get(), Lua.Conversion.NONE)
         return 1
@@ -29,7 +29,7 @@ object TransientTileLuaApi {
      * Name: string
      * ```
      */
-    private fun luaGetName(lua: Lua): Int {
+    private fun getName(lua: Lua): Int {
         val tile = lua.checkUserdata<TransientTileApi>(1)
         lua.push(tile.getName())
         return 1
@@ -42,7 +42,7 @@ object TransientTileLuaApi {
      * Dimension: Dimension
      * ```
      */
-    private fun luaGetDimension(lua: Lua): Int {
+    private fun getDimension(lua: Lua): Int {
         val tile = lua.checkUserdata<TransientTileApi>(1)
         lua.push(tile.getDimension(), Lua.Conversion.NONE)
         return 1
@@ -55,7 +55,7 @@ object TransientTileLuaApi {
      * Coordinate: Coordinate
      * ```
      */
-    private fun luaGetCoordinate(lua: Lua): Int {
+    private fun getCoordinate(lua: Lua): Int {
         val tile = lua.checkUserdata<TransientTileApi>(1)
         lua.push(tile.getCoordinate(), Lua.Conversion.NONE)
         return 1
@@ -68,7 +68,7 @@ object TransientTileLuaApi {
      * X: number
      * ```
      */
-    private fun luaGetX(lua: Lua): Int {
+    private fun getX(lua: Lua): Int {
         val tile = lua.checkUserdata<TransientTileApi>(1)
         lua.push(tile.getX())
         return 1
@@ -81,7 +81,7 @@ object TransientTileLuaApi {
      * Y: number
      * ```
      */
-    private fun luaGetY(lua: Lua): Int {
+    private fun getY(lua: Lua): Int {
         val tile = lua.checkUserdata<TransientTileApi>(1)
         lua.push(tile.getY())
         return 1
@@ -94,7 +94,7 @@ object TransientTileLuaApi {
      * Z: number
      * ```
      */
-    private fun luaGetZ(lua: Lua): Int {
+    private fun getZ(lua: Lua): Int {
         val tile = lua.checkUserdata<TransientTileApi>(1)
         lua.push(tile.getZ())
         return 1
@@ -107,7 +107,7 @@ object TransientTileLuaApi {
      * GetMetadata(key: string) -> string|nil
      * ```
      */
-    private fun luaGetMetadata(lua: Lua): Int {
+    private fun getMetadata(lua: Lua): Int {
         val tile = lua.checkUserdata<TransientTileApi>(1)
         val key = lua.checkString(2)
         lua.push(tile.getMetadata(key), Lua.Conversion.FULL)
@@ -121,7 +121,7 @@ object TransientTileLuaApi {
      * HasTag(tag: string) -> boolean
      * ```
      */
-    private fun luaHasTag(lua: Lua): Int {
+    private fun hasTag(lua: Lua): Int {
         val tile = lua.checkUserdata<TransientTileApi>(1)
         val tag = lua.checkString(2)
         lua.push(tile.hasTag(tag))
@@ -136,7 +136,7 @@ object TransientTileLuaApi {
      * Swap(newTileDef: TileDefinition, layerName: string) -> TransientTile
      * ```
      */
-    private fun luaSwap(lua: Lua): Int {
+    private fun swap(lua: Lua): Int {
         val tile = lua.checkUserdata<TransientTileApi>(1)
         val newTileDef = lua.checkRegistry(2, tile.tile.definition.registry)
         val layerName = lua.toString(3)
@@ -150,16 +150,16 @@ object TransientTileLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(TransientTileApi::class) {
-        getter(::luaGetDefinition)
-        getter(::luaGetName)
-        getter(::luaGetDimension)
-        getter(::luaGetCoordinate)
-        getter(::luaGetX)
-        getter(::luaGetY)
-        getter(::luaGetZ)
-        callable(::luaGetMetadata)
-        callable(::luaHasTag)
-        callable(::luaSwap)
+        callable(::getDefinition)
+        callable(::getName)
+        callable(::getDimension)
+        callable(::getCoordinate)
+        callable(::getX)
+        callable(::getY)
+        callable(::getZ)
+        callable(::getMetadata)
+        callable(::hasTag)
+        callable(::swap)
     }
 
 }

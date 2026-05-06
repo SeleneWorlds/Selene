@@ -20,14 +20,14 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
     override val name = "selene.network"
 
     override fun register(table: LuaValue) {
-        table.register("HandlePayload", ::luaHandlePayload)
-        table.register("SendToPlayer", ::luaSendToPlayer)
-        table.register("SendToPlayers", ::luaSendToPlayers)
-        table.register("SendToEntity", ::luaSendToEntity)
-        table.register("SendToEntities", ::luaSendToEntities)
+        table.register("handlePayload", ::handlePayload)
+        table.register("sendToPlayer", ::sendToPlayer)
+        table.register("sendToPlayers", ::sendToPlayers)
+        table.register("sendToEntity", ::sendToEntity)
+        table.register("sendToEntities", ::sendToEntities)
     }
 
-    private fun luaHandlePayload(lua: Lua): Int {
+    private fun handlePayload(lua: Lua): Int {
         val payloadId = lua.checkString(1)
         val function = lua.checkFunction(2)
         val trace = lua.getCallerInfo()
@@ -46,23 +46,23 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
         return 0
     }
 
-    private fun luaSendToPlayer(lua: Lua): Int {
+    private fun sendToPlayer(lua: Lua): Int {
         api.sendToPlayer(lua.checkUserdata<PlayerApi>(1), lua.checkString(2), if (!lua.isNil(3)) lua.checkSerializedMap(3) else emptyMap())
         return 0
     }
 
-    private fun luaSendToPlayers(lua: Lua): Int {
+    private fun sendToPlayers(lua: Lua): Int {
         val players = lua.toList(1) ?: return lua.error(IllegalArgumentException("Expected list of players"))
         api.sendToPlayers(players.filterIsInstance<PlayerApi>(), lua.checkString(2), if (!lua.isNil(3)) lua.checkSerializedMap(3) else emptyMap())
         return 0
     }
 
-    private fun luaSendToEntity(lua: Lua): Int {
+    private fun sendToEntity(lua: Lua): Int {
         api.sendToEntity(lua.checkUserdata<EntityApi>(1), lua.checkString(2), if (!lua.isNil(3)) lua.checkSerializedMap(3) else emptyMap())
         return 0
     }
 
-    private fun luaSendToEntities(lua: Lua): Int {
+    private fun sendToEntities(lua: Lua): Int {
         val entities = lua.toList(1) ?: return lua.error(IllegalArgumentException("Expected list of entities"))
         api.sendToEntities(entities, lua.checkString(2), if (!lua.isNil(3)) lua.checkSerializedMap(3) else emptyMap())
         return 0

@@ -17,10 +17,10 @@ class HttpLuaApi(private val api: HttpApi) : LuaModule, Disposable {
     override val name = "selene.http"
 
     override fun register(table: LuaValue) {
-        table.register("Post", ::luaPost)
+        table.register("post", ::post)
     }
 
-    private fun luaPost(lua: Lua): Int {
+    private fun post(lua: Lua): Int {
         val url = lua.checkString(1)
         val body = when(val type = lua.type(2)) {
             Lua.LuaType.STRING -> lua.checkString(2)

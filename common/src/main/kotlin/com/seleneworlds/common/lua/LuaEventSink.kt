@@ -18,7 +18,7 @@ class LuaEventSink<T : Any>(private val event: Event<T>, private val factory: (L
          * Connect(callback: function)
          * ```
          */
-        private fun luaConnect(lua: Lua): Int {
+        private fun connect(lua: Lua): Int {
             val luaEventSink = lua.checkUserdata<LuaEventSink<Any>>(1)
             val callback = lua.checkFunction(2)
             val listener = luaEventSink.factory(callback, lua.getCallerInfo())
@@ -27,7 +27,7 @@ class LuaEventSink<T : Any>(private val event: Event<T>, private val factory: (L
         }
 
         val luaMeta = LuaMappedMetatable(LuaEventSink::class) {
-            callable(::luaConnect)
+            callable(::connect)
         }
     }
 }

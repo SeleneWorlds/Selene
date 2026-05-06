@@ -1,5 +1,6 @@
 package com.seleneworlds.server.entities
 
+import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.RegistryReference
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.entities.EntityDefinition
@@ -23,8 +24,17 @@ class EntityApi(val entity: Entity) : IdResolvable<Int, Entity> {
         return entity.networkId
     }
 
+    @Deprecated("Use getCustomData(Identifier) instead.")
     fun getCustomData(): ObservableMap {
         return entity.customData
+    }
+
+    fun getCustomData(identifier: Identifier): Any? {
+        return entity.customData[identifier.toString()]
+    }
+
+    fun setCustomData(identifier: Identifier, value: Any?) {
+        entity.customData[identifier.toString()] = value
     }
 
     fun getEntityDefinition(): RegistryReference<EntityDefinition> {

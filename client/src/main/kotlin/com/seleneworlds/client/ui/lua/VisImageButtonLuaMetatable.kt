@@ -8,10 +8,10 @@ import com.seleneworlds.common.lua.util.checkUserdata
 
 object VisImageButtonLuaMetatable {
     val luaMeta = ActorLuaMetatable.luaMeta.extend(VisImageButton::class) {
-        callable(::luaSetStyle)
+        callable(::setStyle)
     }
 
-    private fun luaSetStyle(lua: Lua): Int {
+    private fun setStyle(lua: Lua): Int {
         val actor = lua.checkUserdata<VisImageButton>(1)
         val theme = lua.checkUserdata<ThemeApi>(2)
         val style = lua.checkString(3)

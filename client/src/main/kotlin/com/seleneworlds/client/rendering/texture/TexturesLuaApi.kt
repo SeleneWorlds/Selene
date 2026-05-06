@@ -19,10 +19,10 @@ class TexturesLuaApi(private val api: TexturesApi) : LuaModule {
     }
 
     override fun register(table: LuaValue) {
-        table.register("Create", ::luaCreateTexture)
+        table.register("create", ::createTexture)
     }
 
-    private fun luaCreateTexture(lua: Lua): Int {
+    private fun createTexture(lua: Lua): Int {
         val width = lua.checkInt(1)
         val height = lua.checkInt(2)
         val formatName = if (lua.top >= 3) lua.checkString(3) else "RGBA8888"

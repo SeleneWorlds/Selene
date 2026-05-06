@@ -13,7 +13,7 @@ object DrawableIsoVisualLuaApi {
      * SurfaceHeight: number
      * ```
      */
-    private fun luaGetSurfaceHeight(lua: Lua): Int {
+    private fun getSurfaceHeight(lua: Lua): Int {
         val self = lua.checkUserdata<DrawableIsoVisualApi>(1)
         lua.push(self.getSurfaceHeight())
         return 1
@@ -26,7 +26,7 @@ object DrawableIsoVisualLuaApi {
      * Drawable: DrawableApi
      * ```
      */
-    private fun luaGetDrawable(lua: Lua): Int {
+    private fun getDrawable(lua: Lua): Int {
         val self = lua.checkUserdata<DrawableIsoVisualApi>(1)
         lua.push(self.getDrawable(), Lua.Conversion.NONE)
         return 1
@@ -39,15 +39,15 @@ object DrawableIsoVisualLuaApi {
      * Definition: VisualDefinition
      * ```
      */
-    private fun luaGetDefinition(lua: Lua): Int {
+    private fun getDefinition(lua: Lua): Int {
         val self = lua.checkUserdata<DrawableIsoVisualApi>(1)
         lua.push(self.getDefinition(), Lua.Conversion.NONE)
         return 1
     }
 
     val luaMeta = Visual2DLuaApi.luaMeta.extend(DrawableIsoVisualApi::class) {
-        getter(::luaGetSurfaceHeight)
-        getter(::luaGetDrawable)
-        getter(::luaGetDefinition)
+        callable(::getSurfaceHeight)
+        callable(::getDrawable)
+        callable(::getDefinition)
     }
 }

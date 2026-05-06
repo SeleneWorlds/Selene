@@ -7,19 +7,19 @@ import com.seleneworlds.common.lua.util.checkUserdata
 
 object ProgressBarLuaMetatable {
     val luaMeta = ActorLuaMetatable.luaMeta.extend(ProgressBar::class) {
-        getter(::luaGetValue)
-        setter(::luaSetValue)
+        callable(::getValue)
+        callable(::setValue)
     }
 
-    private fun luaGetValue(lua: Lua): Int {
+    private fun getValue(lua: Lua): Int {
         val progressBar = lua.checkUserdata<ProgressBar>(1)
         lua.push(progressBar.value)
         return 1
     }
 
-    private fun luaSetValue(lua: Lua): Int {
+    private fun setValue(lua: Lua): Int {
         val progressBar = lua.checkUserdata<ProgressBar>(1)
-        val value = lua.checkFloat(3)
+        val value = lua.checkFloat(2)
         progressBar.setValue(value)
         return 0
     }

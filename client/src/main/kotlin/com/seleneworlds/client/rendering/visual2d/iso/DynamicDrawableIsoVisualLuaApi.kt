@@ -13,7 +13,7 @@ object DynamicDrawableIsoVisualLuaApi {
      * SurfaceHeight: number
      * ```
      */
-    private fun luaGetSurfaceHeight(lua: Lua): Int {
+    private fun getSurfaceHeight(lua: Lua): Int {
         val self = lua.checkUserdata<DynamicDrawableIsoVisualApi>(1)
         lua.push(self.getSurfaceHeight())
         return 1
@@ -26,14 +26,14 @@ object DynamicDrawableIsoVisualLuaApi {
      * Drawable: DrawableApi
      * ```
      */
-    private fun luaGetDrawable(lua: Lua): Int {
+    private fun getDrawable(lua: Lua): Int {
         val self = lua.checkUserdata<DynamicDrawableIsoVisualApi>(1)
         lua.push(self.getDrawable(), Lua.Conversion.NONE)
         return 1
     }
 
     val luaMeta = Visual2DLuaApi.luaMeta.extend(DynamicDrawableIsoVisualApi::class) {
-        getter(::luaGetSurfaceHeight)
-        getter(::luaGetDrawable)
+        callable(::getSurfaceHeight)
+        callable(::getDrawable)
     }
 }

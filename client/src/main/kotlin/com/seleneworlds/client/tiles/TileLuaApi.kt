@@ -13,7 +13,7 @@ object TileLuaApi {
      * Coordinate: Coordinate
      * ```
      */
-    private fun luaGetCoordinate(lua: Lua): Int {
+    private fun getCoordinate(lua: Lua): Int {
         val tile = lua.checkUserdata<TileApi>(1)
         lua.push(tile.getCoordinate(), Lua.Conversion.NONE)
         return 1
@@ -26,7 +26,7 @@ object TileLuaApi {
      * Definition: TileDefinition
      * ```
      */
-    private fun luaGetDefinition(lua: Lua): Int {
+    private fun getDefinition(lua: Lua): Int {
         val tile = lua.checkUserdata<TileApi>(1)
         lua.push(tile.getDefinition().get(), Lua.Conversion.NONE)
         return 1
@@ -39,7 +39,7 @@ object TileLuaApi {
      * Visual: ReloadableVisualApi
      * ```
      */
-    private fun luaGetVisual(lua: Lua): Int {
+    private fun getVisual(lua: Lua): Int {
         val tile = lua.checkUserdata<TileApi>(1)
         lua.push(tile.getVisual(), Lua.Conversion.NONE)
         return 1
@@ -52,7 +52,7 @@ object TileLuaApi {
      * X: number
      * ```
      */
-    private fun luaGetX(lua: Lua): Int {
+    private fun getX(lua: Lua): Int {
         val tile = lua.checkUserdata<TileApi>(1)
         lua.push(tile.getX())
         return 1
@@ -65,7 +65,7 @@ object TileLuaApi {
      * Y: number
      * ```
      */
-    private fun luaGetY(lua: Lua): Int {
+    private fun getY(lua: Lua): Int {
         val tile = lua.checkUserdata<TileApi>(1)
         lua.push(tile.getY())
         return 1
@@ -78,7 +78,7 @@ object TileLuaApi {
      * Z: number
      * ```
      */
-    private fun luaGetZ(lua: Lua): Int {
+    private fun getZ(lua: Lua): Int {
         val tile = lua.checkUserdata<TileApi>(1)
         lua.push(tile.getZ())
         return 1
@@ -91,19 +91,19 @@ object TileLuaApi {
      * Name: string
      * ```
      */
-    private fun luaGetName(lua: Lua): Int {
+    private fun getName(lua: Lua): Int {
         val tile = lua.checkUserdata<TileApi>(1)
         lua.push(tile.getName())
         return 1
     }
 
     val luaMeta = LuaMappedMetatable(TileApi::class) {
-        getter(::luaGetCoordinate)
-        getter(::luaGetDefinition)
-        getter(::luaGetVisual)
-        getter(::luaGetX)
-        getter(::luaGetY)
-        getter(::luaGetZ)
-        getter(::luaGetName)
+        callable(::getCoordinate)
+        callable(::getDefinition)
+        callable(::getVisual)
+        callable(::getX)
+        callable(::getY)
+        callable(::getZ)
+        callable(::getName)
     }
 }

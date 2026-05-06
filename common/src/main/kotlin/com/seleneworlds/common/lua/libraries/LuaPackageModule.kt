@@ -45,7 +45,7 @@ class LuaPackageModule : LuaModule {
     }
 
     override fun initialize(luaManager: LuaManager) {
-        luaManager.lua.register("require", this::luaRequire)
+        luaManager.lua.register("require", this::require)
     }
 
     override fun register(table: LuaValue) = Unit
@@ -58,7 +58,7 @@ class LuaPackageModule : LuaModule {
      * require(moduleName: string) -> any
      * ```
      */
-    private fun luaRequire(lua: Lua): Int {
+    private fun require(lua: Lua): Int {
         val moduleName = lua.checkString(1)
         lua.push(packageLoaded)
         lua.getField(-1, moduleName)

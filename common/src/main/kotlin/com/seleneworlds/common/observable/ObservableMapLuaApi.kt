@@ -21,7 +21,7 @@ object ObservableMapLuaApi {
         }
     }
 
-    private fun luaPairs(lua: Lua): Int {
+    private fun pairs(lua: Lua): Int {
         val observableMap = lua.checkUserdata<ObservableMap>(1)
         lua.push { lua ->
             val iterator = lua.checkUserdata<Iterator<Map.Entry<*, *>>>(1)
@@ -53,13 +53,13 @@ object ObservableMapLuaApi {
         return 3
     }
 
-    private fun luaToTable(lua: Lua): Int {
+    private fun toTable(lua: Lua): Int {
         val observableMap = lua.checkUserdata<ObservableMap>(1)
         lua.push(observableMap.map, Lua.Conversion.FULL)
         return 1
     }
 
-    private fun luaRawLookup(lua: Lua): Int {
+    private fun rawLookup(lua: Lua): Int {
         val observableMap = lua.checkUserdata<ObservableMap>(1)
         var result: Any? = observableMap.map
         for (index in 2..lua.top) {
@@ -73,7 +73,7 @@ object ObservableMapLuaApi {
         return 1
     }
 
-    private fun luaLookup(lua: Lua): Int {
+    private fun lookup(lua: Lua): Int {
         val observableMap = lua.checkUserdata<ObservableMap>(1)
         var result: Any? = observableMap.map
         for (index in 2..lua.top) {
@@ -91,7 +91,7 @@ object ObservableMapLuaApi {
         return 1
     }
 
-    private fun luaSetNested(lua: Lua): Int {
+    private fun setNested(lua: Lua): Int {
         val observableMap = lua.checkUserdata<ObservableMap>(1)
         var container: Any? = observableMap.map
 
@@ -129,13 +129,13 @@ object ObservableMapLuaApi {
         return 0
     }
 
-    private fun luaDeepCopy(lua: Lua): Int {
+    private fun deepCopy(lua: Lua): Int {
         val observableMap = lua.checkUserdata<ObservableMap>(1)
         lua.push(observableMap.deepCopy(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaHasKey(lua: Lua): Int {
+    private fun hasKey(lua: Lua): Int {
         val observableMap = lua.checkUserdata<ObservableMap>(1)
         val key = lua.toString(2) ?: lua.throwTypeError(2, Lua.LuaType.STRING)
         lua.push(observableMap.map.containsKey(key))
@@ -143,13 +143,13 @@ object ObservableMapLuaApi {
     }
 
     val luaMappings = ObservableLuaApi.luaMeta.extend(ObservableMap::class) {
-        callable(::luaPairs)
-        callable(::luaToTable)
-        callable(::luaRawLookup)
-        callable(::luaLookup)
-        callable(::luaSetNested, "Set")
-        callable(::luaDeepCopy)
-        callable(::luaHasKey)
+        callable(::pairs)
+        callable(::toTable)
+        callable(::rawLookup)
+        callable(::lookup)
+        callable(::setNested, "Set")
+        callable(::deepCopy)
+        callable(::hasKey)
     }
 
     val luaMeta = object : LuaMetatable {

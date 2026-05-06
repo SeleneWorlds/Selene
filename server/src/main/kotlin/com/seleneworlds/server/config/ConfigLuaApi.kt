@@ -14,10 +14,10 @@ class ConfigLuaApi(private val api: ConfigApi) : LuaModule {
     override val name = "selene.config"
 
     override fun register(table: LuaValue) {
-        table.register("GetProperty", this::luaGetProperty)
+        table.register("getProperty", this::getProperty)
     }
 
-    private fun luaGetProperty(lua: Lua): Int {
+    private fun getProperty(lua: Lua): Int {
         val key = lua.checkString(1)
         if (lua.top >= 2) lua.checkType(2, Lua.LuaType.STRING)
 

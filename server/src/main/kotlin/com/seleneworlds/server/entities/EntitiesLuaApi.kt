@@ -45,24 +45,24 @@ class EntitiesLuaApi(
     }
 
     override fun register(table: LuaValue) {
-        table.register("Create", this::luaCreate)
-        table.register("CreateTransient", this::luaCreateTransient)
-        table.register("GetByNetworkId", this::luaGetByNetworkId)
-        table.set("SteppedOnTile", entitySteppedOnTile)
-        table.set("SteppedOffTile", entitySteppedOffTile)
+        table.register("create", this::create)
+        table.register("createTransient", this::createTransient)
+        table.register("getByNetworkId", this::getByNetworkId)
+        table.set("steppedOnTile", entitySteppedOnTile)
+        table.set("steppedOffTile", entitySteppedOffTile)
     }
 
-    private fun luaCreate(lua: Lua): Int {
+    private fun create(lua: Lua): Int {
         lua.push(api.create(lua.checkRegistry(1, registries.entities)), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaCreateTransient(lua: Lua): Int {
+    private fun createTransient(lua: Lua): Int {
         lua.push(api.createTransient(lua.checkRegistry(1, registries.entities)), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaGetByNetworkId(lua: Lua): Int {
+    private fun getByNetworkId(lua: Lua): Int {
         lua.push(api.getByNetworkId(lua.checkInt(1)), Lua.Conversion.NONE)
         return 1
     }

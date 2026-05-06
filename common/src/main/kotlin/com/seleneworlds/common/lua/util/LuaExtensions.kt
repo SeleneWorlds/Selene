@@ -85,7 +85,7 @@ fun Lua.checkIdentifier(index: Int): Identifier {
         throwTypeError(index, LuaType.STRING, LuaType.NIL)
     }
     return when (val type = type(index)) {
-        LuaType.STRING -> Identifier.parse(toString(index)!!)
+        LuaType.STRING -> Identifier.parse(toString(index)!!) // TODO reject default here - we never want user scripts to use "selene" by default
         else -> throwTypeError(index, LuaType.STRING, type)
     }
 }

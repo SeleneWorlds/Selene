@@ -9,7 +9,7 @@ import com.seleneworlds.common.lua.util.checkUserdata
 
 object ScopedChunkViewLuaApi {
 
-    private fun luaGetBaseTileAtRelative(lua: Lua): Int {
+    private fun getBaseTileAtRelative(lua: Lua): Int {
         val chunkView = lua.checkUserdata<ScopedChunkViewApi>(1)
         val ox = lua.checkInt(2)
         val oy = lua.checkInt(3)
@@ -17,28 +17,28 @@ object ScopedChunkViewLuaApi {
         return 1
     }
 
-    private fun luaGetBaseTileAt(lua: Lua): Int {
+    private fun getBaseTileAt(lua: Lua): Int {
         val chunkView = lua.checkUserdata<ScopedChunkViewApi>(1)
         val (coordinate, _) = lua.checkCoordinate(2)
         lua.push(chunkView.getBaseTileAt(coordinate))
         return 1
     }
 
-    private fun luaGetAdditionalTilesAt(lua: Lua): Int {
+    private fun getAdditionalTilesAt(lua: Lua): Int {
         val chunkView = lua.checkUserdata<ScopedChunkViewApi>(1)
         val (coordinate, _) = lua.checkCoordinate(2)
         lua.push(chunkView.getAdditionalTilesAt(coordinate), Lua.Conversion.FULL)
         return 1
     }
 
-    private fun luaGetAnnotationsAt(lua: Lua): Int {
+    private fun getAnnotationsAt(lua: Lua): Int {
         val chunkView = lua.checkUserdata<ScopedChunkViewApi>(1)
         val (coordinate, _) = lua.checkCoordinate(2)
         lua.push(chunkView.getAnnotationsAt(coordinate), Lua.Conversion.FULL)
         return 1
     }
 
-    private fun luaGetAnnotationAt(lua: Lua): Int {
+    private fun getAnnotationAt(lua: Lua): Int {
         val chunkView = lua.checkUserdata<ScopedChunkViewApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val key = lua.checkString(index + 1)
@@ -47,11 +47,11 @@ object ScopedChunkViewLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(ScopedChunkViewApi::class) {
-        callable(::luaGetBaseTileAtRelative)
-        callable(::luaGetBaseTileAt)
-        callable(::luaGetAdditionalTilesAt)
-        callable(::luaGetAnnotationsAt)
-        callable(::luaGetAnnotationAt)
+        callable(::getBaseTileAtRelative)
+        callable(::getBaseTileAt)
+        callable(::getAdditionalTilesAt)
+        callable(::getAnnotationsAt)
+        callable(::getAnnotationAt)
     }
 
 }

@@ -14,13 +14,13 @@ import com.seleneworlds.common.lua.util.getFieldString
 
 class ThemeLuaApi(private val luaApi: UILuaApi) {
     val luaMeta = LuaMappedMetatable(ThemeApi::class) {
-        callable(::luaAddTexture)
-        callable(::luaAddButtonStyle)
-        callable(::luaAddLabelStyle)
-        callable(::luaAddImageButtonStyle)
-        callable(::luaAddTextFieldStyle)
-        callable(::luaAddScrollPaneStyle)
-        callable(::luaAddProgressBarStyle)
+        callable(::addTexture)
+        callable(::addButtonStyle)
+        callable(::addLabelStyle)
+        callable(::addImageButtonStyle)
+        callable(::addTextFieldStyle)
+        callable(::addScrollPaneStyle)
+        callable(::addProgressBarStyle)
     }
 
     /**
@@ -32,7 +32,7 @@ class ThemeLuaApi(private val luaApi: UILuaApi) {
      * AddTexture(name: string, texture: LuaTexture)
      * ```
      */
-    private fun luaAddTexture(lua: Lua): Int {
+    private fun addTexture(lua: Lua): Int {
         val theme = lua.checkUserdata<ThemeApi>(1)
         val name = lua.checkString(2)
         if (lua.isString(3)) {
@@ -52,7 +52,7 @@ class ThemeLuaApi(private val luaApi: UILuaApi) {
      * AddButtonStyle(name: string, config: table{up: string|Visual2D|Drawable, down: string|Visual2D|Drawable, checked: string|Visual2D|Drawable, over: string|Visual2D|Drawable, focused: string|Visual2D|Drawable, disabled: string|Visual2D|Drawable, checkedOver: string|Visual2D|Drawable, checkedDown: string|Visual2D|Drawable, checkedFocused: string|Visual2D|Drawable, checkedOffsetX: number, checkedOffsetY: number, pressedOffsetX: number, pressedOffsetY: number, unpressedOffsetX: number, unpressedOffsetY: number})
      * ```
      */
-    private fun luaAddButtonStyle(lua: Lua): Int {
+    private fun addButtonStyle(lua: Lua): Int {
         val theme = lua.checkUserdata<ThemeApi>(1)
         val styleName = lua.checkString(2)
         val styles = luaApi.createButtonStyle(lua, 3, theme)
@@ -70,7 +70,7 @@ class ThemeLuaApi(private val luaApi: UILuaApi) {
      * AddLabelStyle(name: string, config: table{font: string, fontColor: string, background: string})
      * ```
      */
-    private fun luaAddLabelStyle(lua: Lua): Int {
+    private fun addLabelStyle(lua: Lua): Int {
         val theme = lua.checkUserdata<ThemeApi>(1)
         val styleName = lua.checkString(2)
         lua.checkType(3, Lua.LuaType.TABLE)
@@ -96,7 +96,7 @@ class ThemeLuaApi(private val luaApi: UILuaApi) {
      * AddImageButtonStyle(name: string, config: table{up: string|Visual2D|Drawable, down: string|Visual2D|Drawable, over: string|Visual2D|Drawable, imageUp: string|Visual2D|Drawable, imageDown: string|Visual2D|Drawable, imageOver: string|Visual2D|Drawable})
      * ```
      */
-    private fun luaAddImageButtonStyle(lua: Lua): Int {
+    private fun addImageButtonStyle(lua: Lua): Int {
         val theme = lua.checkUserdata<ThemeApi>(1)
         val styleName = lua.checkString(2)
         val styles = luaApi.createImageButtonStyle(lua, 3, theme)
@@ -114,7 +114,7 @@ class ThemeLuaApi(private val luaApi: UILuaApi) {
      * AddTextFieldStyle(name: string, config: table{font: string, fontColor: string, cursor: string, selection: string, background: string, focusedFontColor: string, disabledFontColor: string, focusedBackground: string, disabledBackground: string, messageFont: string, messageFontColor: string})
      * ```
      */
-    private fun luaAddTextFieldStyle(lua: Lua): Int {
+    private fun addTextFieldStyle(lua: Lua): Int {
         val theme = lua.checkUserdata<ThemeApi>(1)
         val styleName = lua.checkString(2)
         lua.checkType(3, Lua.LuaType.TABLE)
@@ -186,7 +186,7 @@ class ThemeLuaApi(private val luaApi: UILuaApi) {
      * AddScrollPaneStyle(name: string, config: table{background: string, hScroll: string, hScrollKnob: string, vScroll: string, vScrollKnob: string, corner: string})
      * ```
      */
-    private fun luaAddScrollPaneStyle(lua: Lua): Int {
+    private fun addScrollPaneStyle(lua: Lua): Int {
         val theme = lua.checkUserdata<ThemeApi>(1)
         val styleName = lua.checkString(2)
         lua.checkType(3, Lua.LuaType.TABLE)
@@ -223,7 +223,7 @@ class ThemeLuaApi(private val luaApi: UILuaApi) {
      * AddProgressBarStyle(name: string, config: table{background: string, knob: string, knobBefore: string, knobAfter: string, disabledBackground: string, disabledKnob: string, disabledKnobBefore: string, disabledKnobAfter: string})
      * ```
      */
-    private fun luaAddProgressBarStyle(lua: Lua): Int {
+    private fun addProgressBarStyle(lua: Lua): Int {
         val theme = lua.checkUserdata<ThemeApi>(1)
         val styleName = lua.checkString(2)
         lua.checkType(3, Lua.LuaType.TABLE)

@@ -9,11 +9,11 @@ import com.seleneworlds.common.lua.util.checkUserdata
 
 object StageLuaMetatable {
     val luaMeta = LuaMappedMetatable(Stage::class) {
-        callable(::luaHit)
-        callable(::luaScreenToStage)
+        callable(::hit)
+        callable(::screenToStage)
     }
 
-    private fun luaHit(lua: Lua): Int {
+    private fun hit(lua: Lua): Int {
         val stage = lua.checkUserdata<Stage>(1)
         val stageX = lua.checkFloat(2)
         val stageY = lua.checkFloat(3)
@@ -23,7 +23,7 @@ object StageLuaMetatable {
         return 1
     }
 
-    private fun luaScreenToStage(lua: Lua): Int {
+    private fun screenToStage(lua: Lua): Int {
         val stage = lua.checkUserdata<Stage>(1)
         val screenX = lua.checkFloat(2)
         val screenY = lua.checkFloat(3)

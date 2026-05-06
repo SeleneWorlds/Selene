@@ -37,17 +37,17 @@ class MapLuaApi(
     }
 
     override fun register(table: LuaValue) {
-        table.register("GetTilesAt", this::luaGetTilesAt)
-        table.register("HasTileAt", this::luaHasTileAt)
-        table.set("OnChunkChanged", mapChunkChanged)
+        table.register("getTilesAt", this::getTilesAt)
+        table.register("hasTileAt", this::hasTileAt)
+        table.set("onChunkChanged", mapChunkChanged)
     }
 
-    private fun luaGetTilesAt(lua: Lua): Int {
+    private fun getTilesAt(lua: Lua): Int {
         lua.push(api.getTilesAt(lua.checkInt(1), lua.checkInt(2), lua.checkInt(3)), Lua.Conversion.FULL)
         return 1
     }
 
-    private fun luaHasTileAt(lua: Lua): Int {
+    private fun hasTileAt(lua: Lua): Int {
         lua.push(api.hasTileAt(lua.checkInt(1), lua.checkInt(2), lua.checkInt(3)))
         return 1
     }

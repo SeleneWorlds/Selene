@@ -14,7 +14,7 @@ object IsoVisualComponentLuaApi {
      * Visual: IsoVisualApi
      * ```
      */
-    private fun luaGetVisual(lua: Lua): Int {
+    private fun getVisual(lua: Lua): Int {
         val component = lua.checkUserdata<IsoVisualComponentApi>(1)
         lua.push(component.getVisual(), Lua.Conversion.NONE)
         return 1
@@ -27,7 +27,7 @@ object IsoVisualComponentLuaApi {
      * Red: number
      * ```
      */
-    private fun luaGetRed(lua: Lua): Int {
+    private fun getRed(lua: Lua): Int {
         val component = lua.checkUserdata<IsoVisualComponentApi>(1)
         lua.push(component.getRed())
         return 1
@@ -38,9 +38,9 @@ object IsoVisualComponentLuaApi {
      * Red: number
      * ```
      */
-    private fun luaSetRed(lua: Lua): Int {
+    private fun setRed(lua: Lua): Int {
         val component = lua.checkUserdata<IsoVisualComponentApi>(1)
-        component.setRed(lua.checkFloat(3))
+        component.setRed(lua.checkFloat(2))
         return 0
     }
 
@@ -51,7 +51,7 @@ object IsoVisualComponentLuaApi {
      * Green: number
      * ```
      */
-    private fun luaGetGreen(lua: Lua): Int {
+    private fun getGreen(lua: Lua): Int {
         val component = lua.checkUserdata<IsoVisualComponentApi>(1)
         lua.push(component.getGreen())
         return 1
@@ -62,9 +62,9 @@ object IsoVisualComponentLuaApi {
      * Green: number
      * ```
      */
-    private fun luaSetGreen(lua: Lua): Int {
+    private fun setGreen(lua: Lua): Int {
         val component = lua.checkUserdata<IsoVisualComponentApi>(1)
-        component.setGreen(lua.checkFloat(3))
+        component.setGreen(lua.checkFloat(2))
         return 0
     }
 
@@ -75,7 +75,7 @@ object IsoVisualComponentLuaApi {
      * Blue: number
      * ```
      */
-    private fun luaGetBlue(lua: Lua): Int {
+    private fun getBlue(lua: Lua): Int {
         val component = lua.checkUserdata<IsoVisualComponentApi>(1)
         lua.push(component.getBlue())
         return 1
@@ -86,9 +86,9 @@ object IsoVisualComponentLuaApi {
      * Blue: number
      * ```
      */
-    private fun luaSetBlue(lua: Lua): Int {
+    private fun setBlue(lua: Lua): Int {
         val component = lua.checkUserdata<IsoVisualComponentApi>(1)
-        component.setBlue(lua.checkFloat(3))
+        component.setBlue(lua.checkFloat(2))
         return 0
     }
 
@@ -99,7 +99,7 @@ object IsoVisualComponentLuaApi {
      * Alpha: number
      * ```
      */
-    private fun luaGetAlpha(lua: Lua): Int {
+    private fun getAlpha(lua: Lua): Int {
         val component = lua.checkUserdata<IsoVisualComponentApi>(1)
         lua.push(component.getAlpha())
         return 1
@@ -110,21 +110,21 @@ object IsoVisualComponentLuaApi {
      * Alpha: number
      * ```
      */
-    private fun luaSetAlpha(lua: Lua): Int {
+    private fun setAlpha(lua: Lua): Int {
         val component = lua.checkUserdata<IsoVisualComponentApi>(1)
-        component.setAlpha(lua.checkFloat(3))
+        component.setAlpha(lua.checkFloat(2))
         return 0
     }
 
     val luaMeta = LuaMappedMetatable(IsoVisualComponentApi::class) {
-        getter(::luaGetVisual)
-        getter(::luaGetRed)
-        setter(::luaSetRed)
-        getter(::luaGetGreen)
-        setter(::luaSetGreen)
-        getter(::luaGetBlue)
-        setter(::luaSetBlue)
-        getter(::luaGetAlpha)
-        setter(::luaSetAlpha)
+        callable(::getVisual)
+        callable(::getRed)
+        callable(::setRed)
+        callable(::getGreen)
+        callable(::setGreen)
+        callable(::getBlue)
+        callable(::setBlue)
+        callable(::getAlpha)
+        callable(::setAlpha)
     }
 }

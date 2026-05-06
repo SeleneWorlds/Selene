@@ -16,10 +16,10 @@ class TaskLuaApi(
     override val name = "selene.task"
 
     override fun register(table: LuaValue) {
-        table.register("Launch", ::luaLaunch)
+        table.register("launch", ::launch)
     }
 
-    private fun luaLaunch(lua: Lua): Int {
+    private fun launch(lua: Lua): Int {
         val callback = lua.checkFunction(1)
         val args = Array(lua.top - 1) { index ->
             lua.toAny(index + 2)

@@ -16,7 +16,7 @@ class LuaMathxModule : LuaModule {
     override val registerAsGlobal: Boolean = true
 
     override fun register(table: LuaValue) {
-        table.register("clamp", this::luaClamp)
+        table.register("clamp", this::clamp)
     }
 
     /**
@@ -27,7 +27,7 @@ class LuaMathxModule : LuaModule {
      * clamp(value: number, min: number, max: number) -> number
      * ```
      */
-    private fun luaClamp(lua: Lua): Int {
+    private fun clamp(lua: Lua): Int {
         if (lua.isInteger(1) && lua.isInteger(2) && lua.isInteger(3)) {
             lua.push(lua.checkInt(1).coerceIn(lua.checkInt(2), lua.checkInt(3)))
         } else {

@@ -15,37 +15,37 @@ import com.seleneworlds.server.attributes.filters.LuaAttributeFilter
 
 object AttributeLuaApi {
 
-    private fun luaGetName(lua: Lua): Int {
+    private fun getName(lua: Lua): Int {
         val attribute = lua.checkUserdata<AttributeApi>(1)
         lua.push(attribute.getName())
         return 1
     }
 
-    private fun luaGetValue(lua: Lua): Int {
+    private fun getValue(lua: Lua): Int {
         val attribute = lua.checkUserdata<AttributeApi>(1)
         lua.push(attribute.getValue(), Lua.Conversion.FULL)
         return 1
     }
 
-    private fun luaSetValue(lua: Lua): Int {
+    private fun setValue(lua: Lua): Int {
         val attribute = lua.checkUserdata<AttributeApi>(1)
-        attribute.setValue(lua.toAny(3))
+        attribute.setValue(lua.toAny(2))
         return 0
     }
 
-    private fun luaGetEffectiveValue(lua: Lua): Int {
+    private fun getEffectiveValue(lua: Lua): Int {
         val attribute = lua.checkUserdata<AttributeApi>(1)
         lua.push(attribute.getEffectiveValue(), Lua.Conversion.FULL)
         return 1
     }
 
-    private fun luaGetOwner(lua: Lua): Int {
+    private fun getOwner(lua: Lua): Int {
         val attribute = lua.checkUserdata<AttributeApi>(1)
         lua.push(attribute.getOwner(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaAddConstraint(lua: Lua): Int {
+    private fun addConstraint(lua: Lua): Int {
         val attribute = lua.checkUserdata<AttributeApi>(1)
         val name = lua.checkString(2)
         val registrationSite = lua.getCallerInfo()
@@ -59,13 +59,13 @@ object AttributeLuaApi {
         return 1
     }
 
-    private fun luaRemoveConstraint(lua: Lua): Int {
+    private fun removeConstraint(lua: Lua): Int {
         val attribute = lua.checkUserdata<AttributeApi>(1)
         attribute.attribute.removeConstraint(lua.checkString(2))
         return 0
     }
 
-    private fun luaAddModifier(lua: Lua): Int {
+    private fun addModifier(lua: Lua): Int {
         val attribute = lua.checkUserdata<AttributeApi>(1)
         val registrationSite = lua.getCallerInfo()
         val name = lua.checkString(2)
@@ -79,28 +79,28 @@ object AttributeLuaApi {
         return 1
     }
 
-    private fun luaRemoveModifier(lua: Lua): Int {
+    private fun removeModifier(lua: Lua): Int {
         val attribute = lua.checkUserdata<AttributeApi>(1)
         attribute.attribute.removeModifier(lua.checkString(2))
         return 0
     }
 
-    private fun luaRefresh(lua: Lua): Int {
+    private fun refresh(lua: Lua): Int {
         val attribute = lua.checkUserdata<AttributeApi>(1)
         attribute.refresh()
         return 0
     }
 
     val luaMeta = ObservableLuaApi.luaMeta.extend(AttributeApi::class) {
-        getter(::luaGetName)
-        getter(::luaGetValue)
-        setter(::luaSetValue)
-        getter(::luaGetEffectiveValue)
-        getter(::luaGetOwner)
-        callable(::luaAddConstraint)
-        callable(::luaRemoveConstraint)
-        callable(::luaAddModifier)
-        callable(::luaRemoveModifier)
-        callable(::luaRefresh)
+        callable(::getName)
+        callable(::getValue)
+        callable(::setValue)
+        callable(::getEffectiveValue)
+        callable(::getOwner)
+        callable(::addConstraint)
+        callable(::removeConstraint)
+        callable(::addModifier)
+        callable(::removeModifier)
+        callable(::refresh)
     }
 }

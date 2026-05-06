@@ -14,7 +14,7 @@ object IdentifierLuaApi {
      * Namespace: string
      * ```
      */
-    private fun luaGetNamespace(lua: Lua): Int {
+    private fun getNamespace(lua: Lua): Int {
         val identifier = lua.checkUserdata<Identifier>(1)
         lua.push(identifier.namespace)
         return 1
@@ -27,7 +27,7 @@ object IdentifierLuaApi {
      * Path: string
      * ```
      */
-    private fun luaGetPath(lua: Lua): Int {
+    private fun getPath(lua: Lua): Int {
         val identifier = lua.checkUserdata<Identifier>(1)
         lua.push(identifier.path)
         return 1
@@ -40,7 +40,7 @@ object IdentifierLuaApi {
      * WithPrefix(prefix: string) -> Identifier
      * ```
      */
-    private fun luaWithPrefix(lua: Lua): Int {
+    private fun withPrefix(lua: Lua): Int {
         val identifier = lua.checkUserdata<Identifier>(1)
         val prefix = lua.checkString(2)
         lua.push(identifier.withPrefix(prefix), Lua.Conversion.FULL)
@@ -54,7 +54,7 @@ object IdentifierLuaApi {
      * WithSuffix(suffix: string) -> Identifier
      * ```
      */
-    private fun luaWithSuffix(lua: Lua): Int {
+    private fun withSuffix(lua: Lua): Int {
         val identifier = lua.checkUserdata<Identifier>(1)
         val suffix = lua.checkString(2)
         lua.push(identifier.withSuffix(suffix), Lua.Conversion.FULL)
@@ -62,10 +62,10 @@ object IdentifierLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(Identifier::class) {
-        getter(::luaGetNamespace)
-        getter(::luaGetPath)
-        callable(::luaWithPrefix)
-        callable(::luaWithSuffix)
+        callable(::getNamespace)
+        callable(::getPath)
+        callable(::withPrefix)
+        callable(::withSuffix)
     }
 
 }

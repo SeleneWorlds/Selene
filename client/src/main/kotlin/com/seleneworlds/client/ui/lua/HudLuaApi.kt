@@ -15,7 +15,7 @@ object HudLuaApi {
      * Actors: Actor[]
      * ```
      */
-    private fun luaGetActors(lua: Lua): Int {
+    private fun getActors(lua: Lua): Int {
         val self = lua.checkUserdata<HudApi>(1)
         lua.push(self.getActors(), Lua.Conversion.FULL)
         return 1
@@ -28,7 +28,7 @@ object HudLuaApi {
      * ActorsByName: table<string, Actor>
      * ```
      */
-    private fun luaGetActorsByName(lua: Lua): Int {
+    private fun getActorsByName(lua: Lua): Int {
         val self = lua.checkUserdata<HudApi>(1)
         lua.push(self.getActorsByName(), Lua.Conversion.FULL)
         return 1
@@ -41,7 +41,7 @@ object HudLuaApi {
      * GetActor(name: string) -> Actor|nil
      * ```
      */
-    private fun luaGetActor(lua: Lua): Int {
+    private fun getActor(lua: Lua): Int {
         val self = lua.checkUserdata<HudApi>(1)
         val actor = self.getActor(lua.checkString(2))
         if (actor != null) {
@@ -53,8 +53,8 @@ object HudLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(HudApi::class) {
-        getter(::luaGetActors)
-        getter(::luaGetActorsByName)
-        callable(::luaGetActor)
+        callable(::getActors)
+        callable(::getActorsByName)
+        callable(::getActor)
     }
 }

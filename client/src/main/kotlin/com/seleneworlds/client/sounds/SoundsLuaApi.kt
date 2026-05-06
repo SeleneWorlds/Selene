@@ -17,12 +17,12 @@ class SoundsLuaApi(
     override val name = "selene.sounds"
 
     override fun register(table: LuaValue) {
-        table.register("PlaySound", ::luaPlaySound)
-        table.register("StopSound", ::luaStopSound)
-        table.register("StopAllSounds", ::luaStopAllSounds)
+        table.register("playSound", ::playSound)
+        table.register("stopSound", ::stopSound)
+        table.register("stopAllSounds", ::stopAllSounds)
     }
 
-    private fun luaPlaySound(lua: Lua): Int {
+    private fun playSound(lua: Lua): Int {
         val sound = lua.checkRegistry(1, api.getSoundRegistry())
         if (lua.top >= 2) lua.checkType(2, Lua.LuaType.TABLE)
 
@@ -32,12 +32,12 @@ class SoundsLuaApi(
         return 0
     }
 
-    private fun luaStopSound(lua: Lua): Int {
+    private fun stopSound(lua: Lua): Int {
         api.stopSound(lua.checkRegistry(1, api.getSoundRegistry()))
         return 0
     }
 
-    private fun luaStopAllSounds(lua: Lua): Int {
+    private fun stopAllSounds(lua: Lua): Int {
         api.stopAllSounds()
         return 0
     }

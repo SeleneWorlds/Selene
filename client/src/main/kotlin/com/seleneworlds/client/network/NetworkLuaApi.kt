@@ -22,11 +22,11 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
     override val name = "selene.network"
 
     override fun register(table: LuaValue) {
-        table.register("HandlePayload", ::luaHandlePayload)
-        table.register("SendToServer", ::luaSendToServer)
+        table.register("handlePayload", ::handlePayload)
+        table.register("sendToServer", ::sendToServer)
     }
 
-    private fun luaHandlePayload(lua: Lua): Int {
+    private fun handlePayload(lua: Lua): Int {
         val payloadId = lua.checkString(1)
         val function = lua.checkFunction(2)
         val trace = lua.getCallerInfo()
@@ -44,7 +44,7 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
         return 0
     }
 
-    private fun luaSendToServer(lua: Lua): Int {
+    private fun sendToServer(lua: Lua): Int {
         api.sendToServer(lua.checkString(1), if (!lua.isNil(2)) lua.checkSerializedMap(2) else emptyMap())
         return 0
     }

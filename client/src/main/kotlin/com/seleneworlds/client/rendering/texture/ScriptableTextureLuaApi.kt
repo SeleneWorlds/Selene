@@ -15,7 +15,7 @@ object ScriptableTextureLuaApi {
      * Width: number
      * ```
      */
-    private fun luaGetWidth(lua: Lua): Int {
+    private fun getWidth(lua: Lua): Int {
         val self = lua.checkUserdata<ScriptableTexture>(1)
         lua.push(self.width)
         return 1
@@ -28,7 +28,7 @@ object ScriptableTextureLuaApi {
      * Height: number
      * ```
      */
-    private fun luaGetHeight(lua: Lua): Int {
+    private fun getHeight(lua: Lua): Int {
         val self = lua.checkUserdata<ScriptableTexture>(1)
         lua.push(self.height)
         return 1
@@ -44,7 +44,7 @@ object ScriptableTextureLuaApi {
      * SetPixel(x: number, y: number, hexColor: string)
      * ```
      */
-    private fun luaSetPixel(lua: Lua): Int {
+    private fun setPixel(lua: Lua): Int {
         val self = lua.checkUserdata<ScriptableTexture>(1)
         val x = lua.checkInt(2)
         val y = lua.checkInt(3)
@@ -62,7 +62,7 @@ object ScriptableTextureLuaApi {
      * GetPixel(x: number, y: number) -> red: number, green: number, blue: number, alpha: number
      * ```
      */
-    private fun luaGetPixel(lua: Lua): Int {
+    private fun getPixel(lua: Lua): Int {
         val self = lua.checkUserdata<ScriptableTexture>(1)
         val x = lua.checkInt(2)
         val y = lua.checkInt(3)
@@ -85,7 +85,7 @@ object ScriptableTextureLuaApi {
      * Fill(hexColor: string)
      * ```
      */
-    private fun luaFill(lua: Lua): Int {
+    private fun fill(lua: Lua): Int {
         val self = lua.checkUserdata<ScriptableTexture>(1)
         val (color, _) = lua.checkColor(2)
         self.pixmap.setColor(color)
@@ -100,7 +100,7 @@ object ScriptableTextureLuaApi {
      * CopyFrom(sourceTexture: LuaTexture, srcX: number, srcY: number, srcWidth: number, srcHeight: number, dstX: number, dstY: number)
      * ```
      */
-    private fun luaCopyFrom(lua: Lua): Int {
+    private fun copyFrom(lua: Lua): Int {
         val self = lua.checkUserdata<ScriptableTexture>(1)
         val sourceTexture = lua.checkUserdata<ScriptableTexture>(2)
         val srcX = lua.checkInt(3)
@@ -131,7 +131,7 @@ object ScriptableTextureLuaApi {
      * Update()
      * ```
      */
-    private fun luaUpdate(lua: Lua): Int {
+    private fun update(lua: Lua): Int {
         val self = lua.checkUserdata<ScriptableTexture>(1)
         self.texture.draw(self.pixmap, 0, 0)
         return 0
@@ -145,7 +145,7 @@ object ScriptableTextureLuaApi {
      * Dispose()
      * ```
      */
-    private fun luaDispose(lua: Lua): Int {
+    private fun dispose(lua: Lua): Int {
         val self = lua.checkUserdata<ScriptableTexture>(1)
         self.texture.dispose()
         self.pixmap.dispose()
@@ -153,13 +153,13 @@ object ScriptableTextureLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(ScriptableTexture::class) {
-        getter(::luaGetWidth)
-        getter(::luaGetHeight)
-        callable(::luaSetPixel)
-        callable(::luaGetPixel)
-        callable(::luaFill)
-        callable(::luaCopyFrom)
-        callable(::luaUpdate)
-        callable(::luaDispose)
+        callable(::getWidth)
+        callable(::getHeight)
+        callable(::setPixel)
+        callable(::getPixel)
+        callable(::fill)
+        callable(::copyFrom)
+        callable(::update)
+        callable(::dispose)
     }
 }

@@ -35,7 +35,7 @@ object ResolvableReferenceLuaApi {
     }
 
     val luaMappings = LuaMappedMetatable(ResolvableReference::class) {
-        getter(::getId)
+        callable(::getId)
         callable(::get)
     }
 

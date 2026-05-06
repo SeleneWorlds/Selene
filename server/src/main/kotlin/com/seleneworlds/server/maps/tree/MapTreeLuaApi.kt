@@ -18,7 +18,7 @@ object MapTreeLuaApi {
      * Merge(other: MapTree)
      * ```
      */
-    private fun luaMerge(lua: Lua): Int {
+    private fun merge(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val other = lua.checkUserdata<MapTreeApi>(2)
         mapTree.merge(other)
@@ -33,7 +33,7 @@ object MapTreeLuaApi {
      * PlaceTile(coordinate: Coordinate, tileDef: TileDefinition, layerName: string)
      * ```
      */
-    private fun luaPlaceTile(lua: Lua): Int {
+    private fun placeTile(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val tileDef = lua.checkRegistry(index + 1, mapTree.mapTree.registries.tiles)
@@ -50,7 +50,7 @@ object MapTreeLuaApi {
      * ReplaceTiles(coordinate: Coordinate, tileDef: TileDefinition, layerName: string)
      * ```
      */
-    private fun luaReplaceTiles(lua: Lua): Int {
+    private fun replaceTiles(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val tileDef = lua.checkRegistry(index + 1, mapTree.mapTree.registries.tiles)
@@ -67,7 +67,7 @@ object MapTreeLuaApi {
      * SwapTile(coordinate: Coordinate, oldTileDef: TileDefinition, newTileDef: TileDefinition, layerName: string)
      * ```
      */
-    private fun luaSwapTile(lua: Lua): Int {
+    private fun swapTile(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val oldTileDef = lua.checkRegistry(index + 1, mapTree.mapTree.registries.tiles)
@@ -85,7 +85,7 @@ object MapTreeLuaApi {
      * RemoveTile(coordinate: Coordinate, tileDef: TileDefinition, layerName: string)
      * ```
      */
-    private fun luaRemoveTile(lua: Lua): Int {
+    private fun removeTile(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val tileDef = lua.checkRegistry(index + 1, mapTree.mapTree.registries.tiles)
@@ -102,7 +102,7 @@ object MapTreeLuaApi {
      * ResetTile(coordinate: Coordinate, layerName: string)
      * ```
      */
-    private fun luaResetTile(lua: Lua): Int {
+    private fun resetTile(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val layerName = lua.toString(index + 1)
@@ -118,7 +118,7 @@ object MapTreeLuaApi {
      * AnnotateTile(coordinate: Coordinate, key: string, data: table[string, any], layerName: string)
      * ```
      */
-    private fun luaAnnotateTile(lua: Lua): Int {
+    private fun annotateTile(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val key = lua.checkString(index + 1)
@@ -136,7 +136,7 @@ object MapTreeLuaApi {
      * SetVisibility(layerName: string, enabled: boolean, tag: string)
      * ```
      */
-    private fun luaSetVisibility(lua: Lua): Int {
+    private fun setVisibility(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val layerName = lua.checkString(2)
         val enabled = lua.checkBoolean(3)
@@ -153,7 +153,7 @@ object MapTreeLuaApi {
      * IsVisible(layerName: string, tag: string) -> boolean
      * ```
      */
-    private fun luaIsVisible(lua: Lua): Int {
+    private fun isVisible(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val layerName = lua.checkString(2)
         val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
@@ -169,7 +169,7 @@ object MapTreeLuaApi {
      * IsInvisible(layerName: string, tag: string) -> boolean
      * ```
      */
-    private fun luaIsInvisible(lua: Lua): Int {
+    private fun isInvisible(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val layerName = lua.checkString(2)
         val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
@@ -185,7 +185,7 @@ object MapTreeLuaApi {
      * MakeVisible(layerName: string, tag: string)
      * ```
      */
-    private fun luaMakeVisible(lua: Lua): Int {
+    private fun makeVisible(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val layerName = lua.checkString(2)
         val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
@@ -201,7 +201,7 @@ object MapTreeLuaApi {
      * MakeInvisible(layerName: string, tag: string)
      * ```
      */
-    private fun luaMakeInvisible(lua: Lua): Int {
+    private fun makeInvisible(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val layerName = lua.checkString(2)
         val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
@@ -217,7 +217,7 @@ object MapTreeLuaApi {
      * HasCollisions(layerName: string, tag: string) -> boolean
      * ```
      */
-    private fun luaHasCollisions(lua: Lua): Int {
+    private fun hasCollisions(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val layerName = lua.checkString(2)
         val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
@@ -233,7 +233,7 @@ object MapTreeLuaApi {
      * SetCollisions(layerName: string, enabled: boolean, tag: string)
      * ```
      */
-    private fun luaSetCollisions(lua: Lua): Int {
+    private fun setCollisions(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val layerName = lua.checkString(2)
         val enabled = lua.checkBoolean(3)
@@ -250,7 +250,7 @@ object MapTreeLuaApi {
      * EnableCollisions(layerName: string, tag: string)
      * ```
      */
-    private fun luaEnableCollisions(lua: Lua): Int {
+    private fun enableCollisions(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val layerName = lua.checkString(2)
         val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
@@ -266,7 +266,7 @@ object MapTreeLuaApi {
      * DisableCollisions(layerName: string, tag: string)
      * ```
      */
-    private fun luaDisableCollisions(lua: Lua): Int {
+    private fun disableCollisions(lua: Lua): Int {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val layerName = lua.checkString(2)
         val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
@@ -275,22 +275,22 @@ object MapTreeLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(MapTreeApi::class) {
-        callable(::luaMerge)
-        callable(::luaPlaceTile)
-        callable(::luaReplaceTiles)
-        callable(::luaSwapTile)
-        callable(::luaRemoveTile)
-        callable(::luaResetTile)
-        callable(::luaAnnotateTile)
-        callable(::luaSetVisibility)
-        callable(::luaMakeVisible)
-        callable(::luaMakeInvisible)
-        callable(::luaIsVisible)
-        callable(::luaIsInvisible)
-        callable(::luaSetCollisions)
-        callable(::luaEnableCollisions)
-        callable(::luaDisableCollisions)
-        callable(::luaHasCollisions)
+        callable(::merge)
+        callable(::placeTile)
+        callable(::replaceTiles)
+        callable(::swapTile)
+        callable(::removeTile)
+        callable(::resetTile)
+        callable(::annotateTile)
+        callable(::setVisibility)
+        callable(::makeVisible)
+        callable(::makeInvisible)
+        callable(::isVisible)
+        callable(::isInvisible)
+        callable(::setCollisions)
+        callable(::enableCollisions)
+        callable(::disableCollisions)
+        callable(::hasCollisions)
     }
 
 }

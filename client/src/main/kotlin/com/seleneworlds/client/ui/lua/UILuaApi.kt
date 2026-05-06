@@ -55,30 +55,30 @@ class UILuaApi(
     }
 
     override fun register(table: LuaValue) {
-        table.register("LoadUI", ::luaLoadUI)
-        table.register("LoadTheme", ::luaLoadTheme)
-        table.register("CreateTheme", ::luaCreateTheme)
-        table.register("CreateContainer", ::luaCreateContainer)
-        table.register("CreateLabel", ::luaCreateLabel)
-        table.register("AddToRoot", ::luaAddToRoot)
-        table.register("SetFocus", ::luaSetFocus)
-        table.register("GetFocus", ::luaGetFocus)
-        table.register("CreateImageButtonStyle", ::luaCreateImageButtonStyle)
-        table.register("CreateButtonStyle", ::luaCreateButtonStyle)
-        table.register("AddInputProcessor", ::luaAddInputProcessor)
-        table.register("CreateDragListener", ::luaCreateDragListener)
-        table.register("CreateAtlas", ::luaCreateAtlas)
-        table.set("Root", api.bundlesRoot)
-        table.set("Setup", setup)
+        table.register("loadUI", ::loadUI)
+        table.register("loadTheme", ::loadTheme)
+        table.register("createTheme", ::createTheme)
+        table.register("createContainer", ::createContainer)
+        table.register("createLabel", ::createLabel)
+        table.register("addToRoot", ::addToRoot)
+        table.register("setFocus", ::setFocus)
+        table.register("getFocus", ::getFocus)
+        table.register("createImageButtonStyle", ::createImageButtonStyle)
+        table.register("createButtonStyle", ::createButtonStyle)
+        table.register("addInputProcessor", ::addInputProcessor)
+        table.register("createDragListener", ::createDragListener)
+        table.register("createAtlas", ::createAtlas)
+        table.set("root", api.bundlesRoot)
+        table.set("setup", setup)
     }
 
-    private fun luaCreateAtlas(lua: Lua): Int {
+    private fun createAtlas(lua: Lua): Int {
         val textures = lua.checkSerializedMap(1)
         lua.push(api.createAtlas(textures), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaAddInputProcessor(lua: Lua): Int {
+    private fun addInputProcessor(lua: Lua): Int {
         lua.checkType(1, Lua.LuaType.TABLE)
         val registrationSite = lua.getCallerInfo()
         api.addInputProcessor(
@@ -128,13 +128,13 @@ class UILuaApi(
         return 0
     }
 
-    private fun luaSetFocus(lua: Lua): Int {
+    private fun setFocus(lua: Lua): Int {
         val actor = if (lua.isUserdata(1)) lua.checkUserdata<Actor>(1) else null
         api.setFocus(actor)
         return 0
     }
 
-    private fun luaGetFocus(lua: Lua): Int {
+    private fun getFocus(lua: Lua): Int {
         val actor = api.getFocus()
         if (actor != null) {
             lua.push(actor, Lua.Conversion.NONE)
@@ -144,7 +144,7 @@ class UILuaApi(
         return 1
     }
 
-    private fun luaAddToRoot(lua: Lua): Int {
+    private fun addToRoot(lua: Lua): Int {
         val actors = mutableListOf<Actor>()
         if (lua.isUserdata(1) && lua.toUserdata<HudApi>(1) != null) {
             api.addToRoot(lua.checkUserdata<HudApi>(1))
@@ -158,7 +158,7 @@ class UILuaApi(
         return 0
     }
 
-    private fun luaLoadUI(lua: Lua): Int {
+    private fun loadUI(lua: Lua): Int {
         val xmlFilePath = lua.checkString(1)
         if (lua.top >= 2) {
             lua.checkType(2, Lua.LuaType.TABLE)
@@ -202,7 +202,7 @@ class UILuaApi(
         return 1
     }
 
-    private fun luaLoadTheme(lua: Lua): Int {
+    private fun loadTheme(lua: Lua): Int {
         val atlas = if (lua.isUserdata(2)) lua.checkUserdata<TextureAtlas>(2) else null
         if (lua.isString(1)) {
             lua.push(api.loadTheme(lua.checkString(1), atlas), Lua.Conversion.NONE)
@@ -216,12 +216,12 @@ class UILuaApi(
         return 1
     }
 
-    private fun luaCreateTheme(lua: Lua): Int {
+    private fun createTheme(lua: Lua): Int {
         lua.push(api.createTheme(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaCreateContainer(lua: Lua): Int {
+    private fun createContainer(lua: Lua): Int {
         val theme = lua.checkUserdata(1, ThemeApi::class)
         if (lua.top > 1) {
             lua.checkType(2, Lua.LuaType.TABLE)
@@ -238,7 +238,7 @@ class UILuaApi(
         return 1
     }
 
-    private fun luaCreateLabel(lua: Lua): Int {
+    private fun createLabel(lua: Lua): Int {
         val theme = lua.checkUserdata(1, ThemeApi::class)
         if (lua.top > 1) {
             lua.checkType(2, Lua.LuaType.TABLE)
@@ -256,7 +256,7 @@ class UILuaApi(
         return 1
     }
 
-    private fun luaCreateButtonStyle(lua: Lua): Int {
+    private fun createButtonStyle(lua: Lua): Int {
         val theme = lua.toUserdata<ThemeApi>(2)
         val styles = createButtonStyle(lua, 1, theme)
         for (style in styles) {
@@ -265,7 +265,7 @@ class UILuaApi(
         return styles.size
     }
 
-    private fun luaCreateImageButtonStyle(lua: Lua): Int {
+    private fun createImageButtonStyle(lua: Lua): Int {
         val theme = lua.toUserdata<ThemeApi>(2)
         val styles = createImageButtonStyle(lua, 1, theme)
         for (style in styles) {
@@ -274,7 +274,7 @@ class UILuaApi(
         return styles.size
     }
 
-    private fun luaCreateDragListener(lua: Lua): Int {
+    private fun createDragListener(lua: Lua): Int {
         lua.checkType(1, Lua.LuaType.TABLE)
         val registrationSite = lua.getCallerInfo()
         lua.push(

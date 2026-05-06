@@ -14,19 +14,19 @@ import com.seleneworlds.server.maps.tree.MapTreeApi
 
 object DimensionLuaApi {
 
-    private fun luaGetMap(lua: Lua): Int {
+    private fun getMap(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         lua.push(dimension.getMapTree(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaSetMap(lua: Lua): Int {
+    private fun setMap(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
-        dimension.setMapTree(lua.checkUserdata<MapTreeApi>(3))
+        dimension.setMapTree(lua.checkUserdata<MapTreeApi>(2))
         return 0
     }
 
-    private fun luaHasTile(lua: Lua): Int {
+    private fun hasTile(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val tile = lua.checkRegistry(index + 1, dimension.dimension.registries.tiles)
@@ -35,7 +35,7 @@ object DimensionLuaApi {
         return 1
     }
 
-    private fun luaPlaceTile(lua: Lua): Int {
+    private fun placeTile(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val tileDef = lua.checkRegistry(index + 1, dimension.dimension.registries.tiles)
@@ -44,7 +44,7 @@ object DimensionLuaApi {
         return 1
     }
 
-    private fun luaAnnotateTile(lua: Lua): Int {
+    private fun annotateTile(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val key = lua.checkString(index + 1)
@@ -54,7 +54,7 @@ object DimensionLuaApi {
         return 0
     }
 
-    private fun luaGetTilesAt(lua: Lua): Int {
+    private fun getTilesAt(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val viewer = if (lua.isUserdata(index + 1)) lua.checkUserdata<Viewer>(index + 1) else DefaultViewer
@@ -62,7 +62,7 @@ object DimensionLuaApi {
         return 1
     }
 
-    private fun luaGetAnnotationAt(lua: Lua): Int {
+    private fun getAnnotationAt(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val key = lua.checkString(index + 1)
@@ -71,7 +71,7 @@ object DimensionLuaApi {
         return 1
     }
 
-    private fun luaHasCollisionAt(lua: Lua): Int {
+    private fun hasCollisionAt(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val viewer = if (lua.isUserdata(index + 1)) lua.checkUserdata<Viewer>(index + 1) else DefaultViewer
@@ -79,14 +79,14 @@ object DimensionLuaApi {
         return 1
     }
 
-    private fun luaGetEntitiesAt(lua: Lua): Int {
+    private fun getEntitiesAt(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         val (coordinate, _) = lua.checkCoordinate(2)
         lua.push(dimension.getEntitiesAt(coordinate), Lua.Conversion.FULL)
         return 1
     }
 
-    private fun luaGetEntitiesInRange(lua: Lua): Int {
+    private fun getEntitiesInRange(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val range = lua.checkInt(index + 1)
@@ -95,16 +95,16 @@ object DimensionLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(DimensionApi::class) {
-        getter(::luaGetMap)
-        setter(::luaSetMap)
-        callable(::luaHasTile)
-        callable(::luaPlaceTile)
-        callable(::luaAnnotateTile)
-        callable(::luaGetTilesAt)
-        callable(::luaGetAnnotationAt)
-        callable(::luaHasCollisionAt)
-        callable(::luaGetEntitiesAt)
-        callable(::luaGetEntitiesInRange)
+        callable(::getMap)
+        callable(::setMap)
+        callable(::hasTile)
+        callable(::placeTile)
+        callable(::annotateTile)
+        callable(::getTilesAt)
+        callable(::getAnnotationAt)
+        callable(::hasCollisionAt)
+        callable(::getEntitiesAt)
+        callable(::getEntitiesInRange)
     }
 
 }

@@ -13,7 +13,7 @@ object CoordinateLuaApi {
      * X: number
      * ```
      */
-    private fun luaGetX(lua: Lua): Int {
+    private fun getX(lua: Lua): Int {
         val coordinate = lua.checkUserdata<Coordinate>(1)
         lua.push(coordinate.x)
         return 1
@@ -26,7 +26,7 @@ object CoordinateLuaApi {
      * Y: number
      * ```
      */
-    private fun luaGetY(lua: Lua): Int {
+    private fun getY(lua: Lua): Int {
         val coordinate = lua.checkUserdata<Coordinate>(1)
         lua.push(coordinate.y)
         return 1
@@ -39,7 +39,7 @@ object CoordinateLuaApi {
      * Z: number
      * ```
      */
-    private fun luaGetZ(lua: Lua): Int {
+    private fun getZ(lua: Lua): Int {
         val coordinate = lua.checkUserdata<Coordinate>(1)
         lua.push(coordinate.z)
         return 1
@@ -53,7 +53,7 @@ object CoordinateLuaApi {
      * GetHorizontalDistanceTo(other: Coordinate) -> number
      * ```
      */
-    private fun luaGetHorizontalDistanceTo(lua: Lua): Int {
+    private fun getHorizontalDistanceTo(lua: Lua): Int {
         val self = lua.checkUserdata<Coordinate>(1)
         val (other, _) = lua.checkCoordinate(2)
         lua.push(self.horizontalDistanceTo(other))
@@ -61,12 +61,12 @@ object CoordinateLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(Coordinate::class) {
-        getter(::luaGetX)
-        getter(::luaGetY)
-        getter(::luaGetZ)
-        getter(::luaGetX, "x")
-        getter(::luaGetY, "y")
-        getter(::luaGetZ, "z")
-        callable(::luaGetHorizontalDistanceTo)
+        getter(::getX, "x")
+        getter(::getY, "y")
+        getter(::getZ, "z")
+        callable(::getX)
+        callable(::getY)
+        callable(::getZ)
+        callable(::getHorizontalDistanceTo)
     }
 }

@@ -25,10 +25,10 @@ class ServerMapLuaApi(private val api: ServerMapApi) : LuaModule {
     }
 
     override fun register(table: LuaValue) {
-        table.register("Create", this::luaCreate)
+        table.register("create", this::create)
     }
 
-    private fun luaCreate(lua: Lua): Int {
+    private fun create(lua: Lua): Int {
         lua.push(api.create(), Lua.Conversion.NONE)
         return 1
     }

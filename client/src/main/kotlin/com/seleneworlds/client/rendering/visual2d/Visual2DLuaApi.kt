@@ -14,7 +14,7 @@ object Visual2DLuaApi {
      * GetMetadata(key: string) -> any|nil
      * ```
      */
-    private fun luaGetMetadata(lua: Lua): Int {
+    private fun getMetadata(lua: Lua): Int {
         val self = lua.checkUserdata<Visual2DApi>(1)
         val key = lua.checkString(2)
         lua.push(self.getMetadata(key), Lua.Conversion.FULL)
@@ -22,6 +22,6 @@ object Visual2DLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(Visual2DApi::class) {
-        callable(::luaGetMetadata)
+        callable(::getMetadata)
     }
 }

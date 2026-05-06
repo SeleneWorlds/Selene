@@ -16,7 +16,7 @@ object AnimatedDrawableLuaApi {
      * CurrentFrame: number
      * ```
      */
-    private fun luaGetCurrentFrame(lua: Lua): Int {
+    private fun getCurrentFrame(lua: Lua): Int {
         val self = lua.checkUserdata<AnimatedDrawableApi>(1)
         lua.push(self.getCurrentFrame())
         return 1
@@ -29,7 +29,7 @@ object AnimatedDrawableLuaApi {
      * ElapsedTime: number
      * ```
      */
-    private fun luaGetElapsedTime(lua: Lua): Int {
+    private fun getElapsedTime(lua: Lua): Int {
         val self = lua.checkUserdata<AnimatedDrawableApi>(1)
         lua.push(self.getElapsedTime())
         return 1
@@ -42,7 +42,7 @@ object AnimatedDrawableLuaApi {
      * Duration: number
      * ```
      */
-    private fun luaGetDuration(lua: Lua): Int {
+    private fun getDuration(lua: Lua): Int {
         val self = lua.checkUserdata<AnimatedDrawableApi>(1)
         lua.push(self.getDuration())
         return 1
@@ -55,7 +55,7 @@ object AnimatedDrawableLuaApi {
      * AnimationCompleted: Event
      * ```
      */
-    private fun luaGetAnimationCompleted(lua: Lua): Int {
+    private fun getAnimationCompleted(lua: Lua): Int {
         val self = lua.checkUserdata<AnimatedDrawableApi>(1)
         val luaEventSink = LuaEventSink(self.animatedDrawable.animationCompleted) { callback: LuaValue, trace: ScriptTrace ->
             AnimatedDrawable.AnimationCompleted {
@@ -75,17 +75,17 @@ object AnimatedDrawableLuaApi {
      * WithoutOffset() -> AnimatedDrawableApi
      * ```
      */
-    private fun luaWithoutOffset(lua: Lua): Int {
+    private fun withoutOffset(lua: Lua): Int {
         val self = lua.checkUserdata<AnimatedDrawableApi>(1)
         lua.push(self.withoutOffset(), Lua.Conversion.NONE)
         return 1
     }
 
     val luaMeta = DrawableLuaApi.luaMeta.extend(AnimatedDrawableApi::class) {
-        getter(::luaGetCurrentFrame)
-        getter(::luaGetElapsedTime)
-        getter(::luaGetDuration)
-        getter(::luaGetAnimationCompleted)
-        callable(::luaWithoutOffset)
+        callable(::getCurrentFrame)
+        callable(::getElapsedTime)
+        callable(::getDuration)
+        callable(::getAnimationCompleted)
+        callable(::withoutOffset)
     }
 }

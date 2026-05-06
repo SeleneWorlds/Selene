@@ -22,7 +22,7 @@ class PlayersLuaApi(private val api: PlayersApi) : LuaModule {
     }
 
     override fun register(table: LuaValue) {
-        table.set("PlayerQueued", LuaEventSink(PlayerEvents.PlayerQueued.EVENT) { callback, trace ->
+        table.set("playerQueued", LuaEventSink(PlayerEvents.PlayerQueued.EVENT) { callback, trace ->
             PlayerEvents.PlayerQueued { entry ->
                 val lua = callback.state()
                 lua.push(callback)
@@ -31,7 +31,7 @@ class PlayersLuaApi(private val api: PlayersApi) : LuaModule {
                 entry.status
             }
         })
-        table.set("PlayerDequeued", LuaEventSink(PlayerEvents.PlayerDequeued.EVENT) { callback, trace ->
+        table.set("playerDequeued", LuaEventSink(PlayerEvents.PlayerDequeued.EVENT) { callback, trace ->
             PlayerEvents.PlayerDequeued { entry ->
                 val lua = callback.state()
                 lua.push(callback)
@@ -39,7 +39,7 @@ class PlayersLuaApi(private val api: PlayersApi) : LuaModule {
                 lua.xpCall(1, 0, trace)
             }
         })
-        table.set("PlayerJoined", LuaEventSink(PlayerEvents.PlayerJoined.EVENT) { callback, trace ->
+        table.set("playerJoined", LuaEventSink(PlayerEvents.PlayerJoined.EVENT) { callback, trace ->
             PlayerEvents.PlayerJoined { entry ->
                 val lua = callback.state()
                 lua.push(callback)
@@ -47,7 +47,7 @@ class PlayersLuaApi(private val api: PlayersApi) : LuaModule {
                 lua.xpCall(1, 0, trace)
             }
         })
-        table.set("PlayerLeft", LuaEventSink(PlayerEvents.PlayerLeft.EVENT) { callback, trace ->
+        table.set("playerLeft", LuaEventSink(PlayerEvents.PlayerLeft.EVENT) { callback, trace ->
             PlayerEvents.PlayerLeft { entry ->
                 val lua = callback.state()
                 lua.push(callback)
@@ -55,7 +55,7 @@ class PlayersLuaApi(private val api: PlayersApi) : LuaModule {
                 lua.xpCall(1, 0, trace)
             }
         })
-        table.register("GetOnlinePlayers", this::luaGetOnlinePlayers)
+        table.register("getOnlinePlayers", this::getOnlinePlayers)
     }
 
     /**
@@ -65,7 +65,7 @@ class PlayersLuaApi(private val api: PlayersApi) : LuaModule {
      * GetOnlinePlayers() -> table[Player]
      * ```
      */
-    private fun luaGetOnlinePlayers(lua: Lua): Int {
+    private fun getOnlinePlayers(lua: Lua): Int {
         lua.push(api.getOnlinePlayers(), Lua.Conversion.FULL)
         return 1
     }

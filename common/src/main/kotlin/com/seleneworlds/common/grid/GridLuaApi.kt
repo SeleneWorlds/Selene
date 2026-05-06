@@ -15,16 +15,16 @@ open class GridLuaApi(private val api: GridApi) : LuaModule {
     override val name = "selene.grid"
 
     override fun register(table: LuaValue) {
-        table.register("DefineDirection", this::luaDefineDirection)
-        table.register("GetDirectionByName", this::luaGetDirectionByName)
+        table.register("defineDirection", this::defineDirection)
+        table.register("getDirectionByName", this::getDirectionByName)
     }
 
-    private fun luaGetDirectionByName(lua: Lua): Int {
+    private fun getDirectionByName(lua: Lua): Int {
         lua.push(api.getDirectionByName(lua.checkString(1)), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaDefineDirection(lua: Lua): Int {
+    private fun defineDirection(lua: Lua): Int {
         lua.push(
             api.defineDirection(lua.checkString(1), lua.checkInt(2), lua.checkInt(3), lua.checkInt(4), lua.checkFloat(5)),
             Lua.Conversion.NONE

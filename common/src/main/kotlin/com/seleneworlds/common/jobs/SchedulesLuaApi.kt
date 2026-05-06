@@ -40,16 +40,16 @@ class SchedulesLuaApi(private val api: SchedulesApi) : LuaModule, Disposable {
     }
 
     override fun register(table: LuaValue) {
-        table.set("EverySecond", secondEvent)
-        table.set("EveryMinute", minuteEvent)
-        table.set("EveryHour", hourEvent)
-        table.register("SetTimeout", ::luaSetTimeout)
-        table.register("ClearTimeout", ::luaClearTimeout)
-        table.register("SetInterval", ::luaSetInterval)
-        table.register("ClearInterval", ::luaClearInterval)
+        table.set("everySecond", secondEvent)
+        table.set("everyMinute", minuteEvent)
+        table.set("everyHour", hourEvent)
+        table.register("setTimeout", ::setTimeout)
+        table.register("clearTimeout", ::clearTimeout)
+        table.register("setInterval", ::setInterval)
+        table.register("clearInterval", ::clearInterval)
     }
 
-    private fun luaSetTimeout(lua: Lua): Int {
+    private fun setTimeout(lua: Lua): Int {
         val intervalMs = lua.checkInt(1)
         val callback = lua.checkFunction(2)
         if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
@@ -68,12 +68,12 @@ class SchedulesLuaApi(private val api: SchedulesApi) : LuaModule, Disposable {
         return 1
     }
 
-    private fun luaClearTimeout(lua: Lua): Int {
+    private fun clearTimeout(lua: Lua): Int {
         api.clearTimeout(lua.checkInt(1))
         return 0
     }
 
-    private fun luaSetInterval(lua: Lua): Int {
+    private fun setInterval(lua: Lua): Int {
         val intervalMs = lua.checkInt(1)
         val callback = lua.checkFunction(2)
         if (lua.top >= 3) lua.checkType(3, Lua.LuaType.TABLE)
@@ -95,7 +95,7 @@ class SchedulesLuaApi(private val api: SchedulesApi) : LuaModule, Disposable {
         return 1
     }
 
-    private fun luaClearInterval(lua: Lua): Int {
+    private fun clearInterval(lua: Lua): Int {
         api.clearInterval(lua.checkInt(1))
         return 0
     }

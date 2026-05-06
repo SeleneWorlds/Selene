@@ -103,7 +103,7 @@ class LuaClassAnalyzer : BaseLuaAnalyzer() {
             val propertyType = extractDocumentationBlocks(documentation, "property").firstOrNull()
                 ?.let { signatureParser.parseProperty(it) }
                 ?: throw IllegalArgumentException("Unknown property type found for getter $methodName in ${clazz.parent}")
-            val propertyName = methodName.removePrefix("luaGet")
+            val propertyName = methodName.removePrefix("luaGet").removePrefix("get")
             val description = removeDocumentationBlocks(documentation, "property")
             properties[propertyName] =
                 PropertyInfo(propertyName, propertyType.type, PropertyAccess.READ_ONLY, description)
@@ -116,7 +116,7 @@ class LuaClassAnalyzer : BaseLuaAnalyzer() {
             val propertyType = extractDocumentationBlocks(documentation, "property").firstOrNull()
                 ?.let { signatureParser.parseProperty(it) }
                 ?: throw IllegalArgumentException("Unknown property type found for setter $methodName in ${clazz.parent}")
-            val propertyName = methodName.removePrefix("luaSet")
+            val propertyName = methodName.removePrefix("luaSet").removePrefix("set")
             val description = removeDocumentationBlocks(documentation, "property")
             properties.compute(propertyName) { _, value ->
                 PropertyInfo(

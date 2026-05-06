@@ -8,60 +8,60 @@ import com.seleneworlds.common.lua.util.checkUserdata
 
 object ContainerLuaMetatable {
     val luaMeta = GroupLuaMetatable.luaMeta.extend(Container::class) {
-        setter(::luaSetMinWidth)
-        setter(::luaSetMinHeight)
-        setter(::luaSetWidth)
-        setter(::luaSetHeight)
-        setter(::luaSetMaxWidth)
-        setter(::luaSetMaxHeight)
-        callable(::luaAddChild)
+        callable(::setMinWidth)
+        callable(::setMinHeight)
+        callable(::setWidth)
+        callable(::setHeight)
+        callable(::setMaxWidth)
+        callable(::setMaxHeight)
+        callable(::addChild)
     }
 
-    private fun luaAddChild(it: Lua): Int {
+    private fun addChild(it: Lua): Int {
         val container = it.checkUserdata<Container<Actor>>(1)
         val child = it.checkUserdata(2, Actor::class)
         container.actor = child
         return 0
     }
 
-    private fun luaSetWidth(it: Lua): Int {
+    private fun setWidth(it: Lua): Int {
         val container = it.checkUserdata<Container<Actor>>(1)
-        val minWidth = it.checkFloat(3)
+        val minWidth = it.checkFloat(2)
         container.width(minWidth)
         return 0
     }
 
-    private fun luaSetHeight(it: Lua): Int {
+    private fun setHeight(it: Lua): Int {
         val container = it.checkUserdata<Container<Actor>>(1)
-        val minHeight = it.checkFloat(3)
+        val minHeight = it.checkFloat(2)
         container.height(minHeight)
         return 0
     }
 
-    private fun luaSetMinWidth(it: Lua): Int {
+    private fun setMinWidth(it: Lua): Int {
         val container = it.checkUserdata<Container<Actor>>(1)
-        val minWidth = it.checkFloat(3)
+        val minWidth = it.checkFloat(2)
         container.minWidth(minWidth)
         return 0
     }
 
-    private fun luaSetMinHeight(it: Lua): Int {
+    private fun setMinHeight(it: Lua): Int {
         val container = it.checkUserdata<Container<Actor>>(1)
-        val minHeight = it.checkFloat(3)
+        val minHeight = it.checkFloat(2)
         container.minHeight(minHeight)
         return 0
     }
 
-    private fun luaSetMaxWidth(it: Lua): Int {
+    private fun setMaxWidth(it: Lua): Int {
         val container = it.checkUserdata<Container<Actor>>(1)
-        val maxWidth = it.checkFloat(3)
+        val maxWidth = it.checkFloat(2)
         container.maxWidth(maxWidth)
         return 0
     }
 
-    private fun luaSetMaxHeight(it: Lua): Int {
+    private fun setMaxHeight(it: Lua): Int {
         val container = it.checkUserdata<Container<Actor>>(1)
-        val maxHeight = it.checkFloat(3)
+        val maxHeight = it.checkFloat(2)
         container.maxHeight(maxHeight)
         return 0
     }

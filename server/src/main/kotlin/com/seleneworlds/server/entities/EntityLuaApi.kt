@@ -1,5 +1,6 @@
 package com.seleneworlds.server.entities
 
+import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.lua.LuaMappedMetatable
 import com.seleneworlds.common.lua.util.*
@@ -11,117 +12,133 @@ import party.iroiro.luajava.Lua
 
 object EntityLuaApi {
 
-    private fun luaGetNetworkId(lua: Lua): Int {
+    private fun getNetworkId(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getNetworkId())
         return 1
     }
 
-    private fun luaGetCustomData(lua: Lua): Int {
+    @Deprecated("Use getCustomData(Identifier) instead.")
+    private fun getLegacyCustomData(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getCustomData(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaGetEntityDefinition(lua: Lua): Int {
+    private fun getCustomData(lua: Lua): Int {
+        val api = lua.checkUserdata<EntityApi>(1)
+        val identifier = lua.checkIdentifier(2)
+        lua.push(api.getCustomData(identifier), Lua.Conversion.FULL)
+        return 1
+    }
+
+    private fun setCustomData(lua: Lua): Int {
+        val api = lua.checkUserdata<EntityApi>(1)
+        val identifier = lua.checkIdentifier(2)
+        val value = lua.toObject(3)
+        api.setCustomData(identifier, value)
+        return 0
+    }
+
+    private fun getEntityDefinition(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getEntityDefinition().get(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaGetName(lua: Lua): Int {
+    private fun getName(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getName())
         return 1
     }
 
-    private fun luaSetName(lua: Lua): Int {
+    private fun setName(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
-        entity.setName(lua.checkString(3))
+        entity.setName(lua.checkString(2))
         return 0
     }
 
-    private fun luaGetCoordinate(lua: Lua): Int {
+    private fun getCoordinate(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getCoordinate(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaGetFacing(lua: Lua): Int {
+    private fun getFacing(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getFacing(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaGetDimension(lua: Lua): Int {
+    private fun getDimension(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getDimension(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaGetMap(lua: Lua): Int {
+    private fun getMap(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getMap(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaGetCollisionViewer(lua: Lua): Int {
+    private fun getCollisionViewer(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getCollisionViewer(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaGetVisionViewer(lua: Lua): Int {
+    private fun getVisionViewer(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getVisionViewer(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaRef(lua: Lua): Int {
+    private fun ref(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.entity.resolvableReference(), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaSetCoordinate(lua: Lua): Int {
+    private fun setCoordinate(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val (coordinate, _) = lua.checkCoordinate(2)
         entity.setCoordinate(coordinate)
         return 0
     }
 
-    private fun luaSpawn(lua: Lua): Int {
+    private fun spawn(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val dimension = lua.toUserdata<DimensionApi>(2)?.dimension
         entity.spawn(dimension)
         return 0
     }
 
-    private fun luaDespawn(lua: Lua): Int {
+    private fun despawn(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         entity.despawn()
         return 0
     }
 
-    private fun luaRemove(lua: Lua): Int {
+    private fun remove(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         entity.remove()
         return 0
     }
 
-    private fun luaSetFacing(lua: Lua): Int {
+    private fun setFacing(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         entity.setFacing(lua.checkDirection(2, entity.entity.world.grid))
         return 0
     }
 
-    private fun luaMove(lua: Lua): Int {
+    private fun move(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.move(lua.checkDirection(2, entity.entity.world.grid)))
         return 1
     }
 
-    private fun luaSetVision(lua: Lua): Int {
+    private fun setVision(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val enabled = lua.checkBoolean(2)
         val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
@@ -129,28 +146,28 @@ object EntityLuaApi {
         return 0
     }
 
-    private fun luaHasVision(lua: Lua): Int {
+    private fun hasVision(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
         lua.push(entity.hasVision(tagName))
         return 1
     }
 
-    private fun luaGrantVision(lua: Lua): Int {
+    private fun grantVision(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
         entity.grantVision(tagName)
         return 0
     }
 
-    private fun luaRevokeVision(lua: Lua): Int {
+    private fun revokeVision(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
         entity.revokeVision(tagName)
         return 0
     }
 
-    private fun luaSetVisibility(lua: Lua): Int {
+    private fun setVisibility(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val enabled = lua.checkBoolean(2)
         val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
@@ -158,42 +175,42 @@ object EntityLuaApi {
         return 0
     }
 
-    private fun luaIsVisible(lua: Lua): Int {
+    private fun isVisible(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
         lua.push(entity.isVisible(tagName))
         return 1
     }
 
-    private fun luaIsInvisible(lua: Lua): Int {
+    private fun isInvisible(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
         lua.push(entity.isInvisible(tagName))
         return 1
     }
 
-    private fun luaMakeVisible(lua: Lua): Int {
+    private fun makeVisible(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
         entity.makeVisible(tagName)
         return 0
     }
 
-    private fun luaMakeInvisible(lua: Lua): Int {
+    private fun makeInvisible(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
         entity.makeInvisible(tagName)
         return 0
     }
 
-    private fun luaHasCollisions(lua: Lua): Int {
+    private fun hasCollisions(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
         lua.push(entity.hasCollisions(tagName))
         return 1
     }
 
-    private fun luaSetCollisions(lua: Lua): Int {
+    private fun setCollisions(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val enabled = lua.checkBoolean(2)
         val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
@@ -201,21 +218,21 @@ object EntityLuaApi {
         return 0
     }
 
-    private fun luaEnableCollisions(lua: Lua): Int {
+    private fun enableCollisions(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
         entity.enableCollisions(tagName)
         return 0
     }
 
-    private fun luaDisableCollisions(lua: Lua): Int {
+    private fun disableCollisions(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
         entity.disableCollisions(tagName)
         return 0
     }
 
-    private fun luaAddDynamicComponent(lua: Lua): Int {
+    private fun addDynamicComponent(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val name = lua.checkString(2)
         lua.pushValue(3)
@@ -239,19 +256,19 @@ object EntityLuaApi {
         return 0
     }
 
-    private fun luaGetControllingPlayers(lua: Lua): Int {
+    private fun getControllingPlayers(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getControllingPlayers(), Lua.Conversion.FULL)
         return 1
     }
 
-    private fun luaGetAttribute(lua: Lua): Int {
+    private fun getAttribute(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getAttribute(lua.checkString(2)), Lua.Conversion.NONE)
         return 1
     }
 
-    private fun luaCreateAttribute(lua: Lua): Int {
+    private fun createAttribute(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val name = lua.checkString(2)
         val initialValue = lua.toAny(3)
@@ -259,56 +276,58 @@ object EntityLuaApi {
         return 1
     }
 
-    private fun luaHasTag(lua: Lua): Int {
+    private fun hasTag(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.hasTag(lua.checkString(2)))
         return 1
     }
 
-    private fun luaPlayAnimation(lua: Lua): Int {
+    private fun playAnimation(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         entity.playAnimation(lua.checkString(2))
         return 0
     }
 
     val luaMeta = LuaMappedMetatable(EntityApi::class) {
-        getter(::luaGetNetworkId)
-        getter(::luaGetCustomData)
-        getter(::luaGetEntityDefinition)
-        getter(::luaGetName)
-        setter(::luaSetName)
-        getter(::luaGetCoordinate)
-        getter(::luaGetFacing)
-        getter(::luaGetDimension)
-        getter(::luaGetMap)
-        getter(::luaGetCollisionViewer, "Collision")
-        getter(::luaGetVisionViewer, "Vision")
-        callable(::luaSpawn)
-        callable(::luaDespawn)
-        callable(::luaRemove)
-        callable(::luaRef)
-        callable(::luaSetCoordinate)
-        callable(::luaSetFacing)
-        callable(::luaMove)
-        callable(::luaSetVision)
-        callable(::luaHasVision)
-        callable(::luaGrantVision)
-        callable(::luaRevokeVision)
-        callable(::luaSetVisibility)
-        callable(::luaIsVisible)
-        callable(::luaIsInvisible)
-        callable(::luaMakeVisible)
-        callable(::luaMakeInvisible)
-        callable(::luaHasCollisions)
-        callable(::luaSetCollisions)
-        callable(::luaEnableCollisions)
-        callable(::luaDisableCollisions)
-        callable(::luaAddDynamicComponent)
-        callable(::luaGetControllingPlayers)
-        callable(::luaGetAttribute)
-        callable(::luaCreateAttribute)
-        callable(::luaHasTag)
-        callable(::luaPlayAnimation)
+        callable(::getNetworkId)
+        callable(::getEntityDefinition)
+        callable(::getName)
+        callable(::setName)
+        callable(::getCoordinate)
+        callable(::getFacing)
+        callable(::getDimension)
+        callable(::getMap)
+        callable(::getCollisionViewer)
+        callable(::getVisionViewer)
+        callable(::spawn)
+        callable(::despawn)
+        callable(::remove)
+        callable(::ref)
+        callable(::setCoordinate)
+        callable(::setFacing)
+        callable(::move)
+        callable(::setVision)
+        callable(::getDimension)
+        callable(::hasVision)
+        callable(::grantVision)
+        callable(::revokeVision)
+        callable(::setVisibility)
+        callable(::isVisible)
+        callable(::isInvisible)
+        callable(::makeVisible)
+        callable(::makeInvisible)
+        callable(::hasCollisions)
+        callable(::setCollisions)
+        callable(::enableCollisions)
+        callable(::disableCollisions)
+        callable(::addDynamicComponent)
+        callable(::getControllingPlayers)
+        callable(::getAttribute)
+        callable(::createAttribute)
+        callable(::hasTag)
+        callable(::playAnimation)
+        callable(::getCustomData)
+        callable(::setCustomData)
     }
 
 }

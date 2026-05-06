@@ -17,18 +17,12 @@ open class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaM
         body()
     }
 
-    private fun capitalize(s: String): String {
-        return s.replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase() else it.toString()
-        }
-    }
-
     fun getter(function: KFunction<*>, alias: String? = null) {
         require(!function.isSuspend) { "Suspend functions are not supported" }
         require(function.parameters.size == 1) { "Method '${function.name}' has invalid number of parameters: ${function.parameters.size}" }
         require(function.parameters[0].type.classifier == Lua::class) { "Method '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
         require(function.returnType.classifier == Int::class) { "Method '${function.name}' has invalid return type: ${function.returnType}" }
-        val key = alias ?: capitalize(function.name.removePrefix("luaGet").removePrefix("get"))
+        val key = alias ?: function.name.removePrefix("luaGet").removePrefix("get")
         getters[key] = function
         function.isAccessible = true
     }
@@ -38,7 +32,7 @@ open class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaM
         require(function.parameters.size == 1) { "Method '${function.name}' has invalid number of parameters: ${function.parameters.size}" }
         require(function.parameters[0].type.classifier == Lua::class) { "Method '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
         require(function.returnType.classifier == Int::class) { "Method '${function.name}' has invalid return type: ${function.returnType}" }
-        val key = alias ?: capitalize(function.name.removePrefix("luaSet").removePrefix("set"))
+        val key = alias ?: function.name.removePrefix("luaSet").removePrefix("set")
         setters[key] = function
         function.isAccessible = true
     }
@@ -48,7 +42,7 @@ open class LuaMappedMetatable<T : Any>(private val clazz: KClass<T>, body: (LuaM
         require(function.parameters.size == 1) { "Method '${function.name}' has invalid number of parameters: ${function.parameters.size}" }
         require(function.parameters[0].type.classifier == Lua::class) { "Method '${function.name}' has invalid parameter type: ${function.parameters[0].type}" }
         require(function.returnType.classifier == Int::class) { "Method '${function.name}' has invalid return type: ${function.returnType}" }
-        val key = alias ?: capitalize(function.name.removePrefix("lua"))
+        val key = alias ?: function.name.removePrefix("lua")
         callables[key] = function
         function.isAccessible = true
     }

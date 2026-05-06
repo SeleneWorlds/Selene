@@ -1,13 +1,13 @@
 local LML = require("selene.ui.lml")
 
 return {
-    CreateAtlas = function(textures)
-        return coroutine.yield(LML.CreateAtlas(textures))
+    createAtlas = function(textures)
+        return coroutine.yield(LML.createAtlas(textures))
     end,
-    LoadTheme = function(theme, atlas)
-        return coroutine.yield(LML.LoadTheme(theme, atlas))
+    loadTheme = function(theme, atlas)
+        return coroutine.yield(LML.loadTheme(theme, atlas))
     end,
-    LoadUI = function(path, options)
-        return coroutine.yield(LML.LoadUI(path, options))
+    loadUI = function(path, options)
+        return coroutine.yield(LML.loadUI(path, options))
     end
 }

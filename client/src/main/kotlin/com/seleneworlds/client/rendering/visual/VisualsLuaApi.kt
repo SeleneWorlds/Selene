@@ -37,10 +37,10 @@ class VisualsLuaApi(private val api: VisualsApi) : LuaModule {
     }
 
     override fun register(table: LuaValue) {
-        table.register("Create", ::luaCreate)
+        table.register("create", ::create)
     }
 
-    private fun luaCreate(lua: Lua): Int {
+    private fun create(lua: Lua): Int {
         val identifier = lua.checkIdentifier(1)
         try {
             lua.push(api.create(identifier), Lua.Conversion.NONE)

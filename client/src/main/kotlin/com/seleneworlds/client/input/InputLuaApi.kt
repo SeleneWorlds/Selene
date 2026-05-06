@@ -17,18 +17,18 @@ class InputLuaApi(private val api: InputApi) : LuaModule {
     override val name = "selene.input"
 
     override fun register(table: LuaValue) {
-        table.register("BindContinuousAction", this::luaBindContinuousAction)
-        table.register("BindAction", this::luaBindAction)
-        table.register("BindPressAction", this::luaBindPressAction)
-        table.register("BindReleaseAction", this::luaBindReleaseAction)
-        table.register("IsKeyPressed", this::luaIsKeyPressed)
-        table.register("IsMousePressed", this::luaIsMousePressed)
-        table.register("GetMousePosition", this::luaGetMousePosition)
+        table.register("bindContinuousAction", this::bindContinuousAction)
+        table.register("bindAction", this::bindAction)
+        table.register("bindPressAction", this::bindPressAction)
+        table.register("bindReleaseAction", this::bindReleaseAction)
+        table.register("isKeyPressed", this::isKeyPressed)
+        table.register("isMousePressed", this::isMousePressed)
+        table.register("getMousePosition", this::getMousePosition)
         table.set("KEYBOARD", api.inputTypeKeyboard)
         table.set("MOUSE", api.inputTypeMouse)
     }
 
-    private fun luaBindContinuousAction(lua: Lua): Int {
+    private fun bindContinuousAction(lua: Lua): Int {
         val type = lua.checkEnum<InputType>(1)
         val input = lua.checkString(2)
         val function = captureFunction(lua)
@@ -41,38 +41,38 @@ class InputLuaApi(private val api: InputApi) : LuaModule {
         return 0
     }
 
-    private fun luaBindAction(lua: Lua): Int {
+    private fun bindAction(lua: Lua): Int {
         bindAction(lua) { type, input, keyboardCallback, mouseCallback ->
             api.bindAction(type, input, keyboardCallback, mouseCallback)
         }
         return 0
     }
 
-    private fun luaBindPressAction(lua: Lua): Int {
+    private fun bindPressAction(lua: Lua): Int {
         bindAction(lua) { type, input, keyboardCallback, mouseCallback ->
             api.bindPressAction(type, input, keyboardCallback, mouseCallback)
         }
         return 0
     }
 
-    private fun luaBindReleaseAction(lua: Lua): Int {
+    private fun bindReleaseAction(lua: Lua): Int {
         bindAction(lua) { type, input, keyboardCallback, mouseCallback ->
             api.bindReleaseAction(type, input, keyboardCallback, mouseCallback)
         }
         return 0
     }
 
-    private fun luaIsKeyPressed(lua: Lua): Int {
+    private fun isKeyPressed(lua: Lua): Int {
         lua.push(api.isKeyPressed(lua.checkString(1)))
         return 1
     }
 
-    private fun luaIsMousePressed(lua: Lua): Int {
+    private fun isMousePressed(lua: Lua): Int {
         lua.push(api.isMousePressed(lua.checkString(1)))
         return 1
     }
 
-    private fun luaGetMousePosition(lua: Lua): Int {
+    private fun getMousePosition(lua: Lua): Int {
         val (x, y) = api.getMousePosition()
         lua.push(x)
         lua.push(y)

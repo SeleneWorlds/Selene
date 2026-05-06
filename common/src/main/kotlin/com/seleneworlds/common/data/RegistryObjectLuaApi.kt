@@ -13,7 +13,7 @@ object RegistryObjectLuaApi {
      * Id: number|nil
      * ```
      */
-    private fun luaGetId(lua: Lua): Int {
+    private fun getId(lua: Lua): Int {
         val registryObject = lua.checkUserdata<RegistryObject<*>>(1)
         lua.push(registryObject.id)
         return 1
@@ -26,7 +26,7 @@ object RegistryObjectLuaApi {
      * Name: string
      * ```
      */
-    private fun luaGetName(lua: Lua): Int {
+    private fun getName(lua: Lua): Int {
         val registryObject = lua.checkUserdata<RegistryObject<*>>(1)
         lua.push(registryObject.identifier.toString())
         return 1
@@ -39,7 +39,7 @@ object RegistryObjectLuaApi {
      * GetMetadata(key: string) -> any|nil
      * ```
      */
-    private fun luaGetMetadata(lua: Lua): Int {
+    private fun getMetadata(lua: Lua): Int {
         val registryObject = lua.checkUserdata<RegistryObject<*>>(1)
         val key = lua.checkString(2)
         val value = (registryObject as? MetadataHolder)?.metadata[key]
@@ -54,7 +54,7 @@ object RegistryObjectLuaApi {
      * HasTag(tag: string) -> boolean
      * ```
      */
-    private fun luaHasTag(lua: Lua): Int {
+    private fun hasTag(lua: Lua): Int {
         val registryObject = lua.checkUserdata<RegistryObject<*>>(1)
         val tag = lua.checkString(2)
         lua.push((registryObject as? TagHolder)?.tags?.contains(tag) == true)
@@ -62,9 +62,9 @@ object RegistryObjectLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(RegistryObject::class) {
-        getter(::luaGetId)
-        getter(::luaGetName)
-        callable(::luaGetMetadata)
-        callable(::luaHasTag)
+        callable(::getId)
+        callable(::getName)
+        callable(::getMetadata)
+        callable(::hasTag)
     }
 }

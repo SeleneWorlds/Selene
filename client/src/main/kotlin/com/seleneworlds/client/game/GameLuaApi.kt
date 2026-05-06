@@ -25,17 +25,17 @@ class GameLuaApi(private val api: GameApi) : LuaModule {
         }
     }
 
-    fun luaSetWindowAspectRatio(lua: Lua): Int {
+    fun setWindowAspectRatio(lua: Lua): Int {
         api.setWindowAspectRatio(lua.checkInt(1), lua.checkInt(2))
         return 0
     }
 
-    fun luaClearWindowAspectRatio(@Suppress("UNUSED_PARAMETER") lua: Lua): Int {
+    fun clearWindowAspectRatio(@Suppress("UNUSED_PARAMETER") lua: Lua): Int {
         api.clearWindowAspectRatio()
         return 0
     }
 
-    fun luaSetWindowScaling(lua: Lua): Int {
+    fun setWindowScaling(lua: Lua): Int {
         val strategy = lua.checkEnum<ScalingStrategy>(1)
         val baseWidth = if (lua.top >= 2) lua.checkInt(2) else null
         val baseHeight = if (lua.top >= 3) lua.checkInt(3) else null
@@ -44,9 +44,9 @@ class GameLuaApi(private val api: GameApi) : LuaModule {
     }
 
     override fun register(table: LuaValue) {
-        table.register("SetWindowAspectRatio", ::luaSetWindowAspectRatio)
-        table.register("ClearWindowAspectRatio", ::luaClearWindowAspectRatio)
-        table.register("SetWindowScaling", ::luaSetWindowScaling)
-        table.set("PreTick", gamePreTick)
+        table.register("setWindowAspectRatio", ::setWindowAspectRatio)
+        table.register("clearWindowAspectRatio", ::clearWindowAspectRatio)
+        table.register("setWindowScaling", ::setWindowScaling)
+        table.set("preTick", gamePreTick)
     }
 }

@@ -14,16 +14,16 @@ class MovementGridLuaApi(private val api: MovementGridApi) : LuaModule {
     override val name = "selene.movement.grid"
 
     override fun register(table: LuaValue) {
-        table.register("SetMotion", this::luaSetMotion)
-        table.register("SetFacing", this::luaSetFacing)
+        table.register("setMotion", this::setMotion)
+        table.register("setFacing", this::setFacing)
     }
 
-    private fun luaSetMotion(lua: Lua): Int {
+    private fun setMotion(lua: Lua): Int {
         api.setMotion(lua.checkUserdata(1, Direction::class))
         return 0
     }
 
-    private fun luaSetFacing(lua: Lua): Int {
+    private fun setFacing(lua: Lua): Int {
         api.setFacing(lua.checkUserdata(1, Direction::class))
         return 0
     }

@@ -13,17 +13,17 @@ class SavesLuaApi(private val api: SavesApi) : LuaModule {
     override val name = "selene.saves"
 
     override fun register(table: LuaValue) {
-        table.register("Has", this::luaHas)
-        table.register("Save", this::luaSave)
-        table.register("Load", this::luaLoad)
+        table.register("has", this::has)
+        table.register("save", this::save)
+        table.register("load", this::load)
     }
 
-    private fun luaHas(lua: Lua): Int {
+    private fun has(lua: Lua): Int {
         lua.push(api.has(lua.checkString(-1)))
         return 1
     }
 
-    private fun luaSave(lua: Lua): Int {
+    private fun save(lua: Lua): Int {
         val savable = lua.toJavaObject(-2)
         val path = lua.checkString(-1)
         if (savable != null) {
@@ -32,7 +32,7 @@ class SavesLuaApi(private val api: SavesApi) : LuaModule {
         return 0
     }
 
-    private fun luaLoad(lua: Lua): Int {
+    private fun load(lua: Lua): Int {
         lua.push(api.load(lua.checkString(-1)), Lua.Conversion.FULL)
         return 1
     }

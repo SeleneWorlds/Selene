@@ -19,7 +19,7 @@ object EntityLuaApi {
      * Coordinate: Coordinate
      * ```
      */
-    private fun luaGetCoordinate(lua: Lua): Int {
+    private fun getCoordinate(lua: Lua): Int {
         val self = lua.checkUserdata<EntityApi>(1)
         lua.push(self.getCoordinate(), Lua.Conversion.NONE)
         return 1
@@ -32,7 +32,7 @@ object EntityLuaApi {
      * Spawn()
      * ```
      */
-    private fun luaSpawn(lua: Lua): Int {
+    private fun spawn(lua: Lua): Int {
         val self = lua.checkUserdata<EntityApi>(1)
         self.spawn()
         return 0
@@ -45,7 +45,7 @@ object EntityLuaApi {
      * Despawn()
      * ```
      */
-    private fun luaDespawn(lua: Lua): Int {
+    private fun despawn(lua: Lua): Int {
         val self = lua.checkUserdata<EntityApi>(1)
         self.despawn()
         return 0
@@ -58,7 +58,7 @@ object EntityLuaApi {
      * SetCoordinate(coordinate: Coordinate)
      * ```
      */
-    private fun luaSetCoordinate(lua: Lua): Int {
+    private fun setCoordinate(lua: Lua): Int {
         val self = lua.checkUserdata<EntityApi>(1)
         val (coordinate, _) = lua.checkCoordinate(2)
         self.setCoordinate(coordinate)
@@ -72,7 +72,7 @@ object EntityLuaApi {
      * AddComponent(name: string, componentData: table)
      * ```
      */
-    private fun luaAddComponent(lua: Lua): Int {
+    private fun addComponent(lua: Lua): Int {
         val self = lua.checkUserdata<EntityApi>(1)
         val componentName = lua.checkString(2)
         val componentData = lua.toSerializedMap(3)
@@ -92,7 +92,7 @@ object EntityLuaApi {
      * GetComponent(name: string) -> EntityComponent|nil
      * ```
      */
-    private fun luaGetComponent(lua: Lua): Int {
+    private fun getComponent(lua: Lua): Int {
         val self = lua.checkUserdata<EntityApi>(1)
         val componentName = lua.checkString(2)
         val component = self.getComponent(componentName)
@@ -104,11 +104,11 @@ object EntityLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(EntityApi::class) {
-        getter(::luaGetCoordinate)
-        callable(::luaSpawn)
-        callable(::luaDespawn)
-        callable(::luaSetCoordinate)
-        callable(::luaAddComponent)
-        callable(::luaGetComponent)
+        callable(::getCoordinate)
+        callable(::spawn)
+        callable(::despawn)
+        callable(::setCoordinate)
+        callable(::addComponent)
+        callable(::getComponent)
     }
 }

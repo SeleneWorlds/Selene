@@ -10,9 +10,9 @@ import com.seleneworlds.common.lua.util.checkUserdata
 
 object TextFieldClickListenerLuaMetatable {
     val luaMeta = LuaMappedMetatable(TextField.TextFieldClickListener::class) {
-        callable(::luaKeyDown)
-        callable(::luaKeyUp)
-        callable(::luaKeyTyped)
+        callable(::keyDown)
+        callable(::keyUp)
+        callable(::keyTyped)
     }
 
     /**
@@ -22,7 +22,7 @@ object TextFieldClickListenerLuaMetatable {
      * KeyDown(event: InputEvent, keyCode: number) -> boolean
      * ```
      */
-    private fun luaKeyDown(lua: Lua): Int {
+    private fun keyDown(lua: Lua): Int {
         val listener = lua.checkUserdata<ClickListener>(1)
         val event = lua.checkUserdata<InputEvent>(2)
         val keyCode = lua.checkInt(3)
@@ -37,7 +37,7 @@ object TextFieldClickListenerLuaMetatable {
      * KeyUp(event: InputEvent, keyCode: number) -> boolean
      * ```
      */
-    private fun luaKeyUp(lua: Lua): Int {
+    private fun keyUp(lua: Lua): Int {
         val listener = lua.checkUserdata<ClickListener>(1)
         val event = lua.checkUserdata<InputEvent>(2)
         val keyCode = lua.checkInt(3)
@@ -52,7 +52,7 @@ object TextFieldClickListenerLuaMetatable {
      * KeyTyped(event: InputEvent, char: number) -> boolean
      * ```
      */
-    private fun luaKeyTyped(lua: Lua): Int {
+    private fun keyTyped(lua: Lua): Int {
         val listener = lua.checkUserdata<ClickListener>(1)
         val event = lua.checkUserdata<InputEvent>(2)
         val char = lua.checkInt(3).toChar()

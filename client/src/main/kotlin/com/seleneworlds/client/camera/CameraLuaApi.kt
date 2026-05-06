@@ -26,12 +26,12 @@ class CameraLuaApi(private val api: CameraApi) : LuaModule {
         }
     }
 
-    fun luaGetCoordinate(lua: Lua): Int {
+    fun getCoordinate(lua: Lua): Int {
         lua.push(api.getCoordinate(), Lua.Conversion.NONE)
         return 1
     }
 
-    fun luaSetViewport(lua: Lua): Int {
+    fun setViewport(lua: Lua): Int {
         val x = lua.checkInt(1)
         val y = lua.checkInt(2)
         val width = lua.checkInt(3)
@@ -40,7 +40,7 @@ class CameraLuaApi(private val api: CameraApi) : LuaModule {
         return 0
     }
 
-    fun luaScreenToWorld(lua: Lua): Int {
+    fun screenToWorld(lua: Lua): Int {
         val worldPos = api.screenToWorld(lua.checkFloat(1), lua.checkFloat(2))
         lua.push(worldPos.x)
         lua.push(worldPos.y)
@@ -48,9 +48,9 @@ class CameraLuaApi(private val api: CameraApi) : LuaModule {
     }
 
     override fun register(table: LuaValue) {
-        table.register("SetViewport", ::luaSetViewport)
-        table.register("ScreenToWorld", ::luaScreenToWorld)
-        table.register("GetCoordinate", ::luaGetCoordinate)
-        table.set("OnCoordinateChanged", cameraCoordinateChanged)
+        table.register("setViewport", ::setViewport)
+        table.register("screenToWorld", ::screenToWorld)
+        table.register("getCoordinate", ::getCoordinate)
+        table.set("onCoordinateChanged", cameraCoordinateChanged)
     }
 }

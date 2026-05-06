@@ -7,19 +7,19 @@ import com.seleneworlds.common.lua.util.checkUserdata
 
 object LabelLuaMetatable {
     val luaMeta = ActorLuaMetatable.luaMeta.extend(Label::class) {
-        getter(::luaGetText)
-        setter(::luaSetText)
+        callable(::getText)
+        callable(::setText)
     }
 
-    private fun luaGetText(lua: Lua): Int {
+    private fun getText(lua: Lua): Int {
         val label = lua.checkUserdata<Label>(1)
         lua.push(label.text.toString())
         return 1
     }
 
-    private fun luaSetText(lua: Lua): Int {
+    private fun setText(lua: Lua): Int {
         val label = lua.checkUserdata<Label>(1)
-        val text = lua.checkString(3)
+        val text = lua.checkString(2)
         label.setText(text)
         return 0
     }

@@ -12,7 +12,7 @@ object TextureRegionDrawableLuaApi {
      * TextureRegion: TextureRegion
      * ```
      */
-    private fun luaGetTextureRegion(lua: Lua): Int {
+    private fun getTextureRegion(lua: Lua): Int {
         val self = lua.checkUserdata<TextureRegionDrawableApi>(1)
         lua.push(self.getTextureRegion(), Lua.Conversion.NONE)
         return 1
@@ -25,14 +25,14 @@ object TextureRegionDrawableLuaApi {
      * WithoutOffset() -> TextureRegionDrawableApi
      * ```
      */
-    private fun luaWithoutOffset(lua: Lua): Int {
+    private fun withoutOffset(lua: Lua): Int {
         val self = lua.checkUserdata<TextureRegionDrawableApi>(1)
         lua.push(self.withoutOffset(), Lua.Conversion.NONE)
         return 1
     }
 
     val luaMeta = DrawableLuaApi.luaMeta.extend(TextureRegionDrawableApi::class) {
-        getter(::luaGetTextureRegion)
-        callable(::luaWithoutOffset)
+        callable(::getTextureRegion)
+        callable(::withoutOffset)
     }
 }

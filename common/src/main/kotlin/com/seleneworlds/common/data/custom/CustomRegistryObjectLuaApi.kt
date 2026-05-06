@@ -17,7 +17,7 @@ object CustomRegistryObjectLuaApi {
      * Identifier: Identifier
      * ```
      */
-    private fun luaGetIdentifier(lua: Lua): Int {
+    private fun getIdentifier(lua: Lua): Int {
         val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
         lua.push(registryObject.identifier, Lua.Conversion.FULL)
         return 1
@@ -30,7 +30,7 @@ object CustomRegistryObjectLuaApi {
      * Name: string
      * ```
      */
-    private fun luaGetName(lua: Lua): Int {
+    private fun getName(lua: Lua): Int {
         val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
         lua.push(registryObject.identifier.toString())
         return 1
@@ -43,7 +43,7 @@ object CustomRegistryObjectLuaApi {
      * GetMetadata(key: string) -> any|nil
      * ```
      */
-    private fun luaGetMetadata(lua: Lua): Int {
+    private fun getMetadata(lua: Lua): Int {
         val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
         val key = lua.checkString(2)
         val value = registryObject.getMetadata(key)
@@ -58,7 +58,7 @@ object CustomRegistryObjectLuaApi {
      * GetField(key: string) -> any|nil
      * ```
      */
-    private fun luaGetField(lua: Lua): Int {
+    private fun getField(lua: Lua): Int {
         val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
         val key = lua.checkString(2)
         when (val value = (registryObject.element as? JsonObject)?.get(key)) {
@@ -71,9 +71,9 @@ object CustomRegistryObjectLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(CustomRegistryObject::class) {
-        getter(::luaGetIdentifier)
-        getter(::luaGetName)
-        callable(::luaGetMetadata)
-        callable(::luaGetField)
+        callable(::getIdentifier)
+        callable(::getName)
+        callable(::getMetadata)
+        callable(::getField)
     }
 }
