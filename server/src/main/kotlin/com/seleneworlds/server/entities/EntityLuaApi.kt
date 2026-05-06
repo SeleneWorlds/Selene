@@ -28,7 +28,7 @@ object EntityLuaApi {
     private fun getCustomData(lua: Lua): Int {
         val api = lua.checkUserdata<EntityApi>(1)
         val identifier = lua.checkIdentifier(2)
-        lua.push(api.getCustomData(identifier), Lua.Conversion.FULL)
+        lua.push(api.getCustomData(identifier), Lua.Conversion.SEMI)
         return 1
     }
 

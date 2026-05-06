@@ -11,7 +11,7 @@ object PlayerLuaApi {
     private fun getCustomData(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
         val identifier = lua.checkIdentifier(2)
-        lua.push(player.getCustomData(identifier), Lua.Conversion.FULL)
+        lua.push(player.getCustomData(identifier), Lua.Conversion.SEMI)
         return 1
     }
 

@@ -17,7 +17,7 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
 
     private fun getCustomData(lua: Lua): Int {
         val identifier = lua.checkIdentifier(1)
-        lua.push(api.getCustomData(identifier), Lua.Conversion.FULL)
+        lua.push(api.getCustomData(identifier), Lua.Conversion.SEMI)
         return 1
     }
 
