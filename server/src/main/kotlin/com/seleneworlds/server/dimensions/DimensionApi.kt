@@ -53,6 +53,10 @@ class DimensionApi(val dimension: Dimension) {
         return tiles
     }
 
+    fun getAnnotationsAt(coordinate: Coordinate, viewer: Viewer = DefaultViewer): Map<String, Map<*, *>> {
+        return dimension.getAnnotationsAt(coordinate, viewer)
+    }
+
     fun getAnnotationAt(coordinate: Coordinate, key: String, viewer: Viewer = DefaultViewer): SerializedMap? {
         return dimension.getAnnotationAt(coordinate, key, viewer)
     }

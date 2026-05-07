@@ -54,4 +54,9 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
         return chunkView.getAnnotationAt(coordinate, key)
     }
 
+    fun getAnnotationsAt(coordinate: Coordinate, viewer: Viewer = DefaultViewer): Map<String, SerializedMap> {
+        val chunkView = world.chunkViewManager.atCoordinate(this, viewer, coordinate)
+        return chunkView.getAnnotationsAt(coordinate)
+    }
+
 }

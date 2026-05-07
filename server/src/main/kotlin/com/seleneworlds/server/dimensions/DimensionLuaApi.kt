@@ -62,6 +62,14 @@ object DimensionLuaApi {
         return 1
     }
 
+    private fun getAnnotationsAt(lua: Lua): Int {
+        val dimension = lua.checkUserdata<DimensionApi>(1)
+        val (coordinate, index) = lua.checkCoordinate(2)
+        val viewer = if (lua.isUserdata(index + 1)) lua.checkUserdata<Viewer>(index + 1) else DefaultViewer
+        lua.push(dimension.getAnnotationsAt(coordinate, viewer), Lua.Conversion.FULL)
+        return 1
+    }
+
     private fun getAnnotationAt(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
@@ -101,6 +109,7 @@ object DimensionLuaApi {
         callable(::placeTile)
         callable(::annotateTile)
         callable(::getTilesAt)
+        callable(::getAnnotationsAt)
         callable(::getAnnotationAt)
         callable(::hasCollisionAt)
         callable(::getEntitiesAt)
