@@ -10,6 +10,7 @@ import com.seleneworlds.client.rendering.visual2d.DrawableVisual2D
 import com.seleneworlds.client.rendering.visual2d.iso.DrawableIsoVisual
 import com.seleneworlds.client.rendering.visual2d.iso.DynamicDrawableIsoVisual
 import com.seleneworlds.common.threading.Awaitable
+import kotlin.math.abs
 
 class VisualFactory(private val drawableManager: DrawableManager) {
 
@@ -34,7 +35,7 @@ class VisualFactory(private val drawableManager: DrawableManager) {
                     flipX = visualDef.flipX,
                     flipY = visualDef.flipY
                 )
-                val variant = visualDef.textures[context.coordinate.x % visualDef.textures.size]
+                val variant = visualDef.textures[abs(context.coordinate.x) % visualDef.textures.size]
                 val drawable = drawableManager.getDrawable(variant, options) ?: return null
                 DrawableIsoVisual(visualDef, drawable, visualDef.sortLayerOffset, visualDef.surfaceOffsetY)
             }
