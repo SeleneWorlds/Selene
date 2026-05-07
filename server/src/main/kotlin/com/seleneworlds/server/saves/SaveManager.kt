@@ -5,6 +5,9 @@ import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.common.serialization.decodeFromFile
 import com.seleneworlds.server.maps.tree.MapTree
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.JsonElement
 import java.io.File
 
 class SaveManager(
@@ -30,6 +33,10 @@ class SaveManager(
             "json" -> ObservableMap(json.decodeFromFile(SerializedMapSerializer, file).toMutableMap())
             else -> null
         }
+    }
+
+    fun loadKeyValueMap(file: File): Map<String, Any?> {
+        return json.decodeFromFile(SerializedMapSerializer, file)
     }
 
 }

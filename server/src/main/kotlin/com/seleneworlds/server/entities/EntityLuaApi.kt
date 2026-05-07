@@ -1,6 +1,5 @@
 package com.seleneworlds.server.entities
 
-import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.lua.LuaMappedMetatable
 import com.seleneworlds.common.lua.util.*
@@ -18,25 +17,67 @@ object EntityLuaApi {
         return 1
     }
 
-    private fun getCustomDataMap(lua: Lua): Int {
+    private fun getRuntimeData(lua: Lua): Int {
         val api = lua.checkUserdata<EntityApi>(1)
-        val identifier = lua.checkIdentifier(2)
-        lua.push(api.getCustomDataMap(identifier), Lua.Conversion.NONE)
+        val namespace = lua.checkString(2)
+        val customLuaData = api.delegate.customLuaData
+            ?: lua.newTable().let { lua.get() }.also { api.delegate.customLuaData = it }
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.rawGet(-2)
+
+        if (lua.isNil(-1)) {
+            lua.pop(1) // pop the nil
+            lua.newTable() // new table for this namespace
+            lua.push(namespace)
+            lua.pushValue(-2) // copy the new table
+            lua.rawSet(-4)
+        }
+        lua.remove(-2)
         return 1
     }
 
-    private fun getCustomData(lua: Lua): Int {
+    private fun overwriteRuntimeData(lua: Lua): Int {
         val api = lua.checkUserdata<EntityApi>(1)
-        val identifier = lua.checkIdentifier(2)
-        lua.push(api.getCustomData(identifier), Lua.Conversion.SEMI)
+        val namespace = lua.checkString(2)
+        lua.checkType(3, Lua.LuaType.TABLE)
+        val customLuaData = api.delegate.customLuaData
+            ?: lua.newTable().let { lua.get() }.also { api.delegate.customLuaData = it }
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.pushValue(3)
+        lua.rawSet(-3)
+        return 0
+    }
+
+    private fun hasRuntimeData(lua: Lua): Int {
+        val api = lua.checkUserdata<EntityApi>(1)
+        val namespace = lua.checkString(2)
+        val customLuaData = api.delegate.customLuaData
+
+        if (customLuaData == null) {
+            lua.push(false)
+            return 1
+        }
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.rawGet(-2)
+        lua.push(!lua.isNil(-1))
         return 1
     }
 
-    private fun setCustomData(lua: Lua): Int {
+    private fun removeRuntimeData(lua: Lua): Int {
         val api = lua.checkUserdata<EntityApi>(1)
-        val identifier = lua.checkIdentifier(2)
-        val value = lua.toObject(3)
-        api.setCustomData(identifier, value)
+        val namespace = lua.checkString(2)
+        val customLuaData = api.delegate.customLuaData ?: return 0
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.pushNil()
+        lua.rawSet(-3)
         return 0
     }
 
@@ -96,7 +137,7 @@ object EntityLuaApi {
 
     private fun ref(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
-        lua.push(entity.entity.resolvableReference(), Lua.Conversion.NONE)
+        lua.push(entity.delegate.resolvableReference(), Lua.Conversion.NONE)
         return 1
     }
 
@@ -128,13 +169,13 @@ object EntityLuaApi {
 
     private fun setFacing(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
-        entity.setFacing(lua.checkDirection(2, entity.entity.world.grid))
+        entity.setFacing(lua.checkDirection(2, entity.delegate.world.grid))
         return 0
     }
 
     private fun move(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
-        lua.push(entity.move(lua.checkDirection(2, entity.entity.world.grid)))
+        lua.push(entity.move(lua.checkDirection(2, entity.delegate.world.grid)))
         return 1
     }
 
@@ -326,9 +367,10 @@ object EntityLuaApi {
         callable(::createAttribute)
         callable(::hasTag)
         callable(::playAnimation)
-        callable(::getCustomData)
-        callable(::getCustomDataMap)
-        callable(::setCustomData)
+        callable(::getRuntimeData)
+        callable(::overwriteRuntimeData)
+        callable(::hasRuntimeData)
+        callable(::removeRuntimeData)
     }
 
 }

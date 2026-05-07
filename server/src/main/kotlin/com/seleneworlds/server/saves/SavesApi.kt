@@ -1,6 +1,8 @@
 package com.seleneworlds.server.saves
 
 import com.seleneworlds.common.script.ExposedApi
+import com.seleneworlds.common.serialization.SerializedMap
+import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.maps.tree.MapTreeApi
 import java.io.File
@@ -49,5 +51,10 @@ class SavesApi(val saveManager: SaveManager, val serverConfig: ServerConfig) {
             return loaded.api
         }
         return loaded
+    }
+
+    fun loadKeyValueMap(path: String): SerializedMap {
+        val saveFile = File(serverConfig.savePath, path)
+        return saveManager.loadKeyValueMap(saveFile)
     }
 }

@@ -1,32 +1,78 @@
 package com.seleneworlds.server.players
 
 import com.seleneworlds.common.lua.LuaMappedMetatable
-import com.seleneworlds.common.lua.util.*
+import com.seleneworlds.common.lua.util.checkCoordinate
+import com.seleneworlds.common.lua.util.checkString
+import com.seleneworlds.common.lua.util.checkType
+import com.seleneworlds.common.lua.util.checkUserdata
+import com.seleneworlds.common.lua.util.toUserdata
 import com.seleneworlds.server.dimensions.DimensionApi
 import com.seleneworlds.server.entities.EntityApi
 import party.iroiro.luajava.Lua
 
 object PlayerLuaApi {
 
-    private fun getCustomData(lua: Lua): Int {
+    private fun getRuntimeData(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
-        val identifier = lua.checkIdentifier(2)
-        lua.push(player.getCustomData(identifier), Lua.Conversion.SEMI)
+        val namespace = lua.checkString(2)
+        val customLuaData = player.delegate.customLuaData
+            ?: lua.newTable().let { lua.get() }.also { player.delegate.customLuaData = it }
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.rawGet(-2)
+
+        if (lua.isNil(-1)) {
+            lua.pop(1) // pop the nil
+            lua.newTable() // new table for this namespace
+            lua.push(namespace)
+            lua.pushValue(-2) // copy the new table
+            lua.rawSet(-4)
+        }
+        lua.remove(-2)
         return 1
     }
 
-    private fun getCustomDataMap(lua: Lua): Int {
-        val api = lua.checkUserdata<PlayerApi>(1)
-        val identifier = lua.checkIdentifier(2)
-        lua.push(api.getCustomDataMap(identifier), Lua.Conversion.NONE)
+    private fun overwriteRuntimeData(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        val namespace = lua.checkString(2)
+        lua.checkType(3, Lua.LuaType.TABLE)
+        val customLuaData = player.delegate.customLuaData
+            ?: lua.newTable().let { lua.get() }.also { player.delegate.customLuaData = it }
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.pushValue(3)
+        lua.rawSet(-3)
+        return 0
+    }
+
+    private fun hasRuntimeData(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        val namespace = lua.checkString(2)
+        val customLuaData = player.delegate.customLuaData
+
+        if (customLuaData == null) {
+            lua.push(false)
+            return 1
+        }
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.rawGet(-2)
+        lua.push(!lua.isNil(-1))
         return 1
     }
 
-    private fun setCustomData(lua: Lua): Int {
+    private fun removeRuntimeData(lua: Lua): Int {
         val player = lua.checkUserdata<PlayerApi>(1)
-        val identifier = lua.checkIdentifier(2)
-        val value = lua.toObject(3)
-        player.setCustomData(identifier, value)
+        val namespace = lua.checkString(2)
+        val customLuaData = player.delegate.customLuaData ?: return 0
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.pushNil()
+        lua.rawSet(-3)
         return 0
     }
 
@@ -187,9 +233,10 @@ object PlayerLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(PlayerApi::class) {
-        callable(::getCustomData)
-        callable(::getCustomDataMap)
-        callable(::setCustomData)
+        callable(::getRuntimeData)
+        callable(::overwriteRuntimeData)
+        callable(::hasRuntimeData)
+        callable(::removeRuntimeData)
         callable(::getIdleTime)
         callable(::getUserId)
         callable(::getLocale)

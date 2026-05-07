@@ -16,6 +16,8 @@ class SavesLuaApi(private val api: SavesApi) : LuaModule {
         table.register("has", this::has)
         table.register("save", this::save)
         table.register("load", this::load)
+        table.register("loadTable", this::loadKeyValueMap)
+        table.register("loadKeyValueMap", this::loadKeyValueMap)
     }
 
     private fun has(lua: Lua): Int {
@@ -33,7 +35,12 @@ class SavesLuaApi(private val api: SavesApi) : LuaModule {
     }
 
     private fun load(lua: Lua): Int {
-        lua.push(api.load(lua.checkString(-1)), Lua.Conversion.FULL)
+        lua.push(api.load(lua.checkString(1)), Lua.Conversion.FULL)
+        return 1
+    }
+
+    private fun loadKeyValueMap(lua: Lua): Int {
+        lua.push(api.loadKeyValueMap(lua.checkString(1)), Lua.Conversion.FULL)
         return 1
     }
 }

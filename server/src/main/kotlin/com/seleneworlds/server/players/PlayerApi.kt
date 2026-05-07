@@ -45,7 +45,7 @@ class PlayerApi(val delegate: Player) : IdResolvable<String, Player> {
     }
 
     fun setControlledEntity(entity: EntityApi) {
-        delegate.controlledEntity = entity.entity
+        delegate.controlledEntity = entity.delegate
     }
 
     fun getCameraEntity(): EntityApi? {
@@ -53,7 +53,7 @@ class PlayerApi(val delegate: Player) : IdResolvable<String, Player> {
     }
 
     fun setCameraEntity(entity: EntityApi) {
-        delegate.cameraEntity = entity.entity
+        delegate.cameraEntity = entity.delegate
     }
 
     fun setCameraToFollowControlledEntity() {

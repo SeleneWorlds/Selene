@@ -13,6 +13,7 @@ import com.seleneworlds.server.dimensions.Dimension
 import com.seleneworlds.server.dimensions.DimensionManager
 import com.seleneworlds.server.entities.Entity
 import com.seleneworlds.server.network.NetworkClient
+import party.iroiro.luajava.value.LuaValue
 import java.util.*
 
 class Player(
@@ -36,6 +37,7 @@ class Player(
     val localeString get() = locale.toString()
     val languageString: String get() = locale.language
     val customData = ObservableMap()
+    var customLuaData: LuaValue? = null
 
     override fun resolvableReference(): ResolvableReference<String, Player> {
         return ResolvableReference(Player::class, userId!!, playerManager)

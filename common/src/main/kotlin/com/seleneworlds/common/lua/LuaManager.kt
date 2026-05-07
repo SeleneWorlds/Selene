@@ -121,13 +121,13 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         lua.setField(-2, "__index")
 
         lua.push { lua ->
-            val obj = lua.toJavaObject(-3) ?: throw IllegalStateException("Stack value at -3 is not a Java Object, but ${lua.toObject(-3)}")
+            val obj = lua.toJavaObject(-3) ?: throw IllegalStateException("Stack value at -3 is not a Java Object, but ${lua.type(-3)}")
             val metatable = findMetatable(lua, obj)
             if (metatable != null) {
                 return@push metatable.luaSet(lua)
             }
 
-            val key = lua.toObject(-2)
+            val key = lua.toString(-2) ?: throw IllegalStateException("Stack value at -2 is not a String, but ${lua.type(-2)}")
             return@push lua.error(NoSuchFieldException("Property '$key' does not exist on ${obj::class.simpleName ?: "(anonymous class)"}"))
         }
         lua.setField(-2, "__newindex")

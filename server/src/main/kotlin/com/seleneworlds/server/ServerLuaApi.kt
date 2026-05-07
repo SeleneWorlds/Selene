@@ -2,37 +2,76 @@ package com.seleneworlds.server
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
-import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.lua.LuaEventSink
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.*
 import com.seleneworlds.common.lua.util.xpCall
 import com.seleneworlds.common.script.ScriptTrace
-import com.seleneworlds.server.entities.EntityApi
 
 /**
  * Server management and server-related events.
  */
 class ServerLuaApi(private val api: ServerApi) : LuaModule {
     override val name = "selene.server"
+    var customLuaData: LuaValue? = null
 
-    private fun getCustomData(lua: Lua): Int {
-        val identifier = lua.checkIdentifier(1)
-        lua.push(api.getCustomData(identifier), Lua.Conversion.SEMI)
+    private fun getRuntimeData(lua: Lua): Int {
+        val namespace = lua.checkString(1)
+        val customLuaData = customLuaData
+            ?: lua.newTable().let { lua.get() }.also { this.customLuaData = it }
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.rawGet(-2)
+
+        if (lua.isNil(-1)) {
+            lua.pop(1) // pop the nil
+            lua.newTable() // new table for this namespace
+            lua.push(namespace)
+            lua.pushValue(-2) // copy the new table
+            lua.rawSet(-4)
+        }
+        lua.remove(-2)
         return 1
     }
 
-    private fun getCustomDataMap(lua: Lua): Int {
-        val api = lua.checkUserdata<EntityApi>(1)
-        val identifier = lua.checkIdentifier(2)
-        lua.push(api.getCustomDataMap(identifier), Lua.Conversion.NONE)
+    private fun overwriteRuntimeData(lua: Lua): Int {
+        val namespace = lua.checkString(1)
+        lua.checkType(2, Lua.LuaType.TABLE)
+        val customLuaData = customLuaData
+            ?: lua.newTable().let { lua.get() }.also { this.customLuaData = it }
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.pushValue(2)
+        lua.rawSet(-3)
+        return 0
+    }
+
+    private fun hasRuntimeData(lua: Lua): Int {
+        val namespace = lua.checkString(1)
+        val customLuaData = customLuaData
+
+        if (customLuaData == null) {
+            lua.push(false)
+            return 1
+        }
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.rawGet(-2)
+        lua.push(!lua.isNil(-1))
         return 1
     }
 
-    private fun setCustomData(lua: Lua): Int {
-        val identifier = lua.checkIdentifier(1)
-        val value = lua.toObject(2)
-        api.setCustomData(identifier, value)
+    private fun removeRuntimeData(lua: Lua): Int {
+        val namespace = lua.checkString(1)
+        val customLuaData = customLuaData ?: return 0
+
+        customLuaData.push(lua)
+        lua.push(namespace)
+        lua.pushNil()
+        lua.rawSet(-3)
         return 0
     }
 
@@ -53,9 +92,10 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
     }
 
     override fun register(table: LuaValue) {
-        table.register("getCustomData", this::getCustomData)
-        table.register("getCustomDataMap", this::getCustomDataMap)
-        table.register("setCustomData", this::setCustomData)
+        table.register("getRuntimeData", this::getRuntimeData)
+        table.register("overwriteRuntimeData", this::overwriteRuntimeData)
+        table.register("hasRuntimeData", this::hasRuntimeData)
+        table.register("removeRuntimeData", this::removeRuntimeData)
         table.set("serverStarted", serverStarted)
         table.set("serverReloaded", serverReloaded)
     }

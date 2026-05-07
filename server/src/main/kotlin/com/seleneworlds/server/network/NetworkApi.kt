@@ -38,7 +38,7 @@ class NetworkApi(
 
     fun sendToEntity(entity: EntityApi, payloadId: String, payload: SerializedMap) {
         val packet = CustomPayloadPacket(payloadId, json.encodeToString(SerializedMapSerializer,payload))
-        entity.entity.getControllingPlayers().forEach { player ->
+        entity.delegate.getControllingPlayers().forEach { player ->
             player.client.send(packet)
         }
     }
@@ -46,7 +46,7 @@ class NetworkApi(
     fun sendToEntities(entities: List<*>, payloadId: String, payload: SerializedMap) {
         val packet = CustomPayloadPacket(payloadId, json.encodeToString(SerializedMapSerializer, payload))
         entities.forEach { entity ->
-            (entity as? EntityApi)?.entity?.getControllingPlayers()?.forEach { player ->
+            (entity as? EntityApi)?.delegate?.getControllingPlayers()?.forEach { player ->
                 player.client.send(packet)
             }
         }

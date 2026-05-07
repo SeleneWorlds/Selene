@@ -18,161 +18,161 @@ import com.seleneworlds.server.maps.tree.MapTreeApi
 import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.players.PlayerApi
 
-class EntityApi(val entity: Entity) : IdResolvable<Int, Entity> {
+class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
 
     fun getNetworkId(): Int {
-        return entity.networkId
+        return delegate.networkId
     }
 
     fun getCustomData(identifier: Identifier): Any? {
-        return entity.customData[identifier.toString()]
+        return delegate.customData[identifier.toString()]
     }
 
     fun getCustomDataMap(identifier: Identifier): ObservableMap {
         val key = identifier.toString()
-        val value = entity.customData[key]
-        return value as? ObservableMap ?: ObservableMap().also { entity.customData[key] = it }
+        val value = delegate.customData[key]
+        return value as? ObservableMap ?: ObservableMap().also { delegate.customData[key] = it }
     }
 
     fun setCustomData(identifier: Identifier, value: Any?) {
-        entity.customData[identifier.toString()] = value
+        delegate.customData[identifier.toString()] = value
     }
 
     fun getEntityDefinition(): RegistryReference<EntityDefinition> {
-        return entity.entityDefinition
+        return delegate.entityDefinition
     }
 
     fun getName(): String {
-        return entity.name
+        return delegate.name
     }
 
     fun setName(name: String) {
-        entity.name = name
+        delegate.name = name
     }
 
     fun getCoordinate(): Coordinate {
-        return entity.coordinate
+        return delegate.coordinate
     }
 
     fun setCoordinate(coordinate: Coordinate) {
-        entity.coordinate = coordinate
-        entity.dimension?.syncManager?.entityTeleported(entity)
+        delegate.coordinate = coordinate
+        delegate.dimension?.syncManager?.entityTeleported(delegate)
     }
 
     fun getFacing(): Direction? {
-        return entity.facing
+        return delegate.facing
     }
 
     fun setFacing(direction: Direction) {
-        entity.facing = direction
-        entity.dimension?.syncManager?.entityTurned(entity, direction)
+        delegate.facing = direction
+        delegate.dimension?.syncManager?.entityTurned(delegate, direction)
     }
 
     fun getDimension(): DimensionApi? {
-        return entity.dimension?.api
+        return delegate.dimension?.api
     }
 
     fun getMap(): MapTreeApi? {
-        return entity.map?.api
+        return delegate.map?.api
     }
 
     fun getCollisionViewer(): Viewer {
-        return entity.collisionViewer
+        return delegate.collisionViewer
     }
 
     fun getVisionViewer(): Viewer {
-        return entity.visionViewer
+        return delegate.visionViewer
     }
 
     fun spawn(dimension: Dimension?) {
-        val targetDimension = dimension ?: entity.world.dimensionManager.getOrCreateDimension(0)
-        entity.dimension = targetDimension
-        targetDimension.syncManager.entityAdded(entity)
-        entity.world.entityManager.onEntitySpawned(entity)
+        val targetDimension = dimension ?: delegate.world.dimensionManager.getOrCreateDimension(0)
+        delegate.dimension = targetDimension
+        targetDimension.syncManager.entityAdded(delegate)
+        delegate.world.entityManager.onEntitySpawned(delegate)
     }
 
     fun despawn() {
-        val oldDimension = entity.dimension
-        entity.world.entityManager.onEntityDespawned(entity)
-        entity.despawn()
-        oldDimension?.syncManager?.entityRemoved(entity)
+        val oldDimension = delegate.dimension
+        delegate.world.entityManager.onEntityDespawned(delegate)
+        delegate.despawn()
+        oldDimension?.syncManager?.entityRemoved(delegate)
     }
 
     fun remove() {
-        entity.remove()
+        delegate.remove()
     }
 
     fun move(direction: Direction): Boolean {
-        val coordinate = entity.coordinate + direction.vector
-        return entity.moveTo(coordinate)
+        val coordinate = delegate.coordinate + direction.vector
+        return delegate.moveTo(coordinate)
     }
 
     fun setVision(enabled: Boolean, tagName: String = "default") {
         if (enabled) {
-            entity.visionTags.add(tagName)
+            delegate.visionTags.add(tagName)
         } else {
-            entity.visionTags.remove(tagName)
+            delegate.visionTags.remove(tagName)
         }
     }
 
     fun hasVision(tagName: String = "default"): Boolean {
-        return entity.visionTags.contains(tagName)
+        return delegate.visionTags.contains(tagName)
     }
 
     fun grantVision(tagName: String = "default") {
-        entity.visionTags.add(tagName)
+        delegate.visionTags.add(tagName)
     }
 
     fun revokeVision(tagName: String = "default") {
-        entity.visionTags.remove(tagName)
+        delegate.visionTags.remove(tagName)
     }
 
     fun setVisibility(enabled: Boolean, tagName: String = "default") {
         if (enabled) {
-            entity.visibilityTags.add(tagName)
+            delegate.visibilityTags.add(tagName)
         } else {
-            entity.visibilityTags.remove(tagName)
+            delegate.visibilityTags.remove(tagName)
         }
     }
 
     fun isVisible(tagName: String = "default"): Boolean {
-        return entity.visibilityTags.contains(tagName)
+        return delegate.visibilityTags.contains(tagName)
     }
 
     fun isInvisible(tagName: String = "default"): Boolean {
-        return !entity.visibilityTags.contains(tagName)
+        return !delegate.visibilityTags.contains(tagName)
     }
 
     fun makeVisible(tagName: String = "default") {
-        entity.visibilityTags.add(tagName)
+        delegate.visibilityTags.add(tagName)
     }
 
     fun makeInvisible(tagName: String = "default") {
-        entity.visibilityTags.remove(tagName)
+        delegate.visibilityTags.remove(tagName)
     }
 
     fun hasCollisions(tagName: String = "default"): Boolean {
-        return entity.collisionTags.contains(tagName)
+        return delegate.collisionTags.contains(tagName)
     }
 
     fun setCollisions(enabled: Boolean, tagName: String = "default") {
         if (enabled) {
-            entity.collisionTags.add(tagName)
+            delegate.collisionTags.add(tagName)
         } else {
-            entity.collisionTags.remove(tagName)
+            delegate.collisionTags.remove(tagName)
         }
     }
 
     fun enableCollisions(tagName: String = "default") {
-        entity.collisionTags.add(tagName)
+        delegate.collisionTags.add(tagName)
     }
 
     fun disableCollisions(tagName: String = "default") {
-        entity.collisionTags.remove(tagName)
+        delegate.collisionTags.remove(tagName)
     }
 
     fun addDynamicComponent(name: String, callback: (Player) -> ComponentConfiguration?) {
-        entity.dynamicComponents[name] = object : Entity.ComponentResolver {
+        delegate.dynamicComponents[name] = object : Entity.ComponentResolver {
             override fun resolveForPlayer(player: Player): ComponentConfiguration? {
                 return callback(player)
             }
@@ -180,29 +180,29 @@ class EntityApi(val entity: Entity) : IdResolvable<Int, Entity> {
     }
 
     fun getControllingPlayers(): List<PlayerApi> {
-        return entity.getControllingPlayers().map { it.api }
+        return delegate.getControllingPlayers().map { it.api }
     }
 
     fun getAttribute(name: String): AttributeApi? {
-        return entity.attributes[name]?.api
+        return delegate.attributes[name]?.api
     }
 
     fun createAttribute(name: String, initialValue: Any?): AttributeApi {
-        val attribute = Attribute(entity, name, initialValue)
-        entity.attributes[name] = attribute
+        val attribute = Attribute(delegate, name, initialValue)
+        delegate.attributes[name] = attribute
         return attribute.api
     }
 
     fun hasTag(tag: String): Boolean {
-        return entity.entityDefinition.tags.contains(tag)
+        return delegate.entityDefinition.tags.contains(tag)
     }
 
     fun playAnimation(animationName: String) {
-        entity.playAnimation(animationName)
+        delegate.playAnimation(animationName)
     }
 
     override fun resolvableReference(): ResolvableReference<Int, Entity> {
-        return entity.resolvableReference()
+        return delegate.resolvableReference()
     }
 
 }

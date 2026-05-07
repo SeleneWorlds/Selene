@@ -20,6 +20,7 @@ import com.seleneworlds.server.dimensions.Dimension
 import com.seleneworlds.server.maps.layers.MapLayer
 import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.world.World
+import party.iroiro.luajava.value.LuaValue
 
 class Entity(
     val registries: Registries,
@@ -36,6 +37,7 @@ class Entity(
     var dimension: Dimension? = null
     val map get() = dimension?.mapTree
     val customData = ObservableMap()
+    var customLuaData: LuaValue? = null
     val attributes = mutableMapOf<String, Attribute<*>>()
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
     val components = mutableMapOf<String, EntityComponent>()
