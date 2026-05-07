@@ -12,6 +12,8 @@ import com.seleneworlds.common.data.custom.CustomRegistryObject
 import com.seleneworlds.common.data.custom.CustomRegistryObjectLuaApi
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.grid.CoordinateLuaApi
+import com.seleneworlds.common.grid.Direction
+import com.seleneworlds.common.grid.DirectionLuaApi
 import com.seleneworlds.common.lua.libraries.LuaPackageModule
 import com.seleneworlds.common.lua.util.newTable
 import com.seleneworlds.common.observable.ObservableMap
@@ -28,6 +30,7 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
 
     init {
         defineMetatable(Coordinate::class, CoordinateLuaApi.luaMeta)
+        defineMetatable(Direction::class, DirectionLuaApi.luaMeta)
         defineMetatable(Identifier::class, IdentifierLuaApi.luaMeta)
         defineMetatable(RegistryObject::class, RegistryObjectLuaApi.luaMeta)
         defineMetatable(CustomRegistryObject::class, CustomRegistryObjectLuaApi.luaMeta)

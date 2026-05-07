@@ -70,6 +70,9 @@ import com.seleneworlds.server.login.SessionAuthentication
 import com.seleneworlds.server.maps.ServerMapApi
 import com.seleneworlds.server.maps.ServerMapLuaApi
 import com.seleneworlds.server.network.*
+import com.seleneworlds.server.pathfinding.Pathfinder
+import com.seleneworlds.server.pathfinding.PathfindingApi
+import com.seleneworlds.server.pathfinding.PathfindingLuaApi
 import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.players.PlayerManager
 import com.seleneworlds.server.players.PlayersApi
@@ -119,6 +122,7 @@ fun main(args: Array<String>) {
         singleOf(::ResourcesApi)
         singleOf(::RegistriesApi)
         singleOf(::SavesApi)
+        singleOf(::PathfindingApi)
     }
     val luaModule = module {
         singleOf(::LuaManager)
@@ -149,6 +153,7 @@ fun main(args: Array<String>) {
         singleOf(::ConfigLuaApi) { bind<LuaModule>() }
         singleOf(::I18nLuaApi) { bind<LuaModule>() }
         singleOf(::AttributesLuaApi) { bind<LuaModule>() }
+        singleOf(::PathfindingLuaApi) { bind<LuaModule>() }
     }
     val bundleModule = module {
         singleOf(::BundleLoader)
@@ -186,6 +191,7 @@ fun main(args: Array<String>) {
         singleOf(::ChunkViewManager)
         singleOf(::TransitionResolver)
         singleOf(::CollisionResolver)
+        singleOf(::Pathfinder)
         singleOf(::Grid)
         singleOf(::World)
         factoryOf(::Entity)
