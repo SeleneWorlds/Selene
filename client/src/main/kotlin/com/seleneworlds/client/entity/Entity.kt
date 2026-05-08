@@ -28,6 +28,7 @@ import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.util.Disposable
 import java.util.*
+import kotlin.math.round
 
 class Entity(
     val json: Json,
@@ -172,6 +173,10 @@ class Entity(
             renderableComponents.forEach { component ->
                 tmpDisplayPos.set(screenX, screenY + environment.getSurfaceOffset(coordinate))
                 component.positioner.applyPositioning(this, tmpDisplayPos)
+                tmpDisplayPos.set(
+                    round(tmpDisplayPos.x),
+                    round(tmpDisplayPos.y)
+                )
                 batch.color.set(environment.getColor(coordinate))
                 component.render(this, batch, tmpDisplayPos.x, tmpDisplayPos.y)
                 if (component is IsoComponent) {

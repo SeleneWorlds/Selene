@@ -16,6 +16,7 @@ import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.tiles.TileDefinition
 import kotlin.math.abs
+import kotlin.math.round
 
 class Tile(
     private val grid: ClientGrid,
@@ -68,8 +69,8 @@ class Tile(
 
     private val tmpRenderBounds = Rectangle()
     override fun render(batch: Batch, environment: Environment) {
-        val displayX = grid.getScreenX(coordinate)
-        val displayY = grid.getScreenY(coordinate) + environment.getSurfaceOffset(coordinate)
+        val displayX = round(grid.getScreenX(coordinate))
+        val displayY = round(grid.getScreenY(coordinate) + environment.getSurfaceOffset(coordinate))
         val bounds = getBounds(displayX, displayY, tmpRenderBounds)
         if (environment.shouldRender(coordinate, bounds)) {
             val occluding = environment.occludesFocus(coordinate, bounds)
