@@ -1,7 +1,6 @@
 package com.seleneworlds.client.game
 
 import com.seleneworlds.client.window.WindowManager
-import com.seleneworlds.client.window.ScalingStrategy
 
 class GameApi(
     private val windowManager: WindowManager
@@ -14,7 +13,11 @@ class GameApi(
         windowManager.clearAspectRatio()
     }
 
-    fun setWindowScaling(strategy: ScalingStrategy, baseWidth: Int? = null, baseHeight: Int? = null) {
-        windowManager.setScalingStrategy(strategy, baseWidth, baseHeight)
+    fun setOffscreenRendering(width: Int, height: Int) {
+        windowManager.setOffscreenRendering(width, height)
+    }
+
+    fun setNativeRendering() {
+        windowManager.setNativeRendering()
     }
 }

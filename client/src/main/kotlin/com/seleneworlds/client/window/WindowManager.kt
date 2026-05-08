@@ -7,7 +7,6 @@ import kotlin.math.roundToInt
 
 class WindowManager {
     private var aspectRatio: Pair<Int, Int>? = null
-    private var scalingStrategy = ScalingStrategy.NONE
     private var baseWidth: Int? = null
     private var baseHeight: Int? = null
     private var wasFullscreen = false
@@ -26,6 +25,11 @@ class WindowManager {
         screenHeight = windowHeight
     )
         private set
+    var uiViewport = viewport
+        private set
+
+    val isOffscreenRendering: Boolean
+        get() = baseWidth != null && baseHeight != null
 
     fun setAspectRatio(width: Int, height: Int) {
         require(width > 0) { "Aspect ratio width must be positive" }
@@ -40,22 +44,17 @@ class WindowManager {
         GLFW.glfwSetWindowAspectRatio(getWindowHandle(), GLFW.GLFW_DONT_CARE, GLFW.GLFW_DONT_CARE)
     }
 
-    fun setScalingStrategy(strategy: ScalingStrategy, baseWidth: Int? = null, baseHeight: Int? = null) {
-        when (strategy) {
-            ScalingStrategy.NONE -> {
-                this.baseWidth = null
-                this.baseHeight = null
-            }
+    fun setOffscreenRendering(width: Int, height: Int) {
+        require(width > 0) { "Offscreen rendering width must be positive" }
+        require(height > 0) { "Offscreen rendering height must be positive" }
+        baseWidth = width
+        baseHeight = height
+        recomputeViewport()
+    }
 
-            ScalingStrategy.UNIFORM -> {
-                require(baseWidth != null && baseWidth > 0) { "Uniform scaling base width must be positive" }
-                require(baseHeight != null && baseHeight > 0) { "Uniform scaling base height must be positive" }
-                this.baseWidth = baseWidth
-                this.baseHeight = baseHeight
-            }
-        }
-
-        scalingStrategy = strategy
+    fun setNativeRendering() {
+        baseWidth = null
+        baseHeight = null
         recomputeViewport()
     }
 
@@ -92,8 +91,10 @@ class WindowManager {
     }
 
     private fun recomputeViewport() {
-        viewport = when (scalingStrategy) {
-            ScalingStrategy.NONE -> WindowViewport(
+        val logicalWidth = baseWidth
+        val logicalHeight = baseHeight
+        viewport = if (logicalWidth == null || logicalHeight == null) {
+            WindowViewport(
                 logicalWidth = windowWidth,
                 logicalHeight = windowHeight,
                 screenX = 0,
@@ -101,26 +102,23 @@ class WindowManager {
                 screenWidth = windowWidth,
                 screenHeight = windowHeight
             )
-
-            ScalingStrategy.UNIFORM -> {
-                val logicalWidth = baseWidth ?: error("Uniform scaling base width is not set")
-                val logicalHeight = baseHeight ?: error("Uniform scaling base height is not set")
-                val scale = minOf(
-                    windowWidth.toFloat() / logicalWidth.toFloat(),
-                    windowHeight.toFloat() / logicalHeight.toFloat()
-                )
-                val screenWidth = (logicalWidth * scale).roundToInt().coerceAtLeast(1)
-                val screenHeight = (logicalHeight * scale).roundToInt().coerceAtLeast(1)
-                WindowViewport(
-                    logicalWidth = logicalWidth,
-                    logicalHeight = logicalHeight,
-                    screenX = (windowWidth - screenWidth) / 2,
-                    screenY = (windowHeight - screenHeight) / 2,
-                    screenWidth = screenWidth,
-                    screenHeight = screenHeight
-                )
-            }
+        } else {
+            val rawScale = minOf(
+                windowWidth.toFloat() / logicalWidth.toFloat(),
+                windowHeight.toFloat() / logicalHeight.toFloat()
+            )
+            val screenWidth = (logicalWidth * rawScale).roundToInt().coerceAtLeast(1)
+            val screenHeight = (logicalHeight * rawScale).roundToInt().coerceAtLeast(1)
+            WindowViewport(
+                logicalWidth = logicalWidth,
+                logicalHeight = logicalHeight,
+                screenX = (windowWidth - screenWidth) / 2,
+                screenY = (windowHeight - screenHeight) / 2,
+                screenWidth = screenWidth,
+                screenHeight = screenHeight
+            )
         }
+        uiViewport = viewport
         layoutVersion++
     }
 

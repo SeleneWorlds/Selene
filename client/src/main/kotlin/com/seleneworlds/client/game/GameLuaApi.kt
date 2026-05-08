@@ -4,12 +4,10 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import com.seleneworlds.common.lua.LuaEventSink
 import com.seleneworlds.common.lua.LuaModule
-import com.seleneworlds.common.lua.util.checkEnum
 import com.seleneworlds.common.lua.util.checkInt
 import com.seleneworlds.common.lua.util.register
 import com.seleneworlds.common.lua.util.xpCall
 import com.seleneworlds.common.script.ScriptTrace
-import com.seleneworlds.client.window.ScalingStrategy
 
 /**
  * Game lifecycle events.
@@ -35,18 +33,21 @@ class GameLuaApi(private val api: GameApi) : LuaModule {
         return 0
     }
 
-    fun setWindowScaling(lua: Lua): Int {
-        val strategy = lua.checkEnum<ScalingStrategy>(1)
-        val baseWidth = if (lua.top >= 2) lua.checkInt(2) else null
-        val baseHeight = if (lua.top >= 3) lua.checkInt(3) else null
-        api.setWindowScaling(strategy, baseWidth, baseHeight)
+    fun setOffscreenRendering(lua: Lua): Int {
+        api.setOffscreenRendering(lua.checkInt(1), lua.checkInt(2))
+        return 0
+    }
+
+    fun setNativeRendering(@Suppress("UNUSED_PARAMETER") lua: Lua): Int {
+        api.setNativeRendering()
         return 0
     }
 
     override fun register(table: LuaValue) {
         table.register("setWindowAspectRatio", ::setWindowAspectRatio)
         table.register("clearWindowAspectRatio", ::clearWindowAspectRatio)
-        table.register("setWindowScaling", ::setWindowScaling)
+        table.register("setOffscreenRendering", ::setOffscreenRendering)
+        table.register("setNativeRendering", ::setNativeRendering)
         table.set("preTick", gamePreTick)
     }
 }

@@ -31,6 +31,10 @@ class CameraManager(
     var viewportY = 0
     var viewportWidth = camera.viewportWidth.toInt()
     var viewportHeight = camera.viewportHeight.toInt()
+    private var renderViewportX = 0
+    private var renderViewportY = 0
+    private var renderViewportWidth = camera.viewportWidth.toInt()
+    private var renderViewportHeight = camera.viewportHeight.toInt()
     private var logicalViewportWidth = camera.viewportWidth.toInt()
     private var logicalViewportHeight = camera.viewportHeight.toInt()
     private var customViewportX = 0
@@ -93,6 +97,10 @@ class CameraManager(
             viewportY = screenTop
             viewportWidth = screenRight - screenLeft
             viewportHeight = screenBottom - screenTop
+            renderViewportX = customViewportX
+            renderViewportY = (windowViewport.logicalHeight - customViewportY - customViewportHeight).coerceAtLeast(0)
+            renderViewportWidth = customViewportWidth
+            renderViewportHeight = customViewportHeight
         } else {
             viewportX = windowViewport.screenX
             viewportY = windowViewport.screenY
@@ -100,6 +108,10 @@ class CameraManager(
             viewportHeight = windowViewport.screenHeight
             logicalViewportWidth = windowViewport.logicalWidth
             logicalViewportHeight = windowViewport.logicalHeight
+            renderViewportX = 0
+            renderViewportY = 0
+            renderViewportWidth = logicalViewportWidth
+            renderViewportHeight = logicalViewportHeight
         }
         applyViewport()
     }
@@ -131,6 +143,10 @@ class CameraManager(
 
     fun applyRenderViewport() {
         Gdx.gl.glViewport(viewportX, getViewportBottom(), viewportWidth, viewportHeight)
+    }
+
+    fun applyLogicalRenderViewport() {
+        Gdx.gl.glViewport(renderViewportX, renderViewportY, renderViewportWidth, renderViewportHeight)
     }
 
     fun unproject(screenX: Float, screenY: Float): Vector3 {
