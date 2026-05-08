@@ -20,7 +20,9 @@ class AssetProvider(
     private val mainThreadDispatcher: MainThreadDispatcher
 ) : Disposable {
 
-    val missingTexture = TextureRegion(Texture(1, 1, Pixmap.Format.RGBA8888))
+    val missingTexture = TextureRegion(Texture(1, 1, Pixmap.Format.RGBA8888).apply {
+        setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest)
+    })
 
     private val assetSubscriptions = ConcurrentHashMap<String, MutableSet<(String) -> Unit>>()
     private val reloadListeners = CopyOnWriteArrayList<AssetReloadListener>()
