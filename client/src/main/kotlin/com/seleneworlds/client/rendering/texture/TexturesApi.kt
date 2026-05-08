@@ -18,7 +18,9 @@ class TexturesApi {
         }
 
         val pixmap = Pixmap(width, height, format)
-        val texture = Texture(pixmap)
+        val texture = Texture(pixmap).apply {
+            setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest)
+        }
         return ScriptableTexture(texture, pixmap)
     }
 }
