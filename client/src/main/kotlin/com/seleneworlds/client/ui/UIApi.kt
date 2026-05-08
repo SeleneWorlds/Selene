@@ -227,7 +227,10 @@ class UIApi(
         textures.entries.forEach { (name, path) ->
             if (path is String) {
                 val textureFile = bundleFileResolver.resolve(path)
-                atlas.addRegion(name, TextureRegion(Texture(textureFile)))
+                val texture = Texture(textureFile).apply {
+                    setFilter(Texture.TextureFilter.Nearest, Texture.TextureFilter.Nearest)
+                }
+                atlas.addRegion(name, TextureRegion(texture))
             } else {
                 throw IllegalArgumentException("Invalid texture value for $name: $path")
             }
