@@ -65,9 +65,7 @@ class AssetProvider(
     }
 
     fun notifyAssetChanged(assetPath: String) {
-        if (textureFilePattern.containsMatchIn(assetPath)) {
-            unloadTextureForReload(assetPath)
-        }
+        unloadTextureForReload(assetPath)
         assetSubscriptions[assetPath]?.forEach { callback ->
             callback(assetPath)
         }
@@ -98,19 +96,20 @@ class AssetProvider(
 
     fun unloadTextureForReload(texturePath: String) {
         runBlocking {
-            assetStorage.unload<Texture>(texturePath)
+            assetStorage.getAssetIdentifiers(texturePath)
+                .filter { Texture::class.java.isAssignableFrom(it.type) }
+                .forEach { identifier ->
+                while (assetStorage.getReferenceCount(identifier) > 0) {
+                    assetStorage.unload(identifier)
+                }
+            }
         }
     }
 
     fun reloadSubscribedTextures() {
         assetSubscriptions.keys
-            .filter { textureFilePattern.containsMatchIn(it) }
             .forEach { texturePath ->
                 notifyAssetChanged(texturePath)
             }
-    }
-
-    companion object {
-        private val textureFilePattern = "^(common|client)/assets/textures/([\\w-]+)/.*".toRegex()
     }
 }
