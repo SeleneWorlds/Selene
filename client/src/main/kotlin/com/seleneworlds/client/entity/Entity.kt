@@ -72,6 +72,7 @@ class Entity(
     val componentsToBeRemoved = mutableSetOf<EntityComponent>()
 
     val motionQueue: ArrayDeque<EntityMotion> = ArrayDeque()
+    private val motionStateTracker = MotionStateTracker()
     var animator: AnimatorController =
         StateMachineAnimatorController().configure(DefaultHumanoidAnimator(grid)::configure)
 
@@ -107,6 +108,7 @@ class Entity(
         val latestTarget = motionQueue.lastOrNull()?.end ?: this.coordinate
         if (latestTarget != target) {
             motionQueue.add(EntityMotion(latestTarget, target, duration))
+            motionStateTracker.onMotionQueued()
         }
     }
 
@@ -115,7 +117,7 @@ class Entity(
     }
 
     fun isInMotion(): Boolean {
-        return motionQueue.isNotEmpty()
+        return motionStateTracker.isInMotion(motionQueue.isNotEmpty())
     }
 
     override fun update(delta: Float) {
@@ -138,9 +140,14 @@ class Entity(
                 position.y = motion.end.y.toFloat()
                 position.z = motion.end.z.toFloat()
                 motionQueue.removeFirst()
+                if (motionQueue.isEmpty()) {
+                    motionStateTracker.onMotionCompleted()
+                }
             }
             scene?.updateSorting(this)
         }
+
+        motionStateTracker.update(delta, motionQueue.isNotEmpty())
 
         animator.update(this, delta)
 
