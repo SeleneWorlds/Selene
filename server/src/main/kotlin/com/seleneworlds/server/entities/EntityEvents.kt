@@ -1,6 +1,7 @@
 package com.seleneworlds.server.entities
 
 import com.seleneworlds.common.event.EventFactory.arrayBackedEvent
+import com.seleneworlds.common.event.EventFactory.catchLog
 import com.seleneworlds.common.grid.Coordinate
 
 class EntityEvents {
@@ -10,7 +11,11 @@ class EntityEvents {
         companion object {
             val EVENT = arrayBackedEvent<EntitySteppedOnTile> { listeners ->
                 EntitySteppedOnTile { entity, coordinate ->
-                    listeners.forEach { it.entitySteppedOnTile(entity, coordinate) }
+                    listeners.forEach {
+                        catchLog {
+                            it.entitySteppedOnTile(entity, coordinate)
+                        }
+                    }
                 }
             }
         }
@@ -22,7 +27,11 @@ class EntityEvents {
         companion object {
             val EVENT = arrayBackedEvent<EntitySteppedOffTile> { listeners ->
                 EntitySteppedOffTile { entity, coordinate ->
-                    listeners.forEach { it.entitySteppedOffTile(entity, coordinate) }
+                    listeners.forEach {
+                        catchLog {
+                            it.entitySteppedOffTile(entity, coordinate)
+                        }
+                    }
                 }
             }
         }

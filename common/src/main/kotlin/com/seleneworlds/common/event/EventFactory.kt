@@ -118,4 +118,21 @@ object EventFactory {
     ) = createArrayBacked(T::class.java) { listeners ->
         invoker(listeners)
     }
+
+    inline fun catchLog(body: () -> Unit) {
+        return try {
+            body()
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
+    }
+
+    inline fun <reified T : Any> catchLog(default: T, body: () -> T): T {
+        return try {
+            body()
+        } catch (e: Throwable) {
+            e.printStackTrace()
+            default
+        }
+    }
 }
