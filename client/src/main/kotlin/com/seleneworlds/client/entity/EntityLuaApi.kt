@@ -77,7 +77,7 @@ object EntityLuaApi {
         val componentName = lua.checkString(2)
         val componentData = lua.toSerializedMap(3)
         val componentConfiguration =
-            self.entity.json.decodeFromJsonElement(
+            self.delegate.json.decodeFromJsonElement(
                 ComponentConfiguration.serializer(),
                 componentData?.toJsonElement() ?: emptyMap<String, Any?>().toJsonElement()
             )
@@ -103,6 +103,12 @@ object EntityLuaApi {
         return 0
     }
 
+    private fun getDefinition(lua: Lua): Int {
+        val api = lua.checkUserdata<EntityApi>(1)
+        lua.push(api.delegate.entityDefinition.get(), Lua.Conversion.NONE)
+        return 1
+    }
+
     val luaMeta = LuaMappedMetatable(EntityApi::class) {
         callable(::getCoordinate)
         callable(::spawn)
@@ -110,5 +116,6 @@ object EntityLuaApi {
         callable(::setCoordinate)
         callable(::addComponent)
         callable(::getComponent)
+        callable(::getDefinition)
     }
 }

@@ -4,30 +4,30 @@ import com.seleneworlds.client.entity.component.EntityComponent
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.grid.Coordinate
 
-class EntityApi(val entity: Entity) {
+class EntityApi(val delegate: Entity) {
 
     fun getCoordinate(): Coordinate {
-        return entity.coordinate
+        return delegate.coordinate
     }
 
     fun spawn() {
-        entity.spawn()
+        delegate.spawn()
     }
 
     fun despawn() {
-        entity.despawn()
+        delegate.despawn()
     }
 
     fun setCoordinate(coordinate: Coordinate) {
-        entity.setCoordinateAndUpdate(coordinate)
+        delegate.setCoordinateAndUpdate(coordinate)
     }
 
     fun addComponent(name: String, componentConfiguration: ComponentConfiguration) {
-        entity.addComponent(name, componentConfiguration)
+        delegate.addComponent(name, componentConfiguration)
     }
 
     fun getComponent(name: String): EntityComponent? {
-        return entity.components[name]
+        return delegate.components[name]
     }
 
 }
