@@ -4,6 +4,8 @@ import org.slf4j.Logger
 import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.data.Registries
 import com.seleneworlds.common.bundles.BundleDatabase
+import com.seleneworlds.common.data.Registry
+import com.seleneworlds.common.data.mappings.NameIdRegistry
 import com.seleneworlds.common.entities.component.ComponentRegistry
 
 class ClientReloadManager(
@@ -11,6 +13,7 @@ class ClientReloadManager(
     private val registries: Registries,
     private val componentRegistry: ComponentRegistry,
     private val assetProvider: AssetProvider,
+    private val nameIdRegistry: NameIdRegistry,
     private val logger: Logger
 ) {
 
@@ -26,11 +29,30 @@ class ClientReloadManager(
         registries.customRegistries.load(bundleDatabase)
         reloadCustomRegistries("common")
         reloadCustomRegistries("client")
+        repopulateNameIdMappings()
 
         assetProvider.reloadSubscribedTextures()
     }
 
     private fun reloadCustomRegistries(platform: String) {
         registries.customRegistries.loadCustomRegistries(bundleDatabase, platform)
+    }
+
+    private fun repopulateNameIdMappings() {
+        listOf<Registry<*>>(
+            registries.tiles,
+            componentRegistry,
+            registries.sounds,
+            registries.entities,
+            registries.visuals,
+            registries.audios,
+            registries.customRegistries
+        ).forEach {
+            it.registryPopulated(nameIdRegistry, false)
+        }
+
+        registries.customRegistries.getAllCustomRegistries().forEach {
+            it.registryPopulated(nameIdRegistry, false)
+        }
     }
 }

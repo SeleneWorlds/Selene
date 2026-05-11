@@ -34,6 +34,10 @@ class CustomRegistries(
         return customRegistries[identifier]
     }
 
+    fun getAllCustomRegistries(): Collection<CustomRegistry> {
+        return customRegistries.values
+    }
+
     fun findByRegistryName(name: String): CustomRegistry? {
         return customRegistries.values.find { it.name == name }
     }
