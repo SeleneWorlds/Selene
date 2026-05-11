@@ -8,8 +8,8 @@ import com.seleneworlds.client.tiles.TileLuaApi
 import com.seleneworlds.common.lua.LuaEventSink
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.LuaModule
+import com.seleneworlds.common.lua.util.checkCoordinate
 import com.seleneworlds.common.script.ScriptTrace
-import com.seleneworlds.common.lua.util.checkInt
 import com.seleneworlds.common.lua.util.register
 import com.seleneworlds.common.lua.util.xpCall
 
@@ -43,12 +43,14 @@ class MapLuaApi(
     }
 
     private fun getTilesAt(lua: Lua): Int {
-        lua.push(api.getTilesAt(lua.checkInt(1), lua.checkInt(2), lua.checkInt(3)), Lua.Conversion.FULL)
+        val (coordinate, _) = lua.checkCoordinate(1)
+        lua.push(api.getTilesAt(coordinate.x, coordinate.y, coordinate.z), Lua.Conversion.FULL)
         return 1
     }
 
     private fun hasTileAt(lua: Lua): Int {
-        lua.push(api.hasTileAt(lua.checkInt(1), lua.checkInt(2), lua.checkInt(3)))
+        val (coordinate, _) = lua.checkCoordinate(1)
+        lua.push(api.hasTileAt(coordinate.x, coordinate.y, coordinate.z))
         return 1
     }
 }
