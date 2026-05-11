@@ -202,6 +202,7 @@ class SeleneApplication(
             singleOf(::UI)
             singleOf(::MainThreadDispatcher)
             singleOf(::ClientLuaScriptProvider) { bind<ClientScriptProvider>() }
+            singleOf(::ClientReloadManager)
             singleOf(::SeleneClient)
             singleOf(::RuntimeBundleUpdateManager) { bind<Disposable>() }
             singleOf(::WindowManager)

@@ -102,6 +102,14 @@ class AssetProvider(
         }
     }
 
+    fun reloadSubscribedTextures() {
+        assetSubscriptions.keys
+            .filter { textureFilePattern.containsMatchIn(it) }
+            .forEach { texturePath ->
+                notifyAssetChanged(texturePath)
+            }
+    }
+
     companion object {
         private val textureFilePattern = "^(common|client)/assets/textures/([\\w-]+)/.*".toRegex()
     }

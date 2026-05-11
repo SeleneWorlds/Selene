@@ -33,6 +33,7 @@ import com.seleneworlds.common.util.Disposable
 
 class SeleneApplicationListener(
     private val client: SeleneClient,
+    private val clientReloadManager: ClientReloadManager,
     private val networkClient: NetworkClient,
     private val cameraManager: CameraManager,
     private val inputMultiplexer: InputMultiplexer,
@@ -60,7 +61,7 @@ class SeleneApplicationListener(
         spriteBatch = SpriteBatch()
         systemFont = BitmapFont()
 
-        inputMultiplexer.addProcessor(SystemInputProcessor(windowManager))
+        inputMultiplexer.addProcessor(SystemInputProcessor(windowManager, clientReloadManager))
         inputMultiplexer.addProcessor(ui.stage)
         inputMultiplexer.addProcessor(inputManager)
         Gdx.input.inputProcessor = inputMultiplexer

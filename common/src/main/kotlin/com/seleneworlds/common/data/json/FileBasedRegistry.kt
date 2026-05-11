@@ -57,6 +57,7 @@ abstract class FileBasedRegistry<TData : Any>(
     }
 
     override fun load(bundleDatabase: BundleDatabase) {
+        val previousEntries = entries.toMap()
         entries.clear()
         entriesById.clear()
         idByIdentifier.clear()
@@ -80,6 +81,7 @@ abstract class FileBasedRegistry<TData : Any>(
 
         // Notify listeners that the entire registry has been reloaded
         notifyRegistryReloaded()
+        notifySubscriptionsForReload(previousEntries)
     }
 
     private fun loadNamespaceEntries(bundle: Bundle, namespaceDir: File) {
@@ -355,6 +357,15 @@ abstract class FileBasedRegistry<TData : Any>(
                 }
             } catch (e: Exception) {
                 logger.error("Error notifying reload listener of entry change for $identifier", e)
+            }
+        }
+    }
+
+    private fun notifySubscriptionsForReload(previousEntries: Map<Identifier, TData>) {
+        val affectedIdentifiers = previousEntries.keys + entries.keys
+        for (identifier in affectedIdentifiers) {
+            subscriptions[identifier]?.forEach { handler ->
+                handler(entries[identifier])
             }
         }
     }
