@@ -11,27 +11,9 @@ class ThemeApi(
     private val assetProvider: AssetProvider
 ) {
     fun addTexture(name: String, texturePath: String): Awaitable<Void?> {
-        val future = Awaitable<Void?>()
-        assetProvider.loadTextureAsync(texturePath).invokeOnCompletion { error ->
-            try {
-                if (error != null) {
-                    future.reject(error)
-                    return@invokeOnCompletion
-                }
-
-                val texture = assetProvider.getLoadedTexture(texturePath)
-                if (texture == null) {
-                    future.reject(IllegalStateException("Texture failed to load: $texturePath"))
-                    return@invokeOnCompletion
-                }
-
-                skin.add(name, TextureRegion(texture))
-                future.resolve(null)
-            } catch (t: Throwable) {
-                future.reject(t)
-            }
-        }
-        return future
+        val textureRegion = assetProvider.loadReloadableTextureRegion(texturePath)
+        skin.add(name, textureRegion)
+        return textureRegion.initialize()
     }
 
     fun addTexture(name: String, texture: ScriptableTexture): Awaitable<Void?> {
