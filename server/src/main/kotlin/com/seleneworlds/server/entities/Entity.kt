@@ -117,7 +117,7 @@ class Entity(
     fun moveTo(coordinate: Coordinate): Boolean {
         this.facing = world.grid.getDirection(this.coordinate, coordinate)
         val dimension = dimension ?: return false
-        if (world.collisionResolver.collidesAt(dimension, collisionViewer, coordinate)) {
+        if (!collisionTags.isEmpty() && world.collisionResolver.collidesAt(dimension, collisionViewer, coordinate)) {
             return false
         }
         val prevCoordinate = this.coordinate
