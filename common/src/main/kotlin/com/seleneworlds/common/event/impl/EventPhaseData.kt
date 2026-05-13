@@ -31,5 +31,19 @@ internal class EventPhaseData<T>(val id: Identifier, listenerClass: Class<*>) : 
         listeners[oldLength] = listener
     }
 
+    fun removeListener(listener: T): Boolean {
+        val index = listeners.indexOfFirst { it === listener }
+        if (index == -1) {
+            return false
+        }
+
+        @Suppress("UNCHECKED_CAST")
+        val newListeners = java.lang.reflect.Array.newInstance(listeners.javaClass.componentType, listeners.size - 1) as Array<T>
+        System.arraycopy(listeners, 0, newListeners, 0, index)
+        System.arraycopy(listeners, index + 1, newListeners, index, listeners.size - index - 1)
+        listeners = newListeners
+        return true
+    }
+
     override val description = id.toString()
 }

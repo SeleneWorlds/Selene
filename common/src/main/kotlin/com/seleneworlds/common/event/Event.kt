@@ -66,6 +66,11 @@ abstract class Event<T : Any> {
     abstract fun register(phase: Identifier, listener: T)
 
     /**
+     * Unregister a listener from the event.
+     */
+    abstract fun unregister(listener: T)
+
+    /**
      * Request that listeners registered for one phase be executed before listeners registered for another phase.
      * Relying on the default phases supplied to [EventFactory.createWithPhases] should be preferred over manually
      * registering phase ordering dependencies.

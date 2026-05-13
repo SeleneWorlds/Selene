@@ -59,6 +59,19 @@ internal class ArrayBackedEvent<T : Any>(type: Class<in T>, private val invokerF
         }
     }
 
+    override fun unregister(listener: T) {
+        Objects.requireNonNull<T>(listener, "Tried to unregister a null listener!")
+
+        synchronized(lock) {
+            for (phase in sortedPhases) {
+                if (phase.removeListener(listener)) {
+                    rebuildInvoker(handlers.size - 1)
+                    return
+                }
+            }
+        }
+    }
+
     private fun getOrCreatePhase(id: Identifier, sortIfCreate: Boolean): EventPhaseData<T> {
         var phase = phases[id]
 
