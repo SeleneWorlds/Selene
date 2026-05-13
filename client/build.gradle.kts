@@ -8,6 +8,13 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
+kotlin {
+    jvmToolchain {
+        val javaVersion by properties
+        languageVersion.set(JavaLanguageVersion.of(javaVersion.toString()))
+    }
+}
+
 application {
     mainClass.set("com.seleneworlds.client.ClientBootstrapKt")
 }

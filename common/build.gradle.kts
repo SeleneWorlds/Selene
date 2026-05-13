@@ -4,6 +4,13 @@ plugins {
     `maven-publish`
 }
 
+kotlin {
+    jvmToolchain {
+        val javaVersion by properties
+        languageVersion.set(JavaLanguageVersion.of(javaVersion.toString()))
+    }
+}
+
 dependencies {
     api(project.dependencies.platform(libs.koin.bom))
     api(libs.bundles.koin)

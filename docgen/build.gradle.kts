@@ -4,6 +4,13 @@ plugins {
     application
 }
 
+kotlin {
+    jvmToolchain {
+        val javaVersion by properties
+        languageVersion.set(JavaLanguageVersion.of(javaVersion.toString()))
+    }
+}
+
 dependencies {
     implementation(project(":common"))
     implementation(project(":server"))
