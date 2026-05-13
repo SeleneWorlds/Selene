@@ -18,6 +18,8 @@ object ActorLuaMetatable {
         callable(::getStage)
         callable(::getName)
         callable(::getParent)
+        callable(::isVisible)
+        callable(::setVisible)
         callable(::getWidth)
         callable(::getHeight)
         callable(::setWidth)
@@ -70,6 +72,30 @@ object ActorLuaMetatable {
         val actor = lua.checkUserdata<Actor>(1)
         lua.push(actor.parent, Lua.Conversion.NONE)
         return 1
+    }
+
+    /**
+     * Whether this actor is currently visible.
+     *
+     * ```property
+     * Visible: boolean
+     * ```
+     */
+    private fun isVisible(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        lua.push(actor.isVisible)
+        return 1
+    }
+
+    /**
+     * ```property
+     * Visible: boolean
+     * ```
+     */
+    private fun setVisible(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        actor.isVisible = lua.toBoolean(2)
+        return 0
     }
 
     /**
