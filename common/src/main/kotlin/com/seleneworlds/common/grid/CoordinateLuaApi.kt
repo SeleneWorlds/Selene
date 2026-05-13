@@ -60,6 +60,20 @@ object CoordinateLuaApi {
         return 1
     }
 
+    /**
+     * Returns a new coordinate offset by the direction's vector.
+     *
+     * ```signatures
+     * offset(direction: Direction) -> Coordinate
+     * ```
+     */
+    private fun offset(lua: Lua): Int {
+        val self = lua.checkUserdata<Coordinate>(1)
+        val direction = lua.checkUserdata<Direction>(2)
+        lua.push(self + direction.vector, Lua.Conversion.NONE)
+        return 1
+    }
+
     val luaMeta = LuaMappedMetatable(Coordinate::class) {
         getter(::getX, "x")
         getter(::getY, "y")
@@ -68,5 +82,6 @@ object CoordinateLuaApi {
         callable(::getY)
         callable(::getZ)
         callable(::getHorizontalDistanceTo)
+        callable(::offset)
     }
 }
