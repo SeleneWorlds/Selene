@@ -28,7 +28,7 @@ class HttpLuaApi(private val api: HttpApi) : LuaModule, Disposable {
             Lua.LuaType.NIL -> null
             else -> lua.throwTypeError(2, Lua.LuaType.STRING, type)
         }
-        val headers = if (!lua.isNil(3)) lua.checkSerializedMap(3) else emptyMap()
+        val headers = if (!lua.isNoneOrNil(3)) lua.checkSerializedMap(3) else emptyMap()
         val result = api.post(url, body, headers)
 
         lua.createTable(0, 3)
