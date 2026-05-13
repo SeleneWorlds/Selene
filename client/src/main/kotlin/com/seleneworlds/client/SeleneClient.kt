@@ -1,5 +1,7 @@
 package com.seleneworlds.client
 
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
@@ -137,7 +139,7 @@ class SeleneClient(
                         } else {
                             logger.info("Successfully connected after $attempt attempts")
                         }
-                        networkClient.send(AuthenticatePacket(runtimeConfig.token))
+                        networkClient.send(AuthenticatePacket(runtimeConfig.token.ifBlank { createOfflineToken() }))
                         networkClient.send(PreferencesPacket(Locale.getDefault().toString()))
                         networkClient.send(FinalizeJoinPacket())
                     }
@@ -160,5 +162,11 @@ class SeleneClient(
 
         logger.error("Failed to connect after $maxAttempts attempts. Giving up.")
         throw RuntimeException("Unable to connect to server after $maxAttempts attempts")
+    }
+
+    private fun createOfflineToken(): String {
+        return JWT.create()
+            .withSubject("unauthenticated-user")
+            .sign(Algorithm.none())
     }
 }
