@@ -1,5 +1,6 @@
 package com.seleneworlds.common.jobs
 
+import com.seleneworlds.common.bundles.BundleExecutionContext
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.Disposable
 import java.time.LocalDateTime
@@ -63,7 +64,12 @@ class SchedulesApi(
             throw IllegalArgumentException("Timeout interval must be non-negative")
         }
         val timeoutId = nextTimeoutId++
-        val handler = ScriptableTimeout(timeoutId,  intervalMs, callback)
+        val handler = ScriptableTimeout(
+            timeoutId = timeoutId,
+            intervalMs = intervalMs,
+            bundle = BundleExecutionContext.currentBundle,
+            callback = callback
+        )
 
         val task = executor.schedule({
             mainThreadDispatcher.runOnMainThread(callback)
@@ -89,7 +95,12 @@ class SchedulesApi(
             throw IllegalArgumentException("Interval must be positive")
         }
         val intervalId = nextIntervalId++
-        val handler = ScriptableInterval(intervalId, intervalMs, callback)
+        val handler = ScriptableInterval(
+            intervalId = intervalId,
+            intervalMs = intervalMs,
+            bundle = BundleExecutionContext.currentBundle,
+            callback = callback
+        )
 
         val task = executor.scheduleAtFixedRate({
             mainThreadDispatcher.runOnMainThread(callback)
