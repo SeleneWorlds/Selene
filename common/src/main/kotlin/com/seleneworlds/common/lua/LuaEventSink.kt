@@ -2,6 +2,7 @@ package com.seleneworlds.common.lua
 
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
+import com.seleneworlds.common.bundles.BundleEventSubscriptions
 import com.seleneworlds.common.event.Event
 import com.seleneworlds.common.lua.util.checkFunction
 import com.seleneworlds.common.lua.util.checkUserdata
@@ -23,6 +24,7 @@ class LuaEventSink<T : Any>(private val event: Event<T>, private val factory: (L
             val callback = lua.checkFunction(2)
             val listener = luaEventSink.factory(callback, lua.getCallerInfo())
             luaEventSink.event.register(listener)
+            BundleEventSubscriptions.record(luaEventSink.event, listener)
             return 0
         }
 
