@@ -74,6 +74,6 @@ jackson = ["jackson-databind", "jackson-module-kotlin"]
 lml = ["gdx-lml", "gdx-lml-vis"]
 
 [plugins]
-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.2.20" }
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.2.20" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version = "2.3.21" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.3.21" }
 shadow = { id = "com.gradleup.shadow", version = "9.3.1" }
