@@ -154,9 +154,11 @@ class BundleLoader(
                 val scriptFile = File(bundleDir, entrypoint)
                 if (scriptFile.exists()) {
                     try {
-                        val lua = luaManager.lua
-                        lua.load(LuaManager.loadBuffer(scriptFile.readText()), bundle.getFileDebugName(scriptFile))
-                        lua.xpCall(0, 1, ConstantTrace("[entrypoint \"$entrypoint\"] in bundle \"${bundle.manifest.name}\""))
+                        BundleExecutionContext.withBundle(bundle) {
+                            val lua = luaManager.lua
+                            lua.load(LuaManager.loadBuffer(scriptFile.readText()), bundle.getFileDebugName(scriptFile))
+                            lua.xpCall(0, 1, ConstantTrace("[entrypoint \"$entrypoint\"] in bundle \"${bundle.manifest.name}\""))
+                        }
                     } catch (e: Exception) {
                         logger.error("Lua Error in Entrypoint", e)
                     }
