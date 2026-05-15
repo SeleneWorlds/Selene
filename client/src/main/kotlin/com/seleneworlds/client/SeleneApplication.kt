@@ -83,6 +83,9 @@ import com.seleneworlds.common.data.custom.CustomRegistries
 import com.seleneworlds.common.data.mappings.NameIdRegistry
 import com.seleneworlds.common.entities.EntityRegistry
 import com.seleneworlds.common.entities.component.ComponentRegistry
+import com.seleneworlds.common.grid.ActiveGrid
+import com.seleneworlds.common.grid.Grid
+import com.seleneworlds.common.grid.GridRegistry
 import com.seleneworlds.common.i18n.I18nApi
 import com.seleneworlds.common.i18n.I18nLuaApi
 import com.seleneworlds.common.i18n.Messages
@@ -190,6 +193,7 @@ class SeleneApplication(
             singleOf(::EntityRegistry)
             singleOf(::ComponentRegistry)
             singleOf(::SoundRegistry)
+            singleOf(::GridRegistry)
             singleOf(::VisualRegistry)
             singleOf(::AudioRegistry)
             singleOf(::CustomRegistries)
@@ -219,7 +223,8 @@ class SeleneApplication(
             singleOf(::TilePool)
             singleOf(::EntityPool)
             singleOf(::Scene)
-            singleOf(::ClientGrid)
+            singleOf(::ClientGrid) { bind<Grid>() }
+            singleOf(::ActiveGrid)
             singleOf(::EntityComponentFactory)
             factoryOf(::Tile)
             factoryOf(::Entity)

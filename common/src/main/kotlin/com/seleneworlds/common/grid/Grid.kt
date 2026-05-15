@@ -4,6 +4,17 @@ open class Grid {
 
     val directions = mutableMapOf<String, Direction>()
 
+    fun clearDirections() {
+        directions.clear()
+    }
+
+    fun applyDefinition(definition: GridDefinition) {
+        clearDirections()
+        definition.directions.forEach { direction ->
+            defineDirection(direction.name, Coordinate(direction.x, direction.y, direction.z), direction.angle)
+        }
+    }
+
     fun defineDirection(name: String, direction: Coordinate, angle: Float): Coordinate {
         directions[name] = Direction(name, direction, angle)
         return direction

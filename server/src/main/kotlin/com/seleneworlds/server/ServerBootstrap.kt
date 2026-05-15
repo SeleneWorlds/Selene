@@ -25,9 +25,11 @@ import com.seleneworlds.common.data.custom.CustomRegistries
 import com.seleneworlds.common.data.mappings.NameIdRegistry
 import com.seleneworlds.common.entities.EntityRegistry
 import com.seleneworlds.common.entities.component.ComponentRegistry
+import com.seleneworlds.common.grid.ActiveGrid
 import com.seleneworlds.common.grid.Grid
 import com.seleneworlds.common.grid.GridApi
 import com.seleneworlds.common.grid.GridLuaApi
+import com.seleneworlds.common.grid.GridRegistry
 import com.seleneworlds.common.i18n.I18nApi
 import com.seleneworlds.common.i18n.I18nLuaApi
 import com.seleneworlds.common.i18n.Messages
@@ -176,6 +178,7 @@ fun main(args: Array<String>) {
         singleOf(::EntityRegistry)
         singleOf(::ComponentRegistry)
         singleOf(::SoundRegistry)
+        singleOf(::GridRegistry)
         singleOf(::CustomRegistries)
         singleOf(::PersistentNameIdRegistry) { bind<NameIdRegistry>() }
         singleOf(::Registries) { bind<RegistryProvider>() }
@@ -193,6 +196,7 @@ fun main(args: Array<String>) {
         singleOf(::CollisionResolver)
         singleOf(::Pathfinder)
         singleOf(::Grid)
+        singleOf(::ActiveGrid)
         singleOf(::World)
         factoryOf(::Entity)
         factoryOf(::Dimension)

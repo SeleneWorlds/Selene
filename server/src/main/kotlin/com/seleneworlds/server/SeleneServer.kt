@@ -10,6 +10,8 @@ import com.seleneworlds.common.bundles.BundleLoader
 import com.seleneworlds.common.data.custom.CustomRegistries
 import com.seleneworlds.common.entities.EntityRegistry
 import com.seleneworlds.common.entities.component.ComponentRegistry
+import com.seleneworlds.common.grid.ActiveGrid
+import com.seleneworlds.common.grid.GridRegistry
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.network.PacketRegistrations
 import com.seleneworlds.common.sounds.SoundRegistry
@@ -17,14 +19,7 @@ import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.tiles.TileRegistry
 import com.seleneworlds.common.tiles.transitions.TransitionRegistry
 import com.seleneworlds.common.util.Disposable
-import com.seleneworlds.server.bundle.ServerBundleWatcher
-import com.seleneworlds.server.bundles.ClientBundleCache
-import com.seleneworlds.server.config.ServerConfig
-import com.seleneworlds.server.data.mappings.PersistentNameIdRegistry
 import com.seleneworlds.server.entities.EntityManager
-import com.seleneworlds.server.heartbeat.ServerHeartbeat
-import com.seleneworlds.server.http.HttpServer
-import com.seleneworlds.server.network.NetworkServer
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
@@ -46,7 +41,9 @@ class SeleneServer(
     componentRegistry: ComponentRegistry,
     soundRegistry: SoundRegistry,
     entityRegistry: EntityRegistry,
+    gridRegistry: GridRegistry,
     customRegistries: CustomRegistries,
+    activeGrid: ActiveGrid,
     luaManager: LuaManager,
     private val config: com.seleneworlds.server.config.ServerConfig,
     logger: Logger,
@@ -67,6 +64,8 @@ class SeleneServer(
         componentRegistry.load(bundleDatabase)
         soundRegistry.load(bundleDatabase)
         entityRegistry.load(bundleDatabase)
+        gridRegistry.load(bundleDatabase)
+        activeGrid.applyGrid(config.grid)
         customRegistries.load(bundleDatabase)
         customRegistries.loadCustomRegistries(bundleDatabase, "common")
         customRegistries.loadCustomRegistries(bundleDatabase, "server")

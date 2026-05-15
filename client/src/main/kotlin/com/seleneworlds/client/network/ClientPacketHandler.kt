@@ -11,6 +11,7 @@ import com.seleneworlds.client.maps.ClientMap
 import com.seleneworlds.client.sounds.SoundManager
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.data.mappings.NameIdRegistry
+import com.seleneworlds.common.grid.ActiveGrid
 import com.seleneworlds.common.network.PayloadHandlerRegistry
 import com.seleneworlds.common.network.Packet
 import com.seleneworlds.common.network.PacketHandler
@@ -28,6 +29,7 @@ class ClientPacketHandler(
     private val playerController: PlayerController,
     private val gridMovement: GridMovement,
     private val soundManager: SoundManager,
+    private val activeGrid: ActiveGrid,
     private val runtimeBundleUpdateManager: RuntimeBundleUpdateManager
 ) : PacketHandler<NetworkClient> {
     override fun handle(
@@ -170,6 +172,12 @@ class ClientPacketHandler(
             is NotifyBundleUpdatePacket -> {
                 context.enqueueWork {
                     handleRegistryUpdatePacket(packet)
+                }
+            }
+
+            is SetActiveGridPacket -> {
+                context.enqueueWork {
+                    activeGrid.applyGrid(packet.identifier)
                 }
             }
 

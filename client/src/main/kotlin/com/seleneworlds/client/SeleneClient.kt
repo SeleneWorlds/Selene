@@ -23,6 +23,8 @@ import com.seleneworlds.common.data.RegistryReloadListener
 import com.seleneworlds.common.data.custom.CustomRegistries
 import com.seleneworlds.common.entities.EntityRegistry
 import com.seleneworlds.common.entities.component.ComponentRegistry
+import com.seleneworlds.common.grid.ActiveGrid
+import com.seleneworlds.common.grid.GridRegistry
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.network.PacketHandler
 import com.seleneworlds.common.network.PacketRegistrations
@@ -46,9 +48,11 @@ class SeleneClient(
     private val componentRegistry: ComponentRegistry,
     private val soundRegistry: SoundRegistry,
     private val entityRegistry: EntityRegistry,
+    private val gridRegistry: GridRegistry,
     private val visualRegistry: VisualRegistry,
     private val audioRegistry: AudioRegistry,
     private val customRegistries: CustomRegistries,
+    private val activeGrid: ActiveGrid,
     private val runtimeConfig: ClientRuntimeConfig,
     private val packetHandler: PacketHandler<NetworkClient>,
     private val bundleWatcher: ClientBundleWatcher,
@@ -69,6 +73,8 @@ class SeleneClient(
         componentRegistry.load(bundleDatabase)
         soundRegistry.load(bundleDatabase)
         entityRegistry.load(bundleDatabase)
+        gridRegistry.load(bundleDatabase)
+        activeGrid.applyDefaultGrid()
         visualRegistry.load(bundleDatabase)
         audioRegistry.load(bundleDatabase)
         customRegistries.load(bundleDatabase)

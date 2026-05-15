@@ -5,12 +5,14 @@ import com.seleneworlds.client.sounds.AudioRegistry
 import com.seleneworlds.common.data.*
 import com.seleneworlds.common.data.custom.CustomRegistries
 import com.seleneworlds.common.entities.EntityRegistry
+import com.seleneworlds.common.grid.GridRegistry
 import com.seleneworlds.common.sounds.SoundRegistry
 import com.seleneworlds.common.tiles.TileRegistry
 
 class Registries(
     val tiles: TileRegistry,
     val entities: EntityRegistry,
+    val grids: GridRegistry,
     val visuals: VisualRegistry,
     val sounds: SoundRegistry,
     val audios: AudioRegistry,
@@ -21,6 +23,7 @@ class Registries(
         return when (identifier) {
             TileRegistry.IDENTIFIER -> tiles
             EntityRegistry.IDENTIFIER -> entities
+            GridRegistry.IDENTIFIER -> grids
             VisualRegistry.IDENTIFIER -> visuals
             SoundRegistry.IDENTIFIER -> sounds
             AudioRegistry.IDENTIFIER -> audios

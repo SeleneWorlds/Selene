@@ -13,7 +13,8 @@ data class ServerConfig(
     val public: Boolean = false,
     val announcedHost: String = "",
     val announcedApi: String = "",
-    val hotReload: Boolean = true
+    val hotReload: Boolean = true,
+    val grid: String = ""
 ) {
     companion object {
         fun createDefault() {

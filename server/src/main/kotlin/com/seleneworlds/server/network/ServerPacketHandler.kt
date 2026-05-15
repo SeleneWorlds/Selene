@@ -1,6 +1,7 @@
 package com.seleneworlds.server.network
 
 import com.seleneworlds.common.data.mappings.NameIdRegistry
+import com.seleneworlds.common.grid.ActiveGrid
 import com.seleneworlds.common.grid.Grid
 import com.seleneworlds.common.network.Packet
 import com.seleneworlds.common.network.PacketHandler
@@ -20,6 +21,7 @@ class ServerPacketHandler(
     private val nameIdRegistry: NameIdRegistry,
     private val payloadRegistry: PayloadHandlerRegistry<Player>,
     private val grid: Grid,
+    private val activeGrid: ActiveGrid,
     private val sessionAuthentication: SessionAuthentication
 ) : PacketHandler<NetworkClient> {
 
@@ -63,6 +65,9 @@ class ServerPacketHandler(
             handlePreferences(context, packet)
         } else if (packet is FinalizeJoinPacket) {
             val player = (context as NetworkClientImpl).player
+            val activeGridId = activeGrid.activeGridId
+                ?: throw IllegalStateException("Active grid was not initialized before player join")
+            context.send(SetActiveGridPacket(activeGridId.toString()))
             player.connectionState = Player.ConnectionState.READY
             PlayerEvents.PlayerJoined.EVENT.invoker().playerJoined(player.api)
         }

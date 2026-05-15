@@ -125,6 +125,12 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             NotifyBundleUpdatePacket.Companion::decode
         )
         packetFactory.registerPacket(
+            21,
+            SetActiveGridPacket::class,
+            SetActiveGridPacket::encode,
+            SetActiveGridPacket::decode
+        )
+        packetFactory.registerPacket(
             254,
             CustomPayloadPacket::class,
             CustomPayloadPacket::encode,
