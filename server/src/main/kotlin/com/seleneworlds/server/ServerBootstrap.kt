@@ -80,6 +80,7 @@ import com.seleneworlds.server.players.PlayerManager
 import com.seleneworlds.server.players.PlayersApi
 import com.seleneworlds.server.players.PlayersLuaApi
 import com.seleneworlds.server.script.ServerLuaScriptProvider
+import com.seleneworlds.server.script.ServerScriptHotReload
 import com.seleneworlds.server.script.ServerScriptProvider
 import com.seleneworlds.server.saves.*
 import com.seleneworlds.server.sounds.SoundsApi
@@ -129,6 +130,7 @@ fun main(args: Array<String>) {
     val luaModule = module {
         singleOf(::LuaManager)
         singleOf(::ServerLuaScriptProvider) { bind<ServerScriptProvider>() }
+        singleOf(::ServerScriptHotReload)
         single { PayloadHandlerRegistry<Player>() }
         singleOf(::ServerCustomData)
         singleOf(::Messages)

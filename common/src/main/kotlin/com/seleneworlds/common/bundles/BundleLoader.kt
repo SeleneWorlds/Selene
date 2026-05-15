@@ -10,6 +10,12 @@ import java.io.File
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 
+data class BundlePreloadSpec(
+    val moduleName: String,
+    val file: String,
+    val encoding: Charset
+)
+
 class BundleLoader(
     private val logger: Logger,
     private val luaManager: LuaManager,
@@ -104,37 +110,27 @@ class BundleLoader(
             val locatedBundle = bundleManifests[bundle] ?: continue
             val manifest = locatedBundle.manifest
             val bundleDir = locatedBundle.dir
-            for ((moduleName, preload) in manifest.preloads) {
+            for (preloadSpec in manifest.getPreloadSpecs()) {
                 try {
-                    val (preloadFile, encoding) = when (preload) {
-                        is String -> preload to StandardCharsets.UTF_8
-                        is Map<*, *> -> {
-                            @Suppress("UNCHECKED_CAST")
-                            val preloadMap = preload as SerializedMap
-                            val file = preloadMap["file"] as? String
-                                ?: throw IllegalArgumentException("Preload object must have 'file' field")
-                            val enc = (preloadMap["encoding"] as? String)?.let { Charset.forName(it) }
-                                ?: StandardCharsets.UTF_8
-                            file to enc
-                        }
-
-                        else -> throw IllegalArgumentException("Preload must be either a string or an object with 'file' and optional 'encoding' fields")
-                    }
-
-                    val scriptFile = File(bundleDir, preloadFile)
+                    val scriptFile = File(bundleDir, preloadSpec.file)
                     if (scriptFile.exists()) {
                         logger.debug(
                             "Pre-loading Lua module {} from {} with encoding {}",
-                            moduleName,
-                            preloadFile,
-                            encoding
+                            preloadSpec.moduleName,
+                            preloadSpec.file,
+                            preloadSpec.encoding
                         )
-                        luaPackage.preloadModule(luaManager.lua, moduleName, scriptFile.readText(encoding))
+                        luaPackage.preloadModule(
+                            luaManager.lua,
+                            preloadSpec.moduleName,
+                            scriptFile.readText(preloadSpec.encoding),
+                            locatedBundle.getFileDebugName(scriptFile)
+                        )
                     } else {
-                        logger.error("Preload file $preloadFile not found in bundle $bundle")
+                        logger.error("Preload file {} not found in bundle {}", preloadSpec.file, bundle)
                     }
                 } catch (e: Exception) {
-                    logger.error("Error pre-loading Lua module $moduleName: ${e.message}")
+                    logger.error("Error pre-loading Lua module {}: {}", preloadSpec.moduleName, e.message)
                 }
             }
         }
@@ -145,27 +141,48 @@ class BundleLoader(
     fun loadBundleEntrypoints(bundles: List<Bundle>, entrypointFilters: List<String>) {
         for (bundle in bundles) {
             val manifest = bundle.manifest
-            val bundleDir = bundle.dir
             for (entrypoint in manifest.entrypoints) {
                 if (entrypointFilters.none { entrypoint.startsWith(it) }) {
                     continue
                 }
-
-                val scriptFile = File(bundleDir, entrypoint)
-                if (scriptFile.exists()) {
-                    try {
-                        BundleExecutionContext.withBundle(bundle) {
-                            val lua = luaManager.lua
-                            lua.load(LuaManager.loadBuffer(scriptFile.readText()), bundle.getFileDebugName(scriptFile))
-                            lua.xpCall(0, 1, ConstantTrace("[entrypoint \"$entrypoint\"] in bundle \"${bundle.manifest.name}\""))
-                        }
-                    } catch (e: Exception) {
-                        logger.error("Lua Error in Entrypoint", e)
-                    }
-                } else {
-                    logger.error("Entrypoint $entrypoint not found in bundle $bundle")
-                }
+                runBundleEntrypoint(bundle, entrypoint)
             }
+        }
+    }
+
+    fun runBundleEntrypoint(bundle: Bundle, entrypoint: String) {
+        val scriptFile = File(bundle.dir, entrypoint)
+        if (scriptFile.exists()) {
+            try {
+                BundleExecutionContext.withBundle(bundle) {
+                    val lua = luaManager.lua
+                    lua.load(LuaManager.loadBuffer(scriptFile.readText()), bundle.getFileDebugName(scriptFile))
+                    lua.xpCall(0, 1, ConstantTrace("[entrypoint \"$entrypoint\"] in bundle \"${bundle.manifest.name}\""))
+                }
+            } catch (e: Exception) {
+                logger.error("Lua Error in Entrypoint", e)
+            }
+        } else {
+            logger.error("Entrypoint $entrypoint not found in bundle $bundle")
+        }
+    }
+}
+
+fun BundleManifest.getPreloadSpecs(): List<BundlePreloadSpec> {
+    return preloads.map { (moduleName, preload) ->
+        when (preload) {
+            is String -> BundlePreloadSpec(moduleName, preload, StandardCharsets.UTF_8)
+            is Map<*, *> -> {
+                @Suppress("UNCHECKED_CAST")
+                val preloadMap = preload as SerializedMap
+                val file = preloadMap["file"] as? String
+                    ?: throw IllegalArgumentException("Preload object must have 'file' field")
+                val encoding = (preloadMap["encoding"] as? String)?.let { Charset.forName(it) }
+                    ?: StandardCharsets.UTF_8
+                BundlePreloadSpec(moduleName, file, encoding)
+            }
+
+            else -> throw IllegalArgumentException("Preload must be either a string or an object with 'file' and optional 'encoding' fields")
         }
     }
 }

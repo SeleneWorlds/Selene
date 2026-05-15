@@ -22,8 +22,13 @@ private data class FileState(
 
 abstract class BundleWatcher(
     protected val logger: Logger,
-    protected val bundleDatabase: BundleDatabase
+    protected val bundleDatabase: BundleDatabase,
+    protected val syncedBundleRoots: Set<String> = setOf("common", "client")
 ) : Disposable {
+    protected val syncedBundleContentFilePattern: Regex =
+        "^(?!.*/\\.|.*~$)(${syncedBundleRoots.joinToString("|")})/.+".toRegex()
+    protected val registryFilePattern: Regex =
+        "^(common|client)/data/[\\w-]+/([\\w-]+)(?:/.*|\\.json)$".toRegex()
 
     private val watchService = FileSystems.getDefault().newWatchService()
     private val watchKeys = ConcurrentHashMap<WatchKey, WatchContext>()
@@ -331,11 +336,5 @@ abstract class BundleWatcher(
 
     override fun dispose() {
         stopWatching()
-    }
-
-    companion object {
-        private val syncedBundleRoots = setOf("common", "client")
-        private val syncedBundleContentFilePattern = "^(?!.*/\\.|.*~$)(common|client)/.+".toRegex()
-        private val registryFilePattern = "^(common|client)/data/[\\w-]+/([\\w-]+)(?:/.*|\\.json)$".toRegex()
     }
 }

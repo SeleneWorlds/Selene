@@ -37,9 +37,23 @@ class LuaPackageModule : LuaModule {
         packageResolvers.add(resolver)
     }
 
-    fun preloadModule(lua: Lua, moduleName: String, script: String) {
+    fun preloadModule(lua: Lua, moduleName: String, script: String, sourceName: String = moduleName) {
         lua.push(packagePreload)
-        lua.load(LuaManager.Companion.loadBuffer(script), moduleName)
+        lua.load(LuaManager.Companion.loadBuffer(script), sourceName)
+        lua.setField(-2, moduleName)
+        lua.pop(1)
+    }
+
+    fun clearLoadedModule(lua: Lua, moduleName: String) {
+        lua.push(packageLoaded)
+        lua.pushNil()
+        lua.setField(-2, moduleName)
+        lua.pop(1)
+    }
+
+    fun removePreloadedModule(lua: Lua, moduleName: String) {
+        lua.push(packagePreload)
+        lua.pushNil()
         lua.setField(-2, moduleName)
         lua.pop(1)
     }

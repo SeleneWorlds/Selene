@@ -9,14 +9,16 @@ import com.seleneworlds.common.network.packet.NotifyBundleUpdatePacket
 import com.seleneworlds.server.bundles.ClientBundleCache
 import com.seleneworlds.server.data.Registries
 import com.seleneworlds.server.network.NetworkServer
+import com.seleneworlds.server.script.ServerScriptHotReload
 
 class ServerBundleWatcher(
     logger: Logger,
     bundleDatabase: BundleDatabase,
     private val networkServer: NetworkServer,
     private val registries: Registries,
-    private val clientBundleCache: ClientBundleCache
-) : BundleWatcher(logger, bundleDatabase) {
+    private val clientBundleCache: ClientBundleCache,
+    private val serverScriptHotReload: ServerScriptHotReload
+) : BundleWatcher(logger, bundleDatabase, setOf("common", "client", "server")) {
 
     override fun processPendingBundleUpdates(
         bundleId: String,
@@ -25,17 +27,28 @@ class ServerBundleWatcher(
     ) {
         super.processPendingBundleUpdates(bundleId, updatedFiles, deletedFiles)
 
+        val bundle = bundleDatabase.getBundle(bundleId)
+        if (bundle != null) {
+            serverScriptHotReload.reloadUpdatedScripts(bundle, updatedFiles)
+            serverScriptHotReload.unloadDeletedScripts(bundle, deletedFiles)
+        }
+
+        val clientVisibleUpdatedFiles = updatedFiles.filterTo(mutableSetOf()) { isClientVisibleContentPath(it) }
+        val clientVisibleDeletedFiles = deletedFiles.filterTo(mutableSetOf()) { isClientVisibleContentPath(it) }
+
         // Clear client bundle cache when bundle content changes
-        if (updatedFiles.isNotEmpty() || deletedFiles.isNotEmpty()) {
+        if (clientVisibleUpdatedFiles.isNotEmpty() || clientVisibleDeletedFiles.isNotEmpty()) {
             clientBundleCache.clearCacheForBundle(bundleId)
         }
 
         val packet = NotifyBundleUpdatePacket(
             bundleId = bundleId,
-            updated = updatedFiles.toList(),
-            deleted = deletedFiles.toList()
+            updated = clientVisibleUpdatedFiles.toList(),
+            deleted = clientVisibleDeletedFiles.toList()
         )
-        networkServer.clients.forEach { it.send(packet) }
+        if (packet.updated.isNotEmpty() || packet.deleted.isNotEmpty()) {
+            networkServer.clients.forEach { it.send(packet) }
+        }
     }
 
     override fun getRegistry(name: String): Registry<*>? {
@@ -46,4 +59,7 @@ class ServerBundleWatcher(
         return registries.customRegistries.findByRegistryName(name)
     }
 
+    private fun isClientVisibleContentPath(path: String): Boolean {
+        return path.startsWith("common/") || path.startsWith("client/")
+    }
 }
