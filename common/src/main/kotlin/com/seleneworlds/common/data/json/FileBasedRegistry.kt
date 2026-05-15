@@ -69,7 +69,7 @@ abstract class FileBasedRegistry<TData : Any>(
                 try {
                     val namespaceDirs = baseDataDir.listFiles {
                         it.isDirectory && (File(it, name).isDirectory || File(it, "$name.json").isFile)
-                    } ?: emptyArray()
+                    }?.sortedBy { it.name }?.toTypedArray() ?: emptyArray()
                     for (namespaceDir in namespaceDirs) {
                         loadNamespaceEntries(bundle, namespaceDir)
                     }
@@ -104,6 +104,7 @@ abstract class FileBasedRegistry<TData : Any>(
         val registryDirPath = registryDir.toPath()
         Files.walk(registryDirPath).use { stream ->
             stream.filter { path -> Files.isRegularFile(path) && path.toString().endsWith(".json") }
+                .sorted()
                 .forEach { path ->
                     try {
                         val relativePath = registryDirPath.relativize(path)
