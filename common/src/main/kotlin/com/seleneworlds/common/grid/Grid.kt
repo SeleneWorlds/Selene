@@ -1,6 +1,8 @@
 package com.seleneworlds.common.grid
 
 open class Grid {
+    var layout = GridLayout.DIAMOND
+        private set
 
     val directions = mutableMapOf<String, Direction>()
 
@@ -9,6 +11,7 @@ open class Grid {
     }
 
     fun applyDefinition(definition: GridDefinition) {
+        layout = definition.layout
         clearDirections()
         definition.directions.forEach { direction ->
             defineDirection(direction.name, Coordinate(direction.x, direction.y, direction.z), direction.angle)

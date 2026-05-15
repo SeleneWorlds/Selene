@@ -3,6 +3,7 @@ package com.seleneworlds.client.grid
 import com.badlogic.gdx.math.Vector3
 import com.seleneworlds.common.grid.Grid
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.grid.GridLayout
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
@@ -33,24 +34,40 @@ class ClientGrid : Grid() {
         rowSortScale = definition.rowSortScale
     }
 
-    fun getScreenX(coordinate: Coordinate) = (coordinate.x + coordinate.y) * tileStepX
-    fun getScreenY(coordinate: Coordinate) =
-        (((coordinate.x - coordinate.y) * tileStepY) + (coordinate.z * tileStepZ))
+    fun getScreenX(coordinate: Coordinate) = when (layout) {
+        GridLayout.DIAMOND -> (coordinate.x + coordinate.y) * tileStepX
+    }
 
-    fun getScreenX(position: Vector3) = (position.x + position.y) * tileStepX
-    fun getScreenY(position: Vector3) =
-        (((position.x - position.y) * tileStepY) + (position.z * tileStepZ))
+    fun getScreenY(coordinate: Coordinate) = when (layout) {
+        GridLayout.DIAMOND -> ((coordinate.x - coordinate.y) * tileStepY) + (coordinate.z * tileStepZ)
+    }
 
-    fun getSortLayer(coordinate: Coordinate, sortLayerOffset: Int) =
-        ((coordinate.x - coordinate.y - (coordinate.z * zSortScale)) * rowSortScale) - sortLayerOffset
+    fun getScreenX(position: Vector3) = when (layout) {
+        GridLayout.DIAMOND -> (position.x + position.y) * tileStepX
+    }
 
-    fun getSortLayer(position: Vector3, sortLayerOffset: Int) =
-        ((floor(position.x) - ceil(position.y) - (floor(position.z) * zSortScale)).toInt() * rowSortScale) - sortLayerOffset
+    fun getScreenY(position: Vector3) = when (layout) {
+        GridLayout.DIAMOND -> ((position.x - position.y) * tileStepY) + (position.z * tileStepZ)
+    }
+
+    fun getSortLayer(coordinate: Coordinate, sortLayerOffset: Int) = when (layout) {
+        GridLayout.DIAMOND ->
+            ((coordinate.x - coordinate.y - (coordinate.z * zSortScale)) * rowSortScale) - sortLayerOffset
+    }
+
+    fun getSortLayer(position: Vector3, sortLayerOffset: Int) = when (layout) {
+        GridLayout.DIAMOND ->
+            ((floor(position.x) - ceil(position.y) - (floor(position.z) * zSortScale)).toInt() * rowSortScale) - sortLayerOffset
+    }
 
     fun screenToCoordinate(x: Float, y: Float, z: Int = 0): Coordinate {
-        val adjustedY = y - (z * tileStepZ)
-        val isoX = (x / tileStepX + (adjustedY / tileStepY)) / 2
-        val isoY = (x / tileStepX - (adjustedY / tileStepY)) / 2
-        return Coordinate(isoX.roundToInt(), isoY.roundToInt(), z)
+        return when (layout) {
+            GridLayout.DIAMOND -> {
+                val adjustedY = y - (z * tileStepZ)
+                val isoX = (x / tileStepX + (adjustedY / tileStepY)) / 2
+                val isoY = (x / tileStepX - (adjustedY / tileStepY)) / 2
+                Coordinate(isoX.roundToInt(), isoY.roundToInt(), z)
+            }
+        }
     }
 }

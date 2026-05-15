@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class GridDefinition(
+    val layout: GridLayout = GridLayout.DIAMOND,
     val directions: List<GridDirectionDefinition>
 )
 
