@@ -140,6 +140,7 @@ class SeleneApplicationListener(
     private fun renderWorldDirect() {
         cameraManager.applyRenderViewport()
         spriteBatch.projectionMatrix = cameraManager.camera.combined
+        spriteBatch.setColor(1f, 1f, 1f, 1f)
         spriteBatch.begin()
         sceneRenderer.render(spriteBatch)
         spriteBatch.end()
@@ -156,6 +157,7 @@ class SeleneApplicationListener(
 
         cameraManager.applyLogicalRenderViewport()
         spriteBatch.projectionMatrix = cameraManager.camera.combined
+        spriteBatch.setColor(1f, 1f, 1f, 1f)
         spriteBatch.begin()
         sceneRenderer.render(spriteBatch)
         spriteBatch.end()
@@ -171,6 +173,7 @@ class SeleneApplicationListener(
             Gdx.graphics.width.toFloat(),
             Gdx.graphics.height.toFloat()
         )
+        spriteBatch.setColor(1f, 1f, 1f, 1f)
         spriteBatch.begin()
         worldFrameRegion?.let { region ->
             spriteBatch.draw(
