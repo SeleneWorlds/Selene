@@ -44,6 +44,7 @@ import com.seleneworlds.client.game.GameLuaApi
 import com.seleneworlds.client.grid.ClientGrid
 import com.seleneworlds.client.grid.ClientGridApi
 import com.seleneworlds.client.grid.ClientGridLuaApi
+import com.seleneworlds.client.grid.RenderGridRegistry
 import com.seleneworlds.client.input.InputApi
 import com.seleneworlds.client.input.InputLuaApi
 import com.seleneworlds.client.input.InputManager
@@ -194,6 +195,7 @@ class SeleneApplication(
             singleOf(::ComponentRegistry)
             singleOf(::SoundRegistry)
             singleOf(::GridRegistry)
+            singleOf(::RenderGridRegistry)
             singleOf(::VisualRegistry)
             singleOf(::AudioRegistry)
             singleOf(::CustomRegistries)

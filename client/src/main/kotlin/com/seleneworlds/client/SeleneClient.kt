@@ -9,6 +9,9 @@ import com.seleneworlds.client.config.ClientRuntimeConfig
 import com.seleneworlds.client.bundle.ClientBundleWatcher
 import com.seleneworlds.client.config.ClientConfig
 import com.seleneworlds.client.game.ClientEvents
+import com.seleneworlds.client.grid.ClientGrid
+import com.seleneworlds.client.grid.RenderGridRegistry
+import com.seleneworlds.client.grid.RenderGridDefinition
 import com.seleneworlds.client.sounds.AudioRegistry
 import com.seleneworlds.client.rendering.visual.VisualRegistry
 import com.seleneworlds.client.network.NetworkClient
@@ -49,10 +52,12 @@ class SeleneClient(
     private val soundRegistry: SoundRegistry,
     private val entityRegistry: EntityRegistry,
     private val gridRegistry: GridRegistry,
+    private val renderGridRegistry: RenderGridRegistry,
     private val visualRegistry: VisualRegistry,
     private val audioRegistry: AudioRegistry,
     private val customRegistries: CustomRegistries,
     private val activeGrid: ActiveGrid,
+    private val clientGrid: ClientGrid,
     private val runtimeConfig: ClientRuntimeConfig,
     private val packetHandler: PacketHandler<NetworkClient>,
     private val bundleWatcher: ClientBundleWatcher,
@@ -74,7 +79,11 @@ class SeleneClient(
         soundRegistry.load(bundleDatabase)
         entityRegistry.load(bundleDatabase)
         gridRegistry.load(bundleDatabase)
-        activeGrid.applyDefaultGrid()
+        renderGridRegistry.load(bundleDatabase)
+        val activeGridId = activeGrid.applyDefaultGrid()
+        val renderGrid = renderGridRegistry.get(activeGridId)
+            ?: throw IllegalStateException("Missing render grid definition for active grid: $activeGridId")
+        clientGrid.applyDefinition(renderGrid)
         visualRegistry.load(bundleDatabase)
         audioRegistry.load(bundleDatabase)
         customRegistries.load(bundleDatabase)
@@ -115,6 +124,36 @@ class SeleneClient(
                 oldData: VisualDefinition
             ) {
                 drawableManager.clearSharedIdentifier(identifier)
+            }
+        })
+
+        renderGridRegistry.addReloadListener(object : RegistryReloadListener<RenderGridDefinition> {
+            override fun onRegistryReloaded(registry: Registry<RenderGridDefinition>) {
+                val activeGridId = activeGrid.activeGridId ?: return
+                val renderGrid = renderGridRegistry.get(activeGridId)
+                    ?: throw IllegalStateException("Missing render grid definition for active grid: $activeGridId")
+                clientGrid.applyDefinition(renderGrid)
+            }
+
+            override fun onEntryAdded(
+                registry: Registry<RenderGridDefinition>,
+                identifier: Identifier,
+                newData: RenderGridDefinition
+            ) {
+                if (identifier == activeGrid.activeGridId) {
+                    clientGrid.applyDefinition(newData)
+                }
+            }
+
+            override fun onEntryChanged(
+                registry: Registry<RenderGridDefinition>,
+                identifier: Identifier,
+                oldData: RenderGridDefinition,
+                newData: RenderGridDefinition
+            ) {
+                if (identifier == activeGrid.activeGridId) {
+                    clientGrid.applyDefinition(newData)
+                }
             }
         })
 

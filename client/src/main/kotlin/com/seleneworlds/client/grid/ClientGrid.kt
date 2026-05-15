@@ -9,12 +9,29 @@ import kotlin.math.roundToInt
 
 class ClientGrid : Grid() {
     var tileWidth = 76
-    var tileStepX = tileWidth / 2f
+        private set
+    var tileStepX = 38f
+        private set
     var tileHeight = 37
-    var tileStepY = (tileHeight + 1) / 2f
-    var tileStepZ = 6 * tileStepY
+        private set
+    var tileStepY = 19f
+        private set
+    var tileStepZ = 114f
+        private set
     var zSortScale = 500
+        private set
     var rowSortScale = 50
+        private set
+
+    fun applyDefinition(definition: RenderGridDefinition) {
+        tileWidth = definition.tileWidth
+        tileHeight = definition.tileHeight
+        tileStepX = definition.tileStepX
+        tileStepY = definition.tileStepY
+        tileStepZ = definition.tileStepZ
+        zSortScale = definition.zSortScale
+        rowSortScale = definition.rowSortScale
+    }
 
     fun getScreenX(coordinate: Coordinate) = (coordinate.x + coordinate.y) * tileStepX
     fun getScreenY(coordinate: Coordinate) =
@@ -36,5 +53,4 @@ class ClientGrid : Grid() {
         val isoY = (x / tileStepX - (adjustedY / tileStepY)) / 2
         return Coordinate(isoX.roundToInt(), isoY.roundToInt(), z)
     }
-
 }

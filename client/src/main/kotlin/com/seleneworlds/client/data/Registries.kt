@@ -1,5 +1,6 @@
 package com.seleneworlds.client.data
 
+import com.seleneworlds.client.grid.RenderGridRegistry
 import com.seleneworlds.client.rendering.visual.VisualRegistry
 import com.seleneworlds.client.sounds.AudioRegistry
 import com.seleneworlds.common.data.*
@@ -13,6 +14,7 @@ class Registries(
     val tiles: TileRegistry,
     val entities: EntityRegistry,
     val grids: GridRegistry,
+    val renderGrids: RenderGridRegistry,
     val visuals: VisualRegistry,
     val sounds: SoundRegistry,
     val audios: AudioRegistry,
@@ -24,6 +26,7 @@ class Registries(
             TileRegistry.IDENTIFIER -> tiles
             EntityRegistry.IDENTIFIER -> entities
             GridRegistry.IDENTIFIER -> grids
+            RenderGridRegistry.IDENTIFIER -> renderGrids
             VisualRegistry.IDENTIFIER -> visuals
             SoundRegistry.IDENTIFIER -> sounds
             AudioRegistry.IDENTIFIER -> audios

@@ -3,6 +3,7 @@ package com.seleneworlds.client
 import org.slf4j.Logger
 import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.data.Registries
+import com.seleneworlds.client.grid.ClientGrid
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.data.Registry
 import com.seleneworlds.common.data.mappings.NameIdRegistry
@@ -15,6 +16,7 @@ class ClientReloadManager(
     private val componentRegistry: ComponentRegistry,
     private val assetProvider: AssetProvider,
     private val activeGrid: ActiveGrid,
+    private val clientGrid: ClientGrid,
     private val nameIdRegistry: NameIdRegistry,
     private val logger: Logger
 ) {
@@ -27,10 +29,14 @@ class ClientReloadManager(
         registries.sounds.load(bundleDatabase)
         registries.entities.load(bundleDatabase)
         registries.grids.load(bundleDatabase)
+        registries.renderGrids.load(bundleDatabase)
         registries.visuals.load(bundleDatabase)
         registries.audios.load(bundleDatabase)
         registries.customRegistries.load(bundleDatabase)
-        activeGrid.reapply()
+        val activeGridId = activeGrid.reapply()
+        val renderGrid = registries.renderGrids.get(activeGridId)
+            ?: throw IllegalStateException("Missing render grid definition for active grid: $activeGridId")
+        clientGrid.applyDefinition(renderGrid)
         reloadCustomRegistries("common")
         reloadCustomRegistries("client")
         repopulateNameIdMappings()
@@ -48,6 +54,7 @@ class ClientReloadManager(
             componentRegistry,
             registries.sounds,
             registries.entities,
+            registries.renderGrids,
             registries.visuals,
             registries.audios,
             registries.customRegistries
