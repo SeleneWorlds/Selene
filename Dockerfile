@@ -1,10 +1,10 @@
-FROM gradle:9.3-jdk21 AS build
+FROM gradle:9.3-jdk25 AS build
 COPY --chown=gradle:gradle . /app
 WORKDIR /app
 RUN gradle :server:installDist --no-daemon
 RUN mv /app/server/build/install/server/lib/server.jar /app/server/build/install/server/server.jar
 
-FROM eclipse-temurin:21-alpine
+FROM eclipse-temurin:25-alpine
 WORKDIR /app
 COPY --from=build /app/server/build/install/server/bin/ ./bin/
 COPY --from=build /app/server/build/install/server/lib/ ./lib/
