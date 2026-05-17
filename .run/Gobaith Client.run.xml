@@ -2,7 +2,7 @@
   <configuration default="false" name="Gobaith Client" type="JetRunConfigurationType">
     <option name="MAIN_CLASS_NAME" value="com.seleneworlds.client.ClientBootstrapKt" />
     <module name="Selene.client.main" />
-    <option name="PROGRAM_PARAMETERS" value="-h localhost -p 8147 -b illarion-gobaith-data ../../bundles/illarion-gobaith-data -b illarion-gobaith-ui ../../bundles/illarion-gobaith-ui -b illarion-gobaith-assets ../../bundles/illarion-gobaith-assets -b illarion-gobaith-assets-os ../../bundles/illarion-gobaith-assets-os" />
+    <option name="PROGRAM_PARAMETERS" value="-h localhost -p 8147 -b illarion-gobaith-data ../../bundles/illarion-gobaith-data -b illarion-gobaith-ui ../../bundles/illarion-gobaith-ui -b illarion-gobaith-assets-os ../../bundles/illarion-gobaith-assets-os" />
     <shortenClasspath name="NONE" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/client/run" />
     <method v="2">
