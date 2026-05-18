@@ -16,6 +16,9 @@ data class BundlePreloadSpec(
     val encoding: Charset
 )
 
+class MissingRequiredBundlesException(val bundles: Set<String>) :
+    IllegalStateException("Missing required bundles: ${bundles.joinToString(", ")}")
+
 class BundleLoader(
     private val logger: Logger,
     private val luaManager: LuaManager,
@@ -66,8 +69,9 @@ class BundleLoader(
         }
 
         if (missingBundles.isNotEmpty()) {
-            logger.error("Missing required bundles: ${missingBundles.joinToString(", ")}")
-            return emptyList()
+            val exception = MissingRequiredBundlesException(missingBundles.toSortedSet())
+            logger.error(exception.message)
+            throw exception
         }
 
         // Topological sort only on loaded/required bundles
