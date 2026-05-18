@@ -1,10 +1,8 @@
 package com.seleneworlds.server.http
 
-import com.auth0.jwk.JwkProviderBuilder
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.auth.jwt.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -21,10 +19,9 @@ import com.seleneworlds.server.login.LoginQueueStatus
 import com.seleneworlds.server.login.SessionAuthentication
 import com.seleneworlds.server.players.PlayerManager
 import com.seleneworlds.server.startupTime
-import java.net.URI
 import java.nio.file.Paths
 
-data class SeleneUser(val userId: String)
+data class SeleneUser(val userId: String, val token: String?)
 
 class HttpServer(
     private val config: ServerConfig,
@@ -35,21 +32,25 @@ class HttpServer(
     private val sessionAuth: SessionAuthentication,
     private val serverHeartbeat: ServerHeartbeat
 ) {
+    private fun ApplicationCall.authenticatedUser(): SeleneUser {
+        return principal<SeleneUser>()
+            ?: if (config.insecureMode) {
+                SeleneUser("unauthenticated-user", "unauthenticated-user")
+            } else {
+                throw IllegalStateException("Authenticated route accessed without principal")
+            }
+    }
+
     fun start() {
         embeddedServer(Netty, port = config.apiPort) {
             install(Authentication) {
-                jwt("user") {
-                    verifier(JwkProviderBuilder(URI("https://id.twelveiterations.com/realms/Selene/protocol/openid-connect/certs").toURL()).build())
-                    validate { credential ->
-                        val claims = credential.payload
-                        SeleneUser(claims.subject)
-                    }
-                }
-                jwt("session") {
-                    verifier(sessionAuth.issuer, sessionAuth.audience, sessionAuth.algorithm)
-                    validate { credential ->
-                        val claims = credential.payload
-                        SeleneUser(claims.subject)
+                bearer("broker") {
+                    authenticate { tokenCredential ->
+                        sessionAuth.parseToken(tokenCredential.token)
+                            .fold(
+                                ifLeft = { null },
+                                ifRight = { SeleneUser(it.userId, tokenCredential.token) }
+                            )
                     }
                 }
             }
@@ -91,7 +92,7 @@ class HttpServer(
                         )
                     ))
                 }
-                authenticate("session", optional = config.insecureMode) {
+                authenticate("broker", optional = config.insecureMode) {
                     get("/bundles") {
                         val bundles = bundleDatabase.loadedBundles.associateBy { it.manifest.name }
                             .filter { clientBundleCache.hasClientSide(it.value.dir) }
@@ -120,36 +121,36 @@ class HttpServer(
                         val bundleName = call.parameters["bundleName"] ?: return@get
                         val unsafePath = call.parameters.getAll("path")?.joinToString("/") ?: return@get
                         val normalizedPath = Paths.get(unsafePath).normalize().toString()
-                        
+
                         val bundle = bundleDatabase.getBundle(bundleName)
                         if (bundle == null) {
                             call.respond(HttpStatusCode.NotFound, "Bundle not found")
                             return@get
                         }
-                        
+
                         val assetPath = bundle.dir.resolve(normalizedPath).normalize()
                         if (normalizedPath.contains("/.") || normalizedPath.startsWith(".")) {
                             call.respond(HttpStatusCode.NotFound, "Asset not found")
                             return@get
                         }
-                        
+
                         val commonBaseDir = bundle.dir.resolve("common").normalize()
                         val clientBaseDir = bundle.dir.resolve("client").normalize()
                         if (!assetPath.startsWith(commonBaseDir) && !assetPath.startsWith(clientBaseDir)) {
                             call.respond(HttpStatusCode.NotFound, "Asset not found")
                             return@get
                         }
-                        
+
                         if (!assetPath.exists()) {
                             call.respond(HttpStatusCode.NotFound, "Asset not found")
                             return@get
                         }
-                        
+
                         if (!assetPath.isFile) {
                             call.respond(HttpStatusCode.BadRequest, "Asset not found")
                             return@get
                         }
-                        
+
                         call.response.header(
                             HttpHeaders.ContentDisposition,
                             ContentDisposition.Inline.withParameter(
@@ -160,14 +161,11 @@ class HttpServer(
 
                         call.respondFile(assetPath)
                     }
-                }
-                authenticate("user") {
                     post("/join") {
-                        val principal = call.principal<SeleneUser>()!!
-                        val userId = principal.userId
-                        val queueStatus = queue.updateUser(userId)
+                        val principal = call.authenticatedUser()
+                        val queueStatus = queue.updateUser(principal.userId)
                         val completedLogin = if (queueStatus.status == LoginQueueStatus.Accepted) {
-                            queue.completeJoin(userId)
+                            queue.completeJoin(principal.token ?: "unauthenticated-user")
                         } else {
                             null
                         }
@@ -179,9 +177,8 @@ class HttpServer(
                         ))
                     }
                     post("/leave") {
-                        val principal = call.principal<SeleneUser>()!!
-                        val userId = principal.userId
-                        queue.removeUser(userId)
+                        val principal = call.authenticatedUser()
+                        queue.removeUser(principal.userId)
                     }
                 }
             }

@@ -6,6 +6,8 @@ data class ServerConfig(
     val name: String = "New Server",
     val port: Int = 8147,
     val apiPort: Int = 8080,
+    val authBrokerIssuer: String = "https://auth-broker.seleneworlds.com",
+    val authBrokerJwksUrl: String = "https://auth-broker.seleneworlds.com/.well-known/jwks.json",
     val savePath: String = "save",
     val bundlesPath: String = "bundles",
     val bundles: List<String> = emptyList(),

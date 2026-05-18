@@ -14,7 +14,6 @@ data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var
 data class CompletedLogin(val token: String)
 
 class LoginQueue(
-    private val sessionAuth: SessionAuthentication,
     private val mainThreadDispatcher: MainThreadDispatcher
 ) {
 
@@ -30,8 +29,8 @@ class LoginQueue(
         return entry
     }
 
-    fun completeJoin(userId: String): CompletedLogin {
-        return CompletedLogin(sessionAuth.createToken(SessionAuthentication.TokenData(userId)))
+    fun completeJoin(token: String): CompletedLogin {
+        return CompletedLogin(token)
     }
 
     fun removeUser(userId: String) {
