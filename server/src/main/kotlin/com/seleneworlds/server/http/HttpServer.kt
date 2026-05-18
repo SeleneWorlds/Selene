@@ -171,7 +171,7 @@ class HttpServer(
                         val principal = call.authenticatedUser()
                         val queueStatus = queue.updateUser(principal.userId)
                         val completedLogin = if (queueStatus.status == LoginQueueStatus.Accepted) {
-                            queue.completeJoin(principal.token ?: "unauthenticated-user")
+                            queue.completeJoin(principal.userId, principal.token ?: "unauthenticated-user")
                         } else {
                             null
                         }
