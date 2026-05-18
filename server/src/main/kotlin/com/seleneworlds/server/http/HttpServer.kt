@@ -9,6 +9,8 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import java.util.*
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.server.bundles.ClientBundleCache
@@ -59,49 +61,53 @@ class HttpServer(
             }
             routing {
                 get("/") {
-                    call.respond(mapOf(
-                        "type" to "selene",
-                        "id" to serverHeartbeat.serverId,
-                        "name" to config.name,
-                        "status" to "running",
-                        "timestamp" to System.currentTimeMillis(),
-                        "uptime" to System.currentTimeMillis() - startupTime,
-                        "bundles" to mapOf(
-                            "total_count" to bundleDatabase.loadedBundles.size,
-                            "client_count" to bundleDatabase.loadedBundles.count { clientBundleCache.hasClientSide(it.dir) }
-                        ),
-                        "queueSize" to queue.queueSize,
-                        "maxQueueSize" to queue.maxQueueSize,
-                        "currentPlayers" to playerManager.players.size,
-                        "maxPlayers" to 100
-                    ))
+                    call.respond(
+                        ServerStatusResponse(
+                            type = "selene",
+                            id = serverHeartbeat.serverId,
+                            name = config.name,
+                            status = "running",
+                            timestamp = System.currentTimeMillis(),
+                            uptime = System.currentTimeMillis() - startupTime,
+                            bundles = BundleCountsResponse(
+                                totalCount = bundleDatabase.loadedBundles.size,
+                                clientCount = bundleDatabase.loadedBundles.count { clientBundleCache.hasClientSide(it.dir) }
+                            ),
+                            queueSize = queue.queueSize,
+                            maxQueueSize = queue.maxQueueSize,
+                            currentPlayers = playerManager.players.size,
+                            maxPlayers = 100
+                        )
+                    )
                 }
                 get("/heartbeat/jwks") {
                     val publicKey = serverHeartbeat.publicKey
 
-                    call.respond(mapOf(
-                        "keys" to listOf(
-                            mapOf(
-                                "kty" to "RSA",
-                                "use" to "sig",
-                                "alg" to "RS256",
-                                "kid" to serverHeartbeat.serverId,
-                                "n" to Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.modulus.toByteArray()),
-                                "e" to Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.publicExponent.toByteArray())
+                    call.respond(
+                        JwksResponse(
+                            keys = listOf(
+                                JwkKeyResponse(
+                                    kty = "RSA",
+                                    use = "sig",
+                                    alg = "RS256",
+                                    kid = serverHeartbeat.serverId,
+                                    n = Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.modulus.toByteArray()),
+                                    e = Base64.getUrlEncoder().withoutPadding().encodeToString(publicKey.publicExponent.toByteArray())
+                                )
                             )
                         )
-                    ))
+                    )
                 }
                 authenticate("broker", optional = config.insecureMode) {
                     get("/bundles") {
                         val bundles = bundleDatabase.loadedBundles.associateBy { it.manifest.name }
                             .filter { clientBundleCache.hasClientSide(it.value.dir) }
                             .mapValues { (_, value) ->
-                                mapOf(
-                                    "name" to value.manifest.name,
-                                    "hash" to clientBundleCache.getHash(value.dir),
-                                    "allow_shared_cache" to value.manifest.name.startsWith("@"),
-                                    "variants" to listOf("clientZip")
+                                BundleDescriptorResponse(
+                                    name = value.manifest.name,
+                                    hash = clientBundleCache.getHash(value.dir),
+                                    allowSharedCache = value.manifest.name.startsWith("@"),
+                                    variants = listOf("clientZip")
                                 )
                             }
                         call.respond(bundles)
@@ -170,11 +176,13 @@ class HttpServer(
                             null
                         }
 
-                        call.respond(mapOf(
-                            "status" to queueStatus.status.name,
-                            "message" to queueStatus.message,
-                            "token" to completedLogin?.token
-                        ))
+                        call.respond(
+                            JoinResponse(
+                                status = queueStatus.status.name,
+                                message = queueStatus.message,
+                                token = completedLogin?.token
+                            )
+                        )
                     }
                     post("/leave") {
                         val principal = call.authenticatedUser()
@@ -185,3 +193,57 @@ class HttpServer(
         }.start()
     }
 }
+
+@Serializable
+private data class ServerStatusResponse(
+    val type: String,
+    val id: String,
+    val name: String,
+    val status: String,
+    val timestamp: Long,
+    val uptime: Long,
+    val bundles: BundleCountsResponse,
+    val queueSize: Int,
+    val maxQueueSize: Int,
+    val currentPlayers: Int,
+    val maxPlayers: Int
+)
+
+@Serializable
+private data class BundleCountsResponse(
+    @SerialName("total_count")
+    val totalCount: Int,
+    @SerialName("client_count")
+    val clientCount: Int
+)
+
+@Serializable
+private data class JwksResponse(
+    val keys: List<JwkKeyResponse>
+)
+
+@Serializable
+private data class JwkKeyResponse(
+    val kty: String,
+    val use: String,
+    val alg: String,
+    val kid: String,
+    val n: String,
+    val e: String
+)
+
+@Serializable
+private data class BundleDescriptorResponse(
+    val name: String,
+    val hash: String?,
+    @SerialName("allow_shared_cache")
+    val allowSharedCache: Boolean,
+    val variants: List<String>
+)
+
+@Serializable
+private data class JoinResponse(
+    val status: String,
+    val message: String?,
+    val token: String?
+)
