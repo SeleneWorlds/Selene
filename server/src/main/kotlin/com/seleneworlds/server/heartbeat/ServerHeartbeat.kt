@@ -6,6 +6,7 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.coroutines.*
+import kotlinx.serialization.Serializable
 import org.slf4j.Logger
 import com.seleneworlds.common.util.Disposable
 import com.seleneworlds.server.config.ServerConfig
@@ -84,13 +85,13 @@ class ServerHeartbeat(
             .withExpiresAt(now.plus(heartbeatInterval))
             .sign(jwtAlgorithm)
 
-        val statusBody = mapOf(
-            "name" to config.name,
-            "address" to config.announcedHost,
-            "port" to config.port,
-            "apiUrl" to publicApiUrl,
-            "currentPlayers" to playerManager.players.size,
-            "maxPlayers" to 100
+        val statusBody = HeartbeatStatusBody(
+            name = config.name,
+            address = config.announcedHost,
+            port = config.port,
+            apiUrl = publicApiUrl,
+            currentPlayers = playerManager.players.size,
+            maxPlayers = 100
         )
 
         try {
@@ -116,3 +117,13 @@ class ServerHeartbeat(
         private val heartbeatInterval = Duration.ofSeconds(30)
     }
 }
+
+@Serializable
+private data class HeartbeatStatusBody(
+    val name: String,
+    val address: String,
+    val port: Int,
+    val apiUrl: String,
+    val currentPlayers: Int,
+    val maxPlayers: Int
+)
