@@ -13,6 +13,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.*
 import com.seleneworlds.common.bundles.BundleDatabase
+import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.server.bundles.ClientBundleCache
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.heartbeat.ServerHeartbeat
@@ -57,7 +58,7 @@ class HttpServer(
                 }
             }
             install(ContentNegotiation) {
-                json()
+                json(seleneJson)
             }
             routing {
                 get("/") {
@@ -67,6 +68,8 @@ class HttpServer(
                             id = serverHeartbeat.serverId,
                             name = config.name,
                             status = "running",
+                            host = config.announcedHost.ifEmpty { null },
+                            port = config.port,
                             timestamp = System.currentTimeMillis(),
                             uptime = System.currentTimeMillis() - startupTime,
                             bundles = BundleCountsResponse(
@@ -200,6 +203,8 @@ private data class ServerStatusResponse(
     val id: String,
     val name: String,
     val status: String,
+    val host: String? = null,
+    val port: Int,
     val timestamp: Long,
     val uptime: Long,
     val bundles: BundleCountsResponse,
