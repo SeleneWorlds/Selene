@@ -3,6 +3,7 @@ package com.seleneworlds.server.entities
 import com.seleneworlds.common.data.RegistryReference
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.entities.EntityDefinition
+import com.seleneworlds.common.entities.ImpassableComponentConfiguration
 import com.seleneworlds.common.grid.Direction
 import com.seleneworlds.common.network.packet.EntityAnimationPacket
 import com.seleneworlds.common.observable.ObservableMap
@@ -28,7 +29,7 @@ class Entity(
     private val entityComponentFactory: EntityComponentFactory
 ) : IdResolvable<Int, Entity>, ExposedApi<EntityApi> {
     override val api = EntityApi(this)
-    val impassable: Boolean = true
+    var impassable: Boolean = true
     var networkId: Int = -1
     var entityDefinition: RegistryReference<EntityDefinition> = RegistryReference.unbound()
     var name = "John Selene"
@@ -87,6 +88,9 @@ class Entity(
     }
 
     fun loadComponents(entityDefinition: EntityDefinition) {
+        impassable = entityDefinition.components.values.any {
+            it is ImpassableComponentConfiguration && it.enabled
+        }
         components.clear()
         tickableComponents.clear()
         entityDefinition.components.forEach { (name, configuration) ->
