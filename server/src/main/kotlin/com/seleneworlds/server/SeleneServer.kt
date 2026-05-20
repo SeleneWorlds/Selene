@@ -46,7 +46,7 @@ class SeleneServer(
     activeGrid: ActiveGrid,
     luaManager: LuaManager,
     private val config: com.seleneworlds.server.config.ServerConfig,
-    logger: Logger,
+    private val logger: Logger,
     private val mainThreadDispatcher: MainThreadDispatcher
 ) {
 
@@ -96,7 +96,12 @@ class SeleneServer(
     }
 
     private fun startConsoleThread() {
-        thread(name = "Console Thread") {
+        if (System.console() == null) {
+            logger.info("No interactive console detected, skipping console thread")
+            return
+        }
+
+        thread(name = "Console Thread", isDaemon = true) {
             val terminal = TerminalBuilder.builder()
                 .system(true)
                 .build()

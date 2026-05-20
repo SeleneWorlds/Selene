@@ -96,7 +96,7 @@ fun main(args: Array<String>) {
         single { LoggerFactory.getLogger("Selene") }
     }
     val httpModule = module {
-        singleOf(::HttpServer)
+        singleOf(::HttpServer) { bind<Disposable>() }
         singleOf(::SessionAuthentication)
         singleOf(::ServerHeartbeat) { bind<Disposable>() }
         single {
@@ -238,5 +238,8 @@ fun main(args: Array<String>) {
 
     koinApp.createEagerInstances()
     val server = koinApp.koin.get<SeleneServer>()
+    Runtime.getRuntime().addShutdownHook(Thread {
+        server.shutdown()
+    })
     server.start()
 }

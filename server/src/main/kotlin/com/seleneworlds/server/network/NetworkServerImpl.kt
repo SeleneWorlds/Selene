@@ -15,6 +15,7 @@ import com.seleneworlds.common.network.PacketFactory
 import com.seleneworlds.common.network.PacketHandler
 import com.seleneworlds.server.players.PlayerManager
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.TimeUnit
 
 @ChannelHandler.Sharable
 class NetworkServerImpl(
@@ -65,11 +66,12 @@ class NetworkServerImpl(
             })
             .option(ChannelOption.SO_BACKLOG, 128)
 
-        bootstrap.bind(port).addListener {
-            if (it.isSuccess) {
+        bootstrap.bind(port).addListener { future ->
+            if (future.isSuccess) {
+                channel = (future as ChannelFuture).channel()
                 logger.info("Server is listening on port $port")
             } else {
-                logger.error("Failed to start server on port $port", it.cause())
+                logger.error("Failed to start server on port $port", future.cause())
             }
         }
     }
@@ -96,8 +98,8 @@ class NetworkServerImpl(
 
     override fun stop() {
         channel?.close()
-        workerGroup.shutdownGracefully()
-        bossGroup.shutdownGracefully()
+        workerGroup.shutdownGracefully().awaitUninterruptibly(5, TimeUnit.SECONDS)
+        bossGroup.shutdownGracefully().awaitUninterruptibly(5, TimeUnit.SECONDS)
     }
 
     override fun reportClientError(client: NetworkClient, cause: Throwable) {

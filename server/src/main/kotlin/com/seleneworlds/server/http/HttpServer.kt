@@ -14,6 +14,7 @@ import kotlinx.serialization.Serializable
 import java.util.*
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.serialization.seleneJson
+import com.seleneworlds.common.util.Disposable
 import com.seleneworlds.server.bundles.ClientBundleCache
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.heartbeat.ServerHeartbeat
@@ -34,7 +35,9 @@ class HttpServer(
     private val playerManager: PlayerManager,
     private val sessionAuth: SessionAuthentication,
     private val serverHeartbeat: ServerHeartbeat
-) {
+) : Disposable {
+    private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
+
     private fun ApplicationCall.authenticatedUser(): SeleneUser {
         return principal<SeleneUser>()
             ?: if (config.insecureMode) {
@@ -45,7 +48,7 @@ class HttpServer(
     }
 
     fun start() {
-        embeddedServer(Netty, port = config.apiPort) {
+        val applicationEngine = embeddedServer(Netty, port = config.apiPort) {
             install(Authentication) {
                 bearer("broker") {
                     authenticate { tokenCredential ->
@@ -193,7 +196,15 @@ class HttpServer(
                     }
                 }
             }
-        }.start()
+        }
+
+        engine = applicationEngine
+        applicationEngine.start()
+    }
+
+    override fun dispose() {
+        engine?.stop(1_000, 5_000)
+        engine = null
     }
 }
 
