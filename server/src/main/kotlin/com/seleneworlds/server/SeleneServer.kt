@@ -69,6 +69,10 @@ class SeleneServer(
         customRegistries.load(bundleDatabase)
         customRegistries.loadCustomRegistries(bundleDatabase, "common")
         customRegistries.loadCustomRegistries(bundleDatabase, "server")
+        nameIdRegistry.watch(tileRegistry)
+        nameIdRegistry.watch(componentRegistry)
+        nameIdRegistry.watch(entityRegistry)
+        nameIdRegistry.watch(soundRegistry)
         nameIdRegistry.load()
         nameIdRegistry.populate(tileRegistry)
         nameIdRegistry.populate(componentRegistry)
@@ -81,8 +85,8 @@ class SeleneServer(
     }
 
     fun start() {
-        _root_ide_package_.com.seleneworlds.server.ServerEvents.ServerStarted.EVENT.invoker().serverStarted()
-        _root_ide_package_.com.seleneworlds.server.ServerEvents.ServerReloaded.EVENT.invoker().serverReloaded()
+        ServerEvents.ServerStarted.EVENT.invoker().serverStarted()
+        ServerEvents.ServerReloaded.EVENT.invoker().serverReloaded()
 
         httpServer.start()
         networkServer.start(config.port)

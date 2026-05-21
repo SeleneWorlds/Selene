@@ -4,8 +4,10 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
+import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.mappings.NameIdRegistry
 import com.seleneworlds.common.data.Registry
+import com.seleneworlds.common.data.RegistryReloadListener
 import com.seleneworlds.common.serialization.decodeFromFile
 import com.seleneworlds.server.config.ServerConfig
 import java.io.File
@@ -15,7 +17,7 @@ class PersistentNameIdRegistry(
     private val json: Json,
     private val config: ServerConfig,
     private val logger: Logger
-) : NameIdRegistry() {
+) : NameIdRegistry(), RegistryReloadListener<Any> {
 
     private val mappingsFile: File
         get() = File(config.savePath, "id_mappings.json")
@@ -85,5 +87,24 @@ class PersistentNameIdRegistry(
             getOrAssign(registry.name, identifier.toString())
         }
         registry.registryPopulated(this)
+    }
+
+    fun watch(registry: Registry<*>) {
+        if (registry.name in managedScopes) {
+            @Suppress("UNCHECKED_CAST")
+            (registry as Registry<Any>).addReloadListener(this)
+        }
+    }
+
+    override fun onEntryAdded(registry: Registry<Any>, identifier: Identifier, newData: Any) {
+        if (registry.name in managedScopes) {
+            getOrAssign(registry.name, identifier.toString())
+            registry.registryPopulated(this, throwOnMissingId = false)
+            save()
+        }
+    }
+
+    companion object {
+        private val managedScopes = setOf("tiles", "components", "entities", "sounds")
     }
 }

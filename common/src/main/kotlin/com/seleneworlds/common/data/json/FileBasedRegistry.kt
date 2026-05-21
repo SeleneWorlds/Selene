@@ -5,7 +5,6 @@ import com.google.common.collect.Table
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromJsonElement
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import com.seleneworlds.common.bundles.Bundle
@@ -145,6 +144,30 @@ abstract class FileBasedRegistry<TData : Any>(
         return data.also {
             (it as? RegistryAdoptedObject<TData>)?.registry = this@FileBasedRegistry
             (it as? RegistryAdoptedObject<*>)?.identifier = identifier
+        }
+    }
+
+    fun upsertEntry(identifier: Identifier, element: JsonElement, id: Int? = null) {
+        val data = loadEntryFromElement(element, identifier)
+        val oldEntry = entries.put(identifier, data)
+
+        val existingId = (oldEntry as? IdMappedObject)?.id?.takeIf { it != -1 } ?: idByIdentifier[identifier]
+        val targetId = id ?: existingId
+        if (targetId != null && targetId != -1) {
+            entriesById[targetId] = data
+            idByIdentifier[identifier] = targetId
+            (data as? IdMappedObject)?.id = targetId
+        }
+
+        (oldEntry as? MetadataHolder)?.let { removeFromMetadataLookup(identifier, it) }
+        (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
+
+        incrementCacheKey()
+
+        notifyEntryChanged(identifier, oldEntry, data)
+
+        subscriptions[identifier]?.forEach { handler ->
+            handler(data)
         }
     }
 
