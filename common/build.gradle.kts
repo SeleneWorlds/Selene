@@ -48,6 +48,14 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.register<JavaExec>("runLuaTest") {
+    group = "verification"
+    description = "Runs one or more bundled Lua test files via the Kotlin Lua test runner."
+    classpath = sourceSets["test"].runtimeClasspath
+    mainClass.set("com.seleneworlds.common.bundles.LuaTestRunner")
+    workingDir = rootDir
+}
+
 publishing {
     publications {
         create<MavenPublication>("maven") {
