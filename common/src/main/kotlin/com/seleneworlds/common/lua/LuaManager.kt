@@ -34,6 +34,7 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         defineMetatable(Identifier::class, IdentifierLuaApi.luaMeta)
         defineMetatable(RegistryObject::class, RegistryObjectLuaApi.luaMeta)
         defineMetatable(CustomRegistryObject::class, CustomRegistryObjectLuaApi.luaMeta)
+        defineMetatable(LuaEvent::class, LuaEvent.luaMeta)
         defineMetatable(LuaEventSink::class, LuaEventSink.luaMeta)
         defineMetatable(ResolvableReference::class, ResolvableReferenceLuaApi.luaMeta)
         defineMetatable(ObservableMap::class, ObservableMapLuaApi.luaMeta)

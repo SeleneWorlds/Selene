@@ -92,6 +92,7 @@ import com.seleneworlds.common.i18n.I18nLuaApi
 import com.seleneworlds.common.i18n.Messages
 import com.seleneworlds.common.jobs.SchedulesApi
 import com.seleneworlds.common.jobs.SchedulesLuaApi
+import com.seleneworlds.common.lua.EventsLuaApi
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.libraries.*
@@ -147,6 +148,7 @@ class SeleneApplication(
             singleOf(::LuaMathxModule) { bind<LuaModule>() }
             singleOf(::LuaStringxModule) { bind<LuaModule>() }
             singleOf(::LuaTablexModule) { bind<LuaModule>() }
+            singleOf(::EventsLuaApi) { bind<LuaModule>() }
             singleOf(::TaskLuaApi) { bind<LuaModule>() }
             singleOf(::UILuaApi) { bind<LuaModule>() }
             singleOf(::VisualsLuaApi) { bind<LuaModule>() }
