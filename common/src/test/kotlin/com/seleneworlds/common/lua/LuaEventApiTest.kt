@@ -84,6 +84,52 @@ class LuaEventApiTest {
     }
 
     @Test
+    fun `lua events preserve lua table identity for fired arguments`() {
+        val luaPackage = LuaPackageModule()
+        val luaManager = LuaManager(luaPackage)
+        val events = EventsLuaApi()
+        try {
+            luaManager.lua.push(luaPackage.packageLoaded)
+            luaManager.lua.push(luaManager.lua.newTable {
+                events.register(this)
+            })
+            luaManager.lua.pushValue(-1)
+            luaManager.lua.setGlobal("Event")
+            luaManager.lua.setField(-2, events.name)
+            luaManager.lua.pop(1)
+
+            luaManager.lua.load(
+                LuaManager.loadBuffer(
+                    """
+                    local event = Event.of("test:event")
+                    local payload = { count = 1 }
+
+                    event:connect(function(arg)
+                        _G.samePayload = arg == payload
+                        arg.count = arg.count + 1
+                    end)
+
+                    event:fire(payload)
+                    _G.payloadCount = payload.count
+                    """.trimIndent()
+                ),
+                "lua_event_identity_test"
+            )
+            luaManager.lua.pCall(0, 0)
+
+            luaManager.lua.getGlobal("samePayload")
+            assertTrue(luaManager.lua.toBoolean(-1))
+            luaManager.lua.pop(1)
+
+            luaManager.lua.getGlobal("payloadCount")
+            assertEquals(2, luaManager.lua.toInteger(-1).toInt())
+            luaManager.lua.pop(1)
+        } finally {
+            luaManager.lua.close()
+        }
+    }
+
+    @Test
     fun `lua events return the same event for the same identifier`() {
         val luaPackage = LuaPackageModule()
         val luaManager = LuaManager(luaPackage)

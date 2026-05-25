@@ -9,21 +9,20 @@ import com.seleneworlds.common.event.EventFactory
 import com.seleneworlds.common.lua.util.checkFunction
 import com.seleneworlds.common.lua.util.getCallerInfo
 import com.seleneworlds.common.lua.util.checkUserdata
-import com.seleneworlds.common.lua.util.toAny
 import com.seleneworlds.common.lua.util.xpCall
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Proxy
 
 class LuaEvent {
     fun interface Listener {
-        fun invoke(arguments: Array<Any?>)
+        fun invoke(argumentsRef: Int, argumentCount: Int)
     }
 
     private val event: Event<Listener> = EventFactory.arrayBackedEvent<Listener> { listeners ->
-        Listener { arguments ->
+        Listener { argumentsRef, argumentCount ->
             listeners.forEach { listener ->
                 EventFactory.catchLog {
-                    listener.invoke(arguments)
+                    listener.invoke(argumentsRef, argumentCount)
                 }
             }
         }
@@ -35,17 +34,16 @@ class LuaEvent {
             val callback = lua.checkFunction(2)
             val trace = lua.getCallerInfo()
             val bundle = BundleExecutionContext.currentBundle
-            val listener = withBundleContext(Listener { arguments ->
+            val listener = withBundleContext(Listener { argumentsRef, argumentCount ->
                 val callbackLua = callback.state()
                 callbackLua.push(callback)
-                arguments.forEach { argument ->
-                    if (argument == null) {
-                        callbackLua.pushNil()
-                    } else {
-                        callbackLua.push(argument, Lua.Conversion.FULL)
-                    }
+                callbackLua.refGet(argumentsRef)
+                val argumentsTableIndex = callbackLua.top
+                for (argumentIndex in 1..argumentCount) {
+                    callbackLua.rawGetI(argumentsTableIndex, argumentIndex)
                 }
-                callbackLua.xpCall(arguments.size, 0, trace)
+                callbackLua.remove(argumentsTableIndex)
+                callbackLua.xpCall(argumentCount, 0, trace)
             }, bundle)
             luaEvent.event.register(listener)
             BundleEventSubscriptions.record(luaEvent.event, listener)
@@ -54,8 +52,18 @@ class LuaEvent {
 
         private fun fire(lua: Lua): Int {
             val luaEvent = lua.checkUserdata<LuaEvent>(1)
-            val arguments = Array(lua.top - 1) { index -> lua.toAny(index + 2) }
-            luaEvent.event.invoker().invoke(arguments)
+            val argumentCount = lua.top - 1
+            lua.createTable(argumentCount, 0)
+            for (argumentIndex in 1..argumentCount) {
+                lua.pushValue(argumentIndex + 1)
+                lua.rawSetI(-2, argumentIndex)
+            }
+            val argumentsRef = lua.ref()
+            try {
+                luaEvent.event.invoker().invoke(argumentsRef, argumentCount)
+            } finally {
+                lua.unref(argumentsRef)
+            }
             return 0
         }
 
