@@ -135,6 +135,7 @@ class BundleLoader(
     }
 
     fun clearBundleState(bundle: Bundle, deletedFiles: Set<String> = emptySet()) {
+        BundleEventSubscriptions.unregisterSubscriptions(bundle)
         val moduleNames = listLuaModuleNames(bundle) + deletedFiles.mapNotNull { moduleNameForLuaFile(bundle, it.replace('\\', '/')) }
         for (moduleName in moduleNames) {
             luaPackage.clearLoadedModule(luaManager.lua, moduleName)
