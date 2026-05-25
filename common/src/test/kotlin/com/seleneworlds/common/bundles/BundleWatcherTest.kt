@@ -38,10 +38,6 @@ class BundleWatcherTest {
             assertEquals(watcher.awaitProcessedUpdate(), null, "server changes should not trigger bundle updates")
 
             Files.writeString(commonFile, "common-2")
-            assertEquals(watcher.awaitProcessedUpdate(), null, "first modify should establish baseline for existing files")
-
-            watcher.resetProcessedUpdates()
-            Files.writeString(commonFile, "common-3")
             val update = assertNotNull(watcher.awaitProcessedUpdate())
             assertEquals(setOf("common/assets/test/atlas.txt"), update.updatedFiles)
             assertTrue(update.deletedFiles.isEmpty())
@@ -49,17 +45,20 @@ class BundleWatcherTest {
     }
 
     @Test
-    fun usesFirstModifyToEstablishBaselineForExistingFiles() {
+    fun snapshotsExistingFilesWhenWatchingStarts() {
         withWatcherBundle { bundle, watcher ->
             val filePath = writeFile(bundle.dir.toPath().resolve("common/assets/test/atlas.txt"), "content")
 
             watcher.startWatching()
             watcher.resetProcessedUpdates()
 
+            Files.writeString(filePath, "updated-content")
             invokeModifiedHandler(watcher, filePath, bundle)
             watcher.processPendingUpdates()
 
-            assertTrue(watcher.processedUpdates.isEmpty(), "unchanged file metadata should not queue updates")
+            val update = assertNotNull(watcher.processedUpdates.firstOrNull())
+            assertEquals(setOf("common/assets/test/atlas.txt"), update.updatedFiles)
+            assertTrue(update.deletedFiles.isEmpty())
         }
     }
 
@@ -86,7 +85,7 @@ class BundleWatcherTest {
     }
 
     @Test
-    fun recursivelyRegistersNewDirectoriesAndEstablishesBaselineLazily() {
+    fun recursivelyRegistersNewDirectoriesAndSnapshotsExistingFiles() {
         withWatcherBundle { bundle, watcher ->
             bundle.dir.toPath().resolve("common").createDirectories()
 
@@ -107,15 +106,10 @@ class BundleWatcherTest {
                 )
 
                 watcher.resetProcessedUpdates()
+                Files.writeString(targetDir.resolve("nested/existing.txt"), "updated")
                 invokeModifiedHandler(watcher, targetDir.resolve("nested/existing.txt"), bundle)
                 watcher.processPendingUpdates()
-                assertTrue(
-                    watcher.processedUpdates.isEmpty(),
-                    "existing files inside newly created directories should establish baseline on first modify"
-                )
-
-                Files.writeString(targetDir.resolve("nested/existing.txt"), "updated")
-                val update = assertNotNull(watcher.awaitProcessedUpdate())
+                val update = assertNotNull(watcher.processedUpdates.firstOrNull())
                 assertEquals(setOf("common/imported/nested/existing.txt"), update.updatedFiles)
                 assertTrue(update.deletedFiles.isEmpty())
             } finally {

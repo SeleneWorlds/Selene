@@ -315,9 +315,26 @@ abstract class BundleWatcher(
                 directoryCount++
                 return FileVisitResult.CONTINUE
             }
+
+            override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+                initializeFileState(bundle, file, attrs)
+                return FileVisitResult.CONTINUE
+            }
         })
 
         logger.debug("Registered {} directories in watched subtree {}", directoryCount, rootPath)
+    }
+
+    private fun initializeFileState(bundle: Bundle, filePath: Path, attrs: BasicFileAttributes) {
+        if (!isSyncedBundleContentFile(bundle, filePath)) {
+            return
+        }
+
+        val relativePath = bundle.dir.toPath().relativize(filePath).toString()
+        fileStates[getFileStateKey(bundle, relativePath)] = FileState(
+            size = attrs.size(),
+            lastModifiedTime = attrs.lastModifiedTime()
+        )
     }
 
     private fun shouldWatchDirectory(bundle: Bundle, dirPath: Path): Boolean {
