@@ -3,10 +3,12 @@ package com.seleneworlds.server.bundle
 import org.slf4j.Logger
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.BundleWatcher
+import com.seleneworlds.common.config.HotReloadMode
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.Registry
 import com.seleneworlds.common.network.packet.NotifyBundleUpdatePacket
 import com.seleneworlds.server.bundles.ClientBundleCache
+import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.data.Registries
 import com.seleneworlds.server.network.NetworkServer
 import com.seleneworlds.server.script.ServerScriptHotReload
@@ -17,7 +19,8 @@ class ServerBundleWatcher(
     private val networkServer: NetworkServer,
     private val registries: Registries,
     private val clientBundleCache: ClientBundleCache,
-    private val serverScriptHotReload: ServerScriptHotReload
+    private val serverScriptHotReload: ServerScriptHotReload,
+    private val config: ServerConfig
 ) : BundleWatcher(logger, bundleDatabase, setOf("common", "client", "server")) {
 
     override fun processPendingBundleUpdates(
@@ -29,8 +32,12 @@ class ServerBundleWatcher(
 
         val bundle = bundleDatabase.getBundle(bundleId)
         if (bundle != null) {
-            serverScriptHotReload.reloadUpdatedScripts(bundle, updatedFiles)
-            serverScriptHotReload.unloadDeletedScripts(bundle, deletedFiles)
+            if (config.hotReloadMode == HotReloadMode.EAGER) {
+                serverScriptHotReload.reloadBundleClosure(bundleId, deletedFiles)
+            } else {
+                serverScriptHotReload.reloadUpdatedScripts(bundle, updatedFiles)
+                serverScriptHotReload.unloadDeletedScripts(bundle, deletedFiles)
+            }
         }
 
         val clientVisibleUpdatedFiles = updatedFiles.filterTo(mutableSetOf()) { isClientVisibleContentPath(it) }

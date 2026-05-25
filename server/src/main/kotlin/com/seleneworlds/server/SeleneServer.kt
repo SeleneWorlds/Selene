@@ -91,7 +91,7 @@ class SeleneServer(
         httpServer.start()
         networkServer.start(config.port)
         serverHeartbeat.start()
-        if (config.hotReload) {
+        if (config.hotReloadMode.isEnabled) {
             bundleWatcher.startWatching()
         }
 

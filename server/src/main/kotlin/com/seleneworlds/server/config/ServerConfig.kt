@@ -1,5 +1,6 @@
 package com.seleneworlds.server.config
 
+import com.seleneworlds.common.config.HotReloadMode
 import java.io.File
 
 data class ServerConfig(
@@ -13,9 +14,12 @@ data class ServerConfig(
     val public: Boolean = false,
     val announcedHost: String = "",
     val announcedApi: String = "",
-    val hotReload: Boolean = true,
+    val hotReload: String = "true",
     val grid: String = ""
 ) {
+    val hotReloadMode: HotReloadMode
+        get() = HotReloadMode.parse(hotReload)
+
     companion object {
         fun createDefault() {
             val configFile = File("server.properties")

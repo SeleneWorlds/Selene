@@ -92,7 +92,7 @@ class SeleneClient(
         bundleLoader.loadBundleEntrypoints(bundles, listOf("common/", "client/", "init.lua"))
         ClientEvents.SetupUI.EVENT.invoker().setupUI()
         (networkClient as NetworkClientImpl).packetHandler = packetHandler
-        if (config.hotReload) {
+        if (config.hotReloadMode.isEnabled) {
             bundleWatcher.startWatching()
         }
 

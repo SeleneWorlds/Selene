@@ -1,8 +1,12 @@
 package com.seleneworlds.client.config
 
+import com.seleneworlds.common.config.HotReloadMode
 import java.io.File
 
-data class ClientConfig(val vsync: Boolean = true, val hotReload: Boolean = true) {
+data class ClientConfig(val vsync: Boolean = true, val hotReload: String = "true") {
+    val hotReloadMode: HotReloadMode
+        get() = HotReloadMode.parse(hotReload)
+
     companion object {
         fun createDefault() {
             val configFile = File("client.properties")
