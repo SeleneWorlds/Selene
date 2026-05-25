@@ -2,44 +2,23 @@ package com.seleneworlds.server.script
 
 import org.slf4j.Logger
 import com.seleneworlds.common.bundles.Bundle
+import com.seleneworlds.common.bundles.BundleLifecycleManager
 import com.seleneworlds.common.bundles.BundleLoader
-import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.getPreloadSpecs
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.libraries.LuaPackageModule
 import java.io.File
 
 class ServerScriptHotReload(
+    private val bundleLifecycleManager: BundleLifecycleManager,
     private val bundleLoader: BundleLoader,
-    private val bundleDatabase: BundleDatabase,
     private val luaManager: LuaManager,
     private val luaPackage: LuaPackageModule,
     private val logger: Logger
 ) {
 
     fun reloadBundleClosure(bundleId: String, deletedFiles: Set<String>) {
-        val impactedBundleIds = bundleDatabase.getTransitiveDependents(bundleId) + bundleId
-        val bundlesToReload = bundleDatabase.loadedBundles.filter { it.manifest.name in impactedBundleIds }
-        if (bundlesToReload.isEmpty()) {
-            logger.warn("Could not eager reload unknown bundle {}", bundleId)
-            return
-        }
-
-        bundlesToReload.forEach { bundle ->
-            clearBundleState(bundle, if (bundle.manifest.name == bundleId) deletedFiles else emptySet())
-        }
-        bundlesToReload.forEach { bundle ->
-            preloadBundleModules(bundle)
-        }
-        bundlesToReload.forEach { bundle ->
-            rerunBundleEntrypoints(bundle)
-        }
-
-        logger.info(
-            "Eager reloaded bundle closure for {}: {}",
-            bundleId,
-            bundlesToReload.joinToString(", ") { it.manifest.name }
-        )
+        bundleLifecycleManager.reloadBundleClosure(bundleId, deletedFiles)
     }
 
     fun reloadUpdatedScripts(bundle: Bundle, updatedFiles: Set<String>) {
@@ -82,7 +61,7 @@ class ServerScriptHotReload(
             reloaded = true
         }
 
-        val resolverModuleName = bundle.moduleNameForLuaFile(normalizedPath)
+        val resolverModuleName = bundleLoader.moduleNameForLuaFile(bundle, normalizedPath)
         if (resolverModuleName != null) {
             luaPackage.clearLoadedModule(luaManager.lua, resolverModuleName)
             logger.info("Invalidated server Lua module {} from {}", resolverModuleName, normalizedPath)
@@ -118,7 +97,7 @@ class ServerScriptHotReload(
             unloaded = true
         }
 
-        val resolverModuleName = bundle.moduleNameForLuaFile(normalizedPath)
+        val resolverModuleName = bundleLoader.moduleNameForLuaFile(bundle, normalizedPath)
         if (resolverModuleName != null) {
             luaPackage.clearLoadedModule(luaManager.lua, resolverModuleName)
             logger.info("Invalidated deleted server Lua module {} from {}", resolverModuleName, normalizedPath)
@@ -128,72 +107,6 @@ class ServerScriptHotReload(
         if (!unloaded) {
             logger.debug("No server Lua module mapping found for deleted file {}", normalizedPath)
         }
-    }
-
-    private fun Bundle.moduleNameForLuaFile(relativePath: String): String? {
-        if (!relativePath.endsWith(".lua")) {
-            return null
-        }
-
-        if (relativePath == "init.lua") {
-            return manifest.name
-        }
-
-        val modulePath = relativePath.removeSuffix(".lua").replace('/', '.')
-        return "${manifest.name}.$modulePath"
-    }
-
-    private fun clearBundleState(bundle: Bundle, deletedFiles: Set<String>) {
-        val moduleNames = bundle.listLuaModuleNames() + deletedFiles.mapNotNull { bundle.moduleNameForLuaFile(it.replace('\\', '/')) }
-        for (moduleName in moduleNames) {
-            luaPackage.clearLoadedModule(luaManager.lua, moduleName)
-        }
-        for (preloadSpec in bundle.manifest.getPreloadSpecs()) {
-            luaPackage.clearLoadedModule(luaManager.lua, preloadSpec.moduleName)
-            luaPackage.removePreloadedModule(luaManager.lua, preloadSpec.moduleName)
-        }
-    }
-
-    private fun preloadBundleModules(bundle: Bundle) {
-        for (preloadSpec in bundle.manifest.getPreloadSpecs()) {
-            val scriptFile = File(bundle.dir, preloadSpec.file)
-            if (!scriptFile.isFile) {
-                logger.debug("Skipping missing eager preload {} in bundle {}", preloadSpec.file, bundle.manifest.name)
-                continue
-            }
-
-            luaPackage.preloadModule(
-                luaManager.lua,
-                preloadSpec.moduleName,
-                scriptFile.readText(preloadSpec.encoding),
-                bundle.getFileDebugName(scriptFile)
-            )
-        }
-    }
-
-    private fun rerunBundleEntrypoints(bundle: Bundle) {
-        bundle.manifest.entrypoints
-            .filter { entrypoint -> serverEntrypointFilters.any { entrypoint.startsWith(it) } }
-            .forEach { entrypoint ->
-                bundleLoader.runBundleEntrypoint(bundle, entrypoint)
-                logger.info("Re-ran eager hot reload bundle entrypoint {} from {}", entrypoint, bundle.manifest.name)
-            }
-    }
-
-    private fun Bundle.listLuaModuleNames(): Set<String> {
-        val moduleNames = mutableSetOf<String>()
-
-        dir.walkTopDown()
-            .filter { it.isFile && it.extension == "lua" }
-            .forEach { file ->
-                val relativePath = file.relativeTo(dir).invariantSeparatorsPath
-                moduleNameForLuaFile(relativePath)?.let(moduleNames::add)
-            }
-
-        manifest.getPreloadSpecs()
-            .mapTo(moduleNames) { it.moduleName }
-
-        return moduleNames
     }
 
     companion object {

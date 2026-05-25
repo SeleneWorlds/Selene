@@ -28,13 +28,12 @@ class ServerBundleWatcher(
         updatedFiles: Set<String>,
         deletedFiles: Set<String>
     ) {
-        super.processPendingBundleUpdates(bundleId, updatedFiles, deletedFiles)
-
         val bundle = bundleDatabase.getBundle(bundleId)
         if (bundle != null) {
             if (config.hotReloadMode == HotReloadMode.EAGER) {
                 serverScriptHotReload.reloadBundleClosure(bundleId, deletedFiles)
             } else {
+                super.processPendingBundleUpdates(bundleId, updatedFiles, deletedFiles)
                 serverScriptHotReload.reloadUpdatedScripts(bundle, updatedFiles)
                 serverScriptHotReload.unloadDeletedScripts(bundle, deletedFiles)
             }

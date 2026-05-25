@@ -18,7 +18,7 @@ import com.seleneworlds.client.network.NetworkClient
 import com.seleneworlds.client.network.NetworkClientImpl
 import com.seleneworlds.client.rendering.drawable.DrawableManager
 import com.seleneworlds.client.rendering.visual.VisualDefinition
-import com.seleneworlds.common.bundles.BundleDatabase
+import com.seleneworlds.common.bundles.BundleLifecycleManager
 import com.seleneworlds.common.bundles.BundleLoader
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.Registry
@@ -44,18 +44,11 @@ class SeleneClient(
     private val config: ClientConfig,
     private val networkClient: NetworkClient,
     private val bundleLoader: BundleLoader,
-    private val bundleDatabase: BundleDatabase,
+    private val bundleLifecycleManager: BundleLifecycleManager,
     private val luaManager: LuaManager,
     private val packetRegistrations: PacketRegistrations,
-    private val tileRegistry: TileRegistry,
-    private val componentRegistry: ComponentRegistry,
-    private val soundRegistry: SoundRegistry,
-    private val entityRegistry: EntityRegistry,
-    private val gridRegistry: GridRegistry,
     private val renderGridRegistry: RenderGridRegistry,
     private val visualRegistry: VisualRegistry,
-    private val audioRegistry: AudioRegistry,
-    private val customRegistries: CustomRegistries,
     private val activeGrid: ActiveGrid,
     private val clientGrid: ClientGrid,
     private val runtimeConfig: ClientRuntimeConfig,
@@ -73,23 +66,8 @@ class SeleneClient(
         luaManager.loadModules()
         luaManager.loadInternalLuaModule("selene.ui.coroutine")
         luaManager.loadInternalLuaModule("selene.visuals")
-        val bundles = bundleLoader.loadBundles(runtimeConfig.bundles.keys)
-        tileRegistry.load(bundleDatabase)
-        componentRegistry.load(bundleDatabase)
-        soundRegistry.load(bundleDatabase)
-        entityRegistry.load(bundleDatabase)
-        gridRegistry.load(bundleDatabase)
-        renderGridRegistry.load(bundleDatabase)
-        val activeGridId = activeGrid.applyDefaultGrid()
-        val renderGrid = renderGridRegistry.get(activeGridId)
-            ?: throw IllegalStateException("Missing render grid definition for active grid: $activeGridId")
-        clientGrid.applyDefinition(renderGrid)
-        visualRegistry.load(bundleDatabase)
-        audioRegistry.load(bundleDatabase)
-        customRegistries.load(bundleDatabase)
-        customRegistries.loadCustomRegistries(bundleDatabase, "common")
-        customRegistries.loadCustomRegistries(bundleDatabase, "client")
-        bundleLoader.loadBundleEntrypoints(bundles, listOf("common/", "client/", "init.lua"))
+        val bundles = bundleLoader.resolveBundles(runtimeConfig.bundles.keys)
+        bundleLifecycleManager.initializeBundles(bundles)
         ClientEvents.SetupUI.EVENT.invoker().setupUI()
         (networkClient as NetworkClientImpl).packetHandler = packetHandler
         if (config.hotReloadMode.isEnabled) {

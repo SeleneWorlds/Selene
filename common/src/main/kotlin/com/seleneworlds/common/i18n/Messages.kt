@@ -39,7 +39,7 @@ class Messages(
 
     private fun loadMessagesForLocale(locale: Locale): Properties {
         val mergedMessages = Properties()
-        for (bundle in bundleDatabase.loadedBundles) {
+        for (bundle in bundleDatabase.enabledBundles) {
             val bundleMessages = loadBundleMessages(bundle, locale)
             mergedMessages.putAll(bundleMessages)
         }

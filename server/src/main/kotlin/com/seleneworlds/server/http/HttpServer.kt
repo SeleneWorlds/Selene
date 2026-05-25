@@ -76,8 +76,8 @@ class HttpServer(
                             timestamp = System.currentTimeMillis(),
                             uptime = System.currentTimeMillis() - startupTime,
                             bundles = BundleCountsResponse(
-                                totalCount = bundleDatabase.loadedBundles.size,
-                                clientCount = bundleDatabase.loadedBundles.count { clientBundleCache.hasClientSide(it.dir) }
+                                totalCount = bundleDatabase.enabledBundles.size,
+                                clientCount = bundleDatabase.enabledBundles.count { clientBundleCache.hasClientSide(it.dir) }
                             ),
                             queueSize = queue.queueSize,
                             maxQueueSize = queue.maxQueueSize,
@@ -106,7 +106,7 @@ class HttpServer(
                 }
                 authenticate("broker", optional = config.insecureMode) {
                     get("/bundles") {
-                        val bundles = bundleDatabase.loadedBundles.associateBy { it.manifest.name }
+                        val bundles = bundleDatabase.enabledBundles.associateBy { it.manifest.name }
                             .filter { clientBundleCache.hasClientSide(it.value.dir) }
                             .mapValues { (_, value) ->
                                 BundleDescriptorResponse(
@@ -120,7 +120,7 @@ class HttpServer(
                     }
                     get("/bundles/{bundleName}/clientZip") {
                         val bundleName = call.parameters["bundleName"] ?: return@get
-                        val bundle = bundleDatabase.getBundle(bundleName) ?: return@get
+                        val bundle = bundleDatabase.getEnabledBundle(bundleName) ?: return@get
                         val hash = clientBundleCache.getHash(bundle.dir) ?: return@get
                         call.response.header(
                             HttpHeaders.ContentDisposition, ContentDisposition.Attachment.withParameter(
@@ -134,7 +134,7 @@ class HttpServer(
                         val unsafePath = call.parameters.getAll("path")?.joinToString("/") ?: return@get
                         val normalizedPath = Paths.get(unsafePath).normalize().toString()
 
-                        val bundle = bundleDatabase.getBundle(bundleName)
+                        val bundle = bundleDatabase.getEnabledBundle(bundleName)
                         if (bundle == null) {
                             call.respond(HttpStatusCode.NotFound, "Bundle not found")
                             return@get

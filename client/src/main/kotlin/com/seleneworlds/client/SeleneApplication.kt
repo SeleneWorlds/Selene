@@ -171,6 +171,7 @@ class SeleneApplication(
         val bundleModule = module {
             singleOf(::BundleLoader)
             singleOf(::BundleDatabase)
+            singleOf(::BundleLifecycleManager)
             singleOf(::ClientBundleLocator) { bind<BundleLocator>() }
             singleOf(::ClientBundleWatcher) { bind<Disposable>() }
         }
@@ -210,7 +211,7 @@ class SeleneApplication(
             singleOf(::UI)
             singleOf(::MainThreadDispatcher)
             singleOf(::ClientLuaScriptProvider) { bind<ClientScriptProvider>() }
-            singleOf(::ClientReloadManager)
+            singleOf(::ClientReloadManager) { bind<BundleRuntimeRebuilder>() }
             singleOf(::SeleneClient)
             singleOf(::RuntimeBundleUpdateManager) { bind<Disposable>() }
             singleOf(::WindowManager)

@@ -26,8 +26,9 @@ class BundleLoader(
     private val bundleDatabase: BundleDatabase,
     private val bundleLocator: BundleLocator
 ) {
+    private val registeredResolverBundles = mutableSetOf<String>()
 
-    fun loadBundles(bundles: Set<String>): List<Bundle> {
+    fun resolveBundles(bundles: Set<String>): List<Bundle> {
         val bundleManifests = mutableMapOf<String, Bundle>()
         val dependencyGraph = mutableMapOf<String, List<String>>()
         val missingBundles = mutableSetOf<String>()
@@ -42,26 +43,9 @@ class BundleLoader(
             }
             bundleManifests[bundle] = locatedBundle
             dependencyGraph[bundle] = locatedBundle.manifest.dependencies
+            registerBundleResolver(locatedBundle)
             for (dependency in locatedBundle.manifest.dependencies) {
                 collectDependencies(dependency)
-            }
-            luaPackage.addPackageResolver { path ->
-                if (path == bundle) {
-                    val luaInitFile =
-                        File(locatedBundle.dir, "init.lua")
-                    if (luaInitFile.exists()) {
-                        return@addPackageResolver (locatedBundle.getFileDebugName(luaInitFile)) to luaInitFile.readText()
-                    }
-                }
-                if (!path.startsWith("$bundle.")) {
-                    return@addPackageResolver null
-                }
-                val luaFile =
-                    File(locatedBundle.dir, path.substringAfter('.').replace('.', File.separatorChar) + ".lua")
-                if (luaFile.exists()) {
-                    return@addPackageResolver (locatedBundle.getFileDebugName(luaFile)) to luaFile.readText()
-                }
-                null
             }
         }
         for (bundle in bundles) {
@@ -106,43 +90,13 @@ class BundleLoader(
 
         for (bundle in sortedBundles) {
             val locatedBundle = bundleManifests[bundle] ?: continue
-            bundleDatabase.addBundle(locatedBundle)
-        }
-
-        // Load bundles in dependency order
-        for (bundle in sortedBundles) {
-            val locatedBundle = bundleManifests[bundle] ?: continue
-            val manifest = locatedBundle.manifest
-            val bundleDir = locatedBundle.dir
-            for (preloadSpec in manifest.getPreloadSpecs()) {
-                try {
-                    val scriptFile = File(bundleDir, preloadSpec.file)
-                    if (scriptFile.exists()) {
-                        logger.debug(
-                            "Pre-loading Lua module {} from {} with encoding {}",
-                            preloadSpec.moduleName,
-                            preloadSpec.file,
-                            preloadSpec.encoding
-                        )
-                        luaPackage.preloadModule(
-                            luaManager.lua,
-                            preloadSpec.moduleName,
-                            scriptFile.readText(preloadSpec.encoding),
-                            locatedBundle.getFileDebugName(scriptFile)
-                        )
-                    } else {
-                        logger.error("Preload file {} not found in bundle {}", preloadSpec.file, bundle)
-                    }
-                } catch (e: Exception) {
-                    logger.error("Error pre-loading Lua module {}: {}", preloadSpec.moduleName, e.message)
-                }
-            }
+            bundleDatabase.addBundle(locatedBundle, enabled = false)
         }
 
         return sortedBundles.mapNotNull { bundleManifests[it] }
     }
 
-    fun loadBundleEntrypoints(bundles: List<Bundle>, entrypointFilters: List<String>) {
+    fun runBundleEntrypoints(bundles: List<Bundle>, entrypointFilters: List<String>) {
         for (bundle in bundles) {
             val manifest = bundle.manifest
             for (entrypoint in manifest.entrypoints) {
@@ -151,6 +105,100 @@ class BundleLoader(
                 }
                 runBundleEntrypoint(bundle, entrypoint)
             }
+        }
+    }
+
+    fun preloadBundleModules(bundle: Bundle) {
+        for (preloadSpec in bundle.manifest.getPreloadSpecs()) {
+            try {
+                val scriptFile = File(bundle.dir, preloadSpec.file)
+                if (scriptFile.exists()) {
+                    logger.debug(
+                        "Pre-loading Lua module {} from {} with encoding {}",
+                        preloadSpec.moduleName,
+                        preloadSpec.file,
+                        preloadSpec.encoding
+                    )
+                    luaPackage.preloadModule(
+                        luaManager.lua,
+                        preloadSpec.moduleName,
+                        scriptFile.readText(preloadSpec.encoding),
+                        bundle.getFileDebugName(scriptFile)
+                    )
+                } else {
+                    logger.error("Preload file {} not found in bundle {}", preloadSpec.file, bundle.manifest.name)
+                }
+            } catch (e: Exception) {
+                logger.error("Error pre-loading Lua module {}: {}", preloadSpec.moduleName, e.message)
+            }
+        }
+    }
+
+    fun clearBundleState(bundle: Bundle, deletedFiles: Set<String> = emptySet()) {
+        val moduleNames = listLuaModuleNames(bundle) + deletedFiles.mapNotNull { moduleNameForLuaFile(bundle, it.replace('\\', '/')) }
+        for (moduleName in moduleNames) {
+            luaPackage.clearLoadedModule(luaManager.lua, moduleName)
+        }
+        for (preloadSpec in bundle.manifest.getPreloadSpecs()) {
+            luaPackage.clearLoadedModule(luaManager.lua, preloadSpec.moduleName)
+            luaPackage.removePreloadedModule(luaManager.lua, preloadSpec.moduleName)
+        }
+    }
+
+    fun moduleNameForLuaFile(bundle: Bundle, relativePath: String): String? {
+        if (!relativePath.endsWith(".lua")) {
+            return null
+        }
+
+        if (relativePath == "init.lua") {
+            return bundle.manifest.name
+        }
+
+        val modulePath = relativePath.removeSuffix(".lua").replace('/', '.')
+        return "${bundle.manifest.name}.$modulePath"
+    }
+
+    fun listLuaModuleNames(bundle: Bundle): Set<String> {
+        val moduleNames = mutableSetOf<String>()
+
+        bundle.dir.walkTopDown()
+            .filter { it.isFile && it.extension == "lua" }
+            .forEach { file ->
+                val relativePath = file.relativeTo(bundle.dir).invariantSeparatorsPath
+                moduleNameForLuaFile(bundle, relativePath)?.let(moduleNames::add)
+            }
+
+        bundle.manifest.getPreloadSpecs()
+            .mapTo(moduleNames) { it.moduleName }
+
+        return moduleNames
+    }
+
+    private fun registerBundleResolver(bundle: Bundle) {
+        if (!registeredResolverBundles.add(bundle.manifest.name)) {
+            return
+        }
+
+        luaPackage.addPackageResolver { path ->
+            // TODO Would be cleaner if we could fully remove the resolver when a bundle is disabled.
+            if (!bundleDatabase.isBundleEnabled(bundle.manifest.name)) {
+                return@addPackageResolver null
+            }
+
+            if (path == bundle.manifest.name) {
+                val luaInitFile = File(bundle.dir, "init.lua")
+                if (luaInitFile.exists()) {
+                    return@addPackageResolver (bundle.getFileDebugName(luaInitFile)) to luaInitFile.readText()
+                }
+            }
+            if (!path.startsWith("${bundle.manifest.name}.")) {
+                return@addPackageResolver null
+            }
+            val luaFile = File(bundle.dir, path.substringAfter('.').replace('.', File.separatorChar) + ".lua")
+            if (luaFile.exists()) {
+                return@addPackageResolver (bundle.getFileDebugName(luaFile)) to luaFile.readText()
+            }
+            null
         }
     }
 

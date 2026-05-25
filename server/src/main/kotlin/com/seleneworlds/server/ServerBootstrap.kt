@@ -50,6 +50,7 @@ import com.seleneworlds.common.util.Disposable
 import com.seleneworlds.server.attributes.AttributesApi
 import com.seleneworlds.server.attributes.AttributesLuaApi
 import com.seleneworlds.server.bundle.ServerBundleWatcher
+import com.seleneworlds.server.bundle.ServerBundleRuntimeRebuilder
 import com.seleneworlds.server.bundles.ClientBundleCache
 import com.seleneworlds.server.bundles.ServerBundleLocator
 import com.seleneworlds.server.collision.CollisionResolver
@@ -164,8 +165,10 @@ fun main(args: Array<String>) {
     val bundleModule = module {
         singleOf(::BundleLoader)
         singleOf(::BundleDatabase)
+        singleOf(::BundleLifecycleManager)
         singleOf(::ClientBundleCache)
         singleOf(::ServerBundleLocator) { bind<BundleLocator>() }
+        singleOf(::ServerBundleRuntimeRebuilder) { bind<BundleRuntimeRebuilder>() }
         singleOf(::ServerBundleWatcher) { bind<Disposable>() }
     }
     val networkModule = module {

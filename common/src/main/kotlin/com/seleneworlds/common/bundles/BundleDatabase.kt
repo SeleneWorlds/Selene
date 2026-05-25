@@ -1,19 +1,51 @@
 package com.seleneworlds.common.bundles
 
 class BundleDatabase {
-    // All loaded bundles, with preserved order
-    val loadedBundles = mutableListOf<Bundle>()
+    // All resolved bundles, with preserved dependency order.
+    private val _resolvedBundles = mutableListOf<Bundle>()
+    private val enabledBundleIds = linkedSetOf<String>()
 
-    fun addBundle(bundle: Bundle) {
-        loadedBundles.add(bundle)
+    val resolvedBundles: List<Bundle>
+        get() = _resolvedBundles
+
+    val loadedBundles: List<Bundle>
+        get() = enabledBundles
+
+    val enabledBundles: List<Bundle>
+        get() = _resolvedBundles.filter { it.manifest.name in enabledBundleIds }
+
+    fun addBundle(bundle: Bundle, enabled: Boolean = true) {
+        if (_resolvedBundles.any { it.manifest.name == bundle.manifest.name }) {
+            return
+        }
+        _resolvedBundles.add(bundle)
+        if (enabled) {
+            enabledBundleIds.add(bundle.manifest.name)
+        }
+    }
+
+    fun enableBundle(bundle: Bundle) {
+        enabledBundleIds.add(bundle.manifest.name)
+    }
+
+    fun disableBundle(bundle: Bundle) {
+        enabledBundleIds.remove(bundle.manifest.name)
+    }
+
+    fun isBundleEnabled(bundle: String): Boolean {
+        return bundle in enabledBundleIds
     }
 
     fun getBundle(bundle: String): Bundle? {
-        return loadedBundles.find { it.manifest.name == bundle }
+        return _resolvedBundles.find { it.manifest.name == bundle }
+    }
+
+    fun getEnabledBundle(bundle: String): Bundle? {
+        return enabledBundles.find { it.manifest.name == bundle }
     }
 
     fun getTransitiveDependents(bundle: String): Set<String> {
-        val reverseDependencies = loadedBundles
+        val reverseDependencies = _resolvedBundles
             .groupBy { loadedBundle ->
                 loadedBundle.manifest.dependencies.toSet()
             }

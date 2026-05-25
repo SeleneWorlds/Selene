@@ -5,6 +5,7 @@ import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.data.Registries
 import com.seleneworlds.client.grid.ClientGrid
 import com.seleneworlds.common.bundles.BundleDatabase
+import com.seleneworlds.common.bundles.BundleRuntimeRebuilder
 import com.seleneworlds.common.data.Registry
 import com.seleneworlds.common.data.mappings.NameIdRegistry
 import com.seleneworlds.common.entities.component.ComponentRegistry
@@ -19,9 +20,11 @@ class ClientReloadManager(
     private val clientGrid: ClientGrid,
     private val nameIdRegistry: NameIdRegistry,
     private val logger: Logger
-) {
+) : BundleRuntimeRebuilder {
 
-    fun reloadRegistriesAndTextures() {
+    override val entrypointFilters: List<String> = listOf("common/", "client/", "init.lua")
+
+    override fun rebuildActiveBundles(bundleDatabase: BundleDatabase) {
         logger.info("Reloading client registries and textures")
 
         registries.tiles.load(bundleDatabase)
@@ -42,6 +45,10 @@ class ClientReloadManager(
         repopulateNameIdMappings()
 
         assetProvider.reloadSubscribedTextures()
+    }
+
+    fun reloadRegistriesAndTextures() {
+        rebuildActiveBundles(bundleDatabase)
     }
 
     private fun reloadCustomRegistries(platform: String) {

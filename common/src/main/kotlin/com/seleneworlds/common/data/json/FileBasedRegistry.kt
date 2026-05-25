@@ -62,7 +62,7 @@ abstract class FileBasedRegistry<TData : Any>(
         idByIdentifier.clear()
         metadataLookupTable.clear()
         incrementCacheKey()
-        for (bundle in bundleDatabase.loadedBundles) {
+        for (bundle in bundleDatabase.enabledBundles) {
             val baseDataDir = File(bundle.dir, "$platform/data")
             if (baseDataDir.exists() && baseDataDir.isDirectory) {
                 try {

@@ -49,7 +49,7 @@ abstract class BundleWatcher(
             throw IllegalStateException("Bundle watcher is already running.")
         }
 
-        for (bundle in bundleDatabase.loadedBundles) {
+        for (bundle in bundleDatabase.enabledBundles) {
             registerBundleWatch(bundle)
         }
 
