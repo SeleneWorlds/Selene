@@ -26,7 +26,7 @@ class LuaEventApiTest {
             luaManager.lua.load(
                 LuaManager.loadBuffer(
                     """
-                    local event = Event.create()
+                    local event = Event.of("test:event")
                     local calls = 0
 
                     event:connect(function(message, missing, count)
@@ -77,6 +77,48 @@ class LuaEventApiTest {
 
             luaManager.lua.getGlobal("secondCount")
             assertEquals(42, luaManager.lua.toInteger(-1).toInt())
+            luaManager.lua.pop(1)
+        } finally {
+            luaManager.lua.close()
+        }
+    }
+
+    @Test
+    fun `lua events return the same event for the same identifier`() {
+        val luaPackage = LuaPackageModule()
+        val luaManager = LuaManager(luaPackage)
+        val events = EventsLuaApi()
+        try {
+            luaManager.lua.push(luaPackage.packageLoaded)
+            luaManager.lua.push(luaManager.lua.newTable {
+                events.register(this)
+            })
+            luaManager.lua.pushValue(-1)
+            luaManager.lua.setGlobal("Event")
+            luaManager.lua.setField(-2, events.name)
+            luaManager.lua.pop(1)
+
+            luaManager.lua.load(
+                LuaManager.loadBuffer(
+                    """
+                    local first = Event.of("test:event")
+                    local second = Event.of("test:event")
+                    local third = Event.of("test:other")
+
+                    _G.sameEvent = first == second
+                    _G.differentEvent = first ~= third
+                    """.trimIndent()
+                ),
+                "lua_event_api_cache_test"
+            )
+            luaManager.lua.pCall(0, 0)
+
+            luaManager.lua.getGlobal("sameEvent")
+            assertTrue(luaManager.lua.toBoolean(-1))
+            luaManager.lua.pop(1)
+
+            luaManager.lua.getGlobal("differentEvent")
+            assertTrue(luaManager.lua.toBoolean(-1))
             luaManager.lua.pop(1)
         } finally {
             luaManager.lua.close()
