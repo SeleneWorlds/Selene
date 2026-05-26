@@ -1,14 +1,16 @@
 package com.seleneworlds.client.input
 
-import party.iroiro.luajava.Lua
-import party.iroiro.luajava.value.LuaValue
 import com.seleneworlds.common.lua.LuaModule
-import com.seleneworlds.common.script.ScriptTrace
 import com.seleneworlds.common.lua.util.checkEnum
 import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.getCallerInfo
 import com.seleneworlds.common.lua.util.register
 import com.seleneworlds.common.lua.util.xpCall
+import com.seleneworlds.common.script.ScriptTrace
+import org.slf4j.LoggerFactory
+import party.iroiro.luajava.Lua
+import party.iroiro.luajava.LuaException
+import party.iroiro.luajava.value.LuaValue
 
 /**
  * Handle input for keyboard and mouse events.
@@ -34,9 +36,9 @@ class InputLuaApi(private val api: InputApi) : LuaModule {
         val function = captureFunction(lua)
         val trace = createTrace(lua, input)
         api.bindContinuousAction(type, input) {
-            val callbackLua = function.state()
-            callbackLua.push(function)
-            callbackLua.xpCall(0, 0, trace)
+            runInputCallback(function, trace, "continuousAction") { callbackLua ->
+                callbackLua.xpCall(0, 0, trace)
+            }
         }
         return 0
     }
@@ -91,18 +93,33 @@ class InputLuaApi(private val api: InputApi) : LuaModule {
             type,
             input,
             {
-                val callbackLua = function.state()
-                callbackLua.push(function)
-                callbackLua.xpCall(0, 0, trace)
+                runInputCallback(function, trace, "action") { callbackLua ->
+                    callbackLua.xpCall(0, 0, trace)
+                }
             },
             { screenX, screenY ->
-                val callbackLua = function.state()
-                callbackLua.push(function)
-                callbackLua.push(screenX)
-                callbackLua.push(screenY)
-                callbackLua.xpCall(2, 0, trace)
+                runInputCallback(function, trace, "action") { callbackLua ->
+                    callbackLua.push(screenX)
+                    callbackLua.push(screenY)
+                    callbackLua.xpCall(2, 0, trace)
+                }
             }
         )
+    }
+
+    private fun runInputCallback(
+        function: LuaValue,
+        trace: ScriptTrace,
+        callbackKind: String,
+        block: (Lua) -> Unit
+    ) {
+        val callbackLua = function.state()
+        callbackLua.push(function)
+        try {
+            block(callbackLua)
+        } catch (e: LuaException) {
+            logger.error("Lua error in input {}", callbackKind, e)
+        }
     }
 
     private fun createTrace(lua: Lua, input: String): ScriptTrace {
@@ -117,5 +134,9 @@ class InputLuaApi(private val api: InputApi) : LuaModule {
     private fun captureFunction(lua: Lua): LuaValue {
         lua.pushValue(3)
         return lua.get()
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(InputLuaApi::class.java)
     }
 }
