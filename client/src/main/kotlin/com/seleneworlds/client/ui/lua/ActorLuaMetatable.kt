@@ -222,7 +222,7 @@ object ActorLuaMetatable {
      */
     private fun focus(lua: Lua): Int {
         val actor = lua.checkUserdata<Actor>(1)
-        actor.stage.keyboardFocus = actor
+        actor.stage?.keyboardFocus = actor
         return 0
     }
 
