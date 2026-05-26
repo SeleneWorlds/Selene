@@ -34,4 +34,7 @@ class EntityApi(val delegate: Entity) {
         return delegate.components[name]
     }
 
+    override fun toString(): String {
+        return "Api[$delegate]"
+    }
 }
