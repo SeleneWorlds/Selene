@@ -17,6 +17,7 @@ import com.seleneworlds.client.ui.ThemeDefinition
 import com.seleneworlds.client.ui.UIApi
 import com.seleneworlds.client.ui.drawable.DrawableDrawable
 import com.seleneworlds.client.ui.drawable.Visual2DDrawable
+import com.seleneworlds.common.bundles.BundleExecutionContext
 import com.seleneworlds.common.lua.LuaEventSink
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.LuaModule
@@ -83,7 +84,9 @@ class UILuaApi(
     private fun addInputProcessor(lua: Lua): Int {
         lua.checkType(1, Lua.LuaType.TABLE)
         val registrationSite = lua.getCallerInfo()
+        val bundle = BundleExecutionContext.currentBundle
         api.addInputProcessor(
+            bundle = bundle,
             keyUp = lua.getFieldFunction(1, "KeyUp")?.let { callback ->
                 { event, keyCode ->
                     runInputProcessorCallback(

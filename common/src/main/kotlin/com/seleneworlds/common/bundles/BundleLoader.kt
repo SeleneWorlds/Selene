@@ -24,7 +24,8 @@ class BundleLoader(
     private val luaManager: LuaManager,
     private val luaPackage: LuaPackageModule,
     private val bundleDatabase: BundleDatabase,
-    private val bundleLocator: BundleLocator
+    private val bundleLocator: BundleLocator,
+    private val bundleStateCleaner: BundleStateCleaner
 ) {
     private val registeredResolverBundles = mutableSetOf<String>()
 
@@ -135,7 +136,7 @@ class BundleLoader(
     }
 
     fun clearBundleState(bundle: Bundle, deletedFiles: Set<String> = emptySet()) {
-        BundleEventSubscriptions.unregisterSubscriptions(bundle)
+        bundleStateCleaner.clearBundleState(bundle)
         val moduleNames = listLuaModuleNames(bundle) + deletedFiles.mapNotNull { moduleNameForLuaFile(bundle, it.replace('\\', '/')) }
         for (moduleName in moduleNames) {
             luaPackage.clearLoadedModule(luaManager.lua, moduleName)

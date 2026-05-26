@@ -28,7 +28,8 @@ class BundleLoaderTest {
                 bundleDatabase = BundleDatabase(),
                 bundleLocator = object : BundleLocator {
                     override fun locateBundle(name: String): Bundle? = null
-                }
+                },
+                bundleStateCleaner = BundleEventSubscriptions
             )
 
             var calls = 0
@@ -49,6 +50,35 @@ class BundleLoaderTest {
 
             BundleEventSubscriptions.removeSubscriptions(bundle).forEach { it.unregister() }
             event.unregister(listener)
+        } finally {
+            luaManager.lua.close()
+            tempDir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `clearBundleState invokes bundle state cleaner`() {
+        val tempDir = Files.createTempDirectory("bundle-loader-test")
+        val bundle = Bundle(BundleManifest(name = "test-bundle"), tempDir.toFile())
+        val luaPackage = LuaPackageModule()
+        val luaManager = LuaManager(luaPackage)
+
+        try {
+            var cleanedBundle: Bundle? = null
+            val loader = BundleLoader(
+                logger = LoggerFactory.getLogger(BundleLoaderTest::class.java),
+                luaManager = luaManager,
+                luaPackage = luaPackage,
+                bundleDatabase = BundleDatabase(),
+                bundleLocator = object : BundleLocator {
+                    override fun locateBundle(name: String): Bundle? = null
+                },
+                bundleStateCleaner = BundleStateCleaner { cleanedBundle = it }
+            )
+
+            loader.clearBundleState(bundle)
+
+            assertEquals(bundle, cleanedBundle)
         } finally {
             luaManager.lua.close()
             tempDir.toFile().deleteRecursively()

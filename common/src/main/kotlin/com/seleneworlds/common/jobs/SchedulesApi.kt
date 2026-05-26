@@ -1,6 +1,8 @@
 package com.seleneworlds.common.jobs
 
+import com.seleneworlds.common.bundles.Bundle
 import com.seleneworlds.common.bundles.BundleExecutionContext
+import com.seleneworlds.common.bundles.BundleStateCleaner
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.Disposable
 import java.time.LocalDateTime
@@ -13,7 +15,7 @@ import java.util.concurrent.TimeUnit
  */
 class SchedulesApi(
     private val mainThreadDispatcher: MainThreadDispatcher
-) : Disposable {
+) : Disposable, BundleStateCleaner {
 
     private val executor: ScheduledExecutorService = Executors.newScheduledThreadPool(1)
     private var lastSecond = -1
@@ -119,6 +121,18 @@ class SchedulesApi(
     fun clearInterval(intervalId: Int) {
         val handler = intervals.remove(intervalId)
         handler?.task?.cancel(false)
+    }
+
+    override fun clearBundleState(bundle: Bundle) {
+        timeouts.values
+            .filter { it.bundle == bundle }
+            .map { it.timeoutId }
+            .forEach(::clearTimeout)
+
+        intervals.values
+            .filter { it.bundle == bundle }
+            .map { it.intervalId }
+            .forEach(::clearInterval)
     }
 
     override fun dispose() {

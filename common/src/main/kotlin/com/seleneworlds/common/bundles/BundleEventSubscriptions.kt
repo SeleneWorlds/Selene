@@ -2,7 +2,7 @@ package com.seleneworlds.common.bundles
 
 import com.seleneworlds.common.event.Event
 
-object BundleEventSubscriptions {
+object BundleEventSubscriptions : BundleStateCleaner {
     class Subscription internal constructor(
         val bundle: Bundle,
         val event: Event<*>,
@@ -38,7 +38,7 @@ object BundleEventSubscriptions {
         }
     }
 
-    fun unregisterSubscriptions(bundle: Bundle) {
+    override fun clearBundleState(bundle: Bundle) {
         removeSubscriptions(bundle).forEach { it.unregister() }
     }
 }

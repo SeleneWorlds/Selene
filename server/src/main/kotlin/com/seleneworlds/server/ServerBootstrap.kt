@@ -161,6 +161,14 @@ fun main(args: Array<String>) {
         singleOf(::PathfindingLuaApi) { bind<LuaModule>() }
     }
     val bundleModule = module {
+        single<BundleStateCleaner> {
+            CompositeBundleStateCleaner(
+                listOf(
+                    BundleEventSubscriptions,
+                    get<SchedulesApi>()
+                )
+            )
+        }
         singleOf(::BundleLoader)
         singleOf(::BundleDatabase)
         singleOf(::BundleLifecycleManager)

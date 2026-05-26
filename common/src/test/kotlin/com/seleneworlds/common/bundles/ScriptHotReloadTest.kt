@@ -140,7 +140,8 @@ class ScriptHotReloadTest {
             bundleDatabase = bundleDatabase,
             bundleLocator = object : BundleLocator {
                 override fun locateBundle(name: String): Bundle? = if (name == bundle.manifest.name) bundle else null
-            }
+            },
+            bundleStateCleaner = BundleStateCleaner.Noop
         )
         val scriptHotReload = ScriptHotReload(
             bundleLifecycleManager = BundleLifecycleManager(

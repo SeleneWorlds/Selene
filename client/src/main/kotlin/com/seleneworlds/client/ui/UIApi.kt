@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.TextureAtlas
 import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.scenes.scene2d.Actor
+import com.badlogic.gdx.scenes.scene2d.EventListener
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.InputEvent
 import com.badlogic.gdx.scenes.scene2d.ui.*
@@ -14,6 +15,7 @@ import com.kotcrab.vis.ui.widget.Draggable
 import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.bundles.BundleFileResolver
 import com.seleneworlds.client.ui.lml.SeleneLmlParser
+import com.seleneworlds.common.bundles.Bundle
 import com.seleneworlds.common.threading.Awaitable
 import org.slf4j.LoggerFactory
 
@@ -29,41 +31,50 @@ class UIApi(
     val bundlesRoot: Stack = ui.bundlesRoot
 
     fun addInputProcessor(
+        bundle: Bundle?,
         keyUp: ((InputEvent, Int) -> Boolean)?,
         keyDown: ((InputEvent, Int) -> Boolean)?,
         keyTyped: ((InputEvent, Char) -> Boolean)?
     ) {
-        ui.stage.addListener { event ->
+        val listener = EventListener { event ->
             if (event is InputEvent) {
-                return@addListener when (event.type) {
-                    InputEvent.Type.keyUp -> {
-                        if (keyUp != null) {
-                            keyUp(event, event.keyCode)
-                        } else {
-                            false
+                return@EventListener BundleUiInputProcessors.runInBundleContext(bundle) {
+                    when (event.type) {
+                        InputEvent.Type.keyUp -> {
+                            if (keyUp != null) {
+                                keyUp(event, event.keyCode)
+                            } else {
+                                false
+                            }
                         }
-                    }
 
-                    InputEvent.Type.keyDown -> {
-                        if (keyDown != null) {
-                            keyDown(event, event.keyCode)
-                        } else {
-                            false
+                        InputEvent.Type.keyDown -> {
+                            if (keyDown != null) {
+                                keyDown(event, event.keyCode)
+                            } else {
+                                false
+                            }
                         }
-                    }
 
-                    InputEvent.Type.keyTyped -> {
-                        if (keyTyped != null) {
-                            keyTyped(event, event.character)
-                        } else {
-                            false
+                        InputEvent.Type.keyTyped -> {
+                            if (keyTyped != null) {
+                                keyTyped(event, event.character)
+                            } else {
+                                false
+                            }
                         }
-                    }
 
-                    else -> false
+                        else -> false
+                    }
                 }
             }
             false
+        }
+        ui.stage.addListener(listener)
+        if (bundle != null) {
+            BundleUiInputProcessors.record(bundle) {
+                ui.stage.removeListener(listener)
+            }
         }
     }
 

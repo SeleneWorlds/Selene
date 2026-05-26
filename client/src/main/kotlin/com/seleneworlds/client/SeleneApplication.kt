@@ -71,6 +71,7 @@ import com.seleneworlds.client.sounds.SoundsApi
 import com.seleneworlds.client.sounds.SoundsLuaApi
 import com.seleneworlds.client.tiles.Tile
 import com.seleneworlds.client.tiles.TilePool
+import com.seleneworlds.client.ui.BundleUiInputProcessors
 import com.seleneworlds.client.ui.UI
 import com.seleneworlds.client.ui.SkinResolvers
 import com.seleneworlds.client.ui.UIApi
@@ -169,6 +170,15 @@ class SeleneApplication(
             singleOf(::I18nLuaApi) { bind<LuaModule>() }
         }
         val bundleModule = module {
+            single<BundleStateCleaner> {
+                CompositeBundleStateCleaner(
+                    listOf(
+                        BundleEventSubscriptions,
+                        get<SchedulesApi>(),
+                        BundleUiInputProcessors
+                    )
+                )
+            }
             singleOf(::BundleLoader)
             singleOf(::BundleDatabase)
             singleOf(::BundleLifecycleManager)
