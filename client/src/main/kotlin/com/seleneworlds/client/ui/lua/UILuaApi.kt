@@ -26,7 +26,9 @@ import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.serialization.toJsonElement
 import com.seleneworlds.common.threading.MainThreadDispatcher
+import org.slf4j.LoggerFactory
 import party.iroiro.luajava.Lua
+import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.value.LuaValue
 
 /**
@@ -84,48 +86,64 @@ class UILuaApi(
         api.addInputProcessor(
             keyUp = lua.getFieldFunction(1, "KeyUp")?.let { callback ->
                 { event, keyCode ->
-                    val callbackLua = callback.state()
-                    callbackLua.push(callback)
-                    callbackLua.push(event, Lua.Conversion.NONE)
-                    callbackLua.push(keyCode, Lua.Conversion.FULL)
-                    callbackLua.xpCall(
-                        2,
-                        1,
-                        ConstantTrace("[ui keyUp \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite")
-                    )
-                    callbackLua.toBoolean(-1)
+                    runInputProcessorCallback(
+                        callback = callback,
+                        callbackName = "KeyUp",
+                        trace = ConstantTrace("[ui keyUp \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite")
+                    ) { callbackLua, callbackTrace ->
+                        callbackLua.push(event, Lua.Conversion.NONE)
+                        callbackLua.push(keyCode, Lua.Conversion.FULL)
+                        callbackLua.xpCall(2, 1, callbackTrace)
+                        callbackLua.toBoolean(-1)
+                    }
                 }
             },
             keyDown = lua.getFieldFunction(1, "KeyDown")?.let { callback ->
                 { event, keyCode ->
-                    val callbackLua = callback.state()
-                    callbackLua.push(callback)
-                    callbackLua.push(event, Lua.Conversion.NONE)
-                    callbackLua.push(keyCode, Lua.Conversion.FULL)
-                    callbackLua.xpCall(
-                        2,
-                        1,
-                        ConstantTrace("[ui keyDown \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite")
-                    )
-                    callbackLua.toBoolean(-1)
+                    runInputProcessorCallback(
+                        callback = callback,
+                        callbackName = "KeyDown",
+                        trace = ConstantTrace("[ui keyDown \"${Input.Keys.toString(keyCode)}\"] registered in $registrationSite")
+                    ) { callbackLua, callbackTrace ->
+                        callbackLua.push(event, Lua.Conversion.NONE)
+                        callbackLua.push(keyCode, Lua.Conversion.FULL)
+                        callbackLua.xpCall(2, 1, callbackTrace)
+                        callbackLua.toBoolean(-1)
+                    }
                 }
             },
             keyTyped = lua.getFieldFunction(1, "KeyTyped")?.let { callback ->
                 { event, character ->
-                    val callbackLua = callback.state()
-                    callbackLua.push(callback)
-                    callbackLua.push(event, Lua.Conversion.NONE)
-                    callbackLua.push(character, Lua.Conversion.FULL)
-                    callbackLua.xpCall(
-                        2,
-                        1,
-                        ConstantTrace("[ui keyTyped \"$character\"] registered in $registrationSite")
-                    )
-                    callbackLua.toBoolean(-1)
+                    runInputProcessorCallback(
+                        callback = callback,
+                        callbackName = "KeyTyped",
+                        trace = ConstantTrace("[ui keyTyped \"$character\"] registered in $registrationSite")
+                    ) { callbackLua, callbackTrace ->
+                        callbackLua.push(event, Lua.Conversion.NONE)
+                        callbackLua.push(character, Lua.Conversion.FULL)
+                        callbackLua.xpCall(2, 1, callbackTrace)
+                        callbackLua.toBoolean(-1)
+                    }
                 }
             }
         )
         return 0
+    }
+
+    private fun runInputProcessorCallback(
+        callback: LuaValue,
+        callbackName: String,
+        trace: ConstantTrace,
+        block: (Lua, ConstantTrace) -> Boolean
+    ): Boolean {
+        val callbackLua = callback.state()
+        callbackLua.push(callback)
+        return try {
+            block(callbackLua, trace)
+        } catch (e: LuaException) {
+            logger.error("Lua error in UI input processor callback {}", callbackName, e)
+            false
+        }
     }
 
     private fun setFocus(lua: Lua): Int {
@@ -452,5 +470,9 @@ class UILuaApi(
 
     val setup = LuaEventSink(ClientEvents.SetupUI.EVENT) { callback, trace ->
         ClientEvents.SetupUI { callback.runCoroutine(mainThreadDispatcher, trace) }
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(UILuaApi::class.java)
     }
 }
