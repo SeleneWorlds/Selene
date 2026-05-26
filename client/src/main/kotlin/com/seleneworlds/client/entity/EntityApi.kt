@@ -6,6 +6,10 @@ import com.seleneworlds.common.grid.Coordinate
 
 class EntityApi(val delegate: Entity) {
 
+    fun getNetworkId(): Int {
+        return delegate.networkId
+    }
+
     fun getCoordinate(): Coordinate {
         return delegate.coordinate
     }

@@ -12,6 +12,12 @@ import com.seleneworlds.common.serialization.toJsonElement
 
 object EntityLuaApi {
 
+    private fun getNetworkId(lua: Lua): Int {
+        val self = lua.checkUserdata<EntityApi>(1)
+        lua.push(self.getNetworkId())
+        return 1
+    }
+
     /**
      * Coordinate this entity is located at.
      *
@@ -110,6 +116,7 @@ object EntityLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(EntityApi::class) {
+        callable(::getNetworkId)
         callable(::getCoordinate)
         callable(::spawn)
         callable(::despawn)
