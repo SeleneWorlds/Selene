@@ -2,9 +2,12 @@ package com.seleneworlds.client.bundle
 
 import org.slf4j.Logger
 import com.seleneworlds.client.assets.AssetProvider
+import com.seleneworlds.client.config.ClientConfig
 import com.seleneworlds.client.data.Registries
 import com.seleneworlds.common.bundles.BundleDatabase
+import com.seleneworlds.common.bundles.ScriptHotReload
 import com.seleneworlds.common.bundles.BundleWatcher
+import com.seleneworlds.common.config.HotReloadMode
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.Registry
 
@@ -12,7 +15,9 @@ class ClientBundleWatcher(
     logger: Logger,
     bundleDatabase: BundleDatabase,
     private val registries: Registries,
-    private val assetProvider: AssetProvider
+    private val assetProvider: AssetProvider,
+    private val scriptHotReload: ScriptHotReload,
+    private val config: ClientConfig
 ) : BundleWatcher(logger, bundleDatabase) {
 
     override fun getRegistry(name: String): Registry<*>? {
@@ -29,6 +34,18 @@ class ClientBundleWatcher(
             .forEach { assetPath ->
                 assetProvider.notifyAssetChanged(assetPath)
             }
+
+        val bundle = bundleDatabase.getBundle(bundleId)
+        if (bundle != null) {
+            if (config.hotReloadMode == HotReloadMode.EAGER) {
+                scriptHotReload.reloadBundleClosure(bundleId, deletedFiles)
+            } else {
+                super.processPendingBundleUpdates(bundleId, updatedFiles, deletedFiles)
+                scriptHotReload.reloadUpdatedScripts(bundle, updatedFiles)
+                scriptHotReload.unloadDeletedScripts(bundle, deletedFiles)
+            }
+            return
+        }
 
         super.processPendingBundleUpdates(bundleId, updatedFiles, deletedFiles)
     }

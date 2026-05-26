@@ -1,20 +1,17 @@
-package com.seleneworlds.server.script
+package com.seleneworlds.common.bundles
 
 import org.slf4j.Logger
-import com.seleneworlds.common.bundles.Bundle
-import com.seleneworlds.common.bundles.BundleLifecycleManager
-import com.seleneworlds.common.bundles.BundleLoader
-import com.seleneworlds.common.bundles.getPreloadSpecs
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.libraries.LuaPackageModule
-import java.io.File
 
-class ServerScriptHotReload(
+class ScriptHotReload(
     private val bundleLifecycleManager: BundleLifecycleManager,
     private val bundleLoader: BundleLoader,
     private val luaManager: LuaManager,
     private val luaPackage: LuaPackageModule,
-    private val logger: Logger
+    private val logger: Logger,
+    private val scriptRoots: Set<String>,
+    private val entrypointFilters: List<String>
 ) {
 
     fun reloadBundleClosure(bundleId: String, deletedFiles: Set<String>) {
@@ -34,8 +31,8 @@ class ServerScriptHotReload(
     }
 
     private fun reloadUpdatedScript(bundle: Bundle, relativePath: String) {
-        val normalizedPath = relativePath.replace('\\', '/')
-        if (!normalizedPath.startsWith("server/") && !normalizedPath.startsWith("common/") && normalizedPath != "init.lua") {
+        val normalizedPath = normalizePath(relativePath)
+        if (!isTrackedScriptPath(normalizedPath)) {
             return
         }
 
@@ -46,7 +43,7 @@ class ServerScriptHotReload(
 
         var reloaded = false
         for (preloadSpec in bundle.manifest.getPreloadSpecs()) {
-            if (preloadSpec.file.replace('\\', '/') != normalizedPath) {
+            if (normalizePath(preloadSpec.file) != normalizedPath) {
                 continue
             }
 
@@ -57,59 +54,61 @@ class ServerScriptHotReload(
                 bundle.getFileDebugName(scriptFile)
             )
             luaPackage.clearLoadedModule(luaManager.lua, preloadSpec.moduleName)
-            logger.info("Reloaded server Lua module {} from {}", preloadSpec.moduleName, normalizedPath)
+            logger.info("Reloaded Lua module {} from {}", preloadSpec.moduleName, normalizedPath)
             reloaded = true
         }
 
         val resolverModuleName = bundleLoader.moduleNameForLuaFile(bundle, normalizedPath)
         if (resolverModuleName != null) {
             luaPackage.clearLoadedModule(luaManager.lua, resolverModuleName)
-            logger.info("Invalidated server Lua module {} from {}", resolverModuleName, normalizedPath)
+            logger.info("Invalidated Lua module {} from {}", resolverModuleName, normalizedPath)
             reloaded = true
         }
 
-        if (normalizedPath in bundle.manifest.entrypoints && serverEntrypointFilters.any { normalizedPath.startsWith(it) }) {
+        if (normalizedPath in bundle.manifest.entrypoints && entrypointFilters.any { normalizedPath.startsWith(it) }) {
             bundleLoader.runBundleEntrypoint(bundle, normalizedPath)
             logger.info("Re-ran hot reloaded bundle entrypoint {} from {}", normalizedPath, bundle.manifest.name)
             reloaded = true
         }
 
         if (!reloaded) {
-            logger.debug("No server Lua module mapping found for {}", normalizedPath)
+            logger.debug("No Lua module mapping found for {}", normalizedPath)
         }
     }
 
     private fun unloadDeletedScript(bundle: Bundle, relativePath: String) {
-        val normalizedPath = relativePath.replace('\\', '/')
-        if (!normalizedPath.startsWith("server/") && !normalizedPath.startsWith("common/") && normalizedPath != "init.lua") {
+        val normalizedPath = normalizePath(relativePath)
+        if (!isTrackedScriptPath(normalizedPath)) {
             return
         }
 
         var unloaded = false
         for (preloadSpec in bundle.manifest.getPreloadSpecs()) {
-            if (preloadSpec.file.replace('\\', '/') != normalizedPath) {
+            if (normalizePath(preloadSpec.file) != normalizedPath) {
                 continue
             }
 
             luaPackage.clearLoadedModule(luaManager.lua, preloadSpec.moduleName)
             luaPackage.removePreloadedModule(luaManager.lua, preloadSpec.moduleName)
-            logger.info("Unloaded deleted server Lua module {} from {}", preloadSpec.moduleName, normalizedPath)
+            logger.info("Unloaded deleted Lua module {} from {}", preloadSpec.moduleName, normalizedPath)
             unloaded = true
         }
 
         val resolverModuleName = bundleLoader.moduleNameForLuaFile(bundle, normalizedPath)
         if (resolverModuleName != null) {
             luaPackage.clearLoadedModule(luaManager.lua, resolverModuleName)
-            logger.info("Invalidated deleted server Lua module {} from {}", resolverModuleName, normalizedPath)
+            logger.info("Invalidated deleted Lua module {} from {}", resolverModuleName, normalizedPath)
             unloaded = true
         }
 
         if (!unloaded) {
-            logger.debug("No server Lua module mapping found for deleted file {}", normalizedPath)
+            logger.debug("No Lua module mapping found for deleted file {}", normalizedPath)
         }
     }
 
-    companion object {
-        private val serverEntrypointFilters = listOf("common/", "server/", "init.lua")
+    private fun isTrackedScriptPath(path: String): Boolean {
+        return path == "init.lua" || scriptRoots.any { path.startsWith("$it/") }
     }
+
+    private fun normalizePath(path: String): String = path.replace('\\', '/')
 }

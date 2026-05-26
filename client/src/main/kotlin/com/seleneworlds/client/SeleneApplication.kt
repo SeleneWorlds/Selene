@@ -173,6 +173,17 @@ class SeleneApplication(
             singleOf(::BundleDatabase)
             singleOf(::BundleLifecycleManager)
             singleOf(::ClientBundleLocator) { bind<BundleLocator>() }
+            single {
+                ScriptHotReload(
+                    bundleLifecycleManager = get(),
+                    bundleLoader = get(),
+                    luaManager = get(),
+                    luaPackage = get(),
+                    logger = get(),
+                    scriptRoots = setOf("common", "client"),
+                    entrypointFilters = listOf("common/", "client/", "init.lua")
+                )
+            }
             singleOf(::ClientBundleWatcher) { bind<Disposable>() }
         }
         val networkModule = module {

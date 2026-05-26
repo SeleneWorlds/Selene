@@ -7,11 +7,11 @@ import com.seleneworlds.common.config.HotReloadMode
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.Registry
 import com.seleneworlds.common.network.packet.NotifyBundleUpdatePacket
+import com.seleneworlds.common.bundles.ScriptHotReload
 import com.seleneworlds.server.bundles.ClientBundleCache
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.data.Registries
 import com.seleneworlds.server.network.NetworkServer
-import com.seleneworlds.server.script.ServerScriptHotReload
 
 class ServerBundleWatcher(
     logger: Logger,
@@ -19,7 +19,7 @@ class ServerBundleWatcher(
     private val networkServer: NetworkServer,
     private val registries: Registries,
     private val clientBundleCache: ClientBundleCache,
-    private val serverScriptHotReload: ServerScriptHotReload,
+    private val scriptHotReload: ScriptHotReload,
     private val config: ServerConfig
 ) : BundleWatcher(logger, bundleDatabase, setOf("common", "client", "server")) {
 
@@ -31,11 +31,11 @@ class ServerBundleWatcher(
         val bundle = bundleDatabase.getBundle(bundleId)
         if (bundle != null) {
             if (config.hotReloadMode == HotReloadMode.EAGER) {
-                serverScriptHotReload.reloadBundleClosure(bundleId, deletedFiles)
+                scriptHotReload.reloadBundleClosure(bundleId, deletedFiles)
             } else {
                 super.processPendingBundleUpdates(bundleId, updatedFiles, deletedFiles)
-                serverScriptHotReload.reloadUpdatedScripts(bundle, updatedFiles)
-                serverScriptHotReload.unloadDeletedScripts(bundle, deletedFiles)
+                scriptHotReload.reloadUpdatedScripts(bundle, updatedFiles)
+                scriptHotReload.unloadDeletedScripts(bundle, deletedFiles)
             }
         }
 
