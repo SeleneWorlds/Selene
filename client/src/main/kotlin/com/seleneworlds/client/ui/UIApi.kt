@@ -83,6 +83,10 @@ class UIApi(
         addToRoot(hud.delegate.actors)
     }
 
+    fun clearBundlesRoot() {
+        ui.bundlesRoot.clearChildren()
+    }
+
     fun loadUI(
         xmlFilePath: String,
         i18nBundle: String,

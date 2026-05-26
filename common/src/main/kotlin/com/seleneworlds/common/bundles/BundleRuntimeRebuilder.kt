@@ -4,4 +4,6 @@ interface BundleRuntimeRebuilder {
     val entrypointFilters: List<String>
 
     fun rebuildActiveBundles(bundleDatabase: BundleDatabase)
+
+    fun onRuntimeRebuilt() = Unit
 }

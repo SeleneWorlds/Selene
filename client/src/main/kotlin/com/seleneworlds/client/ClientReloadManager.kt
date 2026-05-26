@@ -3,7 +3,9 @@ package com.seleneworlds.client
 import org.slf4j.Logger
 import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.data.Registries
+import com.seleneworlds.client.game.ClientEvents
 import com.seleneworlds.client.grid.ClientGrid
+import com.seleneworlds.client.ui.UIApi
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.BundleRuntimeRebuilder
 import com.seleneworlds.common.data.Registry
@@ -18,6 +20,7 @@ class ClientReloadManager(
     private val assetProvider: AssetProvider,
     private val activeGrid: ActiveGrid,
     private val clientGrid: ClientGrid,
+    private val uiApi: UIApi,
     private val nameIdRegistry: NameIdRegistry,
     private val logger: Logger
 ) : BundleRuntimeRebuilder {
@@ -47,8 +50,14 @@ class ClientReloadManager(
         assetProvider.reloadSubscribedTextures()
     }
 
+    override fun onRuntimeRebuilt() {
+        uiApi.clearBundlesRoot()
+        ClientEvents.SetupUI.EVENT.invoker().setupUI()
+    }
+
     fun reloadRegistriesAndTextures() {
         rebuildActiveBundles(bundleDatabase)
+        onRuntimeRebuilt()
     }
 
     private fun reloadCustomRegistries(platform: String) {

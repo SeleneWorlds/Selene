@@ -68,5 +68,6 @@ class BundleLifecycleManager(
         for (bundle in bundles) {
             bundleLoader.runBundleEntrypoints(listOf(bundle), runtimeRebuilder.entrypointFilters)
         }
+        runtimeRebuilder.onRuntimeRebuilt()
     }
 }
