@@ -41,6 +41,35 @@ class BundleUiInputProcessorsTest {
     }
 
     @Test
+    fun `clearBundleState for bundles removes each matching listener`() {
+        val bundleA = Bundle(BundleManifest(name = "bundle-a"), createTempDirectory())
+        val bundleB = Bundle(BundleManifest(name = "bundle-b"), createTempDirectory())
+        val bundleC = Bundle(BundleManifest(name = "bundle-c"), createTempDirectory())
+        var bundleARemovals = 0
+        var bundleBRemovals = 0
+        var bundleCRemovals = 0
+
+        try {
+            BundleUiInputProcessors.record(bundleA) { bundleARemovals++ }
+            BundleUiInputProcessors.record(bundleB) { bundleBRemovals++ }
+            BundleUiInputProcessors.record(bundleC) { bundleCRemovals++ }
+
+            BundleUiInputProcessors.clearBundleState(listOf(bundleA, bundleB))
+
+            assertEquals(1, bundleARemovals)
+            assertEquals(1, bundleBRemovals)
+            assertEquals(0, bundleCRemovals)
+        } finally {
+            BundleUiInputProcessors.clearBundleState(bundleA)
+            BundleUiInputProcessors.clearBundleState(bundleB)
+            BundleUiInputProcessors.clearBundleState(bundleC)
+            bundleA.dir.deleteRecursively()
+            bundleB.dir.deleteRecursively()
+            bundleC.dir.deleteRecursively()
+        }
+    }
+
+    @Test
     fun `clearBundleState after re-registering does not stack removals`() {
         val bundle = Bundle(BundleManifest(name = "bundle-a"), createTempDirectory())
         var removals = 0

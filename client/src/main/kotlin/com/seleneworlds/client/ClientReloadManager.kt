@@ -5,6 +5,7 @@ import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.data.Registries
 import com.seleneworlds.client.game.ClientEvents
 import com.seleneworlds.client.grid.ClientGrid
+import com.seleneworlds.client.ui.BundleUiInputProcessors
 import com.seleneworlds.client.ui.UIApi
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.BundleRuntimeRebuilder
@@ -56,6 +57,7 @@ class ClientReloadManager(
     }
 
     fun reloadRegistriesAndTextures() {
+        BundleUiInputProcessors.clearBundleState(bundleDatabase.enabledBundles)
         rebuildActiveBundles(bundleDatabase)
         onRuntimeRebuilt()
     }
