@@ -41,6 +41,6 @@ fun Lua.getCallerInfo(offset: Int = 2): CallerInfo {
     val line = toNumber(-1).toInt()
     pop(1) // currentline
 
-    pop(1) // debug
+    pop(2) // info, debug
     return CallerInfo(source, line)
 }
