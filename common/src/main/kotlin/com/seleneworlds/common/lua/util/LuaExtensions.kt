@@ -479,12 +479,14 @@ private fun Lua.getJavaCause(): Throwable? {
 }
 
 fun handleError(lua: Lua): Int {
-    val message = lua.toString(1)
+    val message = lua.toString(1) ?: "no error message available"
     lua.getGlobal("debug")
     lua.getField(-1, "traceback")
-    lua.pCall(0, 1)
+    lua.remove(-2)
+    lua.push(message)
+    lua.pCall(1, 1)
     val traceback = lua.toString(-1)
-    lua.pop(1)
+    lua.pop(2)
     lua.push("$message\n$traceback")
     // LuaNatives are resetting the global throwable because the error handler completes successfully lol
     lua.getGlobal(Lua.GLOBAL_THROWABLE)
