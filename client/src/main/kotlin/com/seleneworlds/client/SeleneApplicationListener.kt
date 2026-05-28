@@ -28,12 +28,12 @@ import com.seleneworlds.client.rendering.drawable.DrawableManager
 import com.seleneworlds.client.ui.UI
 import com.seleneworlds.client.window.WindowViewport
 import com.seleneworlds.client.window.WindowManager
+import com.seleneworlds.common.bundles.BundleLifecycleManager
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.Disposable
 
 class SeleneApplicationListener(
     private val client: SeleneClient,
-    private val clientReloadManager: ClientReloadManager,
     private val networkClient: NetworkClient,
     private val cameraManager: CameraManager,
     private val inputMultiplexer: InputMultiplexer,
@@ -45,7 +45,8 @@ class SeleneApplicationListener(
     private val debugRenderer: DebugRenderer,
     private val bundleWatcher: ClientBundleWatcher,
     private val mainThreadDispatcher: MainThreadDispatcher,
-    private val windowManager: WindowManager
+    private val windowManager: WindowManager,
+    private val bundleLifecycleManager: BundleLifecycleManager
 ) : ApplicationListener {
 
     lateinit var systemFont: BitmapFont
@@ -61,7 +62,7 @@ class SeleneApplicationListener(
         spriteBatch = SpriteBatch()
         systemFont = BitmapFont()
 
-        inputMultiplexer.addProcessor(SystemInputProcessor(windowManager, clientReloadManager))
+        inputMultiplexer.addProcessor(SystemInputProcessor(windowManager, bundleLifecycleManager))
         inputMultiplexer.addProcessor(ui.stage)
         inputMultiplexer.addProcessor(inputManager)
         Gdx.input.inputProcessor = inputMultiplexer

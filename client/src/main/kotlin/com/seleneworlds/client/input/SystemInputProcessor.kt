@@ -3,12 +3,12 @@ package com.seleneworlds.client.input
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.InputAdapter
-import com.seleneworlds.client.ClientReloadManager
 import com.seleneworlds.client.window.WindowManager
+import com.seleneworlds.common.bundles.BundleLifecycleManager
 
 class SystemInputProcessor(
     private val windowManager: WindowManager,
-    private val clientReloadManager: ClientReloadManager
+    private val bundleLifecycleManager: BundleLifecycleManager
 ) : InputAdapter() {
 
     override fun keyDown(keycode: Int): Boolean {
@@ -18,7 +18,7 @@ class SystemInputProcessor(
         }
 
         if (isReloadKey(keycode)) {
-            clientReloadManager.reloadRegistriesAndTextures()
+            bundleLifecycleManager.reloadActiveBundles()
             return true
         }
 

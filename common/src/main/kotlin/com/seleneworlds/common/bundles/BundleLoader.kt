@@ -26,7 +26,7 @@ class BundleLoader(
     private val bundleDatabase: BundleDatabase,
     private val bundleLocator: BundleLocator,
     private val bundleStateCleaner: BundleStateCleaner
-) {
+) : BundleLifecycleOperations {
     private val registeredResolverBundles = mutableSetOf<String>()
 
     fun resolveBundles(bundles: Set<String>): List<Bundle> {
@@ -97,7 +97,7 @@ class BundleLoader(
         return sortedBundles.mapNotNull { bundleManifests[it] }
     }
 
-    fun runBundleEntrypoints(bundles: List<Bundle>, entrypointFilters: List<String>) {
+    override fun runBundleEntrypoints(bundles: List<Bundle>, entrypointFilters: List<String>) {
         for (bundle in bundles) {
             val manifest = bundle.manifest
             for (entrypoint in manifest.entrypoints) {
@@ -109,7 +109,7 @@ class BundleLoader(
         }
     }
 
-    fun preloadBundleModules(bundle: Bundle) {
+    override fun preloadBundleModules(bundle: Bundle) {
         for (preloadSpec in bundle.manifest.getPreloadSpecs()) {
             try {
                 val scriptFile = File(bundle.dir, preloadSpec.file)
@@ -135,7 +135,7 @@ class BundleLoader(
         }
     }
 
-    fun clearBundleState(bundle: Bundle, deletedFiles: Set<String> = emptySet()) {
+    override fun clearBundleState(bundle: Bundle, deletedFiles: Set<String>) {
         bundleStateCleaner.clearBundleState(bundle)
         val moduleNames = listLuaModuleNames(bundle) + deletedFiles.mapNotNull { moduleNameForLuaFile(bundle, it.replace('\\', '/')) }
         for (moduleName in moduleNames) {
@@ -145,6 +145,10 @@ class BundleLoader(
             luaPackage.clearLoadedModule(luaManager.lua, preloadSpec.moduleName)
             luaPackage.removePreloadedModule(luaManager.lua, preloadSpec.moduleName)
         }
+    }
+
+    fun clearBundleState(bundle: Bundle) {
+        clearBundleState(bundle, emptySet())
     }
 
     fun moduleNameForLuaFile(bundle: Bundle, relativePath: String): String? {

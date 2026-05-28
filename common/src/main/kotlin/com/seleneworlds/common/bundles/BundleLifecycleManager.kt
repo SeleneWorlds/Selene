@@ -4,7 +4,7 @@ import org.slf4j.Logger
 
 class BundleLifecycleManager(
     private val logger: Logger,
-    private val bundleLoader: BundleLoader,
+    private val bundleLoader: BundleLifecycleOperations,
     private val bundleDatabase: BundleDatabase,
     private val runtimeRebuilder: BundleRuntimeRebuilder
 ) {
@@ -32,18 +32,37 @@ class BundleLifecycleManager(
             return
         }
 
-        disableBundlesInReverseOrder(
-            bundlesToReload,
-            deletedFilesByBundleName = mapOf(bundleId to deletedFiles)
-        )
-        enableBundlesInOrder(bundlesToReload)
-        rebuildRuntimeAndRunEntrypoints(bundlesToReload)
+        reloadBundles(bundlesToReload, deletedFilesByBundleName = mapOf(bundleId to deletedFiles))
 
         logger.info(
             "Eager reloaded bundle closure for {}: {}",
             bundleId,
             bundlesToReload.joinToString(", ") { it.manifest.name }
         )
+    }
+
+    fun reloadActiveBundles() {
+        val bundlesToReload = bundleDatabase.enabledBundles
+        if (bundlesToReload.isEmpty()) {
+            logger.warn("Could not reload active bundles because no bundles are enabled")
+            return
+        }
+
+        reloadBundles(bundlesToReload)
+
+        logger.info(
+            "Reloaded active bundle runtime: {}",
+            bundlesToReload.joinToString(", ") { it.manifest.name }
+        )
+    }
+
+    private fun reloadBundles(
+        bundles: List<Bundle>,
+        deletedFilesByBundleName: Map<String, Set<String>> = emptyMap()
+    ) {
+        disableBundlesInReverseOrder(bundles, deletedFilesByBundleName)
+        enableBundlesInOrder(bundles)
+        rebuildRuntimeAndRunEntrypoints(bundles)
     }
 
     private fun enableBundlesInOrder(bundles: List<Bundle>) {

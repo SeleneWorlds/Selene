@@ -179,7 +179,7 @@ class SeleneApplication(
                     )
                 )
             }
-            singleOf(::BundleLoader)
+            singleOf(::BundleLoader) { bind<BundleLifecycleOperations>() }
             singleOf(::BundleDatabase)
             singleOf(::BundleLifecycleManager)
             singleOf(::ClientBundleLocator) { bind<BundleLocator>() }

@@ -28,10 +28,6 @@ object BundleUiInputProcessors : BundleStateCleaner {
         removedRegistrations.forEach { it.removeListener() }
     }
 
-    fun clearBundleState(bundles: Iterable<Bundle>) {
-        bundles.forEach(::clearBundleState)
-    }
-
     fun <T> runInBundleContext(bundle: Bundle?, block: () -> T): T {
         return if (bundle != null) {
             BundleExecutionContext.withBundle(bundle, block)

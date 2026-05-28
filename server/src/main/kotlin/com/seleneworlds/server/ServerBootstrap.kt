@@ -169,7 +169,7 @@ fun main(args: Array<String>) {
                 )
             )
         }
-        singleOf(::BundleLoader)
+        singleOf(::BundleLoader) { bind<BundleLifecycleOperations>() }
         singleOf(::BundleDatabase)
         singleOf(::BundleLifecycleManager)
         single {
