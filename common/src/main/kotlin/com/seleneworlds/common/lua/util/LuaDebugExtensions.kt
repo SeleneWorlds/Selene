@@ -15,7 +15,15 @@ data class CallerInfo(val source: String, val line: Int) : ScriptTrace {
 
 fun Lua.getCallerInfo(offset: Int = 2): CallerInfo {
     getGlobal("debug")
+    if (!isTable(-1)) {
+        pop(1)
+        return CallerInfo("?", 0)
+    }
     getField(-1, "getinfo")
+    if (!isFunction(-1)) {
+        pop(2)
+        return CallerInfo("?", 0)
+    }
     push(offset)
     push("Sl")
     pCall(2, 1)
