@@ -44,14 +44,14 @@ class LuaEventApiTest {
                     end)
 
                     event:fire("hello", nil, 42)
-                    _G.calls = calls
+                    callsResult = calls
                     """.trimIndent()
                 ),
                 "lua_event_api_test"
             )
             luaManager.lua.pCall(0, 0)
 
-            luaManager.lua.getGlobal("calls")
+            luaManager.lua.getGlobal("callsResult")
             assertEquals(2, luaManager.lua.toInteger(-1).toInt())
             luaManager.lua.pop(1)
 
@@ -105,12 +105,12 @@ class LuaEventApiTest {
                     local payload = { count = 1 }
 
                     event:connect(function(arg)
-                        _G.samePayload = arg == payload
+                        samePayload = arg == payload
                         arg.count = arg.count + 1
                     end)
 
                     event:fire(payload)
-                    _G.payloadCount = payload.count
+                    payloadCount = payload.count
                     """.trimIndent()
                 ),
                 "lua_event_identity_test"
@@ -151,8 +151,8 @@ class LuaEventApiTest {
                     local second = Event.of("test:event")
                     local third = Event.of("test:other")
 
-                    _G.sameEvent = first == second
-                    _G.differentEvent = first ~= third
+                    sameEvent = first == second
+                    differentEvent = first ~= third
                     """.trimIndent()
                 ),
                 "lua_event_api_cache_test"
