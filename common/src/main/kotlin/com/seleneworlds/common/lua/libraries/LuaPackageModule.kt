@@ -93,7 +93,7 @@ class LuaPackageModule : LuaModule {
             lua.pop(1)
             return 1
         }
-        lua.pop(1)
+        lua.pop(2)
 
         val found = packageResolvers.asSequence().mapNotNull { it(moduleName) }.firstOrNull()
         if (found != null) {
