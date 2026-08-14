@@ -3,6 +3,8 @@ package com.seleneworlds.client.ui.lua
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.ui.Slider
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
+import com.seleneworlds.client.ui.BundleUiListeners
+import com.seleneworlds.common.bundles.BundleExecutionContext
 import com.seleneworlds.common.lua.util.checkFloat
 import com.seleneworlds.common.lua.util.checkFunction
 import com.seleneworlds.common.lua.util.checkUserdata
@@ -77,12 +79,15 @@ object SliderLuaMetatable {
         val slider = lua.checkUserdata<Slider>(1)
         val callback = lua.checkFunction(2)
         val trace = ConstantTrace("[slider onChanged] registered in ${lua.getCallerInfo()}")
+        val bundle = BundleExecutionContext.currentBundle
 
-        slider.addListener(object : ChangeListener() {
+        BundleUiListeners.addActorListener(slider, object : ChangeListener() {
             override fun changed(event: ChangeEvent, actor: Actor) {
-                runCallback(callback, trace, slider)
+                BundleUiListeners.runInBundleContext(bundle) {
+                    runCallback(callback, trace, slider)
+                }
             }
-        })
+        }, bundle)
         return 0
     }
 

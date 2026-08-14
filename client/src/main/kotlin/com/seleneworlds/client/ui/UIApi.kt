@@ -40,7 +40,7 @@ class UIApi(
     ) {
         val listener = EventListener { event ->
             if (event is InputEvent) {
-                return@EventListener BundleUiInputProcessors.runInBundleContext(bundle) {
+                return@EventListener BundleUiListeners.runInBundleContext(bundle) {
                     when (event.type) {
                         InputEvent.Type.keyUp -> {
                             if (keyUp != null) {
@@ -74,7 +74,7 @@ class UIApi(
         }
         ui.stage.addListener(listener)
         if (bundle != null) {
-            BundleUiInputProcessors.record(bundle) {
+            BundleUiListeners.record(bundle) {
                 ui.stage.removeListener(listener)
             }
         }

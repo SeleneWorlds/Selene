@@ -4,6 +4,8 @@ import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.ui.SelectBox
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
 import com.badlogic.gdx.utils.Array
+import com.seleneworlds.client.ui.BundleUiListeners
+import com.seleneworlds.common.bundles.BundleExecutionContext
 import com.seleneworlds.common.lua.util.checkFunction
 import com.seleneworlds.common.lua.util.checkInt
 import com.seleneworlds.common.lua.util.checkUserdata
@@ -113,12 +115,15 @@ object SelectBoxLuaMetatable {
         val selectBox = lua.checkUserdata<SelectBox<Any>>(1)
         val callback = lua.checkFunction(2)
         val trace = ConstantTrace("[selectBox onChanged] registered in ${lua.getCallerInfo()}")
+        val bundle = BundleExecutionContext.currentBundle
 
-        selectBox.addListener(object : ChangeListener() {
+        BundleUiListeners.addActorListener(selectBox, object : ChangeListener() {
             override fun changed(event: ChangeEvent, actor: Actor) {
-                runCallback(callback, trace, selectBox)
+                BundleUiListeners.runInBundleContext(bundle) {
+                    runCallback(callback, trace, selectBox)
+                }
             }
-        })
+        }, bundle)
         return 0
     }
 

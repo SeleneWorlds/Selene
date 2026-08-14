@@ -1,5 +1,6 @@
 package com.seleneworlds.client.ui
 
+import com.badlogic.gdx.scenes.scene2d.Actor
 import com.seleneworlds.common.bundles.Bundle
 import com.seleneworlds.common.bundles.BundleEventSubscriptions
 import com.seleneworlds.common.bundles.BundleExecutionContext
@@ -9,9 +10,11 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
-class BundleUiInputProcessorsTest {
+class BundleUiListenersTest {
 
     @Test
     fun `clearBundleState removes only matching bundle listeners`() {
@@ -21,16 +24,16 @@ class BundleUiInputProcessorsTest {
         var bundleBRemovals = 0
 
         try {
-            BundleUiInputProcessors.record(bundleA) { bundleARemovals++ }
-            BundleUiInputProcessors.record(bundleB) { bundleBRemovals++ }
+            BundleUiListeners.record(bundleA) { bundleARemovals++ }
+            BundleUiListeners.record(bundleB) { bundleBRemovals++ }
 
-            BundleUiInputProcessors.clearBundleState(bundleA)
+            BundleUiListeners.clearBundleState(bundleA)
 
             assertEquals(1, bundleARemovals)
             assertEquals(0, bundleBRemovals)
 
-            BundleUiInputProcessors.clearBundleState(bundleA)
-            BundleUiInputProcessors.clearBundleState(bundleB)
+            BundleUiListeners.clearBundleState(bundleA)
+            BundleUiListeners.clearBundleState(bundleB)
 
             assertEquals(1, bundleARemovals)
             assertEquals(1, bundleBRemovals)
@@ -46,15 +49,59 @@ class BundleUiInputProcessorsTest {
         var removals = 0
 
         try {
-            BundleUiInputProcessors.record(bundle) { removals++ }
-            BundleUiInputProcessors.clearBundleState(bundle)
+            BundleUiListeners.record(bundle) { removals++ }
+            BundleUiListeners.clearBundleState(bundle)
 
-            BundleUiInputProcessors.record(bundle) { removals++ }
-            BundleUiInputProcessors.clearBundleState(bundle)
-            BundleUiInputProcessors.clearBundleState(bundle)
+            BundleUiListeners.record(bundle) { removals++ }
+            BundleUiListeners.clearBundleState(bundle)
+            BundleUiListeners.clearBundleState(bundle)
 
             assertEquals(2, removals)
         } finally {
+            bundle.dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `addActorListener removes bundle-owned actor listeners`() {
+        val bundle = Bundle(BundleManifest(name = "bundle-a"), createTempDirectory())
+        val actor = Actor()
+
+        try {
+            BundleExecutionContext.withBundle(bundle) {
+                BundleUiListeners.addActorListener(actor, { false })
+            }
+
+            assertEquals(1, actor.listeners.size)
+
+            BundleUiListeners.clearBundleState(bundle)
+
+            assertEquals(0, actor.listeners.size)
+        } finally {
+            bundle.dir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `runInBundleContext restores previous bundle after actor listener callback`() {
+        val bundle = Bundle(BundleManifest(name = "bundle-a"), createTempDirectory())
+        val actor = Actor()
+        var callbackRanInBundle = false
+
+        try {
+            BundleUiListeners.addActorListener(actor, { _ ->
+                BundleUiListeners.runInBundleContext(bundle) {
+                    callbackRanInBundle = BundleExecutionContext.currentBundle == bundle
+                }
+                false
+            }, bundle)
+
+            assertNull(BundleExecutionContext.currentBundle)
+            assertFalse(actor.fire(com.badlogic.gdx.scenes.scene2d.Event()))
+            assertTrue(callbackRanInBundle)
+            assertNull(BundleExecutionContext.currentBundle)
+        } finally {
+            BundleUiListeners.clearBundleState(bundle)
             bundle.dir.deleteRecursively()
         }
     }
@@ -70,7 +117,7 @@ class BundleUiInputProcessorsTest {
             val listener = Listener { }
             assertNull(BundleExecutionContext.currentBundle)
 
-            BundleUiInputProcessors.runInBundleContext(bundle) {
+            BundleUiListeners.runInBundleContext(bundle) {
                 assertEquals(bundle, BundleExecutionContext.currentBundle)
                 event.register(listener)
                 BundleEventSubscriptions.record(event, listener)

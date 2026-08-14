@@ -3,6 +3,8 @@ package com.seleneworlds.client.ui.lua
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.ui.TextField
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
+import com.seleneworlds.client.ui.BundleUiListeners
+import com.seleneworlds.common.bundles.BundleExecutionContext
 import com.seleneworlds.common.lua.util.checkFunction
 import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.checkUserdata
@@ -59,12 +61,15 @@ object TextFieldLuaMetatable {
         val textField = lua.checkUserdata<TextField>(1)
         val callback = lua.checkFunction(2)
         val trace = ConstantTrace("[textField onChanged] registered in ${lua.getCallerInfo()}")
+        val bundle = BundleExecutionContext.currentBundle
 
-        textField.addListener(object : ChangeListener() {
+        BundleUiListeners.addActorListener(textField, object : ChangeListener() {
             override fun changed(event: ChangeEvent, actor: Actor) {
-                runCallback(callback, trace, textField)
+                BundleUiListeners.runInBundleContext(bundle) {
+                    runCallback(callback, trace, textField)
+                }
             }
-        })
+        }, bundle)
         return 0
     }
 

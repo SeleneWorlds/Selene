@@ -71,7 +71,7 @@ import com.seleneworlds.client.sounds.SoundsApi
 import com.seleneworlds.client.sounds.SoundsLuaApi
 import com.seleneworlds.client.tiles.Tile
 import com.seleneworlds.client.tiles.TilePool
-import com.seleneworlds.client.ui.BundleUiInputProcessors
+import com.seleneworlds.client.ui.BundleUiListeners
 import com.seleneworlds.client.ui.BundleUiDialogs
 import com.seleneworlds.client.ui.UI
 import com.seleneworlds.client.ui.SkinResolvers
@@ -176,7 +176,7 @@ class SeleneApplication(
                     listOf(
                         BundleEventSubscriptions,
                         get<SchedulesApi>(),
-                        BundleUiInputProcessors,
+                        BundleUiListeners,
                         BundleUiDialogs
                     )
                 )

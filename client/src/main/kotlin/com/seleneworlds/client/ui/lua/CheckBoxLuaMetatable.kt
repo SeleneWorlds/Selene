@@ -3,6 +3,8 @@ package com.seleneworlds.client.ui.lua
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.ui.CheckBox
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener
+import com.seleneworlds.client.ui.BundleUiListeners
+import com.seleneworlds.common.bundles.BundleExecutionContext
 import com.seleneworlds.common.lua.util.checkFunction
 import com.seleneworlds.common.lua.util.checkUserdata
 import com.seleneworlds.common.lua.util.getCallerInfo
@@ -22,12 +24,15 @@ object CheckBoxLuaMetatable {
         val checkBox = lua.checkUserdata<CheckBox>(1)
         val callback = lua.checkFunction(2)
         val trace = ConstantTrace("[checkBox onChanged] registered in ${lua.getCallerInfo()}")
+        val bundle = BundleExecutionContext.currentBundle
 
-        checkBox.addListener(object : ChangeListener() {
+        BundleUiListeners.addActorListener(checkBox, object : ChangeListener() {
             override fun changed(event: ChangeEvent, actor: Actor) {
-                runCallback(callback, trace, checkBox)
+                BundleUiListeners.runInBundleContext(bundle) {
+                    runCallback(callback, trace, checkBox)
+                }
             }
-        })
+        }, bundle)
         return 0
     }
 
