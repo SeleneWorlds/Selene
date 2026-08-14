@@ -6,17 +6,12 @@ import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.*
-import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.kotcrab.vis.ui.widget.VisImageButton
 import com.seleneworlds.client.game.ClientEvents
-import com.seleneworlds.client.rendering.drawable.DrawableApi
-import com.seleneworlds.client.rendering.visual2d.Visual2DApi
 import com.seleneworlds.client.ui.HudApi
 import com.seleneworlds.client.ui.ThemeApi
 import com.seleneworlds.client.ui.ThemeDefinition
 import com.seleneworlds.client.ui.UIApi
-import com.seleneworlds.client.ui.drawable.DrawableDrawable
-import com.seleneworlds.client.ui.drawable.Visual2DDrawable
 import com.seleneworlds.common.bundles.BundleExecutionContext
 import com.seleneworlds.common.lua.LuaEventSink
 import com.seleneworlds.common.lua.LuaManager
@@ -54,8 +49,9 @@ class UILuaApi(
         luaManager.defineMetatable(TextButton::class, ButtonLuaMetatable.luaMeta)
         luaManager.defineMetatable(ImageTextButton::class, ButtonLuaMetatable.luaMeta)
         luaManager.defineMetatable(CheckBox::class, CheckBoxLuaMetatable.luaMeta)
-        luaManager.defineMetatable(ImageButton::class, ImageButtonLuaMetatable.luaMeta)
-        luaManager.defineMetatable(VisImageButton::class, VisImageButtonLuaMetatable.luaMeta)
+        luaManager.defineMetatable(Image::class, ImageLuaMetatable(api).luaMeta)
+        luaManager.defineMetatable(ImageButton::class, ImageButtonLuaMetatable(api).luaMeta)
+        luaManager.defineMetatable(VisImageButton::class, VisImageButtonLuaMetatable(api).luaMeta)
         luaManager.defineMetatable(ProgressBar::class, ProgressBarLuaMetatable.luaMeta)
         luaManager.defineMetatable(Slider::class, SliderLuaMetatable.luaMeta)
         luaManager.defineMetatable(ThemeApi::class, ThemeLuaApi(this).luaMeta)
@@ -366,26 +362,26 @@ class UILuaApi(
     ): List<Button.ButtonStyle> {
         lua.checkType(tableIndex, Lua.LuaType.TABLE)
 
-        val up = lua.getFieldDrawable(tableIndex, "up", theme)
-        val down = lua.getFieldDrawable(tableIndex, "down", theme)
-        val checked = lua.getFieldDrawable(tableIndex, "checked", theme)
+        val up = lua.getFieldDrawable(api, tableIndex, "up", theme)
+        val down = lua.getFieldDrawable(api, tableIndex, "down", theme)
+        val checked = lua.getFieldDrawable(api, tableIndex, "checked", theme)
         val buttonStyle = Button.ButtonStyle(up, down, checked)
-        lua.getFieldDrawable(tableIndex, "over", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "over", theme)?.let {
             buttonStyle.over = it
         }
-        lua.getFieldDrawable(tableIndex, "focused", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "focused", theme)?.let {
             buttonStyle.focused = it
         }
-        lua.getFieldDrawable(tableIndex, "disabled", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "disabled", theme)?.let {
             buttonStyle.disabled = it
         }
-        lua.getFieldDrawable(tableIndex, "checkedOver", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "checkedOver", theme)?.let {
             buttonStyle.checkedOver = it
         }
-        lua.getFieldDrawable(tableIndex, "checkedDown", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "checkedDown", theme)?.let {
             buttonStyle.checkedDown = it
         }
-        lua.getFieldDrawable(tableIndex, "checkedFocused", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "checkedFocused", theme)?.let {
             buttonStyle.checkedFocused = it
         }
         lua.getFieldFloat(tableIndex, "checkedOffsetX")?.let {
@@ -416,65 +412,48 @@ class UILuaApi(
     ): List<Button.ButtonStyle> {
         lua.checkType(tableIndex, Lua.LuaType.TABLE)
 
-        val up = lua.getFieldDrawable(tableIndex, "up", theme)
-        val down = lua.getFieldDrawable(tableIndex, "down", theme)
-        val checked = lua.getFieldDrawable(tableIndex, "checked", theme)
-        val imageUp = lua.getFieldDrawable(tableIndex, "imageUp", theme)
-        val imageDown = lua.getFieldDrawable(tableIndex, "imageDown", theme)
-        val imageChecked = lua.getFieldDrawable(tableIndex, "imageChecked", theme)
+        val up = lua.getFieldDrawable(api, tableIndex, "up", theme)
+        val down = lua.getFieldDrawable(api, tableIndex, "down", theme)
+        val checked = lua.getFieldDrawable(api, tableIndex, "checked", theme)
+        val imageUp = lua.getFieldDrawable(api, tableIndex, "imageUp", theme)
+        val imageDown = lua.getFieldDrawable(api, tableIndex, "imageDown", theme)
+        val imageChecked = lua.getFieldDrawable(api, tableIndex, "imageChecked", theme)
         val imageButtonStyle = ImageButton.ImageButtonStyle(up, down, checked, imageUp, imageDown, imageChecked)
         val visImageButtonStyle = VisImageButton.VisImageButtonStyle(
             up, down, checked, imageUp, imageDown, imageChecked
         )
 
-        lua.getFieldDrawable(tableIndex, "over", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "over", theme)?.let {
             imageButtonStyle.over = it
             visImageButtonStyle.over = it
         }
 
-        lua.getFieldDrawable(tableIndex, "checkedOver", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "checkedOver", theme)?.let {
             imageButtonStyle.checkedOver = it
             visImageButtonStyle.checkedOver = it
         }
 
-        lua.getFieldDrawable(tableIndex, "disabled", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "disabled", theme)?.let {
             imageButtonStyle.disabled = it
             visImageButtonStyle.disabled = it
         }
 
-        lua.getFieldDrawable(tableIndex, "imageOver", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "imageOver", theme)?.let {
             imageButtonStyle.imageOver = it
             visImageButtonStyle.imageOver = it
         }
 
-        lua.getFieldDrawable(tableIndex, "imageCheckedOver", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "imageCheckedOver", theme)?.let {
             imageButtonStyle.imageCheckedOver = it
             visImageButtonStyle.imageCheckedOver = it
         }
 
-        lua.getFieldDrawable(tableIndex, "imageDisabled", theme)?.let {
+        lua.getFieldDrawable(api, tableIndex, "imageDisabled", theme)?.let {
             imageButtonStyle.imageDisabled = it
             visImageButtonStyle.imageDisabled = it
         }
 
         return listOf(imageButtonStyle, visImageButtonStyle)
-    }
-
-    fun Lua.getFieldDrawable(tableIndex: Int, fieldName: String, theme: ThemeApi?): Drawable? {
-        return getField(tableIndex, fieldName) { type ->
-            when (type) {
-                Lua.LuaType.STRING -> api.skinResolvers.resolveDrawable(theme, toString(-1)!!)
-                Lua.LuaType.USERDATA -> {
-                    when (val value = toJavaObject(-1)) {
-                        is Visual2DApi -> Visual2DDrawable(value.delegate)
-                        is DrawableApi -> DrawableDrawable(value.drawable)
-                        else -> null
-                    }
-                }
-
-                else -> null
-            }
-        }
     }
 
     val setup = LuaEventSink(ClientEvents.SetupUI.EVENT) { callback, trace ->

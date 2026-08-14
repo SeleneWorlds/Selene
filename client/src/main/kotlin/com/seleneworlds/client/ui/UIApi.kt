@@ -10,6 +10,7 @@ import com.badlogic.gdx.scenes.scene2d.EventListener
 import com.badlogic.gdx.scenes.scene2d.Group
 import com.badlogic.gdx.scenes.scene2d.InputEvent
 import com.badlogic.gdx.scenes.scene2d.ui.*
+import com.badlogic.gdx.scenes.scene2d.utils.Drawable
 import com.badlogic.gdx.utils.I18NBundle
 import com.kotcrab.vis.ui.widget.Draggable
 import com.seleneworlds.client.assets.AssetProvider
@@ -139,6 +140,10 @@ class UIApi(
         actors.forEach { collectActorsByName(it) }
         val hud = Hud(actors.toList(), actorsByName).api
         return Awaitable.completed(hud)
+    }
+
+    fun resolveDrawable(theme: ThemeApi, path: String): Drawable? {
+        return skinResolvers.resolveDrawable(theme, path)
     }
 
     fun loadTheme(skinPath: String, atlas: TextureAtlas?): Awaitable<ThemeApi> {

@@ -15,9 +15,8 @@ class SkinResolvers {
     }
 
     fun resolveDrawable(skin: Skin?, path: String): Drawable? {
-        return skin?.optional(path, TextureRegion::class.java)?.let {
-            return TextureRegionDrawable(it)
-        }
+        return skin?.optional(path, Drawable::class.java)
+            ?: skin?.optional(path, TextureRegion::class.java)?.let { TextureRegionDrawable(it) }
     }
 
     fun resolveDrawable(theme: ThemeApi?, path: String): Drawable? {
