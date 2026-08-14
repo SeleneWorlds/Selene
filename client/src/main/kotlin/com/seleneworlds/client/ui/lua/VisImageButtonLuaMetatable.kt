@@ -7,7 +7,7 @@ import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.checkUserdata
 
 object VisImageButtonLuaMetatable {
-    val luaMeta = ActorLuaMetatable.luaMeta.extend(VisImageButton::class) {
+    val luaMeta = ButtonLuaMetatable.luaMeta.extend(VisImageButton::class) {
         callable(::setStyle)
     }
 
