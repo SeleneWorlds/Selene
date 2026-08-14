@@ -4,6 +4,7 @@ import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.badlogic.gdx.scenes.scene2d.ui.List
 import com.badlogic.gdx.scenes.scene2d.utils.Layout
+import com.kotcrab.vis.ui.VisUI
 import com.kotcrab.vis.ui.widget.LinkLabel
 import com.kotcrab.vis.ui.widget.VisTextField
 import party.iroiro.luajava.Lua
@@ -38,6 +39,8 @@ object ActorLuaMetatable {
         callable(::invalidate)
         callable(::setStyle)
         callable(::focus)
+        callable(::setTooltip)
+        callable(::clearTooltip)
     }
 
     /**
@@ -290,6 +293,40 @@ object ActorLuaMetatable {
         val actor = lua.checkUserdata<Actor>(1)
         actor.stage?.keyboardFocus = actor
         return 0
+    }
+
+    /**
+     * Sets tooltip text for this actor.
+     *
+     * ```signatures
+     * setTooltip(text: string)
+     * ```
+     */
+    private fun setTooltip(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        val text = lua.checkString(2)
+        removeTooltip(actor)
+        actor.addListener(TextTooltip(text, VisUI.getSkin()))
+        return 0
+    }
+
+    /**
+     * Clears tooltip text from this actor.
+     *
+     * ```signatures
+     * clearTooltip()
+     * ```
+     */
+    private fun clearTooltip(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        removeTooltip(actor)
+        return 0
+    }
+
+    private fun removeTooltip(actor: Actor) {
+        actor.listeners
+            .filterIsInstance<TextTooltip>()
+            .forEach(actor::removeListener)
     }
 
     /**
