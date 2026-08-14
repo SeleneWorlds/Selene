@@ -190,6 +190,10 @@ object ActorLuaMetatable {
                 actor.style = theme.skin.get(style, SelectBox.SelectBoxStyle::class.java)
             }
 
+            is CheckBox -> {
+                actor.style = theme.skin.get(style, CheckBox.CheckBoxStyle::class.java)
+            }
+
             is Slider -> {
                 actor.style = theme.skin.get(style, Slider.SliderStyle::class.java)
             }
