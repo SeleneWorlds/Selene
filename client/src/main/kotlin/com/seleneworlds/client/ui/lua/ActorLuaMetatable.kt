@@ -22,8 +22,13 @@ object ActorLuaMetatable {
         callable(::setVisible)
         callable(::getWidth)
         callable(::getHeight)
+        callable(::setX)
+        callable(::setY)
+        callable(::setPosition)
         callable(::setWidth)
         callable(::setHeight)
+        callable(::setSize)
+        callable(::pack)
         callable(::getMinWidth)
         callable(::getMinHeight)
         callable(::getPreferredWidth)
@@ -125,6 +130,39 @@ object ActorLuaMetatable {
     }
 
     /**
+     * ```signatures
+     * SetX(x: number)
+     * ```
+     */
+    private fun setX(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        actor.x = lua.checkFloat(2)
+        return 0
+    }
+
+    /**
+     * ```signatures
+     * SetY(y: number)
+     * ```
+     */
+    private fun setY(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        actor.y = lua.checkFloat(2)
+        return 0
+    }
+
+    /**
+     * ```signatures
+     * SetPosition(x: number, y: number)
+     * ```
+     */
+    private fun setPosition(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        actor.setPosition(lua.checkFloat(2), lua.checkFloat(3))
+        return 0
+    }
+
+    /**
      * ```property
      * Width: number
      * ```
@@ -145,6 +183,30 @@ object ActorLuaMetatable {
         val actor = lua.checkUserdata<Actor>(1)
         val height = lua.checkFloat(2)
         actor.height = height
+        return 0
+    }
+
+    /**
+     * ```signatures
+     * SetSize(width: number, height: number)
+     * ```
+     */
+    private fun setSize(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        actor.setSize(lua.checkFloat(2), lua.checkFloat(3))
+        return 0
+    }
+
+    /**
+     * Packs the actor to its preferred size if it implements Layout interface.
+     *
+     * ```signatures
+     * Pack()
+     * ```
+     */
+    private fun pack(lua: Lua): Int {
+        val actor = lua.checkUserdata<Actor>(1)
+        if (actor is Layout) actor.pack()
         return 0
     }
 
