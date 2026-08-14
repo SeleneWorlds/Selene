@@ -8,6 +8,7 @@ import com.badlogic.gdx.scenes.scene2d.Stage
 import com.badlogic.gdx.scenes.scene2d.ui.*
 import com.kotcrab.vis.ui.widget.VisImageButton
 import com.seleneworlds.client.game.ClientEvents
+import com.seleneworlds.client.ui.BundleUiDialogs
 import com.seleneworlds.client.ui.HudApi
 import com.seleneworlds.client.ui.ThemeApi
 import com.seleneworlds.client.ui.ThemeDefinition
@@ -17,6 +18,8 @@ import com.seleneworlds.common.lua.LuaEventSink
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.*
+import com.seleneworlds.common.lua.util.getCallerInfo
+import com.seleneworlds.common.lua.util.toAny
 import com.seleneworlds.common.script.ConstantTrace
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.serialization.seleneJson
@@ -49,6 +52,9 @@ class UILuaApi(
         luaManager.defineMetatable(Button::class, ButtonLuaMetatable.luaMeta)
         luaManager.defineMetatable(TextButton::class, ButtonLuaMetatable.luaMeta)
         luaManager.defineMetatable(ImageTextButton::class, ButtonLuaMetatable.luaMeta)
+        val dialogMetatable = DialogLuaMetatable(api).luaMeta
+        luaManager.defineMetatable(Dialog::class, dialogMetatable)
+        luaManager.defineMetatable(LuaDialog::class, dialogMetatable)
         luaManager.defineMetatable(CheckBox::class, CheckBoxLuaMetatable.luaMeta)
         luaManager.defineMetatable(Image::class, ImageLuaMetatable(api).luaMeta)
         luaManager.defineMetatable(ImageButton::class, ImageButtonLuaMetatable(api).luaMeta)
@@ -66,6 +72,9 @@ class UILuaApi(
         table.register("createTheme", ::createTheme)
         table.register("createContainer", ::createContainer)
         table.register("createLabel", ::createLabel)
+        table.register("createDialog", ::createDialog)
+        table.register("openDialog", ::openDialog)
+        table.register("closeDialog", ::closeDialog)
         table.register("addToRoot", ::addToRoot)
         table.register("setFocus", ::setFocus)
         table.register("getFocus", ::getFocus)
@@ -76,6 +85,84 @@ class UILuaApi(
         table.register("createAtlas", ::createAtlas)
         table.set("root", api.bundlesRoot)
         table.set("setup", setup)
+    }
+
+    private fun createDialog(lua: Lua): Int {
+        lua.push(buildDialog(lua), Lua.Conversion.NONE)
+        return 1
+    }
+
+    private fun openDialog(lua: Lua): Int {
+        val dialog = if (lua.isUserdata(1) && lua.toUserdata<Dialog>(1) != null) {
+            lua.checkUserdata<Dialog>(1)
+        } else {
+            buildDialog(lua)
+        }
+        api.openDialog(dialog)
+        lua.push(dialog, Lua.Conversion.NONE)
+        return 1
+    }
+
+    private fun closeDialog(lua: Lua): Int {
+        api.closeDialog(lua.checkUserdata<Dialog>(1))
+        return 0
+    }
+
+    private fun buildDialog(lua: Lua): LuaDialog {
+        val (theme, configIndex) = if (lua.isUserdata(1) && lua.toUserdata<ThemeApi>(1) != null) {
+            lua.checkUserdata<ThemeApi>(1) to 2
+        } else {
+            null to 1
+        }
+        if (lua.top >= configIndex) {
+            lua.checkType(configIndex, Lua.LuaType.TABLE)
+        }
+
+        val dialog = LuaDialog(
+            title = lua.getFieldString(configIndex, "title") ?: "",
+            skin = theme?.skin ?: api.systemSkin
+        )
+        lua.getFieldString(configIndex, "content")?.let { content ->
+            dialog.text(content)
+        }
+
+        if (lua.isTable(configIndex)) {
+            lua.getField(configIndex, "buttons")
+            val buttons = if (lua.isTable(-1)) lua.toAny(-1) else null
+            lua.pop(1)
+
+            (buttons as? List<*>)?.forEach { button ->
+                when (button) {
+                    is String -> dialog.addCallbackButton(
+                        text = button,
+                        callback = null,
+                        trace = ConstantTrace("[dialog button \"$button\"] registered in ${lua.getCallerInfo()}")
+                    )
+
+                    is Map<*, *> -> {
+                        val text = button["text"] as? String ?: return@forEach
+                        val callback = button["callback"] as? LuaValue
+                        dialog.addCallbackButton(
+                            text = text,
+                            callback = callback,
+                            trace = ConstantTrace("[dialog button \"$text\"] registered in ${lua.getCallerInfo()}")
+                        )
+                    }
+
+                    is List<*> -> {
+                        val text = button.getOrNull(0) as? String ?: return@forEach
+                        val callback = button.getOrNull(1) as? LuaValue
+                        dialog.addCallbackButton(
+                            text = text,
+                            callback = callback,
+                            trace = ConstantTrace("[dialog button \"$text\"] registered in ${lua.getCallerInfo()}")
+                        )
+                    }
+                }
+            }
+        }
+        BundleExecutionContext.currentBundle?.let { BundleUiDialogs.record(it, dialog) }
+        return dialog
     }
 
     private fun createAtlas(lua: Lua): Int {

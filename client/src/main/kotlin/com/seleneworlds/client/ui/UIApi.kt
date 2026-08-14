@@ -29,6 +29,7 @@ class UIApi(
     val skinResolvers: SkinResolvers,
     private val assetProvider: AssetProvider
 ) {
+    val systemSkin: Skin get() = ui.systemSkin
     val bundlesRoot: Stack = ui.bundlesRoot
 
     fun addInputProcessor(
@@ -97,6 +98,18 @@ class UIApi(
 
     fun clearBundlesRoot() {
         ui.bundlesRoot.clearChildren()
+    }
+
+    fun createDialog(theme: ThemeApi?, title: String): Dialog {
+        return Dialog(title, theme?.skin ?: ui.systemSkin)
+    }
+
+    fun openDialog(dialog: Dialog) {
+        dialog.show(ui.stage)
+    }
+
+    fun closeDialog(dialog: Dialog) {
+        dialog.hide()
     }
 
     fun loadUI(
