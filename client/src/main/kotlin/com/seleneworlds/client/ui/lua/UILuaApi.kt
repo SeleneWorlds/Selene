@@ -49,6 +49,7 @@ class UILuaApi(
         luaManager.defineMetatable(Container::class, ContainerLuaMetatable.luaMeta)
         luaManager.defineMetatable(Label::class, LabelLuaMetatable.luaMeta)
         luaManager.defineMetatable(TextField::class, TextFieldLuaMetatable.luaMeta)
+        luaManager.defineMetatable(SelectBox::class, SelectBoxLuaMetatable.luaMeta)
         luaManager.defineMetatable(ImageButton::class, ImageButtonLuaMetatable.luaMeta)
         luaManager.defineMetatable(VisImageButton::class, VisImageButtonLuaMetatable.luaMeta)
         luaManager.defineMetatable(ProgressBar::class, ProgressBarLuaMetatable.luaMeta)
