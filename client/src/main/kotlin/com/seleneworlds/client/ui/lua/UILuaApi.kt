@@ -57,6 +57,7 @@ class UILuaApi(
         luaManager.defineMetatable(ImageButton::class, ImageButtonLuaMetatable.luaMeta)
         luaManager.defineMetatable(VisImageButton::class, VisImageButtonLuaMetatable.luaMeta)
         luaManager.defineMetatable(ProgressBar::class, ProgressBarLuaMetatable.luaMeta)
+        luaManager.defineMetatable(Slider::class, SliderLuaMetatable.luaMeta)
         luaManager.defineMetatable(ThemeApi::class, ThemeLuaApi(this).luaMeta)
         luaManager.defineMetatable(HudApi::class, HudLuaApi.luaMeta)
         luaManager.defineMetatable(TextField.TextFieldClickListener::class, TextFieldClickListenerLuaMetatable.luaMeta)
