@@ -41,6 +41,7 @@ class UILuaApi(
         luaManager.defineMetatable(Actor::class, ActorLuaMetatable.luaMeta)
         luaManager.defineMetatable(Group::class, GroupLuaMetatable.luaMeta)
         luaManager.defineMetatable(VerticalGroup::class, GroupLuaMetatable.luaMeta)
+        luaManager.defineMetatable(ScrollPane::class, ScrollPaneLuaMetatable.luaMeta)
         luaManager.defineMetatable(Container::class, ContainerLuaMetatable.luaMeta)
         luaManager.defineMetatable(Label::class, LabelLuaMetatable.luaMeta)
         luaManager.defineMetatable(TextField::class, TextFieldLuaMetatable.luaMeta)
