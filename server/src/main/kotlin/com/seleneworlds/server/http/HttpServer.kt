@@ -19,6 +19,7 @@ import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.util.Disposable
 import com.seleneworlds.server.bundles.ClientBundleCache
+import com.seleneworlds.server.bundles.ClientLuaModules
 import com.seleneworlds.server.bundles.ClientRegistrySnapshots
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.heartbeat.ServerHeartbeat
@@ -42,6 +43,7 @@ class HttpServer(
     private val serverHeartbeat: ServerHeartbeat
 ) : Disposable {
     private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
+    private val clientLuaModules = ClientLuaModules(bundleDatabase, clientBundleCache)
     private val clientRegistrySnapshots = ClientRegistrySnapshots(bundleDatabase, clientBundleCache, seleneJson)
 
     private fun ApplicationCall.authenticatedUser(): SeleneUser {
@@ -251,6 +253,19 @@ class HttpServer(
                         }
 
                         call.respond(snapshot)
+                    }
+                    get("/client/lua") {
+                        call.respond(clientLuaModules.getIndex())
+                    }
+                    get("/client/lua/modules/{moduleName...}") {
+                        val moduleName = call.parameters.getAll("moduleName")?.joinToString("/") ?: return@get
+                        val module = clientLuaModules.getModule(moduleName)
+                        if (module == null) {
+                            call.respond(HttpStatusCode.NotFound, "Lua module not found")
+                            return@get
+                        }
+
+                        call.respond(module)
                     }
                     post("/join") {
                         val principal = call.authenticatedUser()
