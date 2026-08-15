@@ -6,6 +6,7 @@ import java.io.File
 data class ServerConfig(
     val name: String = "New Server",
     val port: Int = 8147,
+    val webSocketPort: Int = 8148,
     val apiPort: Int = 8080,
     val savePath: String = "save",
     val bundlesPath: String = "bundles",

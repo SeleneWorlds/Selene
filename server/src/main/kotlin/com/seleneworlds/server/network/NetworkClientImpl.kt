@@ -5,7 +5,6 @@ import io.netty.channel.ChannelFutureListener
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.socket.SocketChannel
-import io.netty.util.AttributeKey
 import com.seleneworlds.common.network.Packet
 import com.seleneworlds.server.players.PlayerManager
 import java.net.InetSocketAddress
@@ -53,9 +52,4 @@ class NetworkClientImpl(
             server.reportClientError(this, future.cause())
         }
     }
-
-    companion object {
-        val ATTRIBUTE: AttributeKey<NetworkClientImpl> = AttributeKey.valueOf("selene:client")
-    }
-
 }
