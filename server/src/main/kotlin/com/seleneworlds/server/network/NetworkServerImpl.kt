@@ -137,6 +137,13 @@ class NetworkServerImpl(
         }
     }
 
+    override fun channelActive(ctx: ChannelHandlerContext) {
+        super.channelActive(ctx)
+        val client = ctx.channel().attr(NetworkClientAttributes.CLIENT).get()
+            ?: return
+        logger.info("Client connected: ${client.address}")
+    }
+
     override fun channelInactive(ctx: ChannelHandlerContext) {
         super.channelInactive(ctx)
         val client = ctx.channel().attr(NetworkClientAttributes.CLIENT).get()
