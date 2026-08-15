@@ -35,6 +35,7 @@ ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor"
 ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-auth = { module = "io.ktor:ktor-server-auth", version.ref = "ktor" }
 ktor-server-auth-jwt = { module = "io.ktor:ktor-server-auth-jwt", version.ref = "ktor" }
+ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor" }
 
 koin-bom = { module = "io.insert-koin:koin-bom", version = "4.0.4" }
 koin-core = { module = "io.insert-koin:koin-core" }
@@ -67,7 +68,7 @@ gdx-natives = ["gdx-platform", "gdx-freetype-platform"]
 ktx = ["ktx-app", "ktx-assets-async", "ktx-freetype-async"]
 lua = ["luajava", "lua54"]
 ktor-client = ["ktor-client-core", "ktor-client-cio", "ktor-client-content-negotiation", "ktor-serialization-kotlinx-json"]
-ktor-server = ["ktor-server-netty", "ktor-server-content-negotiation", "ktor-serialization-kotlinx-json", "ktor-server-auth", "ktor-server-auth-jwt"]
+ktor-server = ["ktor-server-netty", "ktor-server-content-negotiation", "ktor-serialization-kotlinx-json", "ktor-server-auth", "ktor-server-auth-jwt", "ktor-server-cors"]
 koin = ["koin-core", "koin-logger-slf4j"]
 log4j = ["log4j-api", "log4j-core", "log4j-slf4j2-impl"]
 jackson = ["jackson-databind", "jackson-module-kotlin"]

@@ -6,6 +6,7 @@ import io.ktor.server.auth.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.serialization.kotlinx.json.*
@@ -23,6 +24,7 @@ import com.seleneworlds.server.login.LoginQueueStatus
 import com.seleneworlds.server.login.SessionAuthentication
 import com.seleneworlds.server.players.PlayerManager
 import com.seleneworlds.server.startupTime
+import java.net.URI
 import java.nio.file.Paths
 
 data class SeleneUser(val userId: String, val token: String?)
@@ -62,6 +64,28 @@ class HttpServer(
             }
             install(ContentNegotiation) {
                 json(seleneJson)
+            }
+            val corsOrigins = config.managementCorsOrigins.map { it.trim() }.filter { it.isNotEmpty() }
+            if (corsOrigins.isNotEmpty()) {
+                install(CORS) {
+                    if ("*" in corsOrigins) {
+                        anyHost()
+                    } else {
+                        corsOrigins.forEach { origin ->
+                            if ("://" in origin) {
+                                val uri = URI(origin)
+                                allowHost(uri.authority, schemes = listOf(uri.scheme))
+                            } else {
+                                allowHost(origin)
+                            }
+                        }
+                    }
+                    allowMethod(HttpMethod.Get)
+                    allowMethod(HttpMethod.Post)
+                    allowMethod(HttpMethod.Options)
+                    allowHeader(HttpHeaders.Authorization)
+                    allowHeader(HttpHeaders.ContentType)
+                }
             }
             routing {
                 get("/") {
