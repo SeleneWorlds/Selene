@@ -15,9 +15,11 @@ import kotlinx.serialization.Serializable
 import java.util.*
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.BundleManifest
+import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.util.Disposable
 import com.seleneworlds.server.bundles.ClientBundleCache
+import com.seleneworlds.server.bundles.ClientRegistrySnapshots
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.heartbeat.ServerHeartbeat
 import com.seleneworlds.server.login.LoginQueue
@@ -40,6 +42,7 @@ class HttpServer(
     private val serverHeartbeat: ServerHeartbeat
 ) : Disposable {
     private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
+    private val clientRegistrySnapshots = ClientRegistrySnapshots(bundleDatabase, clientBundleCache, seleneJson)
 
     private fun ApplicationCall.authenticatedUser(): SeleneUser {
         return principal<SeleneUser>()
@@ -198,6 +201,19 @@ class HttpServer(
                         )
 
                         call.respondFile(assetPath)
+                    }
+                    get("/client/registries") {
+                        call.respond(clientRegistrySnapshots.getIndex())
+                    }
+                    get("/client/registries/{registryName...}") {
+                        val registryName = call.parameters.getAll("registryName")?.joinToString("/") ?: return@get
+                        val snapshot = clientRegistrySnapshots.getRegistry(Identifier.parse(registryName))
+                        if (snapshot == null) {
+                            call.respond(HttpStatusCode.NotFound, "Registry not found")
+                            return@get
+                        }
+
+                        call.respond(snapshot)
                     }
                     post("/join") {
                         val principal = call.authenticatedUser()
