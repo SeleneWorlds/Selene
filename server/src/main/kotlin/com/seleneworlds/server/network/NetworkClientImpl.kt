@@ -14,9 +14,9 @@ class NetworkClientImpl(
     private val server: NetworkServer,
     playerManager: PlayerManager,
     private val channel: SocketChannel
-) : ChannelInboundHandlerAdapter(), ChannelFutureListener, NetworkClient {
+) : ChannelInboundHandlerAdapter(), ChannelFutureListener, NetworkPlayerClient {
 
-    val player = playerManager.createPlayer(this)
+    override val player = playerManager.createPlayer(this)
     private val incomingPackets = ConcurrentLinkedQueue<Packet>()
 
     override fun poll(): Packet? = incomingPackets.poll()

@@ -15,9 +15,9 @@ class WebSocketNetworkClient(
     playerManager: PlayerManager,
     private val channel: Channel,
     private val packetCodec: PacketCodec
-) : ChannelFutureListener, NetworkClient {
+) : ChannelFutureListener, NetworkPlayerClient {
 
-    val player = playerManager.createPlayer(this)
+    override val player = playerManager.createPlayer(this)
     private val incomingPackets = ConcurrentLinkedQueue<Packet>()
 
     override fun poll(): Packet? = incomingPackets.poll()

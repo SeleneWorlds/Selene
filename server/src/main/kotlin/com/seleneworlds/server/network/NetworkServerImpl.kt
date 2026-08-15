@@ -133,7 +133,7 @@ class NetworkServerImpl(
                 packet = client.poll()
             }
 
-            (client as NetworkClientImpl).player.update()
+            (client as NetworkPlayerClient).player.update()
         }
     }
 

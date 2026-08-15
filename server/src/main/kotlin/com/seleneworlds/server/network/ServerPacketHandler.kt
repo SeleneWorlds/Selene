@@ -26,7 +26,7 @@ class ServerPacketHandler(
 ) : PacketHandler<NetworkClient> {
 
     private fun handleAuthentication(context: NetworkClient, packet: Packet) {
-        val player = (context as NetworkClientImpl).player
+        val player = (context as NetworkPlayerClient).player
         if (packet is AuthenticatePacket) {
             sessionAuthentication.parseToken(packet.token)
                 .onRight {
@@ -50,7 +50,7 @@ class ServerPacketHandler(
     }
 
     private fun handlePreferences(context: NetworkClient, packet: PreferencesPacket) {
-        val player = (context as NetworkClientImpl).player
+        val player = (context as NetworkPlayerClient).player
         val localeParts = packet.locale.split("_")
         player.locale = when (localeParts.size) {
             1 -> Locale.of(localeParts[0])
@@ -64,7 +64,7 @@ class ServerPacketHandler(
         if (packet is PreferencesPacket) {
             handlePreferences(context, packet)
         } else if (packet is FinalizeJoinPacket) {
-            val player = (context as NetworkClientImpl).player
+            val player = (context as NetworkPlayerClient).player
             val activeGridId = activeGrid.activeGridId
                 ?: throw IllegalStateException("Active grid was not initialized before player join")
             context.send(SetActiveGridPacket(activeGridId.toString()))
@@ -74,7 +74,7 @@ class ServerPacketHandler(
     }
 
     private fun handleGame(context: NetworkClient, packet: Packet) {
-        val player = (context as NetworkClientImpl).player
+        val player = (context as NetworkPlayerClient).player
         if (packet is RequestMovePacket) {
             player.resetLastInputTime()
             val controlledEntity = player.controlledEntity ?: return
@@ -115,7 +115,7 @@ class ServerPacketHandler(
         context: NetworkClient,
         packet: Packet
     ) {
-        val player = (context as NetworkClientImpl).player
+        val player = (context as NetworkPlayerClient).player
         when (player.connectionState) {
             Player.ConnectionState.PENDING_AUTHENTICATION -> handleAuthentication(context, packet)
             Player.ConnectionState.PENDING_JOIN -> handleJoin(context, packet)
