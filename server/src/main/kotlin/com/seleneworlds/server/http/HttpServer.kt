@@ -202,6 +202,43 @@ class HttpServer(
 
                         call.respondFile(assetPath)
                     }
+                    get("/client/content/{path...}") {
+                        val unsafePath = call.parameters.getAll("path")?.joinToString("/") ?: return@get
+                        val normalizedPath = Paths.get(unsafePath).normalize().toString()
+                        if (normalizedPath.contains("/.") || normalizedPath.startsWith(".")) {
+                            call.respond(HttpStatusCode.NotFound, "Asset not found")
+                            return@get
+                        }
+
+                        val assetPath = bundleDatabase.enabledBundles.asReversed().asSequence()
+                            .filter { clientBundleCache.hasClientSide(it.dir) }
+                            .mapNotNull { bundle ->
+                                val candidate = bundle.dir.resolve(normalizedPath).normalize()
+                                val commonBaseDir = bundle.dir.resolve("common").normalize()
+                                val clientBaseDir = bundle.dir.resolve("client").normalize()
+                                if (candidate.startsWith(commonBaseDir) || candidate.startsWith(clientBaseDir)) {
+                                    candidate
+                                } else {
+                                    null
+                                }
+                            }
+                            .firstOrNull { it.exists() && it.isFile }
+
+                        if (assetPath == null) {
+                            call.respond(HttpStatusCode.NotFound, "Asset not found")
+                            return@get
+                        }
+
+                        call.response.header(
+                            HttpHeaders.ContentDisposition,
+                            ContentDisposition.Inline.withParameter(
+                                ContentDisposition.Parameters.FileName,
+                                assetPath.name
+                            ).toString()
+                        )
+
+                        call.respondFile(assetPath)
+                    }
                     get("/client/registries") {
                         call.respond(clientRegistrySnapshots.getIndex())
                     }
