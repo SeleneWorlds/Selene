@@ -14,6 +14,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.*
 import com.seleneworlds.common.bundles.BundleDatabase
+import com.seleneworlds.common.bundles.BundleManifest
 import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.util.Disposable
 import com.seleneworlds.server.bundles.ClientBundleCache
@@ -135,9 +136,10 @@ class HttpServer(
                             .mapValues { (_, value) ->
                                 BundleDescriptorResponse(
                                     name = value.manifest.name,
+                                    manifest = value.manifest,
                                     hash = clientBundleCache.getHash(value.dir),
                                     allowSharedCache = value.manifest.name.startsWith("@"),
-                                    variants = listOf("clientZip")
+                                    variants = listOf("clientZip", "content")
                                 )
                             }
                         call.respond(bundles)
@@ -275,6 +277,7 @@ private data class JwkKeyResponse(
 @Serializable
 private data class BundleDescriptorResponse(
     val name: String,
+    val manifest: BundleManifest,
     val hash: String?,
     @SerialName("allow_shared_cache")
     val allowSharedCache: Boolean,
