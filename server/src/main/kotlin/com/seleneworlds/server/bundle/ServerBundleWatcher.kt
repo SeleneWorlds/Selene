@@ -11,6 +11,7 @@ import com.seleneworlds.common.bundles.ScriptHotReload
 import com.seleneworlds.server.bundles.ClientBundleCache
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.data.Registries
+import com.seleneworlds.server.http.ClientAssetIndexProvider
 import com.seleneworlds.server.network.NetworkServer
 
 class ServerBundleWatcher(
@@ -19,6 +20,7 @@ class ServerBundleWatcher(
     private val networkServer: NetworkServer,
     private val registries: Registries,
     private val clientBundleCache: ClientBundleCache,
+    private val clientAssetIndexProvider: ClientAssetIndexProvider,
     private val scriptHotReload: ScriptHotReload,
     private val config: ServerConfig
 ) : BundleWatcher(logger, bundleDatabase, setOf("common", "client", "server")) {
@@ -45,6 +47,7 @@ class ServerBundleWatcher(
         // Clear client bundle cache when bundle content changes
         if (clientVisibleUpdatedFiles.isNotEmpty() || clientVisibleDeletedFiles.isNotEmpty()) {
             clientBundleCache.clearCacheForBundle(bundleId)
+            clientAssetIndexProvider.rebuild()
         }
 
         val packet = NotifyBundleUpdatePacket(

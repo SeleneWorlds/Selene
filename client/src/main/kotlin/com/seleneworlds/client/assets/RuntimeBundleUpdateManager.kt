@@ -5,14 +5,17 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.utils.io.jvm.javaio.*
 import kotlinx.coroutines.*
+import kotlinx.serialization.Serializable
 import org.slf4j.Logger
 import com.seleneworlds.client.config.ClientRuntimeConfig
 import com.seleneworlds.common.bundles.Bundle
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.network.packet.NotifyBundleUpdatePacket
+import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.util.Disposable
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 class RuntimeBundleUpdateManager(
     private val logger: Logger,
@@ -21,6 +24,7 @@ class RuntimeBundleUpdateManager(
     private val runtimeConfig: ClientRuntimeConfig
 ) : Disposable {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val manifestByBundle = ConcurrentHashMap<String, RuntimeAssetManifest>()
 
     private val contentServerUrl: String get() = runtimeConfig.contentServerUrl
 
@@ -36,6 +40,7 @@ class RuntimeBundleUpdateManager(
                     logger.warn("Received bundle content update for unknown bundle: ${packet.bundleId}")
                     return@launch
                 }
+                manifestByBundle.remove(bundle.manifest.name)
 
                 // Download updated files and notify registry
                 for (filePath in packet.updated) {
@@ -59,7 +64,14 @@ class RuntimeBundleUpdateManager(
         }
 
         try {
-            val url = "${contentServerUrl}/bundles/${bundle.manifest.name}/content/$filePath"
+            val manifest = getBundleAssetManifest(bundle)
+            val hashedUrl = manifest.assets[filePath]
+            if (hashedUrl == null) {
+                logger.warn("No hashed content URL found for updated bundle file: {} in {}", filePath, bundle.manifest.name)
+                return
+            }
+
+            val url = "${contentServerUrl}${hashedUrl}"
             logger.debug("Downloading bundle content: {}", url)
 
             val response: HttpResponse = httpClient.get(url) {
@@ -94,6 +106,28 @@ class RuntimeBundleUpdateManager(
         }
     }
 
+    private suspend fun getBundleAssetManifest(bundle: Bundle): RuntimeAssetManifest {
+        manifestByBundle[bundle.manifest.name]?.let { return it }
+
+        val url = "${contentServerUrl}/bundles/${bundle.manifest.name}/asset-manifest.json"
+        val response: HttpResponse = httpClient.get(url) {
+            headers {
+                if (runtimeConfig.token.isNotBlank()) {
+                    append("Authorization", "Bearer ${runtimeConfig.token}")
+                }
+            }
+        }
+        if (response.status.value !in 200..299) {
+            throw IllegalStateException(
+                "Failed to download bundle asset manifest for ${bundle.manifest.name}: HTTP ${response.status.value}"
+            )
+        }
+
+        val manifest = seleneJson.decodeFromString<RuntimeAssetManifest>(response.bodyAsText())
+        manifestByBundle[bundle.manifest.name] = manifest
+        return manifest
+    }
+
     private fun deleteBundleContentFile(bundle: Bundle, filePath: String) {
         try {
             val targetFile = bundle.dir.resolve(filePath)
@@ -120,3 +154,8 @@ class RuntimeBundleUpdateManager(
         scope.cancel()
     }
 }
+
+@Serializable
+private data class RuntimeAssetManifest(
+    val assets: Map<String, String>
+)

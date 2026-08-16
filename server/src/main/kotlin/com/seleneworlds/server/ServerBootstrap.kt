@@ -68,6 +68,7 @@ import com.seleneworlds.server.entities.Entity
 import com.seleneworlds.server.entities.component.EntityComponentFactory
 import com.seleneworlds.server.entities.EntityManager
 import com.seleneworlds.server.heartbeat.ServerHeartbeat
+import com.seleneworlds.server.http.ClientAssetIndexProvider
 import com.seleneworlds.server.http.HttpServer
 import com.seleneworlds.server.login.LoginQueue
 import com.seleneworlds.server.login.SessionAuthentication
@@ -184,6 +185,7 @@ fun main(args: Array<String>) {
             )
         }
         singleOf(::ClientBundleCache)
+        singleOf(::ClientAssetIndexProvider)
         singleOf(::ServerBundleLocator) { bind<BundleLocator>() }
         singleOf(::ServerBundleRuntimeRebuilder) { bind<BundleRuntimeRebuilder>() }
         singleOf(::ServerBundleWatcher) { bind<Disposable>() }

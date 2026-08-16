@@ -7,6 +7,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import io.ktor.serialization.kotlinx.json.*
@@ -40,7 +41,8 @@ class HttpServer(
     private val queue: LoginQueue,
     private val playerManager: PlayerManager,
     private val sessionAuth: SessionAuthentication,
-    private val serverHeartbeat: ServerHeartbeat
+    private val serverHeartbeat: ServerHeartbeat,
+    private val clientAssetIndexProvider: ClientAssetIndexProvider
 ) : Disposable {
     private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
     private val clientLuaModules = ClientLuaModules(bundleDatabase, clientBundleCache)
@@ -56,6 +58,8 @@ class HttpServer(
     }
 
     fun start() {
+        clientAssetIndexProvider.rebuild()
+
         val applicationEngine = embeddedServer(Netty, port = config.apiPort) {
             install(Authentication) {
                 bearer("broker") {
@@ -160,49 +164,47 @@ class HttpServer(
                         )
                         call.respondFile(clientBundleCache.getZipFile(bundle.dir))
                     }
+                    get("/bundles/{bundleName}/asset-manifest.json") {
+                        val bundleName = call.parameters["bundleName"] ?: return@get
+                        if (bundleDatabase.getEnabledBundle(bundleName) == null) {
+                            call.respond(HttpStatusCode.NotFound, "Bundle not found")
+                            return@get
+                        }
+
+                        val manifest = clientAssetIndexProvider.current().bundleManifest(bundleName)
+                        if (manifest == null) {
+                            call.respond(HttpStatusCode.NotFound, "Bundle asset manifest not found")
+                            return@get
+                        }
+
+                        call.respondAssetManifest(manifest)
+                    }
                     get("/bundles/{bundleName}/content/{path...}") {
                         val bundleName = call.parameters["bundleName"] ?: return@get
                         val unsafePath = call.parameters.getAll("path")?.joinToString("/") ?: return@get
                         val normalizedPath = Paths.get(unsafePath).normalize().toString()
 
-                        val bundle = bundleDatabase.getEnabledBundle(bundleName)
-                        if (bundle == null) {
+                        if (bundleDatabase.getEnabledBundle(bundleName) == null) {
                             call.respond(HttpStatusCode.NotFound, "Bundle not found")
                             return@get
                         }
-
-                        val assetPath = bundle.dir.resolve(normalizedPath).normalize()
                         if (normalizedPath.contains("/.") || normalizedPath.startsWith(".")) {
                             call.respond(HttpStatusCode.NotFound, "Asset not found")
                             return@get
                         }
 
-                        val commonBaseDir = bundle.dir.resolve("common").normalize()
-                        val clientBaseDir = bundle.dir.resolve("client").normalize()
-                        if (!assetPath.startsWith(commonBaseDir) && !assetPath.startsWith(clientBaseDir)) {
-                            call.respond(HttpStatusCode.NotFound, "Asset not found")
+                        val assetIndex = clientAssetIndexProvider.current()
+                        val hashedAsset = assetIndex.resolveBundle(bundleName, normalizedPath)
+                        if (hashedAsset != null) {
+                            call.respondHashedAsset(assetIndex, hashedAsset)
                             return@get
                         }
 
-                        if (!assetPath.exists()) {
-                            call.respond(HttpStatusCode.NotFound, "Asset not found")
-                            return@get
-                        }
-
-                        if (!assetPath.isFile) {
-                            call.respond(HttpStatusCode.BadRequest, "Asset not found")
-                            return@get
-                        }
-
-                        call.response.header(
-                            HttpHeaders.ContentDisposition,
-                            ContentDisposition.Inline.withParameter(
-                                ContentDisposition.Parameters.FileName,
-                                assetPath.name
-                            ).toString()
-                        )
-
-                        call.respondFile(assetPath)
+                        call.respond(HttpStatusCode.NotFound, "Asset not found")
+                    }
+                    get("/client/asset-manifest.json") {
+                        val assetIndex = clientAssetIndexProvider.current()
+                        call.respondAssetManifest(VersionedAssetManifest(assetIndex.manifest, assetIndex.manifestEtag))
                     }
                     get("/client/content/{path...}") {
                         val unsafePath = call.parameters.getAll("path")?.joinToString("/") ?: return@get
@@ -212,34 +214,14 @@ class HttpServer(
                             return@get
                         }
 
-                        val assetPath = bundleDatabase.enabledBundles.asReversed().asSequence()
-                            .filter { clientBundleCache.hasClientSide(it.dir) }
-                            .mapNotNull { bundle ->
-                                val candidate = bundle.dir.resolve(normalizedPath).normalize()
-                                val commonBaseDir = bundle.dir.resolve("common").normalize()
-                                val clientBaseDir = bundle.dir.resolve("client").normalize()
-                                if (candidate.startsWith(commonBaseDir) || candidate.startsWith(clientBaseDir)) {
-                                    candidate
-                                } else {
-                                    null
-                                }
-                            }
-                            .firstOrNull { it.exists() && it.isFile }
-
-                        if (assetPath == null) {
-                            call.respond(HttpStatusCode.NotFound, "Asset not found")
+                        val assetIndex = clientAssetIndexProvider.current()
+                        val hashedAsset = assetIndex.resolveClient(normalizedPath)
+                        if (hashedAsset != null) {
+                            call.respondHashedAsset(assetIndex, hashedAsset)
                             return@get
                         }
 
-                        call.response.header(
-                            HttpHeaders.ContentDisposition,
-                            ContentDisposition.Inline.withParameter(
-                                ContentDisposition.Parameters.FileName,
-                                assetPath.name
-                            ).toString()
-                        )
-
-                        call.respondFile(assetPath)
+                        call.respond(HttpStatusCode.NotFound, "Asset not found")
                     }
                     get("/client/registries") {
                         call.respond(clientRegistrySnapshots.getIndex())
@@ -300,6 +282,46 @@ class HttpServer(
         engine?.stop(1_000, 5_000)
         engine = null
     }
+}
+
+private suspend fun ApplicationCall.respondAssetManifest(manifest: VersionedAssetManifest) {
+    response.header(HttpHeaders.CacheControl, ClientAssetIndex.MANIFEST_CACHE_CONTROL)
+    response.header(HttpHeaders.ETag, manifest.etag)
+
+    val requestEtags = request.header(HttpHeaders.IfNoneMatch)
+        ?.split(",")
+        ?.map { it.trim() }
+        .orEmpty()
+    if (manifest.etag in requestEtags || "*" in requestEtags) {
+        respond(HttpStatusCode.NotModified)
+        return
+    }
+
+    respond(manifest.manifest)
+}
+
+private suspend fun ApplicationCall.respondHashedAsset(
+    clientAssetIndex: ClientAssetIndex,
+    asset: HashedClientAsset
+) {
+    if (!clientAssetIndex.isContentCurrent(asset)) {
+        respond(
+            HttpStatusCode.NotFound,
+            "Outdated asset; newer version is available at ${asset.hashedPath}"
+        )
+        return
+    }
+
+    response.header(HttpHeaders.CacheControl, ClientAssetIndex.IMMUTABLE_CACHE_CONTROL)
+    response.header(HttpHeaders.ETag, "\"${asset.fullHash}\"")
+    response.header(
+        HttpHeaders.ContentDisposition,
+        ContentDisposition.Inline.withParameter(
+            ContentDisposition.Parameters.FileName,
+            asset.hashedPath.substringAfterLast('/')
+        ).toString()
+    )
+    respondFile(asset.file)
 }
 
 @Serializable
