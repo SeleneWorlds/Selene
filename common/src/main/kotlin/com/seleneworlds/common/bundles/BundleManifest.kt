@@ -11,5 +11,12 @@ data class BundleManifest(
     val entrypoints: List<String> = emptyList(),
     val dependencies: List<String> = emptyList(),
     @Serializable(with = SerializedMapSerializer::class)
-    val preloads: SerializedMap = emptyMap()
+    val preloads: SerializedMap = emptyMap(),
+    val ui: List<BundleUiEntrypoint> = emptyList()
+)
+
+@Serializable
+data class BundleUiEntrypoint(
+    val id: String,
+    val entrypoint: String
 )

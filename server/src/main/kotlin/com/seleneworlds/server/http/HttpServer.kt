@@ -21,6 +21,7 @@ import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.util.Disposable
 import com.seleneworlds.server.bundles.ClientBundleCache
 import com.seleneworlds.server.bundles.ClientLuaModules
+import com.seleneworlds.server.bundles.ClientUiAssets
 import com.seleneworlds.server.bundles.ClientRegistrySnapshots
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.heartbeat.ServerHeartbeat
@@ -46,6 +47,7 @@ class HttpServer(
 ) : Disposable {
     private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
     private val clientLuaModules = ClientLuaModules(bundleDatabase, clientBundleCache)
+    private val clientUiAssets = ClientUiAssets(bundleDatabase, clientBundleCache)
     private val clientRegistrySnapshots = ClientRegistrySnapshots(bundleDatabase, clientBundleCache, seleneJson)
 
     private fun ApplicationCall.authenticatedUser(): SeleneUser {
@@ -137,6 +139,18 @@ class HttpServer(
                             )
                         )
                     )
+                }
+                get("/client/ui/content/{bundleName}/{id}/{path...}") {
+                    val bundleName = call.parameters["bundleName"] ?: return@get
+                    val id = call.parameters["id"] ?: return@get
+                    val path = call.parameters.getAll("path")?.joinToString("/") ?: return@get
+                    val file = clientUiAssets.resolve(bundleName, id, path)
+                    if (file == null) {
+                        call.respond(HttpStatusCode.NotFound, "UI asset not found")
+                        return@get
+                    }
+                    call.response.header(HttpHeaders.CacheControl, "no-cache")
+                    call.respondFile(file)
                 }
                 authenticate("broker", optional = config.insecureMode) {
                     get("/bundles") {
@@ -248,6 +262,9 @@ class HttpServer(
                         }
 
                         call.respond(module)
+                    }
+                    get("/client/ui") {
+                        call.respond(clientUiAssets.getIndex())
                     }
                     post("/join") {
                         val principal = call.authenticatedUser()
