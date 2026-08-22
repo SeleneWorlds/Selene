@@ -6,6 +6,7 @@ import com.badlogic.gdx.InputMultiplexer
 import com.sksamuel.hoplite.ExperimentalHoplite
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import ktx.assets.async.AssetStorage
@@ -18,6 +19,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.logger.slf4jLogger
+
 import org.slf4j.LoggerFactory
 import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.assets.RuntimeBundleUpdateManager
@@ -110,6 +112,9 @@ import com.seleneworlds.common.tasks.TaskLuaApi
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.tiles.TileRegistry
 import com.seleneworlds.common.util.Disposable
+
+private const val HTTP_REQUEST_TIMEOUT_MILLIS = 15_000L
+private const val HTTP_CONNECT_TIMEOUT_MILLIS = 5_000L
 
 class SeleneApplication(
     private val config: ClientConfig,
@@ -213,6 +218,10 @@ class SeleneApplication(
             single {
                 val json = get<Json>()
                 HttpClient(CIO) {
+                    install(HttpTimeout) {
+                        requestTimeoutMillis = HTTP_REQUEST_TIMEOUT_MILLIS
+                        connectTimeoutMillis = HTTP_CONNECT_TIMEOUT_MILLIS
+                    }
                     install(ContentNegotiation) {
                         json(json)
                     }
