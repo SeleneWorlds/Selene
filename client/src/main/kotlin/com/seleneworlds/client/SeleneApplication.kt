@@ -253,6 +253,8 @@ class SeleneApplication(
             singleOf(::SeleneClient)
             singleOf(::RuntimeBundleUpdateManager) { bind<Disposable>() }
             singleOf(::WindowManager)
+        }
+        val cefModule = module {
             singleOf(::CefBrowserUi) { bind<Disposable>() }
             singleOf(::CefBundleScheme)
             singleOf(::BundleUiSource)
@@ -300,6 +302,7 @@ class SeleneApplication(
                 coreModule,
                 apiModule,
                 clientModule,
+                cefModule,
                 networkModule,
                 bundleModule,
                 luaModule,
