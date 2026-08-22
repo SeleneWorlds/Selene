@@ -137,7 +137,7 @@ class CefInputProcessor(
         Input.Keys.ESCAPE -> "Escape"
         Input.Keys.BACKSPACE -> "Backspace"
         Input.Keys.TAB -> "Tab"
-        Input.Keys.DEL, Input.Keys.FORWARD_DEL -> "Delete"
+        Input.Keys.FORWARD_DEL -> "Delete"
         Input.Keys.HOME -> "Home"
         Input.Keys.END -> "End"
         Input.Keys.PAGE_UP -> "PageUp"
