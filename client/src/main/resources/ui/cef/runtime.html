@@ -293,17 +293,18 @@
         }
     });
 
-    Promise.all(entries.map(mountEntry)).then(() => {
-        console.info(`Mounted ${entries.length} bundle UI(s)`);
+    Promise.allSettled(entries.map(mountEntry)).then(results => {
+        for (const [index, result] of results.entries()) {
+            if (result.status === 'rejected') {
+                console.error(`Bundle UI ${entries[index].bundle}:${entries[index].id} failed to mount`, result.reason);
+            }
+            console.info(`Mounted ${mounted.length} of ${entries.length} bundle UI(s)`);
+        }
         interactionReportingEnabled = true;
         for (const ui of mounted) observeInteractiveElements(ui);
         window.addEventListener('resize', scheduleInteractiveElementsReporting);
         scheduleInteractiveElementsReporting();
-    })
-        .catch(error => {
-            console.error('Bundle UI mounting failed', error);
-            scheduleInteractiveElementsReporting();
-        });
+    });
 </script>
 </body>
 </html>
