@@ -261,7 +261,8 @@
                 let scrollable = target;
                 while (scrollable && scrollable !== document.body) {
                     if (scrollable.scrollHeight > scrollable.clientHeight || scrollable.scrollWidth > scrollable.clientWidth) break;
-                    scrollable = scrollable.parentElement;
+                    const parent = scrollable.parentNode;
+                    scrollable = parent instanceof ShadowRoot ? parent.host : (parent instanceof Element ? parent : null);
                 }
                 scrollable?.scrollBy(deltaX, deltaY);
             }
