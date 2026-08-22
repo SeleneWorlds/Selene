@@ -18,7 +18,6 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.logger.slf4jLogger
-import org.koin.core.qualifier.named
 import org.slf4j.LoggerFactory
 import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.assets.RuntimeBundleUpdateManager
@@ -172,10 +171,8 @@ class SeleneApplication(
             singleOf(::GameLuaApi) { bind<LuaModule>() }
             singleOf(::EntitiesLuaApi) { bind<LuaModule>() }
             singleOf(::RegistriesLuaApi) { bind<LuaModule>() }
-            singleOf(::SchedulesLuaApi) { bind<LuaModule>() }
-            single<Disposable>(named("schedules")) { get<SchedulesLuaApi>() }
-            singleOf(::HttpLuaApi) { bind<LuaModule>() }
-            single<Disposable>(named("http")) { get<HttpLuaApi>() }
+            singleOf(::SchedulesLuaApi) { bind<LuaModule>(); bind<Disposable>() }
+            singleOf(::HttpLuaApi) { bind<LuaModule>(); bind<Disposable>() }
             singleOf(::I18nLuaApi) { bind<LuaModule>() }
         }
         val bundleModule = module {
@@ -204,12 +201,10 @@ class SeleneApplication(
                     entrypointFilters = listOf("common/", "client/", "init.lua")
                 )
             }
-            singleOf(::ClientBundleWatcher)
-            single<Disposable>(named("bundle-watcher")) { get<ClientBundleWatcher>() }
+            singleOf(::ClientBundleWatcher) { bind<Disposable>() }
         }
         val networkModule = module {
-            singleOf(::NetworkClientImpl) { bind<NetworkClient>() }
-            single<Disposable>(named("network")) { get<NetworkClientImpl>() }
+            singleOf(::NetworkClientImpl) { bind<NetworkClient>(); bind<Disposable>() }
             singleOf(::PacketFactory)
             singleOf(::ClientPacketHandler) { bind<PacketHandler<*>>() }
             singleOf(::PacketRegistrations)
@@ -246,8 +241,7 @@ class SeleneApplication(
             singleOf(::ClientLuaScriptProvider) { bind<ClientScriptProvider>() }
             singleOf(::ClientReloadManager) { bind<BundleRuntimeRebuilder>() }
             singleOf(::SeleneClient)
-            singleOf(::RuntimeBundleUpdateManager)
-            single<Disposable>(named("runtime-bundle-updates")) { get<RuntimeBundleUpdateManager>() }
+            singleOf(::RuntimeBundleUpdateManager) { bind<Disposable>() }
             singleOf(::WindowManager)
             singleOf(::CefBrowserUi)
             singleOf(::BundleUiSource)
@@ -259,10 +253,8 @@ class SeleneApplication(
             singleOf(::SeleneApplicationListener) { bind<ApplicationListener>() }
             singleOf(::BundleFileResolver)
             single { AssetStorage(fileResolver = get<BundleFileResolver>()) }
-            singleOf(::AssetProvider)
-            single<Disposable>(named("assets")) { get<AssetProvider>() }
-            singleOf(::DrawableManager)
-            single<Disposable>(named("drawables")) { get<DrawableManager>() }
+            singleOf(::AssetProvider) { bind<Disposable>() }
+            singleOf(::DrawableManager) { bind<Disposable>() }
         }
         val worldModule = module {
             singleOf(::ClientMap)
@@ -283,8 +275,7 @@ class SeleneApplication(
             singleOf(::DebugRenderer)
         }
         val audioModule = module {
-            singleOf(::SoundManager)
-            single<Disposable>(named("sounds")) { get<SoundManager>() }
+            singleOf(::SoundManager) { bind<Disposable>() }
         }
         val inputModule = module {
             single { InputMultiplexer() }

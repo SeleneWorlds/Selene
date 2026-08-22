@@ -161,10 +161,9 @@ class ClientPacketHandler(
 
             is CustomPayloadPacket -> {
                 context.enqueueWork {
-                    val handler = payloadRegistry.getHandler(packet.payloadId)
-                    if (handler != null) {
+                    if (payloadRegistry.hasHandlers(packet.payloadId)) {
                         val payload = json.decodeFromString(SerializedMapSerializer, packet.payload)
-                        handler(Unit, payload)
+                        payloadRegistry.dispatch(packet.payloadId, Unit, payload)
                     }
                 }
             }
