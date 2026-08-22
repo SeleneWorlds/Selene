@@ -27,7 +27,6 @@ import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.Window
 import java.io.File
-import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -52,7 +51,6 @@ class CefBrowserUi(
     private var hostFrame: JFrame? = null
     private var texture: Texture? = null
     private var region: TextureRegion? = null
-    private var uploadBuffer: ByteBuffer? = null
     private var pageDirectory: Path? = null
     private var initialized = false
     private val receivedFirstFrame = AtomicBoolean()
@@ -337,24 +335,23 @@ class CefBrowserUi(
 
     private fun uploadLatestFrame() {
         val frame = mailbox.takeLatest() ?: return
-        if (texture?.width != frame.width || texture?.height != frame.height) {
-            texture?.dispose()
-            texture = Texture(frame.width, frame.height, Pixmap.Format.RGBA8888).apply {
-                setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+        try {
+            if (texture?.width != frame.width || texture?.height != frame.height) {
+                texture?.dispose()
+                texture = Texture(frame.width, frame.height, Pixmap.Format.RGBA8888).apply {
+                    setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear)
+                }
+                region = TextureRegion(texture)
             }
-            region = TextureRegion(texture)
-            uploadBuffer = ByteBuffer.allocateDirect(frame.bgra.size)
+            texture!!.bind()
+            Gdx.gl.glPixelStorei(GL20.GL_UNPACK_ALIGNMENT, 1)
+            Gdx.gl.glTexSubImage2D(
+                GL20.GL_TEXTURE_2D, 0, 0, 0, frame.width, frame.height,
+                GL12.GL_BGRA, GL20.GL_UNSIGNED_BYTE, frame.bgra
+            )
+        } finally {
+            mailbox.release(frame)
         }
-        val pixels = uploadBuffer ?: return
-        pixels.clear()
-        pixels.put(frame.bgra)
-        pixels.flip()
-        texture!!.bind()
-        Gdx.gl.glPixelStorei(GL20.GL_UNPACK_ALIGNMENT, 1)
-        Gdx.gl.glTexSubImage2D(
-            GL20.GL_TEXTURE_2D, 0, 0, 0, frame.width, frame.height,
-            GL12.GL_BGRA, GL20.GL_UNSIGNED_BYTE, pixels
-        )
     }
 
     private fun loadEntrypoints(): List<BrowserUiEntrypoint> =
@@ -403,7 +400,6 @@ class CefBrowserUi(
         texture?.dispose()
         texture = null
         region = null
-        uploadBuffer = null
         bridge.dispose()
         val currentBrowser = browser
         if (currentBrowser != null) {
