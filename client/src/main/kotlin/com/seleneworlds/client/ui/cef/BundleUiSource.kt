@@ -18,7 +18,8 @@ class BundleUiSource(
     private val bundleDatabase: BundleDatabase,
     private val httpClient: HttpClient,
     private val json: Json,
-    private val logger: Logger
+    private val logger: Logger,
+    private val bundleScheme: CefBundleScheme
 ) {
     fun load(): List<BrowserUiEntrypoint> {
         if (runtimeConfig.contentServerUrl.isNotBlank()) {
@@ -49,7 +50,8 @@ class BundleUiSource(
                 logger.warn("Ignoring missing UI entrypoint {}:{}", bundle.manifest.name, specification.id)
                 null
             } else {
-                BrowserUiEntrypoint(bundle.manifest.name, specification.id, file.toURI().toASCIIString(), file.readText())
+                BrowserUiEntrypoint(bundle.manifest.name, specification.id,
+                    bundleScheme.bundleUrl(bundle.manifest.name, specification.entrypoint), file.readText())
             }
         }
     }

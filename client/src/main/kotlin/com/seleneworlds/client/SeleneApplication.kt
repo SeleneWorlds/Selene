@@ -84,6 +84,7 @@ import com.seleneworlds.client.ui.cef.BundleUiSource
 import com.seleneworlds.client.ui.cef.CefUiBridge
 import com.seleneworlds.client.ui.cef.CefInteractionState
 import com.seleneworlds.client.ui.cef.CefInputProcessor
+import com.seleneworlds.client.ui.cef.CefBundleScheme
 import com.seleneworlds.client.window.WindowManager
 import com.seleneworlds.common.bundles.*
 import com.seleneworlds.common.data.RegistriesApi
@@ -253,6 +254,7 @@ class SeleneApplication(
             singleOf(::RuntimeBundleUpdateManager) { bind<Disposable>() }
             singleOf(::WindowManager)
             singleOf(::CefBrowserUi) { bind<Disposable>() }
+            singleOf(::CefBundleScheme)
             singleOf(::BundleUiSource)
             singleOf(::CefUiBridge)
             singleOf(::CefInteractionState)

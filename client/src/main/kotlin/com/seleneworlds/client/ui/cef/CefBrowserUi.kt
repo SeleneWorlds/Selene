@@ -31,7 +31,6 @@ import java.awt.EventQueue
 import java.awt.Dimension
 import java.awt.Window
 import java.io.File
-import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -45,7 +44,8 @@ class CefBrowserUi(
     private val config: ClientConfig,
     private val logger: Logger,
     private val bundleUiSource: BundleUiSource,
-    private val bridge: CefUiBridge
+    private val bridge: CefUiBridge,
+    private val bundleScheme: CefBundleScheme
 ) : Disposable {
     private val mailbox = CefOverlayFrameMailbox()
     private val projection = Matrix4()
@@ -94,12 +94,18 @@ class CefBrowserUi(
                 }
             })
             addJcefArgs("--autoplay-policy=no-user-gesture-required")
-            if (entries.any { URI(it.url).scheme == "file" }) {
-                addJcefArgs("--allow-file-access-from-files", "--disable-web-security")
-            }
         }
-        app = builder.build()
-        client = app!!.createClient().apply {
+        val cefClient: CefClient
+        app = builder.build().also {
+            cefClient = it.createClient()
+            check(it.registerSchemeHandlerFactory(
+                CefBundleScheme.SCHEME,
+                CefBundleScheme.HOST,
+                bundleScheme
+            )) { "Failed to install the browser UI resource handler" }
+        }
+
+        client = cefClient.apply {
             addMessageRouter(bridge.initialize())
             addLifeSpanHandler(object : CefLifeSpanHandlerAdapter() {
                 override fun onBeforeClose(closingBrowser: CefBrowser) {
@@ -108,26 +114,27 @@ class CefBrowserUi(
             })
             addDisplayHandler(object : CefDisplayHandlerAdapter() {
                 override fun onConsoleMessage(browser: CefBrowser, level: CefSettings.LogSeverity,
-                    message: String, source: String, line: Int): Boolean {
+                                              message: String, source: String, line: Int): Boolean {
                     logger.info("CEF console [{}] {}:{} {}", level, source, line, message)
                     return true
                 }
             })
             addLoadHandler(object : CefLoadHandlerAdapter() {
                 override fun onLoadError(browser: CefBrowser, frame: CefFrame, errorCode: CefLoadHandler.ErrorCode,
-                    errorText: String, failedUrl: String) {
+                                         errorText: String, failedUrl: String) {
                     logger.error("CEF failed to load {}: {} ({})", failedUrl, errorText, errorCode)
                 }
             })
             addRequestHandler(object : CefRequestHandlerAdapter() {
                 override fun onRenderProcessTerminated(browser: CefBrowser,
-                    status: CefRequestHandler.TerminationStatus, errorCode: Int, errorString: String) {
+                                                       status: CefRequestHandler.TerminationStatus, errorCode: Int, errorString: String) {
                     logger.error("CEF renderer terminated: {} ({}: {})", status, errorCode, errorString)
                     requestReload()
                 }
             })
         }
-        browser = client!!.createBrowser(writeBrowserPage(entries), true, true).also { cefBrowser ->
+
+        browser = cefClient.createBrowser(writeBrowserPage(entries), true, true).also { cefBrowser ->
             cefBrowser.renderHandler.setOnPaintListener { event ->
                 if (!event.popup) {
                     mailbox.publish(event.renderedFrame, event.width, event.height)
@@ -452,7 +459,8 @@ class CefBrowserUi(
         }
         val page = directory.resolve(BROWSER_PAGE_NAME)
         Files.writeString(page, html, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
-        return page.toUri().toASCIIString()
+        bundleScheme.setRuntimePage(page)
+        return bundleScheme.runtimeUrl
     }
 
     override fun dispose() {
@@ -496,6 +504,7 @@ class CefBrowserUi(
     }
 
     private fun deletePageDirectory() {
+        bundleScheme.setRuntimePage(null)
         val directory = pageDirectory ?: return
         pageDirectory = null
         try {
