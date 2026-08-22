@@ -27,5 +27,6 @@ class CefTrustedDocumentsTest {
         assertFalse(CefTrustedDocuments.isBundleUrl("http://${CefBundleScheme.HOST}/bundle/example/index.html"))
         assertFalse(CefTrustedDocuments.isBundleUrl("https://evil.invalid/bundle/example/index.html"))
         assertFalse(CefTrustedDocuments.isBundleUrl("https://${CefBundleScheme.HOST}:444/bundle/example/index.html"))
+        assertFalse(CefTrustedDocuments.isBundleUrl("https://user@${CefBundleScheme.HOST}/bundle/example/index.html"))
     }
 }

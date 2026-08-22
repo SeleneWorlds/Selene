@@ -41,4 +41,17 @@ class CefInteractionStateTest {
         assertFalse(state.consumesKey("ArrowUp"))
         assertTrue(state.capturesText())
     }
+
+    @Test
+    fun `clear resets published interaction state`() {
+        val state = CefInteractionState()
+        state.update(listOf(CefHitRegion(0, 0, 10, 10)), true, setOf("Enter"), true)
+
+        state.clear()
+
+        assertFalse(state.hasUi())
+        assertFalse(state.isInteractive(1, 1))
+        assertFalse(state.consumesKey("Enter"))
+        assertFalse(state.capturesText())
+    }
 }
