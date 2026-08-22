@@ -76,7 +76,8 @@ class CefInputProcessor(
 
     override fun keyTyped(character: Char): Boolean {
         if (!cef.enabled || !interactionState.hasUi() || !interactionState.capturesText() ||
-            character.isISOControl()) return false
+            character.isISOControl()
+        ) return false
         if (interactionState.hasEditableFocus()) {
             cef.insertText(character)
         } else {
@@ -92,13 +93,17 @@ class CefInputProcessor(
     private fun browserCoordinates(screenX: Int, screenY: Int): Pair<Int, Int>? {
         val viewport = windowManager.uiViewport
         if (screenX < viewport.screenX || screenY < viewport.screenY ||
-            screenX >= viewport.screenX + viewport.screenWidth || screenY >= viewport.screenY + viewport.screenHeight) return null
+            screenX >= viewport.screenX + viewport.screenWidth || screenY >= viewport.screenY + viewport.screenHeight
+        ) return null
         return ((screenX - viewport.screenX) * viewport.logicalWidth / viewport.screenWidth) to
-            ((screenY - viewport.screenY) * viewport.logicalHeight / viewport.screenHeight)
+                ((screenY - viewport.screenY) * viewport.logicalHeight / viewport.screenHeight)
     }
 
     private fun browserCoordinatesClamped(screenX: Int, screenY: Int): Pair<Int, Int> {
         val viewport = windowManager.uiViewport
+        if (viewport.screenWidth <= 0 || viewport.screenHeight <= 0) {
+            return 0 to 0
+        }
         val x = ((screenX - viewport.screenX) * viewport.logicalWidth / viewport.screenWidth)
             .coerceIn(0, viewport.logicalWidth - 1)
         val y = ((screenY - viewport.screenY) * viewport.logicalHeight / viewport.screenHeight)
