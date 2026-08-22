@@ -10,6 +10,8 @@ import com.badlogic.gdx.math.Matrix4
 import com.seleneworlds.client.config.ClientConfig
 import com.seleneworlds.client.window.WindowViewport
 import com.seleneworlds.common.util.Disposable
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.json.Json
 import me.friwi.jcefmaven.CefAppBuilder
 import me.friwi.jcefmaven.MavenCefAppHandlerAdapter
 import org.cef.CefApp
@@ -220,14 +222,8 @@ class CefBrowserUi(
 
     fun insertText(character: Char) {
         if (!initialized) return
-        val escaped = when (character) {
-            '\\' -> "\\\\"
-            '\'' -> "\\'"
-            '\n' -> "\\n"
-            '\r' -> "\\r"
-            else -> character.toString()
-        }
-        browser?.executeJavaScript("document.execCommand('insertText',false,'$escaped')", "", 0)
+        val encoded = Json.encodeToString(String.serializer(), character.toString())
+        browser?.executeJavaScript("document.execCommand('insertText',false,$encoded)", "", 0)
     }
 
     fun dispatchKeyboard(type: String, key: String, shift: Boolean, control: Boolean, alt: Boolean,
