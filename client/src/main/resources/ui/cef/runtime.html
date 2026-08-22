@@ -89,19 +89,19 @@
         mounted.push({host, root, disposers});
     }
 
-    let previousInteraction = '';
+    let previousInteractiveElements = '';
     const interactiveElements = new Set();
-    let interactionFrame = 0;
+    let interactiveElementsFrame = 0;
 
-    function scheduleInteraction() {
-        if (interactionFrame) return;
-        interactionFrame = requestAnimationFrame(() => {
-            interactionFrame = 0;
+    function scheduleInteractiveElementsReporting() {
+        if (interactiveElementsFrame) return;
+        interactiveElementsFrame = requestAnimationFrame(() => {
+            interactiveElementsFrame = 0;
             reportInteractiveElements();
         });
     }
 
-    const resizeObserver = new ResizeObserver(scheduleInteraction);
+    const resizeObserver = new ResizeObserver(scheduleInteractiveElementsReporting);
 
     function refreshInteractiveElements() {
         const current = new Set();
@@ -116,14 +116,14 @@
         }
     }
 
-    function observeInteraction(ui) {
+    function observeInteractiveElements(ui) {
         new MutationObserver(() => {
             refreshInteractiveElements();
-            scheduleInteraction();
+            scheduleInteractiveElementsReporting();
         }).observe(ui.root, {subtree: true, childList: true, characterData: true, attributes: true});
-        ui.root.addEventListener('focusin', scheduleInteraction, true);
-        ui.root.addEventListener('focusout', scheduleInteraction, true);
-        ui.root.addEventListener('scroll', scheduleInteraction, true);
+        ui.root.addEventListener('focusin', scheduleInteractiveElementsReporting, true);
+        ui.root.addEventListener('focusout', scheduleInteractiveElementsReporting, true);
+        ui.root.addEventListener('scroll', scheduleInteractiveElementsReporting, true);
         refreshInteractiveElements();
     }
 
@@ -145,12 +145,12 @@
                 width: Math.ceil(rect.width), height: Math.ceil(rect.height)
             });
         }
-        const interaction = JSON.stringify({type: 'interaction', regions, editableFocused});
-        if (interaction === previousInteraction) return;
-        previousInteraction = interaction;
+        const message = JSON.stringify({type: 'interactiveElements', regions, editableFocused});
+        if (message === previousInteractiveElements) return;
+        previousInteractiveElements = message;
         window.seleneQuery({
-            request: interaction, onFailure: (code, message) =>
-                console.error('interaction update failed', code, message)
+            request: message, onFailure: (code, message) =>
+                console.error('interactiveElements update failed', code, message)
         });
     }
 
@@ -219,13 +219,13 @@
 
     Promise.all(entries.map(mountEntry)).then(() => {
         console.info(`Mounted ${entries.length} bundle UI(s)`);
-        for (const ui of mounted) observeInteraction(ui);
-        window.addEventListener('resize', scheduleInteraction);
-        scheduleInteraction();
+        for (const ui of mounted) observeInteractiveElements(ui);
+        window.addEventListener('resize', scheduleInteractiveElementsReporting);
+        scheduleInteractiveElementsReporting();
     })
         .catch(error => {
             console.error('Bundle UI mounting failed', error);
-            scheduleInteraction();
+            scheduleInteractiveElementsReporting();
         });
 </script>
 </body>

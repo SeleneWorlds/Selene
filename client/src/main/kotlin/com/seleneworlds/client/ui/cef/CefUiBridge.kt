@@ -5,8 +5,6 @@ import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.jsonArray
@@ -45,7 +43,7 @@ class CefUiBridge(
                 when (message.requiredString("type")) {
                     "send" -> handleSend(message, callback)
                     "subscribe" -> handleSubscribe(browser, frame, queryId, persistent, message, callback)
-                    "interaction" -> handleInteraction(message, callback)
+                    "interactiveElements" -> handleInteractiveElements(message, callback)
                     else -> return false
                 }
                 true
@@ -104,7 +102,7 @@ class CefUiBridge(
         subscriptions.put(queryId, Subscription(remove, callback))?.remove?.invoke()
     }
 
-    private fun handleInteraction(message: JsonObject, callback: CefQueryCallback) {
+    private fun handleInteractiveElements(message: JsonObject, callback: CefQueryCallback) {
         val regions = message["regions"]?.jsonArray.orEmpty().map { element ->
             val region = element.jsonObject
             CefHitRegion(
