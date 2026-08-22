@@ -50,6 +50,7 @@
             };
         }
     });
+
     function registerKeys(registry, keys, disposers) {
         const uniqueKeys = new Set(keys);
         for (const key of uniqueKeys) {
@@ -122,6 +123,9 @@
         for (const child of [...parsed.body.childNodes]) content.append(child.cloneNode(true));
         root.append(content);
         const disposers = [];
+        for (const script of parsed.querySelectorAll('script:not([type="module"][src])')) {
+            console.warn(`${entry.bundle}:${entry.id} ignores a script element; use <script type="module" src="...">`, script);
+        }
         for (const script of parsed.querySelectorAll('script[type="module"][src]')) {
             const module = await import(new URL(script.getAttribute('src'), entry.url).href);
             if (typeof module.mount !== 'function') throw new Error(`${entry.bundle}:${entry.id} must export mount(root,selene)`);
@@ -195,9 +199,11 @@
                 width: Math.ceil(rect.width), height: Math.ceil(rect.height)
             });
         }
-        const message = JSON.stringify({type: 'interactiveElements', regions, editableFocused,
+        const message = JSON.stringify({
+            type: 'interactiveElements', regions, editableFocused,
             capturedKeys: [...capturedKeys.keys()], captureText: textCaptureCount > 0,
-            passthroughKeys: [...passthroughKeys.keys()]});
+            passthroughKeys: [...passthroughKeys.keys()]
+        });
         if (message === previousInteractiveElements) return;
         previousInteractiveElements = message;
         window.seleneQuery({
