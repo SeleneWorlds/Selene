@@ -252,6 +252,7 @@
             if (!target) return;
             if (type === 'mousedown') {
                 pointerTarget = target;
+                pressTarget = target;
                 if (typeof target.focus === 'function') target.focus({preventScroll: true});
             }
             if (type === 'click') {
