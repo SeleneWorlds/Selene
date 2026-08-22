@@ -33,6 +33,9 @@ import java.awt.Window
 import java.io.File
 import java.net.URI
 import java.nio.ByteBuffer
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.CountDownLatch
@@ -53,6 +56,7 @@ class CefBrowserUi(
     private var texture: Texture? = null
     private var region: TextureRegion? = null
     private var uploadBuffer: ByteBuffer? = null
+    private var pageDirectory: Path? = null
     private var initialized = false
     private val receivedFirstFrame = AtomicBoolean()
     private val reloadRequested = AtomicBoolean()
@@ -443,14 +447,17 @@ class CefBrowserUi(
               });
             </script></body></html>
         """.trimIndent()
-        return File(config.cefInstallDir, "selene-browser-ui.html").absoluteFile.apply {
-            parentFile.mkdirs()
-            writeText(html)
-        }.toURI().toASCIIString()
+        val directory = pageDirectory ?: Files.createTempDirectory("selene-browser-ui-").also {
+            pageDirectory = it
+        }
+        val page = directory.resolve(BROWSER_PAGE_NAME)
+        Files.writeString(page, html, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+        return page.toUri().toASCIIString()
     }
 
     override fun dispose() {
-        if (!initialized && app == null && client == null && browser == null && hostFrame == null) return
+        if (!initialized && app == null && client == null && browser == null && hostFrame == null &&
+            pageDirectory == null) return
         initialized = false
         texture?.dispose()
         texture = null
@@ -485,6 +492,18 @@ class CefBrowserUi(
         hostFrame = null
         client = null
         app = null
+        deletePageDirectory()
+    }
+
+    private fun deletePageDirectory() {
+        val directory = pageDirectory ?: return
+        pageDirectory = null
+        try {
+            Files.deleteIfExists(directory.resolve(BROWSER_PAGE_NAME))
+            Files.deleteIfExists(directory)
+        } catch (error: Exception) {
+            logger.warn("Failed to delete temporary browser UI directory {}", directory, error)
+        }
     }
 
     private fun awaitShutdown(latch: CountDownLatch, component: String): Boolean {
@@ -505,5 +524,6 @@ class CefBrowserUi(
             "Control", "Alt", "Meta")
         const val UI_READY_TIMEOUT_SECONDS = 30L
         const val SHUTDOWN_TIMEOUT_SECONDS = 5L
+        const val BROWSER_PAGE_NAME = "index.html"
     }
 }
