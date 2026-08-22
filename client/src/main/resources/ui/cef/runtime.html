@@ -134,13 +134,23 @@
     let previousInteractiveElements = '';
     const interactiveElements = new Set();
     let interactiveElementsFrame = 0;
+    let interactiveElementsRefreshPending = false;
 
     function scheduleInteractiveElementsReporting() {
         if (!interactionReportingEnabled || interactiveElementsFrame) return;
         interactiveElementsFrame = requestAnimationFrame(() => {
             interactiveElementsFrame = 0;
+            if (interactiveElementsRefreshPending) {
+                interactiveElementsRefreshPending = false;
+                refreshInteractiveElements();
+            }
             reportInteractiveElements();
         });
+    }
+
+    function scheduleInteractiveElementsRefresh() {
+        interactiveElementsRefreshPending = true;
+        scheduleInteractiveElementsReporting();
     }
 
     const resizeObserver = new ResizeObserver(scheduleInteractiveElementsReporting);
@@ -159,10 +169,8 @@
     }
 
     function observeInteractiveElements(ui) {
-        new MutationObserver(() => {
-            refreshInteractiveElements();
-            scheduleInteractiveElementsReporting();
-        }).observe(ui.root, {subtree: true, childList: true, characterData: true, attributes: true});
+        new MutationObserver(scheduleInteractiveElementsRefresh)
+            .observe(ui.root, {subtree: true, childList: true, characterData: true, attributes: true});
         ui.root.addEventListener('focusin', scheduleInteractiveElementsReporting, true);
         ui.root.addEventListener('focusout', scheduleInteractiveElementsReporting, true);
         ui.root.addEventListener('scroll', scheduleInteractiveElementsReporting, true);
