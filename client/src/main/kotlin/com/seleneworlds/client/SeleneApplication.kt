@@ -243,7 +243,7 @@ class SeleneApplication(
             singleOf(::SeleneClient)
             singleOf(::RuntimeBundleUpdateManager) { bind<Disposable>() }
             singleOf(::WindowManager)
-            singleOf(::CefBrowserUi)
+            singleOf(::CefBrowserUi) { bind<Disposable>() }
             singleOf(::BundleUiSource)
             singleOf(::CefUiBridge)
             singleOf(::CefInteractionState)

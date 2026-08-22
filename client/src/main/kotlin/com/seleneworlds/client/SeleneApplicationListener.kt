@@ -129,7 +129,6 @@ class SeleneApplicationListener(
         worldFrameBuffer?.dispose()
         ui.dispose()
         networkClient.disconnect()
-        browserUi.dispose()
 
         getKoin().getAll<Disposable>().forEach { it.dispose() }
     }
