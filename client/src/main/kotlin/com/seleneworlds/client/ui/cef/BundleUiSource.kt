@@ -39,7 +39,7 @@ class BundleUiSource(
         }.body<ClientUiIndex>()
         index.entrypoints.map { entry ->
             val resolvedUrl = URI("$baseUrl/").resolve(entry.url).toASCIIString()
-            BrowserUiEntrypoint(entry.bundle, entry.id, resolvedUrl, null)
+            BrowserUiEntrypoint(entry.bundle, entry.id, resolvedUrl)
         }
     }
 
@@ -50,8 +50,11 @@ class BundleUiSource(
                 logger.warn("Ignoring missing UI entrypoint {}:{}", bundle.manifest.name, specification.id)
                 null
             } else {
-                BrowserUiEntrypoint(bundle.manifest.name, specification.id,
-                    bundleScheme.bundleUrl(bundle.manifest.name, specification.entrypoint), file.readText())
+                BrowserUiEntrypoint(
+                    bundle.manifest.name,
+                    specification.id,
+                    bundleScheme.bundleUrl(bundle.manifest.name, specification.entrypoint)
+                )
             }
         }
     }
@@ -61,7 +64,7 @@ class BundleUiSource(
 }
 
 @Serializable
-data class BrowserUiEntrypoint(val bundle: String, val id: String, val url: String, val html: String?)
+data class BrowserUiEntrypoint(val bundle: String, val id: String, val url: String)
 
 @Serializable
 private data class ClientUiIndex(val entrypoints: List<ClientUiIndexEntry>)

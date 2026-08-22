@@ -100,7 +100,7 @@
     }
 
     async function mountEntry(entry) {
-        const source = entry.html ?? await fetch(entry.url).then(response => {
+        const source = await fetch(entry.url).then(response => {
             if (!response.ok) throw new Error(`Failed to fetch ${entry.bundle}:${entry.id}: ${response.status}`);
             return response.text();
         });

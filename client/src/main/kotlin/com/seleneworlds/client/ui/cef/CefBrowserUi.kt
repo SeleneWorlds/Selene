@@ -343,7 +343,7 @@ class CefBrowserUi(
 
     private fun loadEntrypoints(): List<BrowserUiEntrypoint> =
         if (config.browserUiUrl.isNotBlank()) {
-            listOf(BrowserUiEntrypoint("configured", "configured", config.browserUiUrl, null))
+            listOf(BrowserUiEntrypoint("configured", "configured", config.browserUiUrl))
         } else {
             bundleUiSource.load()
         }
