@@ -84,6 +84,8 @@ class CefBrowserUi(
             logger.info("No enabled bundle UI entrypoints were found; continuing without browser UI")
             return
         }
+        browserClosed = CountDownLatch(1)
+        appTerminated = CountDownLatch(1)
         val builder = CefAppBuilder().apply {
             setInstallDir(File(config.cefInstallDir))
             cefSettings.windowless_rendering_enabled = true
