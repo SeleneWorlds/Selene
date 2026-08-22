@@ -30,6 +30,7 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -358,7 +359,9 @@ class CefBrowserUi(
             pageDirectory = it
         }
         val page = directory.resolve(BROWSER_PAGE_NAME)
-        Files.writeString(page, html, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)
+        val staging = Files.createTempFile(directory, "page-", ".html")
+        Files.writeString(staging, html, StandardOpenOption.TRUNCATE_EXISTING)
+        Files.move(staging, page, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
         bundleScheme.setRuntimePage(page)
         return bundleScheme.runtimeUrl
     }
