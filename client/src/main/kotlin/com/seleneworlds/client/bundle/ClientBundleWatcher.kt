@@ -66,7 +66,7 @@ class ClientBundleWatcher(
 
         internal fun isBrowserUiFile(filePath: String): Boolean {
             val normalized = filePath.replace('\\', '/')
-            return normalized == "bundle.json" || normalized.startsWith("client/")
+            return normalized == "bundle.json" || normalized.startsWith("client/ui/")
         }
     }
 }
