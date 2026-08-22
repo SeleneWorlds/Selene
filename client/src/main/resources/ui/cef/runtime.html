@@ -46,15 +46,15 @@
             };
         }
     });
-    const selene = Object.freeze({apiVersion: 1, network});
-
-    function rewriteRelativeUrls(root, baseUrl) {
-        for (const element of root.querySelectorAll('[src],[href]')) {
-            for (const attribute of ['src', 'href']) {
-                const value = element.getAttribute(attribute);
-                if (value && !value.startsWith('#')) element.setAttribute(attribute, new URL(value, baseUrl).href);
-            }
-        }
+    function createApi(baseUrl) {
+        return Object.freeze({
+            apiVersion: 1,
+            resolveAsset(path) {
+                if (typeof path !== 'string' || path.length === 0) throw new Error('Asset path must be a non-empty string');
+                return new URL(path, baseUrl).href;
+            },
+            network
+        });
     }
 
     async function mountEntry(entry) {
@@ -78,13 +78,12 @@
         }
         const content = document.createDocumentFragment();
         for (const child of [...parsed.body.childNodes]) content.append(child.cloneNode(true));
-        rewriteRelativeUrls(content, entry.url);
         root.append(content);
         const disposers = [];
         for (const script of parsed.querySelectorAll('script[type="module"][src]')) {
             const module = await import(new URL(script.getAttribute('src'), entry.url).href);
             if (typeof module.mount !== 'function') throw new Error(`${entry.bundle}:${entry.id} must export mount(root,selene)`);
-            const dispose = await module.mount(root, selene);
+            const dispose = await module.mount(root, createApi(entry.url));
             if (typeof dispose === 'function') disposers.push(dispose);
         }
         mounted.push({host, root, disposers});
@@ -231,4 +230,3 @@
 </script>
 </body>
 </html>
-
