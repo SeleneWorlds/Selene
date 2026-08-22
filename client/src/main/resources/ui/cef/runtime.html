@@ -231,6 +231,7 @@
     }
 
     let pointerTarget = null;
+    let pressTarget = null;
 
     function elementAt(x, y) {
         for (let index = mounted.length - 1; index >= 0; index--) {
@@ -249,13 +250,33 @@
                 if (typeof target.focus === 'function') target.focus({preventScroll: true});
             }
             if (type === 'click') {
-                if (target === elementAt(x, y) && typeof target.click === 'function') target.click();
+                const released = elementAt(x, y);
+                if (pressTarget && pressTarget === released && typeof released.click === 'function') {
+                    released.click();
+                }
+                pressTarget = null;
                 pointerTarget = null;
                 return;
             }
             const event = type === 'wheel'
-                ? new WheelEvent(type, {bubbles: true, cancelable: true, clientX: x, clientY: y, deltaX, deltaY})
-                : new MouseEvent(type, {bubbles: true, cancelable: true, clientX: x, clientY: y, button, buttons});
+                ? new WheelEvent(type, {
+                    bubbles: true,
+                    cancelable: true,
+                    composed: true,
+                    clientX: x,
+                    clientY: y,
+                    deltaX,
+                    deltaY
+                })
+                : new MouseEvent(type, {
+                    bubbles: true,
+                    cancelable: true,
+                    composed: true,
+                    clientX: x,
+                    clientY: y,
+                    button,
+                    buttons
+                });
             target.dispatchEvent(event);
             if (type === 'wheel' && !event.defaultPrevented) {
                 let scrollable = target;
