@@ -32,8 +32,8 @@ class ClientBundleWatcher(
 
     override fun processPendingBundleUpdates(bundleId: String, updatedFiles: Set<String>, deletedFiles: Set<String>) {
         val changedFiles = updatedFiles + deletedFiles
-        val changedBundle = bundleDatabase.getBundle(bundleId)
-        if (changedBundle?.manifest?.ui?.isNotEmpty() == true && changedFiles.any(::isBrowserUiFile)) {
+        val bundle = bundleDatabase.getBundle(bundleId)
+        if (bundle?.manifest?.ui?.isNotEmpty() == true && changedFiles.any(::isBrowserUiFile)) {
             browserUi.requestReload()
         }
         changedFiles
@@ -42,7 +42,6 @@ class ClientBundleWatcher(
                 assetProvider.notifyAssetChanged(assetPath)
             }
 
-        val bundle = bundleDatabase.getBundle(bundleId)
         if (bundle != null) {
             if (config.hotReloadMode == HotReloadMode.EAGER) {
                 scriptHotReload.reloadBundleClosure(bundleId, deletedFiles)
