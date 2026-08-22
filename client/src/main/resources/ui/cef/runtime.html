@@ -136,6 +136,23 @@
         mounted.push({host, root, disposers});
     }
 
+    async function unmountAll() {
+        for (const ui of mounted.splice(0)) {
+            for (const dispose of ui.disposers.reverse()) {
+                try {
+                    await dispose();
+                } catch (error) {
+                    console.error('Bundle UI dispose failed', error);
+                }
+            }
+            ui.host.remove();
+        }
+        interactiveElements.clear();
+        resizeObserver.disconnect();
+    }
+
+    window.addEventListener('pagehide', unmountAll);
+
     let previousInteractiveElements = '';
     const interactiveElements = new Set();
     let interactiveElementsFrame = 0;
