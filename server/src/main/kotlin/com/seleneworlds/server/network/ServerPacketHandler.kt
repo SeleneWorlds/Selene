@@ -98,11 +98,10 @@ class ServerPacketHandler(
             }
         } else if (packet is CustomPayloadPacket) {
             context.enqueueWork {
-                val handler = payloadRegistry.getHandler(packet.payloadId)
-                if (handler != null) {
+                if (payloadRegistry.hasHandlers(packet.payloadId)) {
                     try {
                         val payload = json.decodeFromString(SerializedMapSerializer, packet.payload)
-                        handler(player, payload)
+                        payloadRegistry.dispatch(packet.payloadId, player, payload)
                     } catch (e: Exception) {
                         logger.warn("Failed to handle custom payload {} from {}", packet.payloadId, context.address, e)
                     }

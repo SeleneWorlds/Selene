@@ -6,6 +6,7 @@ import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
 import com.seleneworlds.client.config.ClientConfig
 import com.seleneworlds.client.config.ClientRuntimeConfig
+import org.cef.CefApp
 
 @OptIn(ExperimentalHoplite::class)
 fun main(args: Array<String>) {
@@ -25,6 +26,10 @@ fun main(args: Array<String>) {
     appConfig.setWindowedMode(1024, 768)
     appConfig.setWindowIcon("icon_16.png", "icon_32.png", "icon_128.png")
     Lwjgl3Application(SeleneApplication(config, runtimeConfig), appConfig)
+    if (CefApp.getState() !in setOf(CefApp.CefAppState.NONE, CefApp.CefAppState.TERMINATED)) {
+        System.err.println("CEF did not terminate cleanly; forcing client process exit")
+        kotlin.system.exitProcess(0)
+    }
 }
 
 fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {

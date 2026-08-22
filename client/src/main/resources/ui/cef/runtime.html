@@ -1,0 +1,344 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="__SELENE_CSP__">
+    <style>
+        html, body, #bundle-ui {
+            position: absolute;
+            inset: 0;
+            margin: 0;
+            background: transparent;
+            overflow: hidden
+        }
+
+        .bundle-ui-host {
+            position: absolute;
+            inset: 0;
+            pointer-events: none
+        }
+    </style>
+</head>
+<body>
+<div id="bundle-ui"></div>
+<script type="module" nonce="selene-runtime">
+    const entries = __SELENE_UI_ENTRIES__;
+    const developmentSupport = __SELENE_DEVELOPMENT_SUPPORT__;
+    const mounted = [];
+    const payloadCallbacks = new Map();
+    const capturedKeys = new Map();
+    const passthroughKeys = new Map();
+    let textCaptureCount = 0;
+    let interactionReportingEnabled = false;
+    let nextSubscriptionId = 1;
+    const network = Object.freeze({
+        sendToServer(payloadId, payload = {}) {
+            window.seleneQuery({
+                request: JSON.stringify({type: 'send', payloadId, payload}),
+                onFailure: (code, message) => console.error('sendToServer failed', code, message)
+            });
+        },
+        onPayload(payloadId, callback) {
+            const subscriptionId = String(nextSubscriptionId++);
+            payloadCallbacks.set(subscriptionId, callback);
+            const queryId = window.seleneQuery({
+                request: JSON.stringify({type: 'subscribe', payloadId, subscriptionId}), persistent: true,
+                onFailure: (code, message) => console.error('onPayload failed', code, message)
+            });
+            return () => {
+                payloadCallbacks.delete(subscriptionId);
+                window.seleneQueryCancel(queryId);
+            };
+        }
+    });
+
+    function registerKeys(registry, keys, disposers) {
+        const uniqueKeys = new Set(keys);
+        for (const key of uniqueKeys) {
+            if (typeof key !== 'string' || !key) throw new Error('Input keys must be non-empty strings');
+            registry.set(key, (registry.get(key) ?? 0) + 1);
+        }
+        let active = true;
+        const release = () => {
+            if (!active) return;
+            active = false;
+            for (const key of uniqueKeys) {
+                const count = registry.get(key) - 1;
+                if (count) registry.set(key, count); else registry.delete(key);
+            }
+            scheduleInteractiveElementsReporting();
+        };
+        disposers.push(release);
+        scheduleInteractiveElementsReporting();
+        return release;
+    }
+
+    function createApi(baseUrl, disposers) {
+        return Object.freeze({
+            apiVersion: 1,
+            resolveAsset(path) {
+                if (typeof path !== 'string' || path.length === 0) throw new Error('Asset path must be a non-empty string');
+                return new URL(path, baseUrl).href;
+            },
+            input: Object.freeze({
+                captureKeys: (...keys) => registerKeys(capturedKeys, keys, disposers),
+                captureText: () => {
+                    textCaptureCount++;
+                    let active = true;
+                    const release = () => {
+                        if (!active) return;
+                        active = false;
+                        textCaptureCount--;
+                        scheduleInteractiveElementsReporting();
+                    };
+                    disposers.push(release);
+                    scheduleInteractiveElementsReporting();
+                    return release;
+                },
+                passThroughKeys: (...keys) => registerKeys(passthroughKeys, keys, disposers)
+            }),
+            network
+        });
+    }
+
+    async function mountEntry(entry) {
+        const source = await fetch(entry.url).then(response => {
+            if (!response.ok) throw new Error(`Failed to fetch ${entry.bundle}:${entry.id}: ${response.status}`);
+            return response.text();
+        });
+        const parsed = new DOMParser().parseFromString(source, 'text/html');
+        const host = document.createElement('div');
+        host.className = 'bundle-ui-host';
+        host.dataset.bundle = entry.bundle;
+        host.dataset.entrypoint = entry.id;
+        const root = host.attachShadow({mode: 'closed'});
+        document.querySelector('#bundle-ui').append(host);
+        for (const style of parsed.querySelectorAll('style')) root.append(style.cloneNode(true));
+        for (const link of parsed.querySelectorAll('link[rel="stylesheet"][href]')) {
+            const copy = document.createElement('link');
+            copy.rel = 'stylesheet';
+            copy.href = new URL(link.getAttribute('href'), entry.url).href;
+            root.append(copy);
+        }
+        const content = document.createDocumentFragment();
+        for (const child of [...parsed.body.childNodes]) content.append(child.cloneNode(true));
+        root.append(content);
+        const disposers = [];
+        developmentSupport?.attachStyles(root, disposers);
+        for (const script of parsed.querySelectorAll('script:not([type="module"][src])')) {
+            console.warn(`${entry.bundle}:${entry.id} ignores a script element; use <script type="module" src="...">`, script);
+        }
+        const api = createApi(entry.url, disposers);
+        let mountModules = 0;
+        for (const script of parsed.querySelectorAll('script[type="module"][src]')) {
+            const module = await import(new URL(script.getAttribute('src'), entry.url).href);
+            if (typeof module.mount !== 'function') continue;
+            mountModules++;
+            const dispose = await module.mount(root, api);
+            if (typeof dispose === 'function') disposers.push(dispose);
+        }
+        if (!mountModules) throw new Error(`${entry.bundle}:${entry.id} must have a module that exports mount(root,selene)`);
+        mounted.push({host, root, disposers});
+    }
+
+    async function unmountAll() {
+        for (const ui of mounted.splice(0)) {
+            for (const dispose of ui.disposers.reverse()) {
+                try {
+                    await dispose();
+                } catch (error) {
+                    console.error('Bundle UI dispose failed', error);
+                }
+            }
+            ui.host.remove();
+        }
+        interactiveElements.clear();
+        resizeObserver.disconnect();
+    }
+
+    window.addEventListener('pagehide', unmountAll);
+
+    let previousInteractiveElements = '';
+    const interactiveElements = new Set();
+    let interactiveElementsFrame = 0;
+    let interactiveElementsRefreshPending = false;
+
+    function scheduleInteractiveElementsReporting() {
+        if (!interactionReportingEnabled || interactiveElementsFrame) return;
+        interactiveElementsFrame = requestAnimationFrame(() => {
+            interactiveElementsFrame = 0;
+            if (interactiveElementsRefreshPending) {
+                interactiveElementsRefreshPending = false;
+                refreshInteractiveElements();
+            }
+            reportInteractiveElements();
+        });
+    }
+
+    function scheduleInteractiveElementsRefresh() {
+        interactiveElementsRefreshPending = true;
+        scheduleInteractiveElementsReporting();
+    }
+
+    const resizeObserver = new ResizeObserver(scheduleInteractiveElementsReporting);
+
+    function refreshInteractiveElements() {
+        const current = new Set();
+        for (const ui of mounted)
+            for (const element of ui.root.querySelectorAll('[data-selene-interactive]')) current.add(element);
+        resizeObserver.disconnect();
+        interactiveElements.clear();
+        for (const ui of mounted) resizeObserver.observe(ui.host);
+        for (const element of current) {
+            interactiveElements.add(element);
+            resizeObserver.observe(element);
+        }
+    }
+
+    function observeInteractiveElements(ui) {
+        new MutationObserver(scheduleInteractiveElementsRefresh)
+            .observe(ui.root, {subtree: true, childList: true, characterData: true, attributes: true});
+        ui.root.addEventListener('focusin', scheduleInteractiveElementsReporting, true);
+        ui.root.addEventListener('focusout', scheduleInteractiveElementsReporting, true);
+        ui.root.addEventListener('scroll', scheduleInteractiveElementsReporting, true);
+        refreshInteractiveElements();
+    }
+
+    function reportInteractiveElements() {
+        const regions = [];
+        let editableFocused = false;
+        for (const ui of mounted) {
+            const active = ui.root.activeElement;
+            editableFocused ||= active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ||
+                active instanceof HTMLSelectElement || active?.isContentEditable === true;
+        }
+        for (const element of interactiveElements) {
+            const style = getComputedStyle(element);
+            if (style.pointerEvents === 'none' || style.visibility === 'hidden' || style.display === 'none') continue;
+            const rect = element.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) continue;
+            regions.push({
+                x: Math.floor(rect.x), y: Math.floor(rect.y),
+                width: Math.ceil(rect.width), height: Math.ceil(rect.height)
+            });
+        }
+        const message = JSON.stringify({
+            type: 'interactiveElements', regions, editableFocused,
+            capturedKeys: [...capturedKeys.keys()], captureText: textCaptureCount > 0,
+            passthroughKeys: [...passthroughKeys.keys()]
+        });
+        if (message === previousInteractiveElements) return;
+        previousInteractiveElements = message;
+        window.seleneQuery({
+            request: message, onFailure: (code, message) =>
+                console.error('interactiveElements update failed', code, message)
+        });
+    }
+
+    let pointerTarget = null;
+    let pressTarget = null;
+
+    function elementAt(x, y) {
+        for (let index = mounted.length - 1; index >= 0; index--) {
+            const target = mounted[index].root.elementFromPoint(x, y);
+            if (target) return target;
+        }
+        return null;
+    }
+
+    function isEditable(element) {
+        return element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement ||
+            element?.isContentEditable === true;
+    }
+
+    window.__seleneBridge = Object.freeze({
+        pointer(type, x, y, button, buttons, deltaX, deltaY) {
+            let target = type === 'mousedown' ? elementAt(x, y) : pointerTarget ?? elementAt(x, y);
+            if (!target) return;
+            if (type === 'mousedown') {
+                pointerTarget = target;
+                pressTarget = target;
+                if (typeof target.focus === 'function') target.focus({preventScroll: true});
+            }
+            if (type === 'click') {
+                const released = elementAt(x, y);
+                if (pressTarget && pressTarget === released && typeof released.click === 'function') {
+                    released.click();
+                }
+                pressTarget = null;
+                pointerTarget = null;
+                return;
+            }
+            const event = type === 'wheel'
+                ? new WheelEvent(type, {
+                    bubbles: true,
+                    cancelable: true,
+                    composed: true,
+                    clientX: x,
+                    clientY: y,
+                    deltaX,
+                    deltaY
+                })
+                : new MouseEvent(type, {
+                    bubbles: true,
+                    cancelable: true,
+                    composed: true,
+                    clientX: x,
+                    clientY: y,
+                    button,
+                    buttons
+                });
+            target.dispatchEvent(event);
+            if (type === 'wheel' && !event.defaultPrevented) {
+                let scrollable = target;
+                while (scrollable && scrollable !== document.body) {
+                    if (scrollable.scrollHeight > scrollable.clientHeight || scrollable.scrollWidth > scrollable.clientWidth) break;
+                    const parent = scrollable.parentNode;
+                    scrollable = parent instanceof ShadowRoot ? parent.host : (parent instanceof Element ? parent : null);
+                }
+                scrollable?.scrollBy(deltaX, deltaY);
+            }
+            if (type === 'mouseup') pointerTarget = null;
+        },
+        keyboard(type, key, shiftKey, ctrlKey, altKey, metaKey) {
+            let target = null;
+            for (let index = mounted.length - 1; index >= 0 && !target; index--)
+                target = mounted[index].root.activeElement;
+            target ??= document.activeElement ?? window;
+            const event = new KeyboardEvent(type, {
+                key, bubbles: true, cancelable: true, composed: true,
+                shiftKey, ctrlKey, altKey, metaKey
+            });
+            target.dispatchEvent(event);
+            if (type !== 'keydown' || event.defaultPrevented || !isEditable(target)) return;
+            if (key === 'Enter') document.execCommand('insertLineBreak');
+            else if (key === 'Backspace') document.execCommand('delete');
+            else if (key === 'Delete') document.execCommand('forwardDelete');
+        },
+        payload(subscriptionId, payload) {
+            const callback = payloadCallbacks.get(subscriptionId);
+            if (!callback) return;
+            try {
+                callback(JSON.parse(payload));
+            } catch (error) {
+                console.error('Payload callback failed', subscriptionId, error);
+            }
+        }
+    });
+
+    Promise.allSettled(entries.map(mountEntry)).then(results => {
+        for (const [index, result] of results.entries()) {
+            if (result.status === 'rejected') {
+                console.error(`Bundle UI ${entries[index].bundle}:${entries[index].id} failed to mount`, result.reason);
+            }
+            console.info(`Mounted ${mounted.length} of ${entries.length} bundle UI(s)`);
+        }
+        interactionReportingEnabled = true;
+        for (const ui of mounted) observeInteractiveElements(ui);
+        window.addEventListener('resize', scheduleInteractiveElementsReporting);
+        scheduleInteractiveElementsReporting();
+    });
+</script>
+</body>
+</html>

@@ -6,6 +6,7 @@ import com.badlogic.gdx.InputMultiplexer
 import com.sksamuel.hoplite.ExperimentalHoplite
 import io.ktor.client.*
 import io.ktor.client.engine.cio.*
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.serialization.kotlinx.json.*
 import ktx.assets.async.AssetStorage
@@ -18,6 +19,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.bind
 import org.koin.dsl.module
 import org.koin.logger.slf4jLogger
+
 import org.slf4j.LoggerFactory
 import com.seleneworlds.client.assets.AssetProvider
 import com.seleneworlds.client.assets.RuntimeBundleUpdateManager
@@ -77,6 +79,12 @@ import com.seleneworlds.client.ui.UI
 import com.seleneworlds.client.ui.SkinResolvers
 import com.seleneworlds.client.ui.UIApi
 import com.seleneworlds.client.ui.lua.UILuaApi
+import com.seleneworlds.client.ui.cef.CefBrowserUi
+import com.seleneworlds.client.ui.cef.BundleUiSource
+import com.seleneworlds.client.ui.cef.CefUiBridge
+import com.seleneworlds.client.ui.cef.CefInteractionState
+import com.seleneworlds.client.ui.cef.CefInputProcessor
+import com.seleneworlds.client.ui.cef.CefBundleScheme
 import com.seleneworlds.client.window.WindowManager
 import com.seleneworlds.common.bundles.*
 import com.seleneworlds.common.data.RegistriesApi
@@ -105,6 +113,8 @@ import com.seleneworlds.common.tasks.TaskLuaApi
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.tiles.TileRegistry
 import com.seleneworlds.common.util.Disposable
+
+private const val HTTP_CONNECT_TIMEOUT_MILLIS = 5000L
 
 class SeleneApplication(
     private val config: ClientConfig,
@@ -208,6 +218,9 @@ class SeleneApplication(
             single {
                 val json = get<Json>()
                 HttpClient(CIO) {
+                    install(HttpTimeout) {
+                        connectTimeoutMillis = HTTP_CONNECT_TIMEOUT_MILLIS
+                    }
                     install(ContentNegotiation) {
                         json(json)
                     }
@@ -238,6 +251,14 @@ class SeleneApplication(
             singleOf(::SeleneClient)
             singleOf(::RuntimeBundleUpdateManager) { bind<Disposable>() }
             singleOf(::WindowManager)
+        }
+        val cefModule = module {
+            singleOf(::CefBrowserUi) { bind<Disposable>() }
+            singleOf(::CefBundleScheme)
+            singleOf(::BundleUiSource)
+            singleOf(::CefUiBridge)
+            singleOf(::CefInteractionState)
+            singleOf(::CefInputProcessor)
         }
         val gdxModule = module {
             singleOf(::SeleneApplicationListener) { bind<ApplicationListener>() }
@@ -279,6 +300,7 @@ class SeleneApplication(
                 coreModule,
                 apiModule,
                 clientModule,
+                cefModule,
                 networkModule,
                 bundleModule,
                 luaModule,

@@ -3,7 +3,14 @@ package com.seleneworlds.client.config
 import com.seleneworlds.common.config.HotReloadMode
 import java.io.File
 
-data class ClientConfig(val vsync: Boolean = true, val hotReload: String = "true") {
+data class ClientConfig(
+    val vsync: Boolean = true,
+    val hotReload: String = "true",
+    val browserUiEnabled: Boolean = true,
+    val browserUiUrl: String = "",
+    val browserUiInsecure: Boolean = false,
+    val cefInstallDir: String = "jcef-bundle"
+) {
     val hotReloadMode: HotReloadMode
         get() = HotReloadMode.parse(hotReload)
 
