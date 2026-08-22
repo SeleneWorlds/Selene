@@ -1,5 +1,6 @@
 package com.seleneworlds.client.ui.cef
 
+import com.seleneworlds.client.config.ClientConfig
 import com.seleneworlds.client.config.ClientRuntimeConfig
 import com.seleneworlds.common.bundles.BundleDatabase
 import org.cef.browser.CefBrowser
@@ -26,10 +27,14 @@ import java.util.concurrent.atomic.AtomicReference
 
 class CefBundleScheme(
     private val bundleDatabase: BundleDatabase,
-    runtimeConfig: ClientRuntimeConfig
+    runtimeConfig: ClientRuntimeConfig,
+    clientConfig: ClientConfig
 ) : CefSchemeHandlerFactory {
     private val runtimePage = AtomicReference<Path?>()
-    val contentSecurityPolicy = contentSecurityPolicy(runtimeConfig.contentServerUrl)
+    val contentSecurityPolicy = contentSecurityPolicy(
+        runtimeConfig.contentServerUrl,
+        clientConfig.browserUiUrl
+    )
 
     fun setRuntimePage(path: Path?) {
         runtimePage.set(path?.toAbsolutePath()?.normalize())
@@ -188,14 +193,14 @@ class CefBundleScheme(
         const val RUNTIME_URL = "$SCHEME://$HOST/runtime/index.html"
         const val CSP_NONCE = "selene-runtime"
 
-        private fun contentSecurityPolicy(contentServerUrl: String): String {
-            val remoteOrigin = runCatching {
-                val uri = URI(contentServerUrl.trim())
+        private fun contentSecurityPolicy(vararg configuredUrls: String): String {
+            val remoteOrigins = configuredUrls.mapNotNull { configuredUrl -> runCatching {
+                val uri = URI(configuredUrl.trim())
                 require(uri.scheme.equals("http", true) || uri.scheme.equals("https", true))
                 require(uri.host != null && uri.userInfo == null)
                 URI(uri.scheme.lowercase(), null, uri.host, uri.port, null, null, null).toASCIIString()
-            }.getOrNull()
-            val sources = listOfNotNull("'self'", remoteOrigin).joinToString(" ")
+            }.getOrNull() }.distinct()
+            val sources = (listOf("'self'") + remoteOrigins).joinToString(" ")
             return "default-src $sources; script-src $sources 'nonce-$CSP_NONCE'; " +
                 "connect-src $sources; style-src $sources 'unsafe-inline'; " +
                 "img-src $sources data:; frame-src 'none'"
