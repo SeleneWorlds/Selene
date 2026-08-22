@@ -82,6 +82,13 @@ class CefBrowserUi(
         }
         browserClosed = CountDownLatch(1)
         appTerminated = CountDownLatch(1)
+        val insecureBrowserUi = config.browserUiInsecure && config.browserUiUrl.isNotBlank()
+        if (insecureBrowserUi) {
+            logger.warn(
+                "CEF browser UI security is disabled for {}; use browser_ui_insecure only with a trusted development server",
+                config.browserUiUrl
+            )
+        }
         val builder = CefAppBuilder().apply {
             setInstallDir(File(config.cefInstallDir))
             cefSettings.windowless_rendering_enabled = true
@@ -93,6 +100,11 @@ class CefBrowserUi(
                 }
             })
             addJcefArgs("--autoplay-policy=no-user-gesture-required")
+            if (insecureBrowserUi) {
+                addJcefArgs("--disable-web-security")
+                addJcefArgs("--allow-running-insecure-content")
+                addJcefArgs("--disable-features=LocalNetworkAccessChecks")
+            }
         }
         val cefClient: CefClient
         app = builder.build().also {
@@ -209,6 +221,7 @@ class CefBrowserUi(
                 setLocation(-32000, -32000)
                 isVisible = true
             }
+            component.setBounds(0, 0, viewport.logicalWidth, viewport.logicalHeight)
             browser!!.createImmediately()
         }
         browserWidth = viewport.logicalWidth
@@ -361,7 +374,7 @@ class CefBrowserUi(
         }
         val html = RUNTIME_PAGE_TEMPLATE
             .replace(ENTRYPOINTS_PLACEHOLDER, encodedEntries)
-            .replace(CSP_PLACEHOLDER, bundleScheme.contentSecurityPolicy)
+            .replace(CSP_PLACEHOLDER, bundleScheme.contentSecurityPolicy.orEmpty())
         val directory = pageDirectory ?: Files.createTempDirectory("selene-browser-ui-").also {
             pageDirectory = it
         }

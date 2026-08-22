@@ -31,9 +31,9 @@ class CefBundleScheme(
     clientConfig: ClientConfig
 ) : CefSchemeHandlerFactory {
     private val runtimePage = AtomicReference<Path?>()
-    val contentSecurityPolicy = contentSecurityPolicy(
-        runtimeConfig.contentServerUrl,
-        clientConfig.browserUiUrl
+    private val insecureBrowserUi = clientConfig.browserUiInsecure && clientConfig.browserUiUrl.isNotBlank()
+    val contentSecurityPolicy = if (insecureBrowserUi) null else contentSecurityPolicy(
+        runtimeConfig.contentServerUrl, clientConfig.browserUiUrl
     )
 
     fun setRuntimePage(path: Path?) {
@@ -67,7 +67,7 @@ class CefBundleScheme(
     private class Resource(
         private val path: Path?,
         private val method: String,
-        private val contentSecurityPolicy: String
+        private val contentSecurityPolicy: String?
     ) : CefResourceHandlerAdapter() {
         private val mimeType = path?.let(::mimeType) ?: "text/plain"
         private var channel: SeekableByteChannel? = null
@@ -90,7 +90,9 @@ class CefBundleScheme(
             redirectUrl: StringRef
         ) {
             response.mimeType = mimeType
-            response.setHeaderByName("Content-Security-Policy", contentSecurityPolicy, true)
+            contentSecurityPolicy?.let {
+                response.setHeaderByName("Content-Security-Policy", it, true)
+            }
             response.setHeaderByName("X-Content-Type-Options", "nosniff", true)
             when {
                 method != "GET" && method != "HEAD" -> {
@@ -201,8 +203,17 @@ class CefBundleScheme(
                 URI(uri.scheme.lowercase(), null, uri.host, uri.port, null, null, null).toASCIIString()
             }.getOrNull() }.distinct()
             val sources = (listOf("'self'") + remoteOrigins).joinToString(" ")
+            val connectionSources = (listOf("'self'") + remoteOrigins + remoteOrigins.mapNotNull { origin ->
+                val uri = URI(origin)
+                val scheme = when (uri.scheme) {
+                    "http" -> "ws"
+                    "https" -> "wss"
+                    else -> return@mapNotNull null
+                }
+                URI(scheme, null, uri.host, uri.port, null, null, null).toASCIIString()
+            }).distinct().joinToString(" ")
             return "default-src $sources; script-src $sources 'nonce-$CSP_NONCE'; " +
-                "connect-src $sources; style-src $sources 'unsafe-inline'; " +
+                "connect-src $connectionSources; style-src $sources 'unsafe-inline'; " +
                 "img-src $sources data:; frame-src 'none'"
         }
     }

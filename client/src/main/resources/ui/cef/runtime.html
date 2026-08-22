@@ -127,12 +127,16 @@
         for (const script of parsed.querySelectorAll('script:not([type="module"][src])')) {
             console.warn(`${entry.bundle}:${entry.id} ignores a script element; use <script type="module" src="...">`, script);
         }
+        const api = createApi(entry.url, disposers);
+        let mountModules = 0;
         for (const script of parsed.querySelectorAll('script[type="module"][src]')) {
             const module = await import(new URL(script.getAttribute('src'), entry.url).href);
-            if (typeof module.mount !== 'function') throw new Error(`${entry.bundle}:${entry.id} must export mount(root,selene)`);
-            const dispose = await module.mount(root, createApi(entry.url, disposers));
+            if (typeof module.mount !== 'function') continue;
+            mountModules++;
+            const dispose = await module.mount(root, api);
             if (typeof dispose === 'function') disposers.push(dispose);
         }
+        if (!mountModules) throw new Error(`${entry.bundle}:${entry.id} must have a module that exports mount(root,selene)`);
         mounted.push({host, root, disposers});
     }
 
