@@ -6,6 +6,7 @@ ktor = "3.2.1"
 log4j = "2.24.3"
 jackson = "2.19.0"
 kotlinx-serialization = "1.9.0"
+jcef = "146.0.10"
 
 [libraries]
 gdx-backend-lwjgl3 = { module = "com.badlogicgames.gdx:gdx-backend-lwjgl3", version.ref = "gdx" }
@@ -15,6 +16,7 @@ gdx-freetype-platform = { module = "com.badlogicgames.gdx:gdx-freetype-platform"
 gdx-lml = { module = "com.crashinvaders.lml:gdx-lml", version = "1.10.1.12.1" }
 gdx-lml-vis = { module = "com.crashinvaders.lml:gdx-lml-vis", version = "1.10.1.12.1" }
 vis-ui = { module = "com.kotcrab.vis:vis-ui", version = "1.5.7" }
+jcef = { module = "me.friwi:jcefmaven", version.ref = "jcef" }
 
 ktx-app = { module = "io.github.libktx:ktx-app", version.ref = "ktx" }
 ktx-assets-async = { module = "io.github.libktx:ktx-assets-async", version.ref = "ktx" }

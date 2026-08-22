@@ -14,8 +14,8 @@ class NetworkApi(
     private val json: Json,
     private val payloadRegistry: PayloadHandlerRegistry<Unit>
 ) {
-    fun handlePayload(payloadId: String, callback: (SerializedMap) -> Unit) {
-        payloadRegistry.registerHandler(payloadId) {
+    fun handlePayload(payloadId: String, callback: (SerializedMap) -> Unit): () -> Unit {
+        return payloadRegistry.registerHandler(payloadId) {
             _, payload -> callback(payload)
         }
     }

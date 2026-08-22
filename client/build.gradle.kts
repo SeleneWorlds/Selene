@@ -37,6 +37,8 @@ dependencies {
     implementation(libs.vis.ui)
     implementation(libs.bundles.lml)
 
+    implementation(libs.jcef)
+
     testImplementation(kotlin("test"))
 }
 

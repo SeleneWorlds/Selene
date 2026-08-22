@@ -57,7 +57,7 @@ class SeleneClient(
     private val drawableManager: DrawableManager,
     private val logger: Logger
 ) {
-    fun start() {
+    fun initialize() {
         logger.info("Starting Selene Client")
 
         packetRegistrations.register()
@@ -135,9 +135,10 @@ class SeleneClient(
             }
         })
 
-        runBlocking {
-            connectWithRetry()
-        }
+    }
+
+    fun connect() {
+        runBlocking { connectWithRetry() }
     }
 
     private suspend fun connectWithRetry() {

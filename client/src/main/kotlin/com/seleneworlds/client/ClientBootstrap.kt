@@ -6,6 +6,7 @@ import com.sksamuel.hoplite.ConfigLoaderBuilder
 import com.sksamuel.hoplite.ExperimentalHoplite
 import com.seleneworlds.client.config.ClientConfig
 import com.seleneworlds.client.config.ClientRuntimeConfig
+import kotlin.system.exitProcess
 
 @OptIn(ExperimentalHoplite::class)
 fun main(args: Array<String>) {
@@ -25,6 +26,8 @@ fun main(args: Array<String>) {
     appConfig.setWindowedMode(1024, 768)
     appConfig.setWindowIcon("icon_16.png", "icon_32.png", "icon_128.png")
     Lwjgl3Application(SeleneApplication(config, runtimeConfig), appConfig)
+    // CEF initializes AWT non-daemon threads which otherwise keep this single-window client alive.
+    exitProcess(0)
 }
 
 fun parseClientRuntimeConfig(args: Array<String>): ClientRuntimeConfig {

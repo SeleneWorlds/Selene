@@ -26,6 +26,8 @@ import com.seleneworlds.client.rendering.DebugRenderer
 import com.seleneworlds.client.rendering.SceneRenderer
 import com.seleneworlds.client.rendering.drawable.DrawableManager
 import com.seleneworlds.client.ui.UI
+import com.seleneworlds.client.ui.cef.CefBrowserUi
+import com.seleneworlds.client.ui.cef.CefInputProcessor
 import com.seleneworlds.client.window.WindowViewport
 import com.seleneworlds.client.window.WindowManager
 import com.seleneworlds.common.bundles.BundleLifecycleManager
@@ -46,7 +48,9 @@ class SeleneApplicationListener(
     private val bundleWatcher: ClientBundleWatcher,
     private val mainThreadDispatcher: MainThreadDispatcher,
     private val windowManager: WindowManager,
-    private val bundleLifecycleManager: BundleLifecycleManager
+    private val bundleLifecycleManager: BundleLifecycleManager,
+    private val browserUi: CefBrowserUi,
+    private val cefInputProcessor: CefInputProcessor
 ) : ApplicationListener {
 
     lateinit var systemFont: BitmapFont
@@ -56,19 +60,23 @@ class SeleneApplicationListener(
     private var worldFrameRegion: TextureRegion? = null
 
     override fun create() {
-        client.start()
+        client.initialize()
 
         debugRenderer.initialize()
         spriteBatch = SpriteBatch()
         systemFont = BitmapFont()
 
         inputMultiplexer.addProcessor(SystemInputProcessor(windowManager, bundleLifecycleManager))
+        inputMultiplexer.addProcessor(cefInputProcessor)
         inputMultiplexer.addProcessor(ui.stage)
         inputMultiplexer.addProcessor(inputManager)
         Gdx.input.inputProcessor = inputMultiplexer
 
         windowManager.updateWindowSize(Gdx.graphics.width, Gdx.graphics.height)
         applyWindowLayout()
+        browserUi.initialize(windowManager.uiViewport)
+        browserUi.awaitUiReady()
+        client.connect()
     }
 
     override fun resize(width: Int, height: Int) {
@@ -84,6 +92,7 @@ class SeleneApplicationListener(
 
         networkClient.processWork()
         bundleWatcher.processPendingUpdates()
+        browserUi.processPendingReload()
 
         val delta = Gdx.graphics.deltaTime
         inputManager.update()
@@ -99,6 +108,7 @@ class SeleneApplicationListener(
             renderWorldDirect()
         }
 
+        browserUi.render(spriteBatch, windowManager.uiViewport)
         ui.render()
 
         if (Vector2.Zero.x != 0f || Vector2.Zero.y != 0f) {
@@ -119,6 +129,7 @@ class SeleneApplicationListener(
         worldFrameBuffer?.dispose()
         ui.dispose()
         networkClient.disconnect()
+        browserUi.dispose()
 
         getKoin().getAll<Disposable>().forEach { it.dispose() }
     }
@@ -136,6 +147,7 @@ class SeleneApplicationListener(
             viewportWidth = uiViewport.screenWidth,
             viewportHeight = uiViewport.screenHeight
         )
+        browserUi.resize(uiViewport)
     }
 
     private fun renderWorldDirect() {
