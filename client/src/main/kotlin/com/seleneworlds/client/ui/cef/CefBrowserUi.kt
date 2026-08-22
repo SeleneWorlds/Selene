@@ -380,6 +380,42 @@ class CefBrowserUi(
             }
 
             let previousInteraction = '';
+            const interactiveElements = new Set();
+            let interactionFrame = 0;
+
+            function scheduleInteraction() {
+              if (interactionFrame) return;
+              interactionFrame = requestAnimationFrame(() => {
+                interactionFrame = 0;
+                reportInteraction();
+              });
+            }
+
+            const resizeObserver = new ResizeObserver(scheduleInteraction);
+            function refreshInteractiveElements() {
+              const current = new Set();
+              for (const ui of mounted)
+                for (const element of ui.root.querySelectorAll('[data-selene-interactive]')) current.add(element);
+              resizeObserver.disconnect();
+              interactiveElements.clear();
+              for (const ui of mounted) resizeObserver.observe(ui.host);
+              for (const element of current) {
+                interactiveElements.add(element);
+                resizeObserver.observe(element);
+              }
+            }
+
+            function observeInteraction(ui) {
+              new MutationObserver(() => {
+                refreshInteractiveElements();
+                scheduleInteraction();
+              }).observe(ui.root,{subtree:true,childList:true,characterData:true,attributes:true});
+              ui.root.addEventListener('focusin',scheduleInteraction,true);
+              ui.root.addEventListener('focusout',scheduleInteraction,true);
+              ui.root.addEventListener('scroll',scheduleInteraction,true);
+              refreshInteractiveElements();
+            }
+
             function reportInteraction() {
               const regions = [];
               let editableFocused = false;
@@ -387,14 +423,14 @@ class CefBrowserUi(
                 const active = ui.root.activeElement;
                 editableFocused ||= active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ||
                   active instanceof HTMLSelectElement || active?.isContentEditable === true;
-                for (const element of ui.root.querySelectorAll('*')) {
-                  const style = getComputedStyle(element);
-                  if (style.pointerEvents === 'none' || style.visibility === 'hidden' || style.display === 'none') continue;
-                  const rect = element.getBoundingClientRect();
-                  if (rect.width <= 0 || rect.height <= 0) continue;
-                  regions.push({x:Math.floor(rect.x),y:Math.floor(rect.y),
-                    width:Math.ceil(rect.width),height:Math.ceil(rect.height)});
-                }
+              }
+              for (const element of interactiveElements) {
+                const style = getComputedStyle(element);
+                if (style.pointerEvents === 'none' || style.visibility === 'hidden' || style.display === 'none') continue;
+                const rect = element.getBoundingClientRect();
+                if (rect.width <= 0 || rect.height <= 0) continue;
+                regions.push({x:Math.floor(rect.x),y:Math.floor(rect.y),
+                  width:Math.ceil(rect.width),height:Math.ceil(rect.height)});
               }
               const interaction = JSON.stringify({type:'interaction',regions,editableFocused});
               if (interaction === previousInteraction) return;
@@ -461,12 +497,13 @@ class CefBrowserUi(
 
             Promise.all(entries.map(mountEntry)).then(() => {
               console.info(`Mounted ${'$'}{entries.length} bundle UI(s)`);
-              reportInteraction();
-              setInterval(reportInteraction,100);
+              for (const ui of mounted) observeInteraction(ui);
+              window.addEventListener('resize',scheduleInteraction);
+              scheduleInteraction();
             })
               .catch(error => {
                 console.error('Bundle UI mounting failed',error);
-                reportInteraction();
+                scheduleInteraction();
               });
             </script></body></html>
         """.trimIndent()
