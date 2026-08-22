@@ -97,7 +97,7 @@
         if (interactionFrame) return;
         interactionFrame = requestAnimationFrame(() => {
             interactionFrame = 0;
-            reportInteraction();
+            reportInteractiveElements();
         });
     }
 
@@ -127,7 +127,7 @@
         refreshInteractiveElements();
     }
 
-    function reportInteraction() {
+    function reportInteractiveElements() {
         const regions = [];
         let editableFocused = false;
         for (const ui of mounted) {
