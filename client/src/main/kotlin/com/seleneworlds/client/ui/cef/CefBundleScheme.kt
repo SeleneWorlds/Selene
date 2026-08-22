@@ -30,7 +30,7 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
     fun bundleUrl(bundle: String, path: String): String =
         URI(SCHEME, HOST, "/bundle/$bundle/${path.replace('\\', '/')}", null).toASCIIString()
 
-    val runtimeUrl: String get() = "$SCHEME://$HOST/runtime/index.html"
+    val runtimeUrl: String get() = RUNTIME_URL
 
     override fun create(browser: CefBrowser, frame: CefFrame, schemeName: String,
         request: CefRequest): CefResourceHandler = Resource(resolve(request.url), request.method)
@@ -116,5 +116,6 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
     companion object {
         const val SCHEME = "https"
         const val HOST = "cef.seleneworlds.com"
+        const val RUNTIME_URL = "$SCHEME://$HOST/runtime/index.html"
     }
 }

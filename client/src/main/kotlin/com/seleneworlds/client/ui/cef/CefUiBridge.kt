@@ -38,7 +38,9 @@ class CefUiBridge(
         override fun onQuery(browser: CefBrowser, frame: CefFrame, queryId: Long, request: String,
             persistent: Boolean, callback: CefQueryCallback): Boolean {
             return try {
-                require(frame.isMain) { "CEF UI bridge requests are restricted to the main frame" }
+                require(frame.isMain && CefTrustedDocuments.contains(frame.url)) {
+                    "CEF UI bridge requests are restricted to trusted main-frame documents"
+                }
                 val message = json.parseToJsonElement(request).jsonObject
                 when (message.requiredString("type")) {
                     "send" -> handleSend(message, callback)

@@ -25,6 +25,7 @@ import org.cef.handler.CefLoadHandlerAdapter
 import org.cef.handler.CefLifeSpanHandlerAdapter
 import org.cef.handler.CefRequestHandler
 import org.cef.handler.CefRequestHandlerAdapter
+import org.cef.network.CefRequest
 import org.slf4j.Logger
 import java.awt.BorderLayout
 import java.awt.EventQueue
@@ -126,6 +127,21 @@ class CefBrowserUi(
                 }
             })
             addRequestHandler(object : CefRequestHandlerAdapter() {
+                override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest,
+                    userGesture: Boolean, isRedirect: Boolean): Boolean {
+                    if (!frame.isMain || CefTrustedDocuments.contains(request.url)) return false
+                    logger.warn("Blocked untrusted CEF top-level {} to {}",
+                        if (isRedirect) "redirect" else "navigation", request.url)
+                    return true
+                }
+
+                override fun onOpenURLFromTab(browser: CefBrowser, frame: CefFrame, targetUrl: String,
+                    userGesture: Boolean): Boolean {
+                    if (CefTrustedDocuments.contains(targetUrl)) return false
+                    logger.warn("Blocked untrusted CEF top-level navigation to {}", targetUrl)
+                    return true
+                }
+
                 override fun onRenderProcessTerminated(browser: CefBrowser,
                                                        status: CefRequestHandler.TerminationStatus, errorCode: Int, errorString: String) {
                     logger.error("CEF renderer terminated: {} ({}: {})", status, errorCode, errorString)
