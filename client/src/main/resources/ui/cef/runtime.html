@@ -241,6 +241,11 @@
         return null;
     }
 
+    function isEditable(element) {
+        return element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement ||
+            element?.isContentEditable === true;
+    }
+
     window.__seleneBridge = Object.freeze({
         pointer(type, x, y, button, buttons, deltaX, deltaY) {
             let target = type === 'mousedown' ? elementAt(x, y) : pointerTarget ?? elementAt(x, y);
@@ -299,7 +304,7 @@
                 shiftKey, ctrlKey, altKey, metaKey
             });
             target.dispatchEvent(event);
-            if (type !== 'keydown' || event.defaultPrevented) return;
+            if (type !== 'keydown' || event.defaultPrevented || !isEditable(target)) return;
             if (key === 'Enter') document.execCommand('insertLineBreak');
             else if (key === 'Backspace') document.execCommand('delete');
             else if (key === 'Delete') document.execCommand('forwardDelete');
