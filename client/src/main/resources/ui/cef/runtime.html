@@ -164,7 +164,7 @@
         return null;
     }
 
-    window.__seleneInput = Object.freeze({
+    window.__seleneBridge = Object.freeze({
         pointer(type, x, y, button, buttons, deltaX, deltaY) {
             let target = type === 'mousedown' ? elementAt(x, y) : pointerTarget ?? elementAt(x, y);
             if (!target) return;

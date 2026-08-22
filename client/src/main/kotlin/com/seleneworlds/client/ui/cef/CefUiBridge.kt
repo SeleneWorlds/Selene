@@ -96,7 +96,7 @@ class CefUiBridge(
                 val encodedPayload = JsonPrimitive(
                     json.encodeToJsonElement(SerializedMapSerializer, payload).toString()).toString()
                 browser.executeJavaScript(
-                    "window.__seleneInput?.payload($encodedId,$encodedPayload)", frame.url, 0)
+                    "window.__seleneBridge?.payload($encodedId,$encodedPayload)", frame.url, 0)
             } catch (error: Exception) {
                 logger.warn("Failed to deliver payload {} to CEF UI", payloadId, error)
             }

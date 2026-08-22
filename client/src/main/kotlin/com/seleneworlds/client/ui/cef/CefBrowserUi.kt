@@ -244,7 +244,7 @@ class CefBrowserUi(
         deltaY: Float = 0f) {
         if (!initialized || type !in POINTER_EVENT_TYPES) return
         browser?.executeJavaScript(
-            "window.__seleneInput?.pointer('$type',$x,$y,$button,$buttons,$deltaX,$deltaY)", "", 0)
+            "window.__seleneBridge?.pointer('$type',$x,$y,$button,$buttons,$deltaX,$deltaY)", "", 0)
     }
 
     fun insertText(character: Char) {
@@ -257,7 +257,7 @@ class CefBrowserUi(
         meta: Boolean) {
         if (!initialized || type !in setOf("keydown", "keyup") || key !in KEY_NAMES) return
         browser?.executeJavaScript(
-            "window.__seleneInput?.keyboard('$type','$key',$shift,$control,$alt,$meta)", "", 0)
+            "window.__seleneBridge?.keyboard('$type','$key',$shift,$control,$alt,$meta)", "", 0)
     }
 
     fun dispatchCharacter(character: Char, shift: Boolean, control: Boolean, alt: Boolean, meta: Boolean) {
@@ -268,8 +268,8 @@ class CefBrowserUi(
             else -> character.toString()
         }
         browser?.executeJavaScript(
-            "window.__seleneInput?.keyboard('keydown','$escaped',$shift,$control,$alt,$meta);" +
-                "window.__seleneInput?.keyboard('keyup','$escaped',$shift,$control,$alt,$meta)", "", 0)
+            "window.__seleneBridge?.keyboard('keydown','$escaped',$shift,$control,$alt,$meta);" +
+                "window.__seleneBridge?.keyboard('keyup','$escaped',$shift,$control,$alt,$meta)", "", 0)
     }
 
     fun focus() {
