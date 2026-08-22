@@ -113,7 +113,10 @@ class CefUiBridge(
             )
         }.filter { it.width > 0 && it.height > 0 }
         val editableFocused = message["editableFocused"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() ?: false
-        interactionState.update(regions, editableFocused)
+        val capturedKeys = message.stringSet("capturedKeys")
+        val captureText = message["captureText"]?.jsonPrimitive?.content?.toBooleanStrictOrNull() ?: false
+        val passthroughKeys = message.stringSet("passthroughKeys")
+        interactionState.update(regions, editableFocused, capturedKeys, captureText, passthroughKeys)
         uiReady.countDown()
         if (receivedInteractionState.compareAndSet(false, true)) {
             logger.info("CEF UI reported {} interactive hit regions", regions.size)
@@ -136,7 +139,7 @@ class CefUiBridge(
 
     fun prepareReload(browser: CefBrowser) {
         router?.cancelPending(browser, handler)
-        interactionState.update(emptyList(), false)
+        interactionState.clear()
     }
 
     private fun validatedPayloadId(value: String): String {
@@ -152,9 +155,15 @@ class CefUiBridge(
     private fun JsonObject.requiredInt(name: String): Int =
         this[name]?.jsonPrimitive?.content?.toIntOrNull() ?: throw IllegalArgumentException("Invalid $name")
 
+    private fun JsonObject.stringSet(name: String): Set<String> = this[name]?.jsonArray.orEmpty().map { element ->
+        element.jsonPrimitive.content.also { require(it.isNotEmpty() && it.length <= MAX_KEY_NAME_LENGTH) }
+    }.also { require(it.size <= MAX_INPUT_KEYS) }.toSet()
+
     private companion object {
         const val MAX_PAYLOAD_ID_LENGTH = 128
         const val MAX_PAYLOAD_BYTES = 64 * 1024
         const val MAX_SUBSCRIPTIONS = 32767
+        const val MAX_KEY_NAME_LENGTH = 64
+        const val MAX_INPUT_KEYS = 256
     }
 }

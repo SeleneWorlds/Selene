@@ -60,20 +60,23 @@ class CefInputProcessor(
     override fun keyDown(keycode: Int): Boolean {
         if (!cef.enabled) return false
         pressedKeys += keycode
-        if (interactionState.hasUi()) browserKey(keycode)?.let { dispatchKeyboard("keydown", it) }
-        return consumesKeyboard(keycode)
+        val key = browserKey(keycode) ?: return false
+        if (interactionState.hasUi()) dispatchKeyboard("keydown", key)
+        return interactionState.consumesKey(key)
     }
 
     override fun keyUp(keycode: Int): Boolean {
         if (!cef.enabled) return false
-        if (interactionState.hasUi()) browserKey(keycode)?.let { dispatchKeyboard("keyup", it) }
-        val consumed = consumesKeyboard(keycode)
+        val key = browserKey(keycode)
+        if (key != null && interactionState.hasUi()) dispatchKeyboard("keyup", key)
+        val consumed = key != null && interactionState.consumesKey(key)
         pressedKeys -= keycode
         return consumed
     }
 
     override fun keyTyped(character: Char): Boolean {
-        if (!cef.enabled || !interactionState.hasUi() || character.isISOControl()) return false
+        if (!cef.enabled || !interactionState.hasUi() || !interactionState.capturesText() ||
+            character.isISOControl()) return false
         if (interactionState.hasEditableFocus()) {
             cef.insertText(character)
         } else {
@@ -102,10 +105,6 @@ class CefInputProcessor(
             .coerceIn(0, viewport.logicalHeight - 1)
         return x to y
     }
-
-    private fun consumesKeyboard(keycode: Int): Boolean =
-        (interactionState.hasEditableFocus() && keycode !in PASSTHROUGH_KEYS) ||
-            (interactionState.hasUi() && keycode in GLOBAL_CHAT_KEYS)
 
     private fun browserButton(button: Int): Int = when (button) {
         Input.Buttons.LEFT -> 0
@@ -151,10 +150,5 @@ class CefInputProcessor(
         Input.Keys.ALT_LEFT, Input.Keys.ALT_RIGHT -> "Alt"
         Input.Keys.SYM -> "Meta"
         else -> null
-    }
-
-    private companion object {
-        val PASSTHROUGH_KEYS = setOf(Input.Keys.LEFT, Input.Keys.RIGHT, Input.Keys.UP, Input.Keys.DOWN)
-        val GLOBAL_CHAT_KEYS = setOf(Input.Keys.ENTER, Input.Keys.BACKSPACE)
     }
 }

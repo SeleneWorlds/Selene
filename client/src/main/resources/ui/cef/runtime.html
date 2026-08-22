@@ -25,6 +25,10 @@
     const entries = __SELENE_UI_ENTRIES__;
     const mounted = [];
     const payloadCallbacks = new Map();
+    const capturedKeys = new Map();
+    const passthroughKeys = new Map();
+    let textCaptureCount = 0;
+    let interactionReportingEnabled = false;
     let nextSubscriptionId = 1;
     const network = Object.freeze({
         sendToServer(payloadId, payload = {}) {
@@ -46,13 +50,51 @@
             };
         }
     });
-    function createApi(baseUrl) {
+    function registerKeys(registry, keys, disposers) {
+        const uniqueKeys = new Set(keys);
+        for (const key of uniqueKeys) {
+            if (typeof key !== 'string' || !key) throw new Error('Input keys must be non-empty strings');
+            registry.set(key, (registry.get(key) ?? 0) + 1);
+        }
+        let active = true;
+        const release = () => {
+            if (!active) return;
+            active = false;
+            for (const key of uniqueKeys) {
+                const count = registry.get(key) - 1;
+                if (count) registry.set(key, count); else registry.delete(key);
+            }
+            scheduleInteractiveElementsReporting();
+        };
+        disposers.push(release);
+        scheduleInteractiveElementsReporting();
+        return release;
+    }
+
+    function createApi(baseUrl, disposers) {
         return Object.freeze({
             apiVersion: 1,
             resolveAsset(path) {
                 if (typeof path !== 'string' || path.length === 0) throw new Error('Asset path must be a non-empty string');
                 return new URL(path, baseUrl).href;
             },
+            input: Object.freeze({
+                captureKeys: (...keys) => registerKeys(capturedKeys, keys, disposers),
+                captureText: () => {
+                    textCaptureCount++;
+                    let active = true;
+                    const release = () => {
+                        if (!active) return;
+                        active = false;
+                        textCaptureCount--;
+                        scheduleInteractiveElementsReporting();
+                    };
+                    disposers.push(release);
+                    scheduleInteractiveElementsReporting();
+                    return release;
+                },
+                passThroughKeys: (...keys) => registerKeys(passthroughKeys, keys, disposers)
+            }),
             network
         });
     }
@@ -83,7 +125,7 @@
         for (const script of parsed.querySelectorAll('script[type="module"][src]')) {
             const module = await import(new URL(script.getAttribute('src'), entry.url).href);
             if (typeof module.mount !== 'function') throw new Error(`${entry.bundle}:${entry.id} must export mount(root,selene)`);
-            const dispose = await module.mount(root, createApi(entry.url));
+            const dispose = await module.mount(root, createApi(entry.url, disposers));
             if (typeof dispose === 'function') disposers.push(dispose);
         }
         mounted.push({host, root, disposers});
@@ -94,7 +136,7 @@
     let interactiveElementsFrame = 0;
 
     function scheduleInteractiveElementsReporting() {
-        if (interactiveElementsFrame) return;
+        if (!interactionReportingEnabled || interactiveElementsFrame) return;
         interactiveElementsFrame = requestAnimationFrame(() => {
             interactiveElementsFrame = 0;
             reportInteractiveElements();
@@ -145,7 +187,9 @@
                 width: Math.ceil(rect.width), height: Math.ceil(rect.height)
             });
         }
-        const message = JSON.stringify({type: 'interactiveElements', regions, editableFocused});
+        const message = JSON.stringify({type: 'interactiveElements', regions, editableFocused,
+            capturedKeys: [...capturedKeys.keys()], captureText: textCaptureCount > 0,
+            passthroughKeys: [...passthroughKeys.keys()]});
         if (message === previousInteractiveElements) return;
         previousInteractiveElements = message;
         window.seleneQuery({
@@ -219,6 +263,7 @@
 
     Promise.all(entries.map(mountEntry)).then(() => {
         console.info(`Mounted ${entries.length} bundle UI(s)`);
+        interactionReportingEnabled = true;
         for (const ui of mounted) observeInteractiveElements(ui);
         window.addEventListener('resize', scheduleInteractiveElementsReporting);
         scheduleInteractiveElementsReporting();

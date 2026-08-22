@@ -24,10 +24,21 @@ class CefInteractionStateTest {
     }
 
     @Test
-    fun `reports whether bundle UI has published regions`() {
+    fun `reports whether bundle UI has published state`() {
         val state = CefInteractionState()
         assertFalse(state.hasUi())
-        state.update(listOf(CefHitRegion(0, 0, 1, 1)), false)
+        state.update(emptyList(), false)
         assertTrue(state.hasUi())
+    }
+
+    @Test
+    fun `applies bundle keyboard claims with passthrough taking precedence`() {
+        val state = CefInteractionState()
+        state.update(emptyList(), true, setOf("Enter"), true, setOf("ArrowUp"))
+
+        assertTrue(state.consumesKey("Enter"))
+        assertTrue(state.consumesKey("Escape"))
+        assertFalse(state.consumesKey("ArrowUp"))
+        assertTrue(state.capturesText())
     }
 }
