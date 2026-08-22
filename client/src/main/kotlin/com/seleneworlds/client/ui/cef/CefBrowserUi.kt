@@ -103,7 +103,7 @@ class CefBrowserUi(
             if (insecureBrowserUi) {
                 addJcefArgs("--disable-web-security")
                 addJcefArgs("--allow-running-insecure-content")
-                addJcefArgs("--disable-features=LocalNetworkAccessChecks")
+                addJcefArgs("--disable-features=LocalNetworkAccessChecks,AutoupgradeMixedContent")
             }
         }
         val cefClient: CefClient
