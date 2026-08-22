@@ -1,198 +1,234 @@
-<!doctype html><html><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<style>
-  html,body,#bundle-ui{position:absolute;inset:0;margin:0;background:transparent;overflow:hidden}
-  .bundle-ui-host{position:absolute;inset:0;pointer-events:none}
-</style></head><body><div id="bundle-ui"></div><script type="module">
-const entries = __SELENE_UI_ENTRIES__;
-const mounted = [];
-const payloadCallbacks = new Map();
-let nextSubscriptionId = 1;
-const network = Object.freeze({
-  sendToServer(payloadId, payload = {}) {
-    window.seleneQuery({request:JSON.stringify({type:'send',payloadId,payload}),
-      onFailure:(code,message)=>console.error('sendToServer failed',code,message)});
-  },
-  onPayload(payloadId, callback) {
-    const subscriptionId = String(nextSubscriptionId++);
-    payloadCallbacks.set(subscriptionId,callback);
-    const queryId = window.seleneQuery({request:JSON.stringify({type:'subscribe',payloadId,subscriptionId}),persistent:true,
-      onFailure:(code,message)=>console.error('onPayload failed',code,message)});
-    return () => {
-      payloadCallbacks.delete(subscriptionId);
-      window.seleneQueryCancel(queryId);
-    };
-  }
-});
-const selene = Object.freeze({apiVersion:1,network});
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+        html, body, #bundle-ui {
+            position: absolute;
+            inset: 0;
+            margin: 0;
+            background: transparent;
+            overflow: hidden
+        }
 
-function rewriteRelativeUrls(root, baseUrl) {
-  for (const element of root.querySelectorAll('[src],[href]')) {
-    for (const attribute of ['src','href']) {
-      const value = element.getAttribute(attribute);
-      if (value && !value.startsWith('#')) element.setAttribute(attribute,new URL(value,baseUrl).href);
+        .bundle-ui-host {
+            position: absolute;
+            inset: 0;
+            pointer-events: none
+        }
+    </style>
+</head>
+<body>
+<div id="bundle-ui"></div>
+<script type="module">
+    const entries = __SELENE_UI_ENTRIES__;
+    const mounted = [];
+    const payloadCallbacks = new Map();
+    let nextSubscriptionId = 1;
+    const network = Object.freeze({
+        sendToServer(payloadId, payload = {}) {
+            window.seleneQuery({
+                request: JSON.stringify({type: 'send', payloadId, payload}),
+                onFailure: (code, message) => console.error('sendToServer failed', code, message)
+            });
+        },
+        onPayload(payloadId, callback) {
+            const subscriptionId = String(nextSubscriptionId++);
+            payloadCallbacks.set(subscriptionId, callback);
+            const queryId = window.seleneQuery({
+                request: JSON.stringify({type: 'subscribe', payloadId, subscriptionId}), persistent: true,
+                onFailure: (code, message) => console.error('onPayload failed', code, message)
+            });
+            return () => {
+                payloadCallbacks.delete(subscriptionId);
+                window.seleneQueryCancel(queryId);
+            };
+        }
+    });
+    const selene = Object.freeze({apiVersion: 1, network});
+
+    function rewriteRelativeUrls(root, baseUrl) {
+        for (const element of root.querySelectorAll('[src],[href]')) {
+            for (const attribute of ['src', 'href']) {
+                const value = element.getAttribute(attribute);
+                if (value && !value.startsWith('#')) element.setAttribute(attribute, new URL(value, baseUrl).href);
+            }
+        }
     }
-  }
-}
 
-async function mountEntry(entry) {
-  const source = entry.html ?? await fetch(entry.url).then(response => {
-    if (!response.ok) throw new Error(`Failed to fetch ${entry.bundle}:${entry.id}: ${response.status}`);
-    return response.text();
-  });
-  const parsed = new DOMParser().parseFromString(source,'text/html');
-  const host = document.createElement('div');
-  host.className = 'bundle-ui-host';
-  host.dataset.bundle = entry.bundle;
-  host.dataset.entrypoint = entry.id;
-  const root = host.attachShadow({mode:'closed'});
-  document.querySelector('#bundle-ui').append(host);
-  for (const style of parsed.querySelectorAll('style')) root.append(style.cloneNode(true));
-  for (const link of parsed.querySelectorAll('link[rel="stylesheet"][href]')) {
-    const copy = document.createElement('link');
-    copy.rel = 'stylesheet';
-    copy.href = new URL(link.getAttribute('href'),entry.url).href;
-    root.append(copy);
-  }
-  const content = document.createDocumentFragment();
-  for (const child of [...parsed.body.childNodes]) content.append(child.cloneNode(true));
-  rewriteRelativeUrls(content,entry.url);
-  root.append(content);
-  const disposers = [];
-  for (const script of parsed.querySelectorAll('script[type="module"][src]')) {
-    const module = await import(new URL(script.getAttribute('src'),entry.url).href);
-    if (typeof module.mount !== 'function') throw new Error(`${entry.bundle}:${entry.id} must export mount(root,selene)`);
-    const dispose = await module.mount(root,selene);
-    if (typeof dispose === 'function') disposers.push(dispose);
-  }
-  mounted.push({host,root,disposers});
-}
-
-let previousInteraction = '';
-const interactiveElements = new Set();
-let interactionFrame = 0;
-
-function scheduleInteraction() {
-  if (interactionFrame) return;
-  interactionFrame = requestAnimationFrame(() => {
-    interactionFrame = 0;
-    reportInteraction();
-  });
-}
-
-const resizeObserver = new ResizeObserver(scheduleInteraction);
-function refreshInteractiveElements() {
-  const current = new Set();
-  for (const ui of mounted)
-    for (const element of ui.root.querySelectorAll('[data-selene-interactive]')) current.add(element);
-  resizeObserver.disconnect();
-  interactiveElements.clear();
-  for (const ui of mounted) resizeObserver.observe(ui.host);
-  for (const element of current) {
-    interactiveElements.add(element);
-    resizeObserver.observe(element);
-  }
-}
-
-function observeInteraction(ui) {
-  new MutationObserver(() => {
-    refreshInteractiveElements();
-    scheduleInteraction();
-  }).observe(ui.root,{subtree:true,childList:true,characterData:true,attributes:true});
-  ui.root.addEventListener('focusin',scheduleInteraction,true);
-  ui.root.addEventListener('focusout',scheduleInteraction,true);
-  ui.root.addEventListener('scroll',scheduleInteraction,true);
-  refreshInteractiveElements();
-}
-
-function reportInteraction() {
-  const regions = [];
-  let editableFocused = false;
-  for (const ui of mounted) {
-    const active = ui.root.activeElement;
-    editableFocused ||= active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ||
-      active instanceof HTMLSelectElement || active?.isContentEditable === true;
-  }
-  for (const element of interactiveElements) {
-    const style = getComputedStyle(element);
-    if (style.pointerEvents === 'none' || style.visibility === 'hidden' || style.display === 'none') continue;
-    const rect = element.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) continue;
-    regions.push({x:Math.floor(rect.x),y:Math.floor(rect.y),
-      width:Math.ceil(rect.width),height:Math.ceil(rect.height)});
-  }
-  const interaction = JSON.stringify({type:'interaction',regions,editableFocused});
-  if (interaction === previousInteraction) return;
-  previousInteraction = interaction;
-  window.seleneQuery({request:interaction,onFailure:(code,message)=>
-    console.error('interaction update failed',code,message)});
-}
-
-let pointerTarget = null;
-function elementAt(x,y) {
-  for (let index=mounted.length-1;index>=0;index--) {
-    const target = mounted[index].root.elementFromPoint(x,y);
-    if (target) return target;
-  }
-  return null;
-}
-window.__seleneInput = Object.freeze({
-  pointer(type,x,y,button,buttons,deltaX,deltaY) {
-    let target = type === 'mousedown' ? elementAt(x,y) : pointerTarget ?? elementAt(x,y);
-    if (!target) return;
-    if (type === 'mousedown') {
-      pointerTarget = target;
-      if (typeof target.focus === 'function') target.focus({preventScroll:true});
+    async function mountEntry(entry) {
+        const source = entry.html ?? await fetch(entry.url).then(response => {
+            if (!response.ok) throw new Error(`Failed to fetch ${entry.bundle}:${entry.id}: ${response.status}`);
+            return response.text();
+        });
+        const parsed = new DOMParser().parseFromString(source, 'text/html');
+        const host = document.createElement('div');
+        host.className = 'bundle-ui-host';
+        host.dataset.bundle = entry.bundle;
+        host.dataset.entrypoint = entry.id;
+        const root = host.attachShadow({mode: 'closed'});
+        document.querySelector('#bundle-ui').append(host);
+        for (const style of parsed.querySelectorAll('style')) root.append(style.cloneNode(true));
+        for (const link of parsed.querySelectorAll('link[rel="stylesheet"][href]')) {
+            const copy = document.createElement('link');
+            copy.rel = 'stylesheet';
+            copy.href = new URL(link.getAttribute('href'), entry.url).href;
+            root.append(copy);
+        }
+        const content = document.createDocumentFragment();
+        for (const child of [...parsed.body.childNodes]) content.append(child.cloneNode(true));
+        rewriteRelativeUrls(content, entry.url);
+        root.append(content);
+        const disposers = [];
+        for (const script of parsed.querySelectorAll('script[type="module"][src]')) {
+            const module = await import(new URL(script.getAttribute('src'), entry.url).href);
+            if (typeof module.mount !== 'function') throw new Error(`${entry.bundle}:${entry.id} must export mount(root,selene)`);
+            const dispose = await module.mount(root, selene);
+            if (typeof dispose === 'function') disposers.push(dispose);
+        }
+        mounted.push({host, root, disposers});
     }
-    if (type === 'click') {
-      if (target === elementAt(x,y) && typeof target.click === 'function') target.click();
-      pointerTarget = null;
-      return;
-    }
-    const event = type === 'wheel'
-      ? new WheelEvent(type,{bubbles:true,cancelable:true,clientX:x,clientY:y,deltaX,deltaY})
-      : new MouseEvent(type,{bubbles:true,cancelable:true,clientX:x,clientY:y,button,buttons});
-    target.dispatchEvent(event);
-    if (type === 'wheel' && !event.defaultPrevented) {
-      let scrollable = target;
-      while (scrollable && scrollable !== document.body) {
-        if (scrollable.scrollHeight > scrollable.clientHeight || scrollable.scrollWidth > scrollable.clientWidth) break;
-        scrollable = scrollable.parentElement;
-      }
-      scrollable?.scrollBy(deltaX,deltaY);
-    }
-    if (type === 'mouseup') pointerTarget = null;
-  },
-  keyboard(type,key,shiftKey,ctrlKey,altKey,metaKey) {
-    let target = null;
-    for (let index=mounted.length-1;index>=0 && !target;index--)
-      target = mounted[index].root.activeElement;
-    target ??= document.activeElement ?? window;
-    const event = new KeyboardEvent(type,{key,bubbles:true,cancelable:true,composed:true,
-      shiftKey,ctrlKey,altKey,metaKey});
-    target.dispatchEvent(event);
-    if (type !== 'keydown' || event.defaultPrevented) return;
-    if (key === 'Enter') document.execCommand('insertLineBreak');
-    else if (key === 'Backspace') document.execCommand('delete');
-    else if (key === 'Delete') document.execCommand('forwardDelete');
-  },
-  payload(subscriptionId,payload) {
-    const callback = payloadCallbacks.get(subscriptionId);
-    if (!callback) return;
-    try { callback(JSON.parse(payload)); }
-    catch (error) { console.error('Payload callback failed',subscriptionId,error); }
-  }
-});
 
-Promise.all(entries.map(mountEntry)).then(() => {
-  console.info(`Mounted ${entries.length} bundle UI(s)`);
-  for (const ui of mounted) observeInteraction(ui);
-  window.addEventListener('resize',scheduleInteraction);
-  scheduleInteraction();
-})
-  .catch(error => {
-    console.error('Bundle UI mounting failed',error);
-    scheduleInteraction();
-  });
-</script></body></html>
+    let previousInteraction = '';
+    const interactiveElements = new Set();
+    let interactionFrame = 0;
+
+    function scheduleInteraction() {
+        if (interactionFrame) return;
+        interactionFrame = requestAnimationFrame(() => {
+            interactionFrame = 0;
+            reportInteraction();
+        });
+    }
+
+    const resizeObserver = new ResizeObserver(scheduleInteraction);
+
+    function refreshInteractiveElements() {
+        const current = new Set();
+        for (const ui of mounted)
+            for (const element of ui.root.querySelectorAll('[data-selene-interactive]')) current.add(element);
+        resizeObserver.disconnect();
+        interactiveElements.clear();
+        for (const ui of mounted) resizeObserver.observe(ui.host);
+        for (const element of current) {
+            interactiveElements.add(element);
+            resizeObserver.observe(element);
+        }
+    }
+
+    function observeInteraction(ui) {
+        new MutationObserver(() => {
+            refreshInteractiveElements();
+            scheduleInteraction();
+        }).observe(ui.root, {subtree: true, childList: true, characterData: true, attributes: true});
+        ui.root.addEventListener('focusin', scheduleInteraction, true);
+        ui.root.addEventListener('focusout', scheduleInteraction, true);
+        ui.root.addEventListener('scroll', scheduleInteraction, true);
+        refreshInteractiveElements();
+    }
+
+    function reportInteraction() {
+        const regions = [];
+        let editableFocused = false;
+        for (const ui of mounted) {
+            const active = ui.root.activeElement;
+            editableFocused ||= active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ||
+                active instanceof HTMLSelectElement || active?.isContentEditable === true;
+        }
+        for (const element of interactiveElements) {
+            const style = getComputedStyle(element);
+            if (style.pointerEvents === 'none' || style.visibility === 'hidden' || style.display === 'none') continue;
+            const rect = element.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) continue;
+            regions.push({
+                x: Math.floor(rect.x), y: Math.floor(rect.y),
+                width: Math.ceil(rect.width), height: Math.ceil(rect.height)
+            });
+        }
+        const interaction = JSON.stringify({type: 'interaction', regions, editableFocused});
+        if (interaction === previousInteraction) return;
+        previousInteraction = interaction;
+        window.seleneQuery({
+            request: interaction, onFailure: (code, message) =>
+                console.error('interaction update failed', code, message)
+        });
+    }
+
+    let pointerTarget = null;
+
+    function elementAt(x, y) {
+        for (let index = mounted.length - 1; index >= 0; index--) {
+            const target = mounted[index].root.elementFromPoint(x, y);
+            if (target) return target;
+        }
+        return null;
+    }
+
+    window.__seleneInput = Object.freeze({
+        pointer(type, x, y, button, buttons, deltaX, deltaY) {
+            let target = type === 'mousedown' ? elementAt(x, y) : pointerTarget ?? elementAt(x, y);
+            if (!target) return;
+            if (type === 'mousedown') {
+                pointerTarget = target;
+                if (typeof target.focus === 'function') target.focus({preventScroll: true});
+            }
+            if (type === 'click') {
+                if (target === elementAt(x, y) && typeof target.click === 'function') target.click();
+                pointerTarget = null;
+                return;
+            }
+            const event = type === 'wheel'
+                ? new WheelEvent(type, {bubbles: true, cancelable: true, clientX: x, clientY: y, deltaX, deltaY})
+                : new MouseEvent(type, {bubbles: true, cancelable: true, clientX: x, clientY: y, button, buttons});
+            target.dispatchEvent(event);
+            if (type === 'wheel' && !event.defaultPrevented) {
+                let scrollable = target;
+                while (scrollable && scrollable !== document.body) {
+                    if (scrollable.scrollHeight > scrollable.clientHeight || scrollable.scrollWidth > scrollable.clientWidth) break;
+                    scrollable = scrollable.parentElement;
+                }
+                scrollable?.scrollBy(deltaX, deltaY);
+            }
+            if (type === 'mouseup') pointerTarget = null;
+        },
+        keyboard(type, key, shiftKey, ctrlKey, altKey, metaKey) {
+            let target = null;
+            for (let index = mounted.length - 1; index >= 0 && !target; index--)
+                target = mounted[index].root.activeElement;
+            target ??= document.activeElement ?? window;
+            const event = new KeyboardEvent(type, {
+                key, bubbles: true, cancelable: true, composed: true,
+                shiftKey, ctrlKey, altKey, metaKey
+            });
+            target.dispatchEvent(event);
+            if (type !== 'keydown' || event.defaultPrevented) return;
+            if (key === 'Enter') document.execCommand('insertLineBreak');
+            else if (key === 'Backspace') document.execCommand('delete');
+            else if (key === 'Delete') document.execCommand('forwardDelete');
+        },
+        payload(subscriptionId, payload) {
+            const callback = payloadCallbacks.get(subscriptionId);
+            if (!callback) return;
+            try {
+                callback(JSON.parse(payload));
+            } catch (error) {
+                console.error('Payload callback failed', subscriptionId, error);
+            }
+        }
+    });
+
+    Promise.all(entries.map(mountEntry)).then(() => {
+        console.info(`Mounted ${entries.length} bundle UI(s)`);
+        for (const ui of mounted) observeInteraction(ui);
+        window.addEventListener('resize', scheduleInteraction);
+        scheduleInteraction();
+    })
+        .catch(error => {
+            console.error('Bundle UI mounting failed', error);
+            scheduleInteraction();
+        });
+</script>
+</body>
+</html>
 
