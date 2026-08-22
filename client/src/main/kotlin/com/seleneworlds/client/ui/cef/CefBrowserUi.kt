@@ -23,17 +23,17 @@ import org.cef.handler.*
 import org.cef.network.CefRequest
 import org.lwjgl.opengl.GL12
 import org.slf4j.Logger
-import java.awt.EventQueue
 import java.awt.Dimension
+import java.awt.EventQueue
 import java.awt.Window
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JFrame
 
 class CefBrowserUi(
@@ -96,11 +96,13 @@ class CefBrowserUi(
         val cefClient: CefClient
         app = builder.build().also {
             cefClient = it.createClient()
-            check(it.registerSchemeHandlerFactory(
-                CefBundleScheme.SCHEME,
-                CefBundleScheme.HOST,
-                bundleScheme
-            )) { "Failed to install the browser UI resource handler" }
+            check(
+                it.registerSchemeHandlerFactory(
+                    CefBundleScheme.SCHEME,
+                    CefBundleScheme.HOST,
+                    bundleScheme
+                )
+            ) { "Failed to install the browser UI resource handler" }
         }
 
         client = cefClient.apply {
@@ -137,29 +139,39 @@ class CefBrowserUi(
                 }
             })
             addLoadHandler(object : CefLoadHandlerAdapter() {
-                override fun onLoadError(browser: CefBrowser, frame: CefFrame, errorCode: CefLoadHandler.ErrorCode,
-                                         errorText: String, failedUrl: String) {
+                override fun onLoadError(
+                    browser: CefBrowser, frame: CefFrame, errorCode: CefLoadHandler.ErrorCode,
+                    errorText: String, failedUrl: String
+                ) {
                     logger.error("CEF failed to load {}: {} ({})", failedUrl, errorText, errorCode)
                 }
             })
             addRequestHandler(object : CefRequestHandlerAdapter() {
-                override fun onBeforeBrowse(browser: CefBrowser, frame: CefFrame, request: CefRequest,
-                    userGesture: Boolean, isRedirect: Boolean): Boolean {
+                override fun onBeforeBrowse(
+                    browser: CefBrowser, frame: CefFrame, request: CefRequest,
+                    userGesture: Boolean, isRedirect: Boolean
+                ): Boolean {
                     if (!frame.isMain || CefTrustedDocuments.contains(request.url)) return false
-                    logger.warn("Blocked untrusted CEF top-level {} to {}",
-                        if (isRedirect) "redirect" else "navigation", request.url)
+                    logger.warn(
+                        "Blocked untrusted CEF top-level {} to {}",
+                        if (isRedirect) "redirect" else "navigation", request.url
+                    )
                     return true
                 }
 
-                override fun onOpenURLFromTab(browser: CefBrowser, frame: CefFrame, targetUrl: String,
-                    userGesture: Boolean): Boolean {
+                override fun onOpenURLFromTab(
+                    browser: CefBrowser, frame: CefFrame, targetUrl: String,
+                    userGesture: Boolean
+                ): Boolean {
                     if (CefTrustedDocuments.contains(targetUrl)) return false
                     logger.warn("Blocked untrusted CEF top-level navigation to {}", targetUrl)
                     return true
                 }
 
-                override fun onRenderProcessTerminated(browser: CefBrowser,
-                                                       status: CefRequestHandler.TerminationStatus, errorCode: Int, errorString: String) {
+                override fun onRenderProcessTerminated(
+                    browser: CefBrowser,
+                    status: CefRequestHandler.TerminationStatus, errorCode: Int, errorString: String
+                ) {
                     logger.error("CEF renderer terminated: {} ({}: {})", status, errorCode, errorString)
                     requestReload()
                 }
@@ -213,8 +225,10 @@ class CefBrowserUi(
     fun awaitUiReady() {
         if (!initialized) return
         if (!bridge.awaitUiReady(UI_READY_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-            logger.error("CEF bundle UI did not become ready within {} seconds; continuing without it",
-                UI_READY_TIMEOUT_SECONDS)
+            logger.error(
+                "CEF bundle UI did not become ready within {} seconds; continuing without it",
+                UI_READY_TIMEOUT_SECONDS
+            )
             dispose()
             return
         }
@@ -247,20 +261,26 @@ class CefBrowserUi(
         uploadLatestFrame()
         val currentRegion = region ?: return
         Gdx.gl.glViewport(0, 0, Gdx.graphics.width, Gdx.graphics.height)
-        batch.projectionMatrix = projection.setToOrtho2D(0f, 0f, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
+        batch.projectionMatrix =
+            projection.setToOrtho2D(0f, 0f, Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
         batch.setColor(1f, 1f, 1f, 1f)
         batch.begin()
-        batch.draw(currentRegion, viewport.screenX.toFloat(),
+        batch.draw(
+            currentRegion, viewport.screenX.toFloat(),
             (Gdx.graphics.height - viewport.screenY - viewport.screenHeight).toFloat(),
-            viewport.screenWidth.toFloat(), viewport.screenHeight.toFloat())
+            viewport.screenWidth.toFloat(), viewport.screenHeight.toFloat()
+        )
         batch.end()
     }
 
-    fun dispatchPointer(type: String, x: Int, y: Int, button: Int, buttons: Int, deltaX: Float = 0f,
-        deltaY: Float = 0f) {
+    fun dispatchPointer(
+        type: String, x: Int, y: Int, button: Int, buttons: Int, deltaX: Float = 0f,
+        deltaY: Float = 0f
+    ) {
         if (!initialized || type !in POINTER_EVENT_TYPES) return
         browser?.executeJavaScript(
-            "window.__seleneBridge?.pointer('$type',$x,$y,$button,$buttons,$deltaX,$deltaY)", "", 0)
+            "window.__seleneBridge?.pointer('$type',$x,$y,$button,$buttons,$deltaX,$deltaY)", "", 0
+        )
     }
 
     fun insertText(character: Char) {
@@ -269,11 +289,14 @@ class CefBrowserUi(
         browser?.executeJavaScript("document.execCommand('insertText',false,$encoded)", "", 0)
     }
 
-    fun dispatchKeyboard(type: String, key: String, shift: Boolean, control: Boolean, alt: Boolean,
-        meta: Boolean) {
+    fun dispatchKeyboard(
+        type: String, key: String, shift: Boolean, control: Boolean, alt: Boolean,
+        meta: Boolean
+    ) {
         if (!initialized || type !in setOf("keydown", "keyup") || key !in KEY_NAMES) return
         browser?.executeJavaScript(
-            "window.__seleneBridge?.keyboard('$type','$key',$shift,$control,$alt,$meta)", "", 0)
+            "window.__seleneBridge?.keyboard('$type','$key',$shift,$control,$alt,$meta)", "", 0
+        )
     }
 
     fun dispatchCharacter(character: Char, shift: Boolean, control: Boolean, alt: Boolean, meta: Boolean) {
@@ -285,7 +308,8 @@ class CefBrowserUi(
         }
         browser?.executeJavaScript(
             "window.__seleneBridge?.keyboard('keydown','$escaped',$shift,$control,$alt,$meta);" +
-                "window.__seleneBridge?.keyboard('keyup','$escaped',$shift,$control,$alt,$meta)", "", 0)
+                    "window.__seleneBridge?.keyboard('keyup','$escaped',$shift,$control,$alt,$meta)", "", 0
+        )
     }
 
     fun focus() {
@@ -311,8 +335,10 @@ class CefBrowserUi(
         pixels.flip()
         texture!!.bind()
         Gdx.gl.glPixelStorei(GL20.GL_UNPACK_ALIGNMENT, 1)
-        Gdx.gl.glTexSubImage2D(GL20.GL_TEXTURE_2D, 0, 0, 0, frame.width, frame.height,
-            GL12.GL_BGRA, GL20.GL_UNSIGNED_BYTE, pixels)
+        Gdx.gl.glTexSubImage2D(
+            GL20.GL_TEXTURE_2D, 0, 0, 0, frame.width, frame.height,
+            GL12.GL_BGRA, GL20.GL_UNSIGNED_BYTE, pixels
+        )
     }
 
     private fun loadEntrypoints(): List<BrowserUiEntrypoint> =
@@ -339,7 +365,8 @@ class CefBrowserUi(
 
     override fun dispose() {
         if (!initialized && app == null && client == null && browser == null && hostFrame == null &&
-            pageDirectory == null) return
+            pageDirectory == null
+        ) return
         initialized = false
         texture?.dispose()
         texture = null
@@ -367,7 +394,8 @@ class CefBrowserUi(
         client?.dispose()
         app?.dispose()
         if (app != null && CefApp.getState() != CefApp.CefAppState.TERMINATED &&
-            !awaitShutdown(appTerminated, "application")) {
+            !awaitShutdown(appTerminated, "application")
+        ) {
             logger.error("CEF application did not terminate within {} seconds", SHUTDOWN_TIMEOUT_SECONDS)
         }
         browser = null
@@ -401,9 +429,11 @@ class CefBrowserUi(
 
     private companion object {
         val POINTER_EVENT_TYPES = setOf("mousemove", "mousedown", "mouseup", "click", "wheel")
-        val KEY_NAMES = setOf("Enter", "Escape", "Backspace", "Tab", "Delete", "Home", "End",
+        val KEY_NAMES = setOf(
+            "Enter", "Escape", "Backspace", "Tab", "Delete", "Home", "End",
             "PageUp", "PageDown", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Shift",
-            "Control", "Alt", "Meta")
+            "Control", "Alt", "Meta"
+        )
         const val UI_READY_TIMEOUT_SECONDS = 30L
         const val SHUTDOWN_TIMEOUT_SECONDS = 5L
         const val BROWSER_PAGE_NAME = "index.html"
