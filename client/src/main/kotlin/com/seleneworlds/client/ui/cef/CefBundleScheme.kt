@@ -1,5 +1,6 @@
 package com.seleneworlds.client.ui.cef
 
+import com.seleneworlds.client.config.ClientRuntimeConfig
 import com.seleneworlds.common.bundles.BundleDatabase
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -23,8 +24,12 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.atomic.AtomicReference
 
-class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHandlerFactory {
+class CefBundleScheme(
+    private val bundleDatabase: BundleDatabase,
+    runtimeConfig: ClientRuntimeConfig
+) : CefSchemeHandlerFactory {
     private val runtimePage = AtomicReference<Path?>()
+    val contentSecurityPolicy = contentSecurityPolicy(runtimeConfig.contentServerUrl)
 
     fun setRuntimePage(path: Path?) {
         runtimePage.set(path?.toAbsolutePath()?.normalize())
@@ -38,7 +43,7 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
     override fun create(
         browser: CefBrowser, frame: CefFrame, schemeName: String,
         request: CefRequest
-    ): CefResourceHandler = Resource(resolve(request.url), request.method)
+    ): CefResourceHandler = Resource(resolve(request.url), request.method, contentSecurityPolicy)
 
     private fun resolve(url: String): Path? {
         val uri = runCatching { URI(url) }.getOrNull() ?: return null
@@ -54,7 +59,11 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
         return resource.takeIf { it.startsWith(root) && Files.isRegularFile(it) }
     }
 
-    private class Resource(private val path: Path?, private val method: String) : CefResourceHandlerAdapter() {
+    private class Resource(
+        private val path: Path?,
+        private val method: String,
+        private val contentSecurityPolicy: String
+    ) : CefResourceHandlerAdapter() {
         private val mimeType = path?.let(::mimeType) ?: "text/plain"
         private var channel: SeekableByteChannel? = null
         private var openFailed = false
@@ -76,6 +85,8 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
             redirectUrl: StringRef
         ) {
             response.mimeType = mimeType
+            response.setHeaderByName("Content-Security-Policy", contentSecurityPolicy, true)
+            response.setHeaderByName("X-Content-Type-Options", "nosniff", true)
             when {
                 method != "GET" && method != "HEAD" -> {
                     response.status = 405
@@ -175,5 +186,19 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
         const val SCHEME = "https"
         const val HOST = "cef.seleneworlds.com"
         const val RUNTIME_URL = "$SCHEME://$HOST/runtime/index.html"
+        const val CSP_NONCE = "selene-runtime"
+
+        private fun contentSecurityPolicy(contentServerUrl: String): String {
+            val remoteOrigin = runCatching {
+                val uri = URI(contentServerUrl.trim())
+                require(uri.scheme.equals("http", true) || uri.scheme.equals("https", true))
+                require(uri.host != null && uri.userInfo == null)
+                URI(uri.scheme.lowercase(), null, uri.host, uri.port, null, null, null).toASCIIString()
+            }.getOrNull()
+            val sources = listOfNotNull("'self'", remoteOrigin).joinToString(" ")
+            return "default-src $sources; script-src $sources 'nonce-$CSP_NONCE'; " +
+                "connect-src $sources; style-src $sources 'unsafe-inline'; " +
+                "img-src $sources data:; frame-src 'none'"
+        }
     }
 }

@@ -8,6 +8,13 @@ internal object CefTrustedDocuments {
 
     fun contains(url: String): Boolean = runCatching { canonicalize(url) }.getOrNull() in allowlist
 
+    fun isBundleUrl(url: String): Boolean = runCatching {
+        val parsed = URI(url)
+        parsed.scheme.equals(CefBundleScheme.SCHEME, ignoreCase = true) &&
+            parsed.host.equals(CefBundleScheme.HOST, ignoreCase = true) &&
+            parsed.userInfo == null && parsed.port in setOf(-1, 443)
+    }.getOrDefault(false)
+
     private fun canonicalize(url: String): String {
         val parsed = URI(url).normalize()
         require(parsed.scheme.equals("https", ignoreCase = true))

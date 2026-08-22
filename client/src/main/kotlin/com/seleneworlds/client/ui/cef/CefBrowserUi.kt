@@ -152,10 +152,12 @@ class CefBrowserUi(
                     browser: CefBrowser, frame: CefFrame, request: CefRequest,
                     userGesture: Boolean, isRedirect: Boolean
                 ): Boolean {
-                    if (!frame.isMain || CefTrustedDocuments.contains(request.url)) return false
+                    if (CefTrustedDocuments.isBundleUrl(request.url)) return false
                     logger.warn(
-                        "Blocked untrusted CEF top-level {} to {}",
-                        if (isRedirect) "redirect" else "navigation", request.url
+                        "Blocked untrusted CEF {} {} to {}",
+                        if (frame.isMain) "top-level" else "subframe",
+                        if (isRedirect) "redirect" else "navigation",
+                        request.url
                     )
                     return true
                 }
@@ -164,7 +166,7 @@ class CefBrowserUi(
                     browser: CefBrowser, frame: CefFrame, targetUrl: String,
                     userGesture: Boolean
                 ): Boolean {
-                    if (CefTrustedDocuments.contains(targetUrl)) return false
+                    if (CefTrustedDocuments.isBundleUrl(targetUrl)) return false
                     logger.warn("Blocked untrusted CEF top-level navigation to {}", targetUrl)
                     return true
                 }
@@ -354,7 +356,12 @@ class CefBrowserUi(
         check(ENTRYPOINTS_PLACEHOLDER in RUNTIME_PAGE_TEMPLATE) {
             "Browser UI runtime template is missing $ENTRYPOINTS_PLACEHOLDER"
         }
-        val html = RUNTIME_PAGE_TEMPLATE.replace(ENTRYPOINTS_PLACEHOLDER, encodedEntries)
+        check(CSP_PLACEHOLDER in RUNTIME_PAGE_TEMPLATE) {
+            "Browser UI runtime template is missing $CSP_PLACEHOLDER"
+        }
+        val html = RUNTIME_PAGE_TEMPLATE
+            .replace(ENTRYPOINTS_PLACEHOLDER, encodedEntries)
+            .replace(CSP_PLACEHOLDER, bundleScheme.contentSecurityPolicy)
         val directory = pageDirectory ?: Files.createTempDirectory("selene-browser-ui-").also {
             pageDirectory = it
         }
@@ -441,6 +448,7 @@ class CefBrowserUi(
         const val SHUTDOWN_TIMEOUT_SECONDS = 5L
         const val BROWSER_PAGE_NAME = "index.html"
         const val ENTRYPOINTS_PLACEHOLDER = "__SELENE_UI_ENTRIES__"
+        const val CSP_PLACEHOLDER = "__SELENE_CSP__"
         val RUNTIME_PAGE_TEMPLATE = requireNotNull(
             CefBrowserUi::class.java.getResourceAsStream("/ui/cef/runtime.html")
         ) { "Missing browser UI runtime template" }.bufferedReader().use { it.readText() }

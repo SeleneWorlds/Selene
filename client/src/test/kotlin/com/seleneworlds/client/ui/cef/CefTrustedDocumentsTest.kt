@@ -19,4 +19,13 @@ class CefTrustedDocumentsTest {
         assertFalse(CefTrustedDocuments.contains("javascript:alert(1)"))
         assertFalse(CefTrustedDocuments.contains("not a URL"))
     }
+
+    @Test
+    fun `bundle URLs allow only the CEF scheme origin`() {
+        assertTrue(CefTrustedDocuments.isBundleUrl(CefBundleScheme.RUNTIME_URL))
+        assertTrue(CefTrustedDocuments.isBundleUrl("https://${CefBundleScheme.HOST}/bundle/example/index.html"))
+        assertFalse(CefTrustedDocuments.isBundleUrl("http://${CefBundleScheme.HOST}/bundle/example/index.html"))
+        assertFalse(CefTrustedDocuments.isBundleUrl("https://evil.invalid/bundle/example/index.html"))
+        assertFalse(CefTrustedDocuments.isBundleUrl("https://${CefBundleScheme.HOST}:444/bundle/example/index.html"))
+    }
 }
