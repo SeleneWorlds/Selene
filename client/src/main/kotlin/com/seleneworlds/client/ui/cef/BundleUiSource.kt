@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.slf4j.Logger
+import java.net.URI
 
 class BundleUiSource(
     private val runtimeConfig: ClientRuntimeConfig,
@@ -36,7 +37,8 @@ class BundleUiSource(
             if (runtimeConfig.token.isNotBlank()) header(HttpHeaders.Authorization, "Bearer ${runtimeConfig.token}")
         }.body<ClientUiIndex>()
         index.entrypoints.map { entry ->
-            BrowserUiEntrypoint(entry.bundle, entry.id, baseUrl + entry.url, null)
+            val resolvedUrl = URI("$baseUrl/").resolve(entry.url).toASCIIString()
+            BrowserUiEntrypoint(entry.bundle, entry.id, resolvedUrl, null)
         }
     }
 
