@@ -372,9 +372,18 @@ class CefBrowserUi(
         check(CSP_PLACEHOLDER in RUNTIME_PAGE_TEMPLATE) {
             "Browser UI runtime template is missing $CSP_PLACEHOLDER"
         }
+        check(DEVELOPMENT_SUPPORT_PLACEHOLDER in RUNTIME_PAGE_TEMPLATE) {
+            "Browser UI runtime template is missing $DEVELOPMENT_SUPPORT_PLACEHOLDER"
+        }
+        val developmentSupport = if (config.browserUiInsecure && config.browserUiUrl.isNotBlank()) {
+            VITE_DEVELOPMENT_SUPPORT
+        } else {
+            "null"
+        }
         val html = RUNTIME_PAGE_TEMPLATE
             .replace(ENTRYPOINTS_PLACEHOLDER, encodedEntries)
             .replace(CSP_PLACEHOLDER, bundleScheme.contentSecurityPolicy.orEmpty())
+            .replace(DEVELOPMENT_SUPPORT_PLACEHOLDER, developmentSupport)
         val directory = pageDirectory ?: Files.createTempDirectory("selene-browser-ui-").also {
             pageDirectory = it
         }
@@ -462,8 +471,14 @@ class CefBrowserUi(
         const val BROWSER_PAGE_NAME = "index.html"
         const val ENTRYPOINTS_PLACEHOLDER = "__SELENE_UI_ENTRIES__"
         const val CSP_PLACEHOLDER = "__SELENE_CSP__"
+        const val DEVELOPMENT_SUPPORT_PLACEHOLDER = "__SELENE_DEVELOPMENT_SUPPORT__"
         val RUNTIME_PAGE_TEMPLATE = requireNotNull(
             CefBrowserUi::class.java.getResourceAsStream("/ui/cef/runtime.html")
         ) { "Missing browser UI runtime template" }.bufferedReader().use { it.readText() }
+        val VITE_DEVELOPMENT_SUPPORT by lazy {
+            requireNotNull(CefBrowserUi::class.java.getResourceAsStream("/ui/cef/vite-development.js")) {
+                "Missing Vite browser UI development support"
+            }.bufferedReader().use { it.readText() }
+        }
     }
 }

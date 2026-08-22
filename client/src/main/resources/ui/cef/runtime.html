@@ -24,6 +24,7 @@
 <div id="bundle-ui"></div>
 <script type="module" nonce="selene-runtime">
     const entries = __SELENE_UI_ENTRIES__;
+    const developmentSupport = __SELENE_DEVELOPMENT_SUPPORT__;
     const mounted = [];
     const payloadCallbacks = new Map();
     const capturedKeys = new Map();
@@ -124,6 +125,7 @@
         for (const child of [...parsed.body.childNodes]) content.append(child.cloneNode(true));
         root.append(content);
         const disposers = [];
+        developmentSupport?.attachStyles(root, disposers);
         for (const script of parsed.querySelectorAll('script:not([type="module"][src])')) {
             console.warn(`${entry.bundle}:${entry.id} ignores a script element; use <script type="module" src="...">`, script);
         }
