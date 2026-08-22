@@ -11,6 +11,7 @@ import com.seleneworlds.client.config.ClientConfig
 import com.seleneworlds.client.window.WindowViewport
 import com.seleneworlds.common.util.Disposable
 import me.friwi.jcefmaven.CefAppBuilder
+import me.friwi.jcefmaven.MavenCefAppHandlerAdapter
 import org.cef.CefApp
 import org.cef.CefClient
 import org.cef.CefSettings
@@ -19,6 +20,7 @@ import org.cef.browser.CefFrame
 import org.cef.handler.CefDisplayHandlerAdapter
 import org.cef.handler.CefLoadHandler
 import org.cef.handler.CefLoadHandlerAdapter
+import org.cef.handler.CefLifeSpanHandlerAdapter
 import org.cef.handler.CefRequestHandler
 import org.cef.handler.CefRequestHandlerAdapter
 import org.slf4j.Logger
@@ -31,6 +33,7 @@ import java.net.URI
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.CountDownLatch
 import javax.swing.JFrame
 
 class CefBrowserUi(
@@ -51,6 +54,8 @@ class CefBrowserUi(
     private var initialized = false
     private val receivedFirstFrame = AtomicBoolean()
     private val reloadRequested = AtomicBoolean()
+    private var browserClosed = CountDownLatch(1)
+    private var appTerminated = CountDownLatch(1)
     private var browserWidth = 0
     private var browserHeight = 0
 
@@ -77,6 +82,11 @@ class CefBrowserUi(
             cefSettings.windowless_rendering_enabled = true
             cefSettings.background_color = cefSettings.ColorType(0, 0, 0, 0)
             cefSettings.root_cache_path = File(config.cefInstallDir, "cache").absolutePath
+            setAppHandler(object : MavenCefAppHandlerAdapter() {
+                override fun stateHasChanged(state: CefApp.CefAppState) {
+                    if (state == CefApp.CefAppState.TERMINATED) appTerminated.countDown()
+                }
+            })
             addJcefArgs("--autoplay-policy=no-user-gesture-required")
             if (entries.any { URI(it.url).scheme == "file" }) {
                 addJcefArgs("--allow-file-access-from-files", "--disable-web-security")
@@ -85,6 +95,11 @@ class CefBrowserUi(
         app = builder.build()
         client = app!!.createClient().apply {
             addMessageRouter(bridge.initialize())
+            addLifeSpanHandler(object : CefLifeSpanHandlerAdapter() {
+                override fun onBeforeClose(closingBrowser: CefBrowser) {
+                    if (closingBrowser === browser) browserClosed.countDown()
+                }
+            })
             addDisplayHandler(object : CefDisplayHandlerAdapter() {
                 override fun onConsoleMessage(browser: CefBrowser, level: CefSettings.LogSeverity,
                     message: String, source: String, line: Int): Boolean {
@@ -445,9 +460,16 @@ class CefBrowserUi(
         texture = null
         region = null
         uploadBuffer = null
+        bridge.dispose()
+        val currentBrowser = browser
+        if (currentBrowser != null) {
+            EventQueue.invokeLater { currentBrowser.close(true) }
+            if (!awaitShutdown(browserClosed, "browser")) {
+                logger.warn("CEF browser did not close within {} seconds", SHUTDOWN_TIMEOUT_SECONDS)
+            }
+        }
         try {
             EventQueue.invokeAndWait {
-                browser?.close(true)
                 hostFrame?.apply {
                     isVisible = false
                     contentPane.removeAll()
@@ -457,13 +479,26 @@ class CefBrowserUi(
         } catch (error: Exception) {
             logger.warn("Failed to close the browser UI window cleanly", error)
         }
-        bridge.dispose()
         client?.dispose()
         app?.dispose()
+        if (app != null && CefApp.getState() != CefApp.CefAppState.TERMINATED &&
+            !awaitShutdown(appTerminated, "application")) {
+            logger.error("CEF application did not terminate within {} seconds", SHUTDOWN_TIMEOUT_SECONDS)
+        }
         browser = null
         hostFrame = null
         client = null
         app = null
+    }
+
+    private fun awaitShutdown(latch: CountDownLatch, component: String): Boolean {
+        return try {
+            latch.await(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+            logger.warn("Interrupted while waiting for CEF {} shutdown", component)
+            false
+        }
     }
 
     private companion object {
@@ -473,5 +508,6 @@ class CefBrowserUi(
             "PageUp", "PageDown", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Shift",
             "Control", "Alt", "Meta")
         const val UI_READY_TIMEOUT_SECONDS = 30L
+        const val SHUTDOWN_TIMEOUT_SECONDS = 5L
     }
 }
