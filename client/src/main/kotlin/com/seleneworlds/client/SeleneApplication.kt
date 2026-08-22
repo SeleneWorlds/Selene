@@ -114,8 +114,7 @@ import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.tiles.TileRegistry
 import com.seleneworlds.common.util.Disposable
 
-private const val HTTP_REQUEST_TIMEOUT_MILLIS = 15_000L
-private const val HTTP_CONNECT_TIMEOUT_MILLIS = 5_000L
+private const val HTTP_CONNECT_TIMEOUT_MILLIS = 5000L
 
 class SeleneApplication(
     private val config: ClientConfig,
@@ -220,7 +219,6 @@ class SeleneApplication(
                 val json = get<Json>()
                 HttpClient(CIO) {
                     install(HttpTimeout) {
-                        requestTimeoutMillis = HTTP_REQUEST_TIMEOUT_MILLIS
                         connectTimeoutMillis = HTTP_CONNECT_TIMEOUT_MILLIS
                     }
                     install(ContentNegotiation) {

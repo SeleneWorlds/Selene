@@ -4,6 +4,7 @@ import com.seleneworlds.client.config.ClientRuntimeConfig
 import com.seleneworlds.common.bundles.BundleDatabase
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
@@ -35,6 +36,7 @@ class BundleUiSource(
     private fun loadRemote(): List<BrowserUiEntrypoint> = runBlocking {
         val baseUrl = runtimeConfig.contentServerUrl.trimEnd('/')
         val index = httpClient.get("$baseUrl/client/ui") {
+            timeout { requestTimeoutMillis = 15000L }
             if (runtimeConfig.token.isNotBlank()) header(HttpHeaders.Authorization, "Bearer ${runtimeConfig.token}")
         }.body<ClientUiIndex>()
         index.entrypoints.map { entry ->
