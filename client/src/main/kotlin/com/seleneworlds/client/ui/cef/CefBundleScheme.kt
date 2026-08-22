@@ -7,8 +7,8 @@ import org.cef.callback.CefCallback
 import org.cef.callback.CefResourceReadCallback
 import org.cef.callback.CefResourceSkipCallback
 import org.cef.callback.CefSchemeHandlerFactory
-import org.cef.handler.CefResourceHandlerAdapter
 import org.cef.handler.CefResourceHandler
+import org.cef.handler.CefResourceHandlerAdapter
 import org.cef.misc.BoolRef
 import org.cef.misc.IntRef
 import org.cef.misc.LongRef
@@ -35,8 +35,10 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
 
     val runtimeUrl: String get() = RUNTIME_URL
 
-    override fun create(browser: CefBrowser, frame: CefFrame, schemeName: String,
-        request: CefRequest): CefResourceHandler = Resource(resolve(request.url), request.method)
+    override fun create(
+        browser: CefBrowser, frame: CefFrame, schemeName: String,
+        request: CefRequest
+    ): CefResourceHandler = Resource(resolve(request.url), request.method)
 
     private fun resolve(url: String): Path? {
         val uri = runCatching { URI(url) }.getOrNull() ?: return null
@@ -69,8 +71,10 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
             return true
         }
 
-        override fun getResponseHeaders(response: CefResponse, responseLength: IntRef,
-            redirectUrl: StringRef) {
+        override fun getResponseHeaders(
+            response: CefResponse, responseLength: IntRef,
+            redirectUrl: StringRef
+        ) {
             response.mimeType = mimeType
             when {
                 method != "GET" && method != "HEAD" -> {
@@ -78,11 +82,13 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
                     response.statusText = "Method Not Allowed"
                     responseLength.set(0)
                 }
+
                 path == null || openFailed -> {
                     response.status = 404
                     response.statusText = "Not Found"
                     responseLength.set(0)
                 }
+
                 else -> {
                     val length = runCatching { Files.size(path) }.getOrNull()
                     if (length == null) {
@@ -99,8 +105,10 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
             }
         }
 
-        override fun read(dataOut: ByteArray, bytesToRead: Int, bytesRead: IntRef,
-            callback: CefResourceReadCallback): Boolean {
+        override fun read(
+            dataOut: ByteArray, bytesToRead: Int, bytesRead: IntRef,
+            callback: CefResourceReadCallback
+        ): Boolean {
             val resource = channel ?: return false
             val count = runCatching { resource.read(ByteBuffer.wrap(dataOut, 0, bytesToRead)) }
                 .getOrElse {
@@ -116,8 +124,10 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
             return true
         }
 
-        override fun skip(bytesToSkip: Long, bytesSkipped: LongRef,
-            callback: CefResourceSkipCallback): Boolean {
+        override fun skip(
+            bytesToSkip: Long, bytesSkipped: LongRef,
+            callback: CefResourceSkipCallback
+        ): Boolean {
             val resource = channel ?: return false
             val count = runCatching {
                 val position = resource.position()
@@ -141,14 +151,23 @@ class CefBundleScheme(private val bundleDatabase: BundleDatabase) : CefSchemeHan
         }
 
         private companion object {
-            fun mimeType(path: Path): String = Files.probeContentType(path) ?: when {
-                path.toString().endsWith(".html") -> "text/html"
-                path.toString().endsWith(".js") -> "text/javascript"
-                path.toString().endsWith(".css") -> "text/css"
-                path.toString().endsWith(".json") -> "application/json"
-                path.toString().endsWith(".svg") -> "image/svg+xml"
-                else -> "application/octet-stream"
+            private val MIME_TYPES = mapOf(
+                "html" to "text/html",
+                "htm" to "text/html",
+                "js" to "text/javascript",
+                "mjs" to "text/javascript",
+                "css" to "text/css",
+                "json" to "application/json",
+                "svg" to "image/svg+xml"
+            )
+
+            fun mimeType(path: Path): String {
+                val extension = path.fileName.toString().substringAfterLast('.', "").lowercase()
+                return MIME_TYPES[extension]
+                    ?: runCatching { Files.probeContentType(path) }.getOrNull()
+                    ?: "application/octet-stream"
             }
+
         }
     }
 
