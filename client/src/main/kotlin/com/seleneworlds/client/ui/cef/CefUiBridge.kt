@@ -103,7 +103,9 @@ class CefUiBridge(
     }
 
     private fun handleInteractiveElements(message: JsonObject, callback: CefQueryCallback) {
-        val regions = message["regions"]?.jsonArray.orEmpty().map { element ->
+        val regionElements = message["regions"]?.jsonArray.orEmpty()
+        require(regionElements.size <= MAX_HIT_REGIONS) { "Interactive region limit reached" }
+        val regions = regionElements.map { element ->
             val region = element.jsonObject
             CefHitRegion(
                 x = region.requiredInt("x"),
@@ -163,6 +165,7 @@ class CefUiBridge(
         const val MAX_PAYLOAD_ID_LENGTH = 128
         const val MAX_PAYLOAD_BYTES = 64 * 1024
         const val MAX_SUBSCRIPTIONS = 32767
+        const val MAX_HIT_REGIONS = 4096
         const val MAX_KEY_NAME_LENGTH = 64
         const val MAX_INPUT_KEYS = 256
     }
