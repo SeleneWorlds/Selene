@@ -26,6 +26,7 @@ import org.cef.handler.CefLifeSpanHandlerAdapter
 import org.cef.handler.CefRequestHandler
 import org.cef.handler.CefRequestHandlerAdapter
 import org.cef.network.CefRequest
+import org.lwjgl.opengl.GL12
 import org.slf4j.Logger
 import java.awt.EventQueue
 import java.awt.Dimension
@@ -295,7 +296,7 @@ class CefBrowserUi(
         texture!!.bind()
         Gdx.gl.glPixelStorei(GL20.GL_UNPACK_ALIGNMENT, 1)
         Gdx.gl.glTexSubImage2D(GL20.GL_TEXTURE_2D, 0, 0, 0, frame.width, frame.height,
-            GL_BGRA, GL20.GL_UNSIGNED_BYTE, pixels)
+            GL12.GL_BGRA, GL20.GL_UNSIGNED_BYTE, pixels)
     }
 
     private fun loadEntrypoints(): List<BrowserUiEntrypoint> =
@@ -383,7 +384,6 @@ class CefBrowserUi(
     }
 
     private companion object {
-        const val GL_BGRA = 0x80E1
         val POINTER_EVENT_TYPES = setOf("mousemove", "mousedown", "mouseup", "click", "wheel")
         val KEY_NAMES = setOf("Enter", "Escape", "Backspace", "Tab", "Delete", "Home", "End",
             "PageUp", "PageDown", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Shift",
