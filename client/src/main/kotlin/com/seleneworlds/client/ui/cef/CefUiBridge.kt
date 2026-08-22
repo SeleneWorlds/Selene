@@ -155,6 +155,6 @@ class CefUiBridge(
     private companion object {
         const val MAX_PAYLOAD_ID_LENGTH = 128
         const val MAX_PAYLOAD_BYTES = 64 * 1024
-        const val MAX_SUBSCRIPTIONS = 128
+        const val MAX_SUBSCRIPTIONS = 32767
     }
 }
