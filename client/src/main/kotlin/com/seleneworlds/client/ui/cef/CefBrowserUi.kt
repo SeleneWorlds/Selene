@@ -27,7 +27,6 @@ import org.cef.handler.CefRequestHandler
 import org.cef.handler.CefRequestHandlerAdapter
 import org.cef.network.CefRequest
 import org.slf4j.Logger
-import java.awt.BorderLayout
 import java.awt.EventQueue
 import java.awt.Dimension
 import java.awt.Window
@@ -170,12 +169,13 @@ class CefBrowserUi(
                 isUndecorated = true
                 opacity = 0f
                 type = Window.Type.UTILITY
-                layout = BorderLayout()
-                add(component, BorderLayout.CENTER)
-                pack()
+                isAutoRequestFocus = false
+                focusableWindowState = false
+                layout = null
+                add(component)
+                setSize(1, 1)
                 setLocation(-32000, -32000)
                 isVisible = true
-                validate()
             }
             browser!!.createImmediately()
         }
@@ -190,7 +190,6 @@ class CefBrowserUi(
         browserHeight = viewport.logicalHeight
         EventQueue.invokeLater {
             browser?.uiComponent?.setSize(viewport.logicalWidth, viewport.logicalHeight)
-            hostFrame?.setSize(viewport.logicalWidth, viewport.logicalHeight)
         }
     }
 
