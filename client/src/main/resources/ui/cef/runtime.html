@@ -38,6 +38,7 @@
     const worldTiles = new Map();
     const cameraCallbacks = new Set();
     const mapCallbacks = new Set();
+    const visualDefinitions = new Map();
     const worldTileKey = tile => `${tile.x}:${tile.y}:${tile.z}`;
     const applyWorldTiles = tiles => {
         for (const tile of tiles) {
@@ -111,6 +112,14 @@
         }));
     }
 
+    function bridgeQuery(request, operation) {
+        return new Promise((resolve, reject) => window.seleneQuery({
+            request: JSON.stringify(request),
+            onSuccess: resolve,
+            onFailure: (code, message) => reject(new Error(`${operation} failed: ${code} ${message}`))
+        }));
+    }
+
     function createApi(entry, disposers) {
         const registerPointerCallback = (callbacks, callback) => {
             if (typeof callback !== 'function') throw new Error('Pointer callback must be a function');
@@ -120,7 +129,7 @@
             return release;
         };
         return Object.freeze({
-            apiVersion: 2,
+            apiVersion: 3,
             resolveAsset(path) {
                 if (typeof path !== 'string' || path.length === 0) throw new Error('Asset path must be a non-empty string');
                 return new URL(path, entry.url).href;
@@ -136,6 +145,21 @@
                     await storageQuery({
                         type: 'storageSave', bundle: entry.bundle, entrypoint: entry.id, key, value
                     });
+                }
+            }),
+            visuals: Object.freeze({
+                async getDefinition(identifier) {
+                    if (typeof identifier !== 'string' || identifier.length === 0) {
+                        throw new Error('Visual identifier must be a non-empty string');
+                    }
+                    let request = visualDefinitions.get(identifier);
+                    if (!request) {
+                        request = bridgeQuery({type: 'visualDefinition', identifier}, 'visualDefinition')
+                            .then(JSON.parse)
+                            .catch(error => { visualDefinitions.delete(identifier); throw error; });
+                        visualDefinitions.set(identifier, request);
+                    }
+                    return request;
                 }
             }),
             input: Object.freeze({

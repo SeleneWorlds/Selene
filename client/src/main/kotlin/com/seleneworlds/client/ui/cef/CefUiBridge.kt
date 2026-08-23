@@ -4,6 +4,9 @@ import com.seleneworlds.client.network.NetworkApi
 import com.seleneworlds.client.camera.CameraManager
 import com.seleneworlds.client.game.ClientEvents
 import com.seleneworlds.client.maps.ClientMap
+import com.seleneworlds.client.rendering.visual.VisualDefinition
+import com.seleneworlds.client.rendering.visual.VisualRegistry
+import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.common.threading.MainThreadDispatcher
@@ -35,7 +38,8 @@ class CefUiBridge(
     private val interactionState: CefInteractionState,
     private val cameraManager: CameraManager,
     private val clientMap: ClientMap,
-    private val bundleUiStorage: BundleUiStorage
+    private val bundleUiStorage: BundleUiStorage,
+    private val visualRegistry: VisualRegistry
 ) {
     private data class Subscription(val remove: () -> Unit, val callback: CefQueryCallback)
 
@@ -58,6 +62,7 @@ class CefUiBridge(
                     "subscribeWorld" -> handleSubscribeWorld(browser, frame, queryId, persistent, callback)
                     "storageLoad" -> handleStorageLoad(message, callback)
                     "storageSave" -> handleStorageSave(message, callback)
+                    "visualDefinition" -> handleVisualDefinition(message, callback)
                     else -> return false
                 }
                 true
@@ -177,6 +182,14 @@ class CefUiBridge(
         callback.success("")
     }
 
+    private fun handleVisualDefinition(message: JsonObject, callback: CefQueryCallback) {
+        val value = message.requiredString("identifier")
+        require(value.length <= MAX_VISUAL_IDENTIFIER_LENGTH) { "Visual identifier is too long" }
+        val identifier = Identifier.parse(value)
+        val definition = requireNotNull(visualRegistry.get(identifier)) { "Visual not found: $identifier" }
+        callback.success(json.encodeToJsonElement(VisualDefinition.serializer(), definition).toString())
+    }
+
     private fun handleSubscribeWorld(browser: CefBrowser, frame: CefFrame, queryId: Long, persistent: Boolean,
         callback: CefQueryCallback) {
         require(persistent) { "World subscriptions must be persistent queries" }
@@ -263,6 +276,7 @@ class CefUiBridge(
         const val MAX_HIT_REGIONS = 4096
         const val MAX_KEY_NAME_LENGTH = 64
         const val MAX_INPUT_KEYS = 256
+        const val MAX_VISUAL_IDENTIFIER_LENGTH = 256
         const val WORLD_SNAPSHOT_RADIUS = 80
     }
 }
