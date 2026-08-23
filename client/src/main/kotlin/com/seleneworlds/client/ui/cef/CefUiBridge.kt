@@ -1,6 +1,10 @@
 package com.seleneworlds.client.ui.cef
 
 import com.seleneworlds.client.network.NetworkApi
+import com.seleneworlds.client.camera.CameraManager
+import com.seleneworlds.client.game.ClientEvents
+import com.seleneworlds.client.maps.ClientMap
+import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import kotlinx.serialization.json.Json
@@ -9,6 +13,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.browser.CefMessageRouter
@@ -25,7 +32,9 @@ class CefUiBridge(
     private val json: Json,
     private val mainThreadDispatcher: MainThreadDispatcher,
     private val logger: Logger,
-    private val interactionState: CefInteractionState
+    private val interactionState: CefInteractionState,
+    private val cameraManager: CameraManager,
+    private val clientMap: ClientMap
 ) {
     private data class Subscription(val remove: () -> Unit, val callback: CefQueryCallback)
 
@@ -44,6 +53,8 @@ class CefUiBridge(
                     "send" -> handleSend(message, callback)
                     "subscribe" -> handleSubscribe(browser, frame, queryId, persistent, message, callback)
                     "interactiveElements" -> handleInteractiveElements(message, callback)
+                    "worldSnapshot" -> handleWorldSnapshot(callback)
+                    "subscribeWorld" -> handleSubscribeWorld(browser, frame, queryId, persistent, callback)
                     else -> return false
                 }
                 true
@@ -126,6 +137,68 @@ class CefUiBridge(
         callback.success("")
     }
 
+    private fun handleWorldSnapshot(callback: CefQueryCallback) {
+        // UI initialization waits for CEF readiness on the game thread, so this
+        // startup query must not dispatch back to that thread or both will wait
+        // for each other. The game state is stationary during this handshake.
+        // TODO Should move the wait off-thread esp. to also be able to actually render a progress bar or something
+        val center = cameraManager.focusCoordinate
+        callback.success(buildJsonObject {
+            put("camera", coordinateJson(center))
+            put("tiles", buildJsonArray {
+                    for (y in center.y - WORLD_SNAPSHOT_RADIUS until center.y + WORLD_SNAPSHOT_RADIUS) {
+                        for (x in center.x - WORLD_SNAPSHOT_RADIUS until center.x + WORLD_SNAPSHOT_RADIUS) {
+                            mapTileJson(Coordinate(x, y, center.z))?.let(::add)
+                    }
+                }
+            })
+        }.toString())
+    }
+
+    private fun handleSubscribeWorld(browser: CefBrowser, frame: CefFrame, queryId: Long, persistent: Boolean,
+        callback: CefQueryCallback) {
+        require(persistent) { "World subscriptions must be persistent queries" }
+        val cameraListener = ClientEvents.CameraCoordinateChanged { coordinate ->
+            val encoded = JsonPrimitive(coordinateJson(coordinate).toString()).toString()
+            browser.executeJavaScript("window.__seleneBridge?.worldCamera($encoded)", frame.url, 0)
+        }
+        val mapListener = ClientEvents.MapChunkChanged { coordinate, width, height ->
+            val changes = buildJsonArray {
+                for (dy in 0 until height) for (dx in 0 until width) {
+                    val tileCoordinate = Coordinate(coordinate.x + dx, coordinate.y + dy, coordinate.z)
+                    add(mapTileJson(tileCoordinate) ?: buildJsonObject {
+                        put("x", tileCoordinate.x); put("y", tileCoordinate.y); put("z", tileCoordinate.z)
+                        put("removed", true)
+                    })
+                }
+            }
+            val encoded = JsonPrimitive(changes.toString()).toString()
+            browser.executeJavaScript("window.__seleneBridge?.worldMap($encoded)", frame.url, 0)
+        }
+        ClientEvents.CameraCoordinateChanged.EVENT.register(cameraListener)
+        ClientEvents.MapChunkChanged.EVENT.register(mapListener)
+        val remove = {
+            ClientEvents.CameraCoordinateChanged.EVENT.unregister(cameraListener)
+            ClientEvents.MapChunkChanged.EVENT.unregister(mapListener)
+        }
+        subscriptions.put(queryId, Subscription(remove, callback))?.remove?.invoke()
+    }
+
+    private fun mapTileJson(coordinate: Coordinate): JsonObject? {
+        val tile = clientMap.getTilesAt(coordinate).firstOrNull() ?: return null
+        val colorIndex = (tile.visual.api.getMetadata("mapColorIndex") as? Number)?.toInt()
+        return buildJsonObject {
+            put("x", coordinate.x); put("y", coordinate.y); put("z", coordinate.z)
+            put("visualMetadata", buildJsonObject {
+                colorIndex?.let { put("mapColorIndex", it) }
+            })
+        }
+    }
+
+    private fun coordinateJson(coordinate: Coordinate) = buildJsonObject {
+        put("x", coordinate.x); put("y", coordinate.y); put("z", coordinate.z)
+    }
+
     fun dispose() {
         uiReady.countDown()
         val currentRouter = router ?: return
@@ -168,5 +241,6 @@ class CefUiBridge(
         const val MAX_HIT_REGIONS = 4096
         const val MAX_KEY_NAME_LENGTH = 64
         const val MAX_INPUT_KEYS = 256
+        const val WORLD_SNAPSHOT_RADIUS = 80
     }
 }

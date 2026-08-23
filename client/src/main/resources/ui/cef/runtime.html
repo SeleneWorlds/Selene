@@ -32,6 +32,33 @@
     let textCaptureCount = 0;
     let interactionReportingEnabled = false;
     let nextSubscriptionId = 1;
+    let worldCoordinate = {x: 0, y: 0, z: 0};
+    const worldTiles = new Map();
+    const cameraCallbacks = new Set();
+    const mapCallbacks = new Set();
+    const worldTileKey = tile => `${tile.x}:${tile.y}:${tile.z}`;
+    const applyWorldTiles = tiles => {
+        for (const tile of tiles) {
+            const key = worldTileKey(tile);
+            if (tile.removed === true) worldTiles.delete(key); else worldTiles.set(key, tile);
+        }
+    };
+    const worldReady = new Promise((resolve, reject) => {
+        window.seleneQuery({
+            request: JSON.stringify({type: 'worldSnapshot'}),
+            onSuccess: response => {
+                const snapshot = JSON.parse(response);
+                worldCoordinate = snapshot.camera;
+                applyWorldTiles(snapshot.tiles);
+                resolve();
+            },
+            onFailure: (code, message) => reject(new Error(`worldSnapshot failed: ${code} ${message}`))
+        });
+    });
+    window.seleneQuery({
+        request: JSON.stringify({type: 'subscribeWorld'}), persistent: true,
+        onFailure: (code, message) => console.error('subscribeWorld failed', code, message)
+    });
     const network = Object.freeze({
         sendToServer(payloadId, payload = {}) {
             window.seleneQuery({
@@ -98,7 +125,23 @@
                 },
                 passThroughKeys: (...keys) => registerKeys(passthroughKeys, keys, disposers)
             }),
-            network
+            network,
+            world: Object.freeze({
+                getCameraCoordinate: () => ({...worldCoordinate}),
+                getMapTiles: () => [...worldTiles.values()].map(tile => ({...tile})),
+                onCameraCoordinateChanged: callback => {
+                    cameraCallbacks.add(callback);
+                    const release = () => cameraCallbacks.delete(callback);
+                    disposers.push(release);
+                    return release;
+                },
+                onMapChanged: callback => {
+                    mapCallbacks.add(callback);
+                    const release = () => mapCallbacks.delete(callback);
+                    disposers.push(release);
+                    return release;
+                }
+            })
         });
     }
 
@@ -324,10 +367,18 @@
             } catch (error) {
                 console.error('Payload callback failed', subscriptionId, error);
             }
+        },
+        worldCamera(coordinate) {
+            worldCoordinate = JSON.parse(coordinate);
+            for (const callback of [...cameraCallbacks]) callback({...worldCoordinate});
+        },
+        worldMap(changes) {
+            applyWorldTiles(JSON.parse(changes));
+            for (const callback of [...mapCallbacks]) callback();
         }
     });
 
-    Promise.allSettled(entries.map(mountEntry)).then(results => {
+    worldReady.then(() => Promise.allSettled(entries.map(mountEntry))).then(results => {
         for (const [index, result] of results.entries()) {
             if (result.status === 'rejected') {
                 console.error(`Bundle UI ${entries[index].bundle}:${entries[index].id} failed to mount`, result.reason);
