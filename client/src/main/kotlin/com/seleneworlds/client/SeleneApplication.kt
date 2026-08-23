@@ -186,6 +186,7 @@ class SeleneApplication(
                     listOf(
                         BundleEventSubscriptions,
                         get<SchedulesApi>(),
+                        get<PayloadHandlerRegistry<Unit>>(),
                         BundleUiListeners,
                         BundleUiDialogs
                     )

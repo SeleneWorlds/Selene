@@ -166,7 +166,8 @@ fun main(args: Array<String>) {
             CompositeBundleStateCleaner(
                 listOf(
                     BundleEventSubscriptions,
-                    get<SchedulesApi>()
+                    get<SchedulesApi>(),
+                    get<PayloadHandlerRegistry<Player>>()
                 )
             )
         }
