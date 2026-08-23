@@ -210,7 +210,7 @@ class CefBrowserUi(
             hostFrame = JFrame().apply {
                 isUndecorated = true
                 opacity = 0f
-                type = Window.Type.UTILITY
+                type = Window.Type.POPUP
                 isAutoRequestFocus = false
                 focusableWindowState = false
                 layout = null
