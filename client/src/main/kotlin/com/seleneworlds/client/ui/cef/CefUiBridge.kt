@@ -34,7 +34,8 @@ class CefUiBridge(
     private val logger: Logger,
     private val interactionState: CefInteractionState,
     private val cameraManager: CameraManager,
-    private val clientMap: ClientMap
+    private val clientMap: ClientMap,
+    private val bundleUiStorage: BundleUiStorage
 ) {
     private data class Subscription(val remove: () -> Unit, val callback: CefQueryCallback)
 
@@ -55,6 +56,8 @@ class CefUiBridge(
                     "interactiveElements" -> handleInteractiveElements(message, callback)
                     "worldSnapshot" -> handleWorldSnapshot(callback)
                     "subscribeWorld" -> handleSubscribeWorld(browser, frame, queryId, persistent, callback)
+                    "storageLoad" -> handleStorageLoad(message, callback)
+                    "storageSave" -> handleStorageSave(message, callback)
                     else -> return false
                 }
                 true
@@ -153,6 +156,25 @@ class CefUiBridge(
                 }
             })
         }.toString())
+    }
+
+    private fun handleStorageLoad(message: JsonObject, callback: CefQueryCallback) {
+        val value = bundleUiStorage.load(
+            message.requiredString("bundle"),
+            message.requiredString("entrypoint"),
+            message.requiredString("key")
+        )
+        callback.success(buildJsonObject { value?.let { put("value", it) } }.toString())
+    }
+
+    private fun handleStorageSave(message: JsonObject, callback: CefQueryCallback) {
+        bundleUiStorage.save(
+            message.requiredString("bundle"),
+            message.requiredString("entrypoint"),
+            message.requiredString("key"),
+            message.requiredString("value")
+        )
+        callback.success("")
     }
 
     private fun handleSubscribeWorld(browser: CefBrowser, frame: CefFrame, queryId: Long, persistent: Boolean,

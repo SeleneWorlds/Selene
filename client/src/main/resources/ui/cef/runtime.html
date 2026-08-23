@@ -103,7 +103,15 @@
         return release;
     }
 
-    function createApi(baseUrl, disposers) {
+    function storageQuery(request) {
+        return new Promise((resolve, reject) => window.seleneQuery({
+            request: JSON.stringify(request),
+            onSuccess: resolve,
+            onFailure: (code, message) => reject(new Error(`storage failed: ${code} ${message}`))
+        }));
+    }
+
+    function createApi(entry, disposers) {
         const registerPointerCallback = (callbacks, callback) => {
             if (typeof callback !== 'function') throw new Error('Pointer callback must be a function');
             callbacks.add(callback);
@@ -112,11 +120,24 @@
             return release;
         };
         return Object.freeze({
-            apiVersion: 1,
+            apiVersion: 2,
             resolveAsset(path) {
                 if (typeof path !== 'string' || path.length === 0) throw new Error('Asset path must be a non-empty string');
-                return new URL(path, baseUrl).href;
+                return new URL(path, entry.url).href;
             },
+            storage: Object.freeze({
+                async load(key) {
+                    const response = await storageQuery({
+                        type: 'storageLoad', bundle: entry.bundle, entrypoint: entry.id, key
+                    });
+                    return JSON.parse(response).value ?? null;
+                },
+                async save(key, value) {
+                    await storageQuery({
+                        type: 'storageSave', bundle: entry.bundle, entrypoint: entry.id, key, value
+                    });
+                }
+            }),
             input: Object.freeze({
                 captureKeys: (...keys) => registerKeys(capturedKeys, keys, disposers),
                 captureText: () => {
@@ -183,7 +204,7 @@
         for (const script of parsed.querySelectorAll('script:not([type="module"][src])')) {
             console.warn(`${entry.bundle}:${entry.id} ignores a script element; use <script type="module" src="...">`, script);
         }
-        const api = createApi(entry.url, disposers);
+        const api = createApi(entry, disposers);
         let mountModules = 0;
         for (const script of parsed.querySelectorAll('script[type="module"][src]')) {
             const module = await import(new URL(script.getAttribute('src'), entry.url).href);

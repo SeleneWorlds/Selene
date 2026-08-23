@@ -9,6 +9,7 @@ data class ClientConfig(
     val browserUiEnabled: Boolean = true,
     val browserUiUrl: String = "",
     val browserUiInsecure: Boolean = false,
+    val browserUiStorageDir: String = "ui-data",
     val cefInstallDir: String = "jcef-bundle"
 ) {
     val hotReloadMode: HotReloadMode

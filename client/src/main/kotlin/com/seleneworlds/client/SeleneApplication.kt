@@ -81,6 +81,7 @@ import com.seleneworlds.client.ui.UIApi
 import com.seleneworlds.client.ui.lua.UILuaApi
 import com.seleneworlds.client.ui.cef.CefBrowserUi
 import com.seleneworlds.client.ui.cef.BundleUiSource
+import com.seleneworlds.client.ui.cef.BundleUiStorage
 import com.seleneworlds.client.ui.cef.CefUiBridge
 import com.seleneworlds.client.ui.cef.CefInteractionState
 import com.seleneworlds.client.ui.cef.CefInputProcessor
@@ -258,6 +259,7 @@ class SeleneApplication(
             singleOf(::CefBundleScheme)
             singleOf(::BundleUiSource)
             singleOf(::CefUiBridge)
+            singleOf(::BundleUiStorage)
             singleOf(::CefInteractionState)
             singleOf(::CefInputProcessor)
         }
