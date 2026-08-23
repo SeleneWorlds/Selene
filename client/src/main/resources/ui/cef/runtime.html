@@ -29,6 +29,8 @@
     const payloadCallbacks = new Map();
     const capturedKeys = new Map();
     const passthroughKeys = new Map();
+    const pointerDownCallbacks = new Set();
+    const pointerUpCallbacks = new Set();
     let textCaptureCount = 0;
     let interactionReportingEnabled = false;
     let nextSubscriptionId = 1;
@@ -102,6 +104,13 @@
     }
 
     function createApi(baseUrl, disposers) {
+        const registerPointerCallback = (callbacks, callback) => {
+            if (typeof callback !== 'function') throw new Error('Pointer callback must be a function');
+            callbacks.add(callback);
+            const release = () => callbacks.delete(callback);
+            disposers.push(release);
+            return release;
+        };
         return Object.freeze({
             apiVersion: 1,
             resolveAsset(path) {
@@ -123,7 +132,9 @@
                     scheduleInteractiveElementsReporting();
                     return release;
                 },
-                passThroughKeys: (...keys) => registerKeys(passthroughKeys, keys, disposers)
+                passThroughKeys: (...keys) => registerKeys(passthroughKeys, keys, disposers),
+                onPointerDown: callback => registerPointerCallback(pointerDownCallbacks, callback),
+                onPointerUp: callback => registerPointerCallback(pointerUpCallbacks, callback)
             }),
             network,
             world: Object.freeze({
@@ -295,7 +306,21 @@
             element?.isContentEditable === true;
     }
 
+    function dispatchPointerCallbacks(callbacks, x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ) {
+        const event = {
+            clientX: x, clientY: y, button, shiftKey,
+            coordinate: {x: coordinateX, y: coordinateY, z: coordinateZ}
+        };
+        for (const callback of [...callbacks]) callback(event);
+    }
+
     window.__seleneBridge = Object.freeze({
+        gamePointerDown(x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ) {
+            dispatchPointerCallbacks(pointerDownCallbacks, x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ);
+        },
+        gamePointerUp(x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ) {
+            dispatchPointerCallbacks(pointerUpCallbacks, x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ);
+        },
         pointer(type, x, y, button, buttons, deltaX, deltaY) {
             let target = type === 'mousedown' ? elementAt(x, y) : pointerTarget ?? elementAt(x, y);
             if (!target) return;

@@ -2,12 +2,16 @@ package com.seleneworlds.client.ui.cef
 
 import com.badlogic.gdx.Input
 import com.badlogic.gdx.InputAdapter
+import com.seleneworlds.client.camera.CameraManager
+import com.seleneworlds.client.grid.ClientGrid
 import com.seleneworlds.client.window.WindowManager
 
 class CefInputProcessor(
     private val cef: CefBrowserUi,
     private val interactionState: CefInteractionState,
-    private val windowManager: WindowManager
+    private val windowManager: WindowManager,
+    private val cameraManager: CameraManager,
+    private val grid: ClientGrid
 ) : InputAdapter() {
     private val capturedButtons = mutableSetOf<Int>()
     private val pressedKeys = mutableSetOf<Int>()
@@ -17,15 +21,22 @@ class CefInputProcessor(
     override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
         if (!cef.enabled || pointer != 0) return false
         val (x, y) = browserCoordinates(screenX, screenY) ?: return false
-        if (!interactionState.isInteractive(x, y)) return false
+        dispatchGamePointerDown(x, y, screenX, screenY, button)
+        if (!interactionState.isInteractive(x, y)) {
+            return false
+        }
         capturedButtons += button
         dispatchMouse("mousedown", x, y, button)
         return true
     }
 
     override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
-        if (!cef.enabled || pointer != 0 || button !in capturedButtons) return false
+        if (!cef.enabled || pointer != 0) return false
         val (x, y) = browserCoordinatesClamped(screenX, screenY)
+        dispatchGamePointerUp(x, y, screenX, screenY, button)
+        if (button !in capturedButtons) {
+            return false
+        }
         dispatchMouse("mouseup", x, y, button)
         dispatchMouse("click", x, y, button)
         capturedButtons -= button
@@ -88,6 +99,23 @@ class CefInputProcessor(
 
     private fun dispatchMouse(type: String, x: Int, y: Int, gdxButton: Int) {
         cef.dispatchPointer(type, x, y, browserButton(gdxButton), buttonMask())
+    }
+
+    private fun gamePointerCoordinate(screenX: Int, screenY: Int) =
+        cameraManager.unproject(screenX.toFloat(), screenY.toFloat()).let { world ->
+            grid.screenToCoordinate(world.x, world.y, cameraManager.focusCoordinate.z)
+        }
+
+    private fun dispatchGamePointerDown(x: Int, y: Int, screenX: Int, screenY: Int, button: Int) {
+        cef.dispatchGamePointerDown(
+            x, y, browserButton(button), hasShift(), gamePointerCoordinate(screenX, screenY)
+        )
+    }
+
+    private fun dispatchGamePointerUp(x: Int, y: Int, screenX: Int, screenY: Int, button: Int) {
+        cef.dispatchGamePointerUp(
+            x, y, browserButton(button), hasShift(), gamePointerCoordinate(screenX, screenY)
+        )
     }
 
     private fun browserCoordinates(screenX: Int, screenY: Int): Pair<Int, Int>? {

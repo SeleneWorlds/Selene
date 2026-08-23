@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.g2d.TextureRegion
 import com.badlogic.gdx.math.Matrix4
 import com.seleneworlds.client.config.ClientConfig
 import com.seleneworlds.client.window.WindowViewport
+import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.util.Disposable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
@@ -294,6 +295,22 @@ class CefBrowserUi(
         if (!initialized || type !in POINTER_EVENT_TYPES) return
         browser?.executeJavaScript(
             "window.__seleneBridge?.pointer('$type',$x,$y,$button,$buttons,$deltaX,$deltaY)", "", 0
+        )
+    }
+
+    fun dispatchGamePointerDown(x: Int, y: Int, button: Int, shift: Boolean, coordinate: Coordinate) {
+        if (!initialized) return
+        browser?.executeJavaScript(
+            "window.__seleneBridge?.gamePointerDown($x,$y,$button,$shift," +
+                    "${coordinate.x},${coordinate.y},${coordinate.z})", "", 0
+        )
+    }
+
+    fun dispatchGamePointerUp(x: Int, y: Int, button: Int, shift: Boolean, coordinate: Coordinate) {
+        if (!initialized) return
+        browser?.executeJavaScript(
+            "window.__seleneBridge?.gamePointerUp($x,$y,$button,$shift," +
+                    "${coordinate.x},${coordinate.y},${coordinate.z})", "", 0
         )
     }
 
