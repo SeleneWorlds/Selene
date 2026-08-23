@@ -55,14 +55,16 @@ class CefUiBridge(
                 }
                 val message = json.parseToJsonElement(request).jsonObject
                 when (message.requiredString("type")) {
-                    "send" -> handleSend(message, callback)
-                    "subscribe" -> handleSubscribe(browser, frame, queryId, persistent, message, callback)
-                    "interactiveElements" -> handleInteractiveElements(message, callback)
-                    "worldSnapshot" -> handleWorldSnapshot(callback)
-                    "subscribeWorld" -> handleSubscribeWorld(browser, frame, queryId, persistent, callback)
-                    "storageLoad" -> handleStorageLoad(message, callback)
-                    "storageSave" -> handleStorageSave(message, callback)
-                    "visualDefinition" -> handleVisualDefinition(message, callback)
+                    "sendPayloadToServer" -> sendPayloadToServer(message, callback)
+                    "subscribeToServerPayload" -> subscribeToServerPayload(
+                        browser, frame, queryId, persistent, message, callback)
+                    "updateInteractionState" -> updateInteractionState(message, callback)
+                    "getInitialWorldState" -> getInitialWorldState(callback)
+                    "subscribeToWorldUpdates" -> subscribeToWorldUpdates(
+                        browser, frame, queryId, persistent, callback)
+                    "loadBundleStorageValue" -> loadBundleStorageValue(message, callback)
+                    "saveBundleStorageValue" -> saveBundleStorageValue(message, callback)
+                    "getVisualDefinition" -> getVisualDefinition(message, callback)
                     else -> return false
                 }
                 true
@@ -80,15 +82,15 @@ class CefUiBridge(
 
     private var router: CefMessageRouter? = null
 
-    fun initialize(): CefMessageRouter {
+    fun createMessageRouter(): CefMessageRouter {
         check(router == null) { "CEF UI bridge is already initialized" }
         return CefMessageRouter.create(
-            CefMessageRouter.CefMessageRouterConfig("seleneQuery", "seleneQueryCancel"),
+            CefMessageRouter.CefMessageRouterConfig("seleneBridgeRequest", "cancelSeleneBridgeRequest"),
             handler
         ).also { router = it }
     }
 
-    private fun handleSend(message: JsonObject, callback: CefQueryCallback) {
+    private fun sendPayloadToServer(message: JsonObject, callback: CefQueryCallback) {
         val payloadId = validatedPayloadId(message.requiredString("payloadId"))
         val payloadElement = message["payload"] ?: JsonObject(emptyMap())
         val payloadBytes = payloadElement.toString().toByteArray().size
@@ -100,7 +102,7 @@ class CefUiBridge(
         }
     }
 
-    private fun handleSubscribe(browser: CefBrowser, frame: CefFrame, queryId: Long, persistent: Boolean,
+    private fun subscribeToServerPayload(browser: CefBrowser, frame: CefFrame, queryId: Long, persistent: Boolean,
         message: JsonObject, callback: CefQueryCallback) {
         require(persistent) { "Payload subscriptions must be persistent queries" }
         require(subscriptions.size < MAX_SUBSCRIPTIONS) { "UI subscription limit reached" }
@@ -113,7 +115,7 @@ class CefUiBridge(
                 val encodedPayload = JsonPrimitive(
                     json.encodeToJsonElement(SerializedMapSerializer, payload).toString()).toString()
                 browser.executeJavaScript(
-                    "window.__seleneBridge?.payload($encodedId,$encodedPayload)", frame.url, 0)
+                    "window.__seleneBridge?.deliverServerPayload($encodedId,$encodedPayload)", frame.url, 0)
             } catch (error: Exception) {
                 logger.warn("Failed to deliver payload {} to CEF UI", payloadId, error)
             }
@@ -121,7 +123,7 @@ class CefUiBridge(
         subscriptions.put(queryId, Subscription(remove, callback))?.remove?.invoke()
     }
 
-    private fun handleInteractiveElements(message: JsonObject, callback: CefQueryCallback) {
+    private fun updateInteractionState(message: JsonObject, callback: CefQueryCallback) {
         val regionElements = message["regions"]?.jsonArray.orEmpty()
         require(regionElements.size <= MAX_HIT_REGIONS) { "Interactive region limit reached" }
         val regions = regionElements.map { element ->
@@ -145,7 +147,7 @@ class CefUiBridge(
         callback.success("")
     }
 
-    private fun handleWorldSnapshot(callback: CefQueryCallback) {
+    private fun getInitialWorldState(callback: CefQueryCallback) {
         // UI initialization waits for CEF readiness on the game thread, so this
         // startup query must not dispatch back to that thread or both will wait
         // for each other. The game state is stationary during this handshake.
@@ -163,7 +165,7 @@ class CefUiBridge(
         }.toString())
     }
 
-    private fun handleStorageLoad(message: JsonObject, callback: CefQueryCallback) {
+    private fun loadBundleStorageValue(message: JsonObject, callback: CefQueryCallback) {
         val value = bundleUiStorage.load(
             message.requiredString("bundle"),
             message.requiredString("entrypoint"),
@@ -172,7 +174,7 @@ class CefUiBridge(
         callback.success(buildJsonObject { value?.let { put("value", it) } }.toString())
     }
 
-    private fun handleStorageSave(message: JsonObject, callback: CefQueryCallback) {
+    private fun saveBundleStorageValue(message: JsonObject, callback: CefQueryCallback) {
         bundleUiStorage.save(
             message.requiredString("bundle"),
             message.requiredString("entrypoint"),
@@ -182,7 +184,7 @@ class CefUiBridge(
         callback.success("")
     }
 
-    private fun handleVisualDefinition(message: JsonObject, callback: CefQueryCallback) {
+    private fun getVisualDefinition(message: JsonObject, callback: CefQueryCallback) {
         val value = message.requiredString("identifier")
         require(value.length <= MAX_VISUAL_IDENTIFIER_LENGTH) { "Visual identifier is too long" }
         val identifier = Identifier.parse(value)
@@ -190,12 +192,12 @@ class CefUiBridge(
         callback.success(json.encodeToJsonElement(VisualDefinition.serializer(), definition).toString())
     }
 
-    private fun handleSubscribeWorld(browser: CefBrowser, frame: CefFrame, queryId: Long, persistent: Boolean,
+    private fun subscribeToWorldUpdates(browser: CefBrowser, frame: CefFrame, queryId: Long, persistent: Boolean,
         callback: CefQueryCallback) {
         require(persistent) { "World subscriptions must be persistent queries" }
         val cameraListener = ClientEvents.CameraCoordinateChanged { coordinate ->
             val encoded = JsonPrimitive(coordinateJson(coordinate).toString()).toString()
-            browser.executeJavaScript("window.__seleneBridge?.worldCamera($encoded)", frame.url, 0)
+            browser.executeJavaScript("window.__seleneBridge?.updateWorldCameraCoordinate($encoded)", frame.url, 0)
         }
         val mapListener = ClientEvents.MapChunkChanged { coordinate, width, height ->
             val changes = buildJsonArray {
@@ -208,7 +210,7 @@ class CefUiBridge(
                 }
             }
             val encoded = JsonPrimitive(changes.toString()).toString()
-            browser.executeJavaScript("window.__seleneBridge?.worldMap($encoded)", frame.url, 0)
+            browser.executeJavaScript("window.__seleneBridge?.updateWorldMapTiles($encoded)", frame.url, 0)
         }
         ClientEvents.CameraCoordinateChanged.EVENT.register(cameraListener)
         ClientEvents.MapChunkChanged.EVENT.register(mapListener)
@@ -247,7 +249,7 @@ class CefUiBridge(
 
     fun awaitUiReady(timeout: Long, unit: TimeUnit): Boolean = uiReady.await(timeout, unit)
 
-    fun prepareReload(browser: CefBrowser) {
+    fun prepareForReload(browser: CefBrowser) {
         router?.cancelPending(browser, handler)
         interactionState.clear()
     }

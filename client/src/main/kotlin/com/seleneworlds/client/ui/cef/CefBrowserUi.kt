@@ -118,7 +118,7 @@ class CefBrowserUi(
         }
 
         client = cefClient.apply {
-            addMessageRouter(bridge.initialize())
+            addMessageRouter(bridge.createMessageRouter())
             addLifeSpanHandler(object : CefLifeSpanHandlerAdapter() {
                 override fun onBeforeClose(closingBrowser: CefBrowser) {
                     if (closingBrowser === browser) browserClosed.countDown()
@@ -263,7 +263,7 @@ class CefBrowserUi(
                 return
             }
             val currentBrowser = browser ?: return
-            bridge.prepareReload(currentBrowser)
+            bridge.prepareForReload(currentBrowser)
             currentBrowser.loadURL(writeBrowserPage(entries))
             logger.info("Reloading {} browser UI entrypoint(s)", entries.size)
         } catch (error: Exception) {

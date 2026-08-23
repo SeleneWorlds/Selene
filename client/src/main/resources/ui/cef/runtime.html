@@ -47,38 +47,38 @@
         }
     };
     const worldReady = new Promise((resolve, reject) => {
-        window.seleneQuery({
-            request: JSON.stringify({type: 'worldSnapshot'}),
+        window.seleneBridgeRequest({
+            request: JSON.stringify({type: 'getInitialWorldState'}),
             onSuccess: response => {
                 const snapshot = JSON.parse(response);
                 worldCoordinate = snapshot.camera;
                 applyWorldTiles(snapshot.tiles);
                 resolve();
             },
-            onFailure: (code, message) => reject(new Error(`worldSnapshot failed: ${code} ${message}`))
+            onFailure: (code, message) => reject(new Error(`getInitialWorldState failed: ${code} ${message}`))
         });
     });
-    window.seleneQuery({
-        request: JSON.stringify({type: 'subscribeWorld'}), persistent: true,
-        onFailure: (code, message) => console.error('subscribeWorld failed', code, message)
+    window.seleneBridgeRequest({
+        request: JSON.stringify({type: 'subscribeToWorldUpdates'}), persistent: true,
+        onFailure: (code, message) => console.error('subscribeToWorldUpdates failed', code, message)
     });
     const network = Object.freeze({
         sendToServer(payloadId, payload = {}) {
-            window.seleneQuery({
-                request: JSON.stringify({type: 'send', payloadId, payload}),
+            window.seleneBridgeRequest({
+                request: JSON.stringify({type: 'sendPayloadToServer', payloadId, payload}),
                 onFailure: (code, message) => console.error('sendToServer failed', code, message)
             });
         },
         onPayload(payloadId, callback) {
             const subscriptionId = String(nextSubscriptionId++);
             payloadCallbacks.set(subscriptionId, callback);
-            const queryId = window.seleneQuery({
-                request: JSON.stringify({type: 'subscribe', payloadId, subscriptionId}), persistent: true,
+            const queryId = window.seleneBridgeRequest({
+                request: JSON.stringify({type: 'subscribeToServerPayload', payloadId, subscriptionId}), persistent: true,
                 onFailure: (code, message) => console.error('onPayload failed', code, message)
             });
             return () => {
                 payloadCallbacks.delete(subscriptionId);
-                window.seleneQueryCancel(queryId);
+                window.cancelSeleneBridgeRequest(queryId);
             };
         }
     });
@@ -104,19 +104,11 @@
         return release;
     }
 
-    function storageQuery(request) {
-        return new Promise((resolve, reject) => window.seleneQuery({
+    function executeBridgeRequest(request) {
+        return new Promise((resolve, reject) => window.seleneBridgeRequest({
             request: JSON.stringify(request),
             onSuccess: resolve,
-            onFailure: (code, message) => reject(new Error(`storage failed: ${code} ${message}`))
-        }));
-    }
-
-    function bridgeQuery(request, operation) {
-        return new Promise((resolve, reject) => window.seleneQuery({
-            request: JSON.stringify(request),
-            onSuccess: resolve,
-            onFailure: (code, message) => reject(new Error(`${operation} failed: ${code} ${message}`))
+            onFailure: (code, message) => reject(new Error(`${request.type} failed: ${code} ${message}`))
         }));
     }
 
@@ -136,14 +128,14 @@
             },
             storage: Object.freeze({
                 async load(key) {
-                    const response = await storageQuery({
-                        type: 'storageLoad', bundle: entry.bundle, entrypoint: entry.id, key
+                    const response = await executeBridgeRequest({
+                        type: 'loadBundleStorageValue', bundle: entry.bundle, entrypoint: entry.id, key
                     });
                     return JSON.parse(response).value ?? null;
                 },
                 async save(key, value) {
-                    await storageQuery({
-                        type: 'storageSave', bundle: entry.bundle, entrypoint: entry.id, key, value
+                    await executeBridgeRequest({
+                        type: 'saveBundleStorageValue', bundle: entry.bundle, entrypoint: entry.id, key, value
                     });
                 }
             }),
@@ -154,7 +146,7 @@
                     }
                     let request = visualDefinitions.get(identifier);
                     if (!request) {
-                        request = bridgeQuery({type: 'visualDefinition', identifier}, 'visualDefinition')
+                        request = executeBridgeRequest({type: 'getVisualDefinition', identifier})
                             .then(JSON.parse)
                             .catch(error => { visualDefinitions.delete(identifier); throw error; });
                         visualDefinitions.set(identifier, request);
@@ -323,15 +315,15 @@
             });
         }
         const message = JSON.stringify({
-            type: 'interactiveElements', regions, editableFocused,
+            type: 'updateInteractionState', regions, editableFocused,
             capturedKeys: [...capturedKeys.keys()], captureText: textCaptureCount > 0,
             passthroughKeys: [...passthroughKeys.keys()]
         });
         if (message === previousInteractiveElements) return;
         previousInteractiveElements = message;
-        window.seleneQuery({
+        window.seleneBridgeRequest({
             request: message, onFailure: (code, message) =>
-                console.error('interactiveElements update failed', code, message)
+                console.error('updateInteractionState failed', code, message)
         });
     }
 
@@ -429,7 +421,7 @@
             else if (key === 'Backspace') document.execCommand('delete');
             else if (key === 'Delete') document.execCommand('forwardDelete');
         },
-        payload(subscriptionId, payload) {
+        deliverServerPayload(subscriptionId, payload) {
             const callback = payloadCallbacks.get(subscriptionId);
             if (!callback) return;
             try {
@@ -438,11 +430,11 @@
                 console.error('Payload callback failed', subscriptionId, error);
             }
         },
-        worldCamera(coordinate) {
+        updateWorldCameraCoordinate(coordinate) {
             worldCoordinate = JSON.parse(coordinate);
             for (const callback of [...cameraCallbacks]) callback({...worldCoordinate});
         },
-        worldMap(changes) {
+        updateWorldMapTiles(changes) {
             applyWorldTiles(JSON.parse(changes));
             for (const callback of [...mapCallbacks]) callback();
         }
