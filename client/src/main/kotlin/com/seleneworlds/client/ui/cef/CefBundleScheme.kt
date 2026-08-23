@@ -3,6 +3,13 @@ package com.seleneworlds.client.ui.cef
 import com.seleneworlds.client.config.ClientConfig
 import com.seleneworlds.client.config.ClientRuntimeConfig
 import com.seleneworlds.common.bundles.BundleDatabase
+import com.seleneworlds.client.rendering.visual.VisualDefinition
+import com.seleneworlds.client.rendering.visual.VisualRegistry
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.callback.CefCallback
@@ -28,7 +35,9 @@ import java.util.concurrent.atomic.AtomicReference
 class CefBundleScheme(
     private val bundleDatabase: BundleDatabase,
     runtimeConfig: ClientRuntimeConfig,
-    clientConfig: ClientConfig
+    clientConfig: ClientConfig,
+    private val json: Json,
+    private val visualRegistry: VisualRegistry
 ) : CefSchemeHandlerFactory {
     private val runtimePage = AtomicReference<Path?>()
     private val insecureBrowserUi = clientConfig.browserUiInsecure && clientConfig.browserUiUrl.isNotBlank()
@@ -48,29 +57,84 @@ class CefBundleScheme(
     override fun create(
         browser: CefBrowser, frame: CefFrame, schemeName: String,
         request: CefRequest
-    ): CefResourceHandler = Resource(resolve(request.url), request.method, contentSecurityPolicy)
+    ): CefResourceHandler {
+        val resolved = resolve(request.url)
+        return Resource(resolved?.path, resolved?.content, resolved?.mimeType, request.method, contentSecurityPolicy)
+    }
 
-    private fun resolve(url: String): Path? {
+    private fun resolve(url: String): ResolvedResource? {
         val uri = runCatching { URI(url) }.getOrNull() ?: return null
         if (uri.scheme != SCHEME || uri.host != HOST) return null
         val segments = uri.path.removePrefix("/").split('/').filter(String::isNotEmpty)
-        if (segments == listOf("runtime", "index.html")) return runtimePage.get()?.takeIf(Files::isRegularFile)
+        if (segments == listOf("runtime", "index.html")) {
+            return runtimePage.get()?.takeIf(Files::isRegularFile)?.let { ResolvedResource(path = it) }
+        }
+        if (segments == listOf("client", "asset-manifest.json")) return clientAssetManifest()
+        if (segments == listOf("client", "registries", "selene:visuals")) return visualRegistrySnapshot()
+        if (segments.size >= 3 && segments.take(2) == listOf("client", "content")) {
+            return resolveAssetPath(segments.drop(2).joinToString("/"))?.let { ResolvedResource(path = it) }
+        }
         if (segments.size < 3 || segments.first() != "bundle") return null
         val bundle = bundleDatabase.getEnabledBundle(segments[1]) ?: return null
         val root = runCatching { bundle.dir.toPath().toRealPath() }.getOrNull() ?: return null
         val candidate = root.resolve(segments.drop(2).joinToString("/")).normalize()
         if (!candidate.startsWith(root)) return null
         val resource = runCatching { candidate.toRealPath() }.getOrNull() ?: return null
-        return resource.takeIf { it.startsWith(root) && Files.isRegularFile(it) }
+        return resource.takeIf { it.startsWith(root) && Files.isRegularFile(it) }?.let { ResolvedResource(path = it) }
     }
+
+    private fun resolveAssetPath(path: String): Path? {
+        if (!path.startsWith("client/") && !path.startsWith("common/")) return null
+        return bundleDatabase.enabledBundles.asReversed().firstNotNullOfOrNull { bundle ->
+            val root = runCatching { bundle.dir.toPath().toRealPath() }.getOrNull() ?: return@firstNotNullOfOrNull null
+            val candidate = root.resolve(path).normalize()
+            if (!candidate.startsWith(root)) return@firstNotNullOfOrNull null
+            runCatching { candidate.toRealPath() }.getOrNull()?.takeIf { it.startsWith(root) && Files.isRegularFile(it) }
+        }
+    }
+
+    private fun clientAssetManifest(): ResolvedResource {
+        val assets = linkedMapOf<String, JsonPrimitive>()
+        for (bundle in bundleDatabase.enabledBundles) for (rootName in listOf("common", "client")) {
+            val root = bundle.dir.toPath().resolve(rootName)
+            if (!Files.isDirectory(root)) continue
+            Files.walk(root).use { paths -> paths.filter(Files::isRegularFile).forEach { file ->
+                val logicalPath = "$rootName/${root.relativize(file).toString().replace('\\', '/')}"
+                assets[logicalPath] = JsonPrimitive("/client/content/$logicalPath")
+            } }
+        }
+        val content = buildJsonObject { put("assets", JsonObject(assets)) }.toString().toByteArray()
+        return ResolvedResource(content = content, mimeType = "application/json")
+    }
+
+    private fun visualRegistrySnapshot(): ResolvedResource {
+        val entries = visualRegistry.getAll().mapKeys { it.key.toString() }.mapValues {
+            json.encodeToJsonElement(VisualDefinition.serializer(), it.value)
+        }
+        val content = buildJsonObject {
+            put("registry", "selene:visuals")
+            put("hash", visualRegistry.cacheKey.toString())
+            put("entries", JsonObject(entries))
+        }.toString().toByteArray()
+        return ResolvedResource(content = content, mimeType = "application/json")
+    }
+
+    private data class ResolvedResource(
+        val path: Path? = null,
+        val content: ByteArray? = null,
+        val mimeType: String? = null
+    )
 
     private class Resource(
         private val path: Path?,
+        private val content: ByteArray?,
+        explicitMimeType: String?,
         private val method: String,
         private val contentSecurityPolicy: String?
     ) : CefResourceHandlerAdapter() {
-        private val mimeType = path?.let(::mimeType) ?: "text/plain"
+        private val mimeType = explicitMimeType ?: path?.let(::mimeType) ?: "text/plain"
         private var channel: SeekableByteChannel? = null
+        private var contentOffset = 0
         private var openFailed = false
 
         override fun open(request: CefRequest, handleRequest: BoolRef, callback: CefCallback): Boolean {
@@ -101,14 +165,14 @@ class CefBundleScheme(
                     responseLength.set(0)
                 }
 
-                path == null || openFailed -> {
+                path == null && content == null || openFailed -> {
                     response.status = 404
                     response.statusText = "Not Found"
                     responseLength.set(0)
                 }
 
                 else -> {
-                    val length = runCatching { Files.size(path) }.getOrNull()
+                    val length = content?.size?.toLong() ?: path?.let { runCatching { Files.size(it) }.getOrNull() }
                     if (length == null) {
                         closeResource()
                         response.status = 404
@@ -127,6 +191,14 @@ class CefBundleScheme(
             dataOut: ByteArray, bytesToRead: Int, bytesRead: IntRef,
             callback: CefResourceReadCallback
         ): Boolean {
+            if (content != null) {
+                val count = minOf(bytesToRead, content.size - contentOffset)
+                if (count <= 0) return false
+                content.copyInto(dataOut, 0, contentOffset, contentOffset + count)
+                contentOffset += count
+                bytesRead.set(count)
+                return true
+            }
             val resource = channel ?: return false
             val count = runCatching { resource.read(ByteBuffer.wrap(dataOut, 0, bytesToRead)) }
                 .getOrElse {
@@ -146,6 +218,12 @@ class CefBundleScheme(
             bytesToSkip: Long, bytesSkipped: LongRef,
             callback: CefResourceSkipCallback
         ): Boolean {
+            if (content != null) {
+                val count = minOf(bytesToSkip, (content.size - contentOffset).toLong()).coerceAtLeast(0).toInt()
+                contentOffset += count
+                bytesSkipped.set(count.toLong())
+                return count > 0
+            }
             val resource = channel ?: return false
             val count = runCatching {
                 val position = resource.position()
