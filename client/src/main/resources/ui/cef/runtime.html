@@ -40,6 +40,19 @@
     const mapCallbacks = new Set();
     const visualDefinitions = new Map();
     const worldTileKey = tile => `${tile.x}:${tile.y}:${tile.z}`;
+    function describeError(error) {
+        if (!(error instanceof Error)) return String(error);
+        return error.stack || `${error.name}: ${error.message}`;
+    }
+    function logMountError(entry, error) {
+        const hint = entry.bundle === 'configured' && entry.id === 'configured'
+            ? ' Check that the configured browser UI development server is running and reachable.'
+            : '';
+        console.error(
+            `Bundle UI ${entry.bundle}:${entry.id} failed to mount from ${entry.url}: ` +
+            `${describeError(error)}${hint}`
+        );
+    }
     const applyWorldTiles = tiles => {
         for (const tile of tiles) {
             const key = worldTileKey(tile);
@@ -196,7 +209,7 @@
 
     async function mountEntry(entry) {
         const source = await fetch(entry.url).then(response => {
-            if (!response.ok) throw new Error(`Failed to fetch ${entry.bundle}:${entry.id}: ${response.status}`);
+            if (!response.ok) throw new Error(`Request failed with HTTP ${response.status} ${response.statusText}`.trim());
             return response.text();
         });
         const parsed = new DOMParser().parseFromString(source, 'text/html');
@@ -230,7 +243,7 @@
             const dispose = await module.mount(root, api);
             if (typeof dispose === 'function') disposers.push(dispose);
         }
-        if (!mountModules) throw new Error(`${entry.bundle}:${entry.id} must have a module that exports mount(root,selene)`);
+        if (!mountModules) throw new Error('No module exports mount(root, selene)');
         mounted.push({host, root, disposers});
     }
 
@@ -444,14 +457,16 @@
     worldReady.then(() => Promise.allSettled(entries.map(mountEntry))).then(results => {
         for (const [index, result] of results.entries()) {
             if (result.status === 'rejected') {
-                console.error(`Bundle UI ${entries[index].bundle}:${entries[index].id} failed to mount`, result.reason);
+                logMountError(entries[index], result.reason);
             }
-            console.info(`Mounted ${mounted.length} of ${entries.length} bundle UI(s)`);
         }
+        console.info(`Mounted ${mounted.length} of ${entries.length} bundle UI(s)`);
         interactionReportingEnabled = true;
         for (const ui of mounted) observeInteractiveElements(ui);
         window.addEventListener('resize', scheduleInteractiveElementsReporting);
         scheduleInteractiveElementsReporting();
+    }).catch(error => {
+        console.error(`Bundle UI runtime failed before entrypoints could mount: ${describeError(error)}`);
     });
 </script>
 </body>
