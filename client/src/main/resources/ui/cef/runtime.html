@@ -341,17 +341,6 @@
         });
     }
 
-    let pointerTarget = null;
-    let pressTarget = null;
-
-    function elementAt(x, y) {
-        for (let index = mounted.length - 1; index >= 0; index--) {
-            const target = mounted[index].root.elementFromPoint(x, y);
-            if (target) return target;
-        }
-        return null;
-    }
-
     function isEditable(element) {
         return element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement ||
             element?.isContentEditable === true;
@@ -371,63 +360,6 @@
         },
         gamePointerUp(x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ) {
             dispatchPointerCallbacks(pointerUpCallbacks, x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ);
-        },
-        pointer(type, x, y, button, buttons, deltaX, deltaY) {
-            let target = type === 'mousedown' ? elementAt(x, y) : pointerTarget ?? elementAt(x, y);
-            if (!target) return;
-            if (type === 'mousedown') {
-                pointerTarget = target;
-                pressTarget = target;
-                if (typeof target.focus === 'function') target.focus({preventScroll: true});
-            }
-            if (type === 'click') {
-                const released = elementAt(x, y);
-                if (pressTarget && pressTarget === released) {
-                    const activationType = button === 0 ? 'click' : button === 2 ? 'contextmenu' : 'auxclick';
-                    released.dispatchEvent(new MouseEvent(activationType, {
-                        bubbles: true,
-                        cancelable: true,
-                        composed: true,
-                        clientX: x,
-                        clientY: y,
-                        button,
-                        buttons
-                    }));
-                }
-                pressTarget = null;
-                pointerTarget = null;
-                return;
-            }
-            const event = type === 'wheel'
-                ? new WheelEvent(type, {
-                    bubbles: true,
-                    cancelable: true,
-                    composed: true,
-                    clientX: x,
-                    clientY: y,
-                    deltaX,
-                    deltaY
-                })
-                : new MouseEvent(type, {
-                    bubbles: true,
-                    cancelable: true,
-                    composed: true,
-                    clientX: x,
-                    clientY: y,
-                    button,
-                    buttons
-                });
-            target.dispatchEvent(event);
-            if (type === 'wheel' && !event.defaultPrevented) {
-                let scrollable = target;
-                while (scrollable && scrollable !== document.body) {
-                    if (scrollable.scrollHeight > scrollable.clientHeight || scrollable.scrollWidth > scrollable.clientWidth) break;
-                    const parent = scrollable.parentNode;
-                    scrollable = parent instanceof ShadowRoot ? parent.host : (parent instanceof Element ? parent : null);
-                }
-                scrollable?.scrollBy(deltaX, deltaY);
-            }
-            if (type === 'mouseup') pointerTarget = null;
         },
         keyboard(type, key, shiftKey, ctrlKey, altKey, metaKey) {
             let target = null;

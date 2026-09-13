@@ -29,6 +29,7 @@ import java.awt.EventQueue
 import java.awt.Window
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
+import java.awt.event.MouseWheelEvent
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -290,18 +291,28 @@ class CefBrowserUi(
         batch.end()
     }
 
-    fun dispatchPointer(
-        type: String, x: Int, y: Int, button: Int, buttons: Int, deltaX: Float = 0f,
-        deltaY: Float = 0f
-    ) {
-        if (!initialized || type !in POINTER_EVENT_TYPES) return
-        if (type != "wheel") {
-            dispatchMouseEvent(type, x, y, button, buttons)
-            return
+    fun dispatchPointer(type: String, x: Int, y: Int, button: Int, buttons: Int) =
+        dispatchMouseEvent(type, x, y, button, buttons)
+
+    fun dispatchWheel(x: Int, y: Int, amountX: Float, amountY: Float, buttons: Int) {
+        if (!initialized) return
+        EventQueue.invokeLater {
+            val component = browser?.uiComponent ?: return@invokeLater
+            fun dispatch(amount: Float, horizontal: Boolean) {
+                if (amount == 0f) return
+                val rotation = amount.toInt().takeIf { it != 0 } ?: if (amount > 0f) 1 else -1
+                component.dispatchEvent(
+                    MouseWheelEvent(
+                        component, MouseEvent.MOUSE_WHEEL, System.currentTimeMillis(),
+                        awtButtonModifiers(buttons) or if (horizontal) InputEvent.SHIFT_DOWN_MASK else 0,
+                        x, y, x, y, 0, false,
+                        MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, rotation, amount.toDouble()
+                    )
+                )
+            }
+            dispatch(amountX, horizontal = true)
+            dispatch(-amountY, horizontal = false)
         }
-        browser?.executeJavaScript(
-            "window.__seleneBridge?.pointer('$type',$x,$y,$button,$buttons,$deltaX,$deltaY)", "", 0
-        )
     }
 
     private fun dispatchMouseEvent(type: String, x: Int, y: Int, button: Int, buttons: Int) {
@@ -529,7 +540,6 @@ class CefBrowserUi(
     }
 
     private companion object {
-        val POINTER_EVENT_TYPES = setOf("mousemove", "mousedown", "mouseup", "click", "wheel")
         val KEY_NAMES = setOf(
             "Enter", "Escape", "Backspace", "Tab", "Delete", "Home", "End",
             "PageUp", "PageDown", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Shift",
