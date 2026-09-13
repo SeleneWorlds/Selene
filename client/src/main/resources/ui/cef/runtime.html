@@ -134,7 +134,7 @@
             return release;
         };
         return Object.freeze({
-            apiVersion: 4,
+            apiVersion: 5,
             resolveAsset(path) {
                 if (typeof path !== 'string' || path.length === 0) throw new Error('Asset path must be a non-empty string');
                 return new URL(path, entry.url).href;
@@ -191,6 +191,9 @@
             world: Object.freeze({
                 getCameraCoordinate: () => ({...worldCoordinate}),
                 getMapTiles: () => [...worldTiles.values()].map(tile => ({...tile})),
+                getEntitiesAt: coordinate => executeBridgeRequest({
+                    type: 'getEntitiesAt', x: coordinate.x, y: coordinate.y, z: coordinate.z
+                }).then(JSON.parse),
                 onCameraCoordinateChanged: callback => {
                     cameraCallbacks.add(callback);
                     const release = () => cameraCallbacks.delete(callback);

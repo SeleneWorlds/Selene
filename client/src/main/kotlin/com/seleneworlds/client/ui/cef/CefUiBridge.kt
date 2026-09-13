@@ -8,6 +8,7 @@ import com.seleneworlds.client.rendering.visual.VisualDefinition
 import com.seleneworlds.client.rendering.visual.VisualRegistry
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.entities.VisualComponentConfiguration
 import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import kotlinx.serialization.json.Json
@@ -65,6 +66,7 @@ class CefUiBridge(
                     "loadBundleStorageValue" -> loadBundleStorageValue(message, callback)
                     "saveBundleStorageValue" -> saveBundleStorageValue(message, callback)
                     "getVisualDefinition" -> getVisualDefinition(message, callback)
+                    "getEntitiesAt" -> getEntitiesAt(message, callback)
                     else -> return false
                 }
                 true
@@ -190,6 +192,23 @@ class CefUiBridge(
         val identifier = Identifier.parse(value)
         val definition = requireNotNull(visualRegistry.get(identifier)) { "Visual not found: $identifier" }
         callback.success(json.encodeToJsonElement(VisualDefinition.serializer(), definition).toString())
+    }
+
+    private fun getEntitiesAt(message: JsonObject, callback: CefQueryCallback) {
+        val coordinate = Coordinate(message.requiredInt("x"), message.requiredInt("y"), message.requiredInt("z"))
+        mainThreadDispatcher.runOnMainThread {
+            callback.success(buildJsonArray {
+                clientMap.getEntitiesAt(coordinate).forEach { entity ->
+                    val definition = entity.entityDefinition.get() ?: return@forEach
+                    val visual = (definition.components["illarion:visual"] as? VisualComponentConfiguration)?.visual
+                    add(buildJsonObject {
+                        put("networkId", entity.networkId)
+                        put("tags", buildJsonArray { definition.tags.forEach { add(JsonPrimitive(it)) } })
+                        visual?.let { put("visual", it.toString()) }
+                    })
+                }
+            }.toString())
+        }
     }
 
     private fun subscribeToWorldUpdates(browser: CefBrowser, frame: CefFrame, queryId: Long, persistent: Boolean,
