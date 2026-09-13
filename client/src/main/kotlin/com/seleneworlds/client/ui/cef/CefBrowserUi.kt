@@ -27,6 +27,7 @@ import org.slf4j.Logger
 import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.Window
+import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
 import java.io.File
 import java.nio.file.Files
@@ -294,19 +295,35 @@ class CefBrowserUi(
         deltaY: Float = 0f
     ) {
         if (!initialized || type !in POINTER_EVENT_TYPES) return
+        if (type != "wheel") {
+            dispatchMouseEvent(type, x, y, button, buttons)
+            return
+        }
         browser?.executeJavaScript(
             "window.__seleneBridge?.pointer('$type',$x,$y,$button,$buttons,$deltaX,$deltaY)", "", 0
         )
     }
 
-    fun dispatchMouseMove(x: Int, y: Int) {
+    private fun dispatchMouseEvent(type: String, x: Int, y: Int, button: Int, buttons: Int) {
         if (!initialized) return
         EventQueue.invokeLater {
             val component = browser?.uiComponent ?: return@invokeLater
+            val id = when (type) {
+                "mousemove" -> if (buttons == 0) MouseEvent.MOUSE_MOVED else MouseEvent.MOUSE_DRAGGED
+                "mousedown" -> MouseEvent.MOUSE_PRESSED
+                "mouseup" -> MouseEvent.MOUSE_RELEASED
+                "click" -> MouseEvent.MOUSE_CLICKED
+                else -> return@invokeLater
+            }
             component.dispatchEvent(
                 MouseEvent(
-                    component, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0,
-                    x, y, 0, false, MouseEvent.NOBUTTON
+                    component, id, System.currentTimeMillis(), awtButtonModifiers(buttons),
+                    x, y, if (id == MouseEvent.MOUSE_CLICKED) 1 else 0, false,
+                    if (id == MouseEvent.MOUSE_MOVED || id == MouseEvent.MOUSE_DRAGGED) {
+                        MouseEvent.NOBUTTON
+                    } else {
+                        awtButton(button)
+                    }
                 )
             )
         }
@@ -324,6 +341,18 @@ class CefBrowserUi(
             )
         }
     }
+
+    private fun awtButton(button: Int): Int = when (button) {
+        0 -> MouseEvent.BUTTON1
+        1 -> MouseEvent.BUTTON2
+        2 -> MouseEvent.BUTTON3
+        else -> MouseEvent.NOBUTTON
+    }
+
+    private fun awtButtonModifiers(buttons: Int): Int =
+        (if (buttons and 1 != 0) InputEvent.BUTTON1_DOWN_MASK else 0) or
+                (if (buttons and 2 != 0) InputEvent.BUTTON3_DOWN_MASK else 0) or
+                (if (buttons and 4 != 0) InputEvent.BUTTON2_DOWN_MASK else 0)
 
     fun dispatchGamePointerDown(x: Int, y: Int, button: Int, shift: Boolean, coordinate: Coordinate) {
         if (!initialized) return

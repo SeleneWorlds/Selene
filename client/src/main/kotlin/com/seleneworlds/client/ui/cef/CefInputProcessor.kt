@@ -32,20 +32,25 @@ class CefInputProcessor(
     }
 
     override fun touchUp(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return releasePointer(screenX, screenY, pointer, button, activate = true)
+    }
+
+    override fun touchCancelled(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
+        return releasePointer(screenX, screenY, pointer, button, activate = false)
+    }
+
+    private fun releasePointer(screenX: Int, screenY: Int, pointer: Int, button: Int, activate: Boolean): Boolean {
         if (!cef.enabled || pointer != 0) return false
         val (x, y) = browserCoordinatesClamped(screenX, screenY)
         dispatchGamePointerUp(x, y, screenX, screenY, button)
         if (button !in capturedButtons) {
             return false
         }
-        dispatchMouse("mouseup", x, y, button)
-        dispatchMouse("click", x, y, button)
         capturedButtons -= button
+        dispatchMouse("mouseup", x, y, button)
+        if (activate) dispatchMouse("click", x, y, button)
         return true
     }
-
-    override fun touchCancelled(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean =
-        touchUp(screenX, screenY, pointer, button)
 
     override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
         if (!cef.enabled || pointer != 0 || capturedButtons.isEmpty()) return false
@@ -67,7 +72,7 @@ class CefInputProcessor(
         mouseX = coordinates.first
         mouseY = coordinates.second
         mouseInsideBrowser = true
-        cef.dispatchMouseMove(mouseX, mouseY)
+        dispatchMouse("mousemove", mouseX, mouseY, -1)
         return interactionState.isInteractive(mouseX, mouseY)
     }
 
