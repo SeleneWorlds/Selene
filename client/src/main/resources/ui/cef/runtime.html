@@ -121,7 +121,7 @@
             return release;
         };
         return Object.freeze({
-            apiVersion: 3,
+            apiVersion: 4,
             resolveAsset(path) {
                 if (typeof path !== 'string' || path.length === 0) throw new Error('Asset path must be a non-empty string');
                 return new URL(path, entry.url).href;
@@ -170,6 +170,7 @@
                     return release;
                 },
                 passThroughKeys: (...keys) => registerKeys(passthroughKeys, keys, disposers),
+                isPassthroughKey: key => passthroughKeys.has(key),
                 onPointerDown: callback => registerPointerCallback(pointerDownCallbacks, callback),
                 onPointerUp: callback => registerPointerCallback(pointerUpCallbacks, callback)
             }),
