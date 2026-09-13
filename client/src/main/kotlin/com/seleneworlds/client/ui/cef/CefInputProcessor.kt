@@ -78,7 +78,10 @@ class CefInputProcessor(
 
     override fun scrolled(amountX: Float, amountY: Float): Boolean {
         if (!cef.enabled || !interactionState.isInteractive(mouseX, mouseY)) return false
-        cef.dispatchWheel(mouseX, mouseY, amountX, amountY, buttonMask())
+        cef.dispatchWheel(
+            mouseX, mouseY, amountX, amountY, buttonMask(),
+            hasShift(), hasControl(), hasAlt(), hasMeta()
+        )
         return true
     }
 
@@ -112,7 +115,10 @@ class CefInputProcessor(
     }
 
     private fun dispatchMouse(type: String, x: Int, y: Int, gdxButton: Int) {
-        cef.dispatchPointer(type, x, y, browserButton(gdxButton), buttonMask())
+        cef.dispatchPointer(
+            type, x, y, browserButton(gdxButton), buttonMask(),
+            hasShift(), hasControl(), hasAlt(), hasMeta()
+        )
     }
 
     private fun gamePointerCoordinate(screenX: Int, screenY: Int) =

@@ -291,10 +291,15 @@ class CefBrowserUi(
         batch.end()
     }
 
-    fun dispatchPointer(type: String, x: Int, y: Int, button: Int, buttons: Int) =
-        dispatchMouseEvent(type, x, y, button, buttons)
+    fun dispatchPointer(
+        type: String, x: Int, y: Int, button: Int, buttons: Int,
+        shift: Boolean, control: Boolean, alt: Boolean, meta: Boolean
+    ) = dispatchMouseEvent(type, x, y, button, buttons, shift, control, alt, meta)
 
-    fun dispatchWheel(x: Int, y: Int, amountX: Float, amountY: Float, buttons: Int) {
+    fun dispatchWheel(
+        x: Int, y: Int, amountX: Float, amountY: Float, buttons: Int,
+        shift: Boolean, control: Boolean, alt: Boolean, meta: Boolean
+    ) {
         if (!initialized) return
         EventQueue.invokeLater {
             val component = browser?.uiComponent ?: return@invokeLater
@@ -304,7 +309,7 @@ class CefBrowserUi(
                 component.dispatchEvent(
                     MouseWheelEvent(
                         component, MouseEvent.MOUSE_WHEEL, System.currentTimeMillis(),
-                        awtButtonModifiers(buttons) or if (horizontal) InputEvent.SHIFT_DOWN_MASK else 0,
+                        awtModifiers(buttons, shift || horizontal, control, alt, meta),
                         x, y, x, y, 0, false,
                         MouseWheelEvent.WHEEL_UNIT_SCROLL, 1, rotation, amount.toDouble()
                     )
@@ -315,7 +320,10 @@ class CefBrowserUi(
         }
     }
 
-    private fun dispatchMouseEvent(type: String, x: Int, y: Int, button: Int, buttons: Int) {
+    private fun dispatchMouseEvent(
+        type: String, x: Int, y: Int, button: Int, buttons: Int,
+        shift: Boolean, control: Boolean, alt: Boolean, meta: Boolean
+    ) {
         if (!initialized) return
         EventQueue.invokeLater {
             val component = browser?.uiComponent ?: return@invokeLater
@@ -328,7 +336,8 @@ class CefBrowserUi(
             }
             component.dispatchEvent(
                 MouseEvent(
-                    component, id, System.currentTimeMillis(), awtButtonModifiers(buttons),
+                    component, id, System.currentTimeMillis(),
+                    awtModifiers(buttons, shift, control, alt, meta),
                     x, y, if (id == MouseEvent.MOUSE_CLICKED) 1 else 0, false,
                     if (id == MouseEvent.MOUSE_MOVED || id == MouseEvent.MOUSE_DRAGGED) {
                         MouseEvent.NOBUTTON
@@ -364,6 +373,14 @@ class CefBrowserUi(
         (if (buttons and 1 != 0) InputEvent.BUTTON1_DOWN_MASK else 0) or
                 (if (buttons and 2 != 0) InputEvent.BUTTON3_DOWN_MASK else 0) or
                 (if (buttons and 4 != 0) InputEvent.BUTTON2_DOWN_MASK else 0)
+
+    private fun awtModifiers(
+        buttons: Int, shift: Boolean, control: Boolean, alt: Boolean, meta: Boolean
+    ): Int = awtButtonModifiers(buttons) or
+            (if (shift) InputEvent.SHIFT_DOWN_MASK else 0) or
+            (if (control) InputEvent.CTRL_DOWN_MASK else 0) or
+            (if (alt) InputEvent.ALT_DOWN_MASK else 0) or
+            (if (meta) InputEvent.META_DOWN_MASK else 0)
 
     fun dispatchGamePointerDown(x: Int, y: Int, button: Int, shift: Boolean, coordinate: Coordinate) {
         if (!initialized) return
