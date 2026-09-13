@@ -92,10 +92,7 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
     }
 
     fun despawn() {
-        val oldDimension = delegate.dimension
-        delegate.world.entityManager.onEntityDespawned(delegate)
         delegate.despawn()
-        oldDimension?.syncManager?.entityRemoved(delegate)
     }
 
     fun remove() {

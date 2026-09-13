@@ -133,10 +133,14 @@ class Entity(
     }
 
     fun despawn() {
+        val oldDimension = dimension ?: return
+        world.entityManager.onEntityDespawned(this)
         dimension = null
+        oldDimension.syncManager.entityRemoved(this)
     }
 
     fun remove() {
+        despawn()
         world.entityManager.removeEntity(this)
     }
 
