@@ -27,6 +27,7 @@ import org.slf4j.Logger
 import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.Window
+import java.awt.event.MouseEvent
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -296,6 +297,32 @@ class CefBrowserUi(
         browser?.executeJavaScript(
             "window.__seleneBridge?.pointer('$type',$x,$y,$button,$buttons,$deltaX,$deltaY)", "", 0
         )
+    }
+
+    fun dispatchMouseMove(x: Int, y: Int) {
+        if (!initialized) return
+        EventQueue.invokeLater {
+            val component = browser?.uiComponent ?: return@invokeLater
+            component.dispatchEvent(
+                MouseEvent(
+                    component, MouseEvent.MOUSE_MOVED, System.currentTimeMillis(), 0,
+                    x, y, 0, false, MouseEvent.NOBUTTON
+                )
+            )
+        }
+    }
+
+    fun dispatchMouseExit(x: Int, y: Int) {
+        if (!initialized) return
+        EventQueue.invokeLater {
+            val component = browser?.uiComponent ?: return@invokeLater
+            component.dispatchEvent(
+                MouseEvent(
+                    component, MouseEvent.MOUSE_EXITED, System.currentTimeMillis(), 0,
+                    x, y, 0, false, MouseEvent.NOBUTTON
+                )
+            )
+        }
     }
 
     fun dispatchGamePointerDown(x: Int, y: Int, button: Int, shift: Boolean, coordinate: Coordinate) {

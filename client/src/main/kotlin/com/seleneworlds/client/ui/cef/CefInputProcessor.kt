@@ -17,6 +17,7 @@ class CefInputProcessor(
     private val pressedKeys = mutableSetOf<Int>()
     private var mouseX = 0
     private var mouseY = 0
+    private var mouseInsideBrowser = false
 
     override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
         if (!cef.enabled || pointer != 0) return false
@@ -55,10 +56,18 @@ class CefInputProcessor(
 
     override fun mouseMoved(screenX: Int, screenY: Int): Boolean {
         if (!cef.enabled) return false
-        val coordinates = browserCoordinates(screenX, screenY) ?: return false
+        val coordinates = browserCoordinates(screenX, screenY)
+        if (coordinates == null) {
+            if (mouseInsideBrowser) {
+                cef.dispatchMouseExit(mouseX, mouseY)
+                mouseInsideBrowser = false
+            }
+            return false
+        }
         mouseX = coordinates.first
         mouseY = coordinates.second
-        dispatchMouse("mousemove", mouseX, mouseY, -1)
+        mouseInsideBrowser = true
+        cef.dispatchMouseMove(mouseX, mouseY)
         return interactionState.isInteractive(mouseX, mouseY)
     }
 
