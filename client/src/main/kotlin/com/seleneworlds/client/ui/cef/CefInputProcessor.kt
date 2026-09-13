@@ -45,21 +45,17 @@ class CefInputProcessor(
         if (!cef.enabled || pointer != 0) return false
         val (x, y) = browserCoordinatesClamped(screenX, screenY)
         pressedButtons -= button
-        if (button !in capturedButtons) {
-            dispatchGamePointerUp(x, y, screenX, screenY, button)
-            return false
-        }
-        capturedButtons -= button
+        val wasCaptured = capturedButtons.remove(button)
         dispatchMouse("mouseup", x, y, button)
-        if (activate) dispatchMouse("click", x, y, button)
+        if (wasCaptured && activate) dispatchMouse("click", x, y, button)
         dispatchGamePointerUp(x, y, screenX, screenY, button)
-        return true
+        return wasCaptured
     }
 
     override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
-        if (!cef.enabled || pointer != 0 || pressedButtons.isEmpty()) return false
+        if (!cef.enabled || pointer != 0) return false
         val (x, y) = browserCoordinatesClamped(screenX, screenY)
-        dispatchMouse("mousemove", x, y, pressedButtons.first())
+        dispatchMouse("mousemove", x, y, pressedButtons.firstOrNull() ?: -1)
         return capturedButtons.isNotEmpty()
     }
 
