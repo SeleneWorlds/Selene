@@ -28,6 +28,7 @@ git clone https://github.com/SeleneWorlds/Illarion-Gobaith-Scripts.git illarion-
 git clone https://github.com/SeleneWorlds/Illarion-Gobaith-Map.git illarion-gobaith-map
 git clone https://github.com/SeleneWorlds/Illarion-Gobaith-Data.git illarion-gobaith-data
 git clone https://github.com/SeleneWorlds/Illarion-Gobaith-UI.git illarion-gobaith-ui
+git clone https://github.com/SeleneWorlds/Illarion-Gobaith-Assets.git illarion-gobaith-assets
 # or
 git clone https://github.com/SeleneWorlds/Moonlight-Inventory.git moonlight-inventory
 git clone https://github.com/SeleneWorlds/Illarion-Script-Loader.git illarion-script-loader
@@ -38,9 +39,9 @@ git clone https://github.com/SeleneWorlds/Illarion-VBU-Data.git illarion-vbu-dat
 git clone https://github.com/SeleneWorlds/Illarion-Gobaith-UI.git illarion-gobaith-ui
 ```
 
-Note: You will also need an `illarion-gobaith-assets` or `illarion-vbu-assets` bundle, which cannot be redistributed 
-due to licensing restrictions. We hope to provide an open source alternative in the future.
-In the meantime, you'll need to build this bundle yourself. Feel free to ask for guidance within the community.
+Note: For VBU, you would also need an `illarion-vbu-assets` bundle, which cannot be redistributed 
+due to licensing restrictions. For Gobaith, we have compiled an [open source alternative](https://github.com/SeleneWorlds/Illarion-Gobaith-Assets). There is also
+[Illarion-Converter](https://github.com/SeleneWorlds/Illarion-Converter), which you can use to extract a proprietary asset bundle for personal use.
 
 ### Running the Server
 
