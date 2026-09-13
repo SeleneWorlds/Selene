@@ -428,7 +428,7 @@ fun <TKey : Any, TValue : Any> Lua.toTypedMap(
 
 fun Lua.toLocale(index: Int): Locale? {
     return when (type(index)) {
-        LuaType.STRING -> Locale.forLanguageTag(toString(index)!!)
+        LuaType.STRING -> Locale.forLanguageTag(toString(index)!!.replace('_', '-'))
         LuaType.USERDATA -> toUserdata(index, Locale::class)
         else -> throwTypeError(index, Locale::class)
     }
