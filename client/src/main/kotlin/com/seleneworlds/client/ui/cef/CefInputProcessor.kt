@@ -14,6 +14,7 @@ class CefInputProcessor(
     private val grid: ClientGrid
 ) : InputAdapter() {
     private val capturedButtons = mutableSetOf<Int>()
+    private val pressedButtons = mutableSetOf<Int>()
     private val pressedKeys = mutableSetOf<Int>()
     private var mouseX = 0
     private var mouseY = 0
@@ -22,6 +23,7 @@ class CefInputProcessor(
     override fun touchDown(screenX: Int, screenY: Int, pointer: Int, button: Int): Boolean {
         if (!cef.enabled || pointer != 0) return false
         val (x, y) = browserCoordinates(screenX, screenY) ?: return false
+        pressedButtons += button
         dispatchGamePointerDown(x, y, screenX, screenY, button)
         if (!interactionState.isInteractive(x, y)) {
             return false
@@ -42,6 +44,7 @@ class CefInputProcessor(
     private fun releasePointer(screenX: Int, screenY: Int, pointer: Int, button: Int, activate: Boolean): Boolean {
         if (!cef.enabled || pointer != 0) return false
         val (x, y) = browserCoordinatesClamped(screenX, screenY)
+        pressedButtons -= button
         if (button !in capturedButtons) {
             dispatchGamePointerUp(x, y, screenX, screenY, button)
             return false
@@ -54,10 +57,10 @@ class CefInputProcessor(
     }
 
     override fun touchDragged(screenX: Int, screenY: Int, pointer: Int): Boolean {
-        if (!cef.enabled || pointer != 0 || capturedButtons.isEmpty()) return false
+        if (!cef.enabled || pointer != 0 || pressedButtons.isEmpty()) return false
         val (x, y) = browserCoordinatesClamped(screenX, screenY)
-        dispatchMouse("mousemove", x, y, capturedButtons.first())
-        return true
+        dispatchMouse("mousemove", x, y, pressedButtons.first())
+        return capturedButtons.isNotEmpty()
     }
 
     override fun mouseMoved(screenX: Int, screenY: Int): Boolean {
@@ -161,7 +164,7 @@ class CefInputProcessor(
         else -> -1
     }
 
-    private fun buttonMask(): Int = capturedButtons.fold(0) { mask, button ->
+    private fun buttonMask(): Int = pressedButtons.fold(0) { mask, button ->
         mask or when (button) {
             Input.Buttons.LEFT -> 1
             Input.Buttons.RIGHT -> 2
