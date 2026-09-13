@@ -375,10 +375,12 @@ class CefBrowserUi(
 
     fun dispatchGamePointerUp(x: Int, y: Int, button: Int, shift: Boolean, coordinate: Coordinate) {
         if (!initialized) return
-        browser?.executeJavaScript(
-            "window.__seleneBridge?.gamePointerUp($x,$y,$button,$shift," +
-                    "${coordinate.x},${coordinate.y},${coordinate.z})", "", 0
-        )
+        EventQueue.invokeLater {
+            browser?.executeJavaScript(
+                "window.__seleneBridge?.gamePointerUp($x,$y,$button,$shift," +
+                        "${coordinate.x},${coordinate.y},${coordinate.z})", "", 0
+            )
+        }
     }
 
     fun insertText(character: Char) {

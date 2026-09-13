@@ -42,13 +42,14 @@ class CefInputProcessor(
     private fun releasePointer(screenX: Int, screenY: Int, pointer: Int, button: Int, activate: Boolean): Boolean {
         if (!cef.enabled || pointer != 0) return false
         val (x, y) = browserCoordinatesClamped(screenX, screenY)
-        dispatchGamePointerUp(x, y, screenX, screenY, button)
         if (button !in capturedButtons) {
+            dispatchGamePointerUp(x, y, screenX, screenY, button)
             return false
         }
         capturedButtons -= button
         dispatchMouse("mouseup", x, y, button)
         if (activate) dispatchMouse("click", x, y, button)
+        dispatchGamePointerUp(x, y, screenX, screenY, button)
         return true
     }
 
