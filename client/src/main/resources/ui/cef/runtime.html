@@ -382,8 +382,17 @@
             }
             if (type === 'click') {
                 const released = elementAt(x, y);
-                if (pressTarget && pressTarget === released && typeof released.click === 'function') {
-                    released.click();
+                if (pressTarget && pressTarget === released) {
+                    const activationType = button === 0 ? 'click' : button === 2 ? 'contextmenu' : 'auxclick';
+                    released.dispatchEvent(new MouseEvent(activationType, {
+                        bubbles: true,
+                        cancelable: true,
+                        composed: true,
+                        clientX: x,
+                        clientY: y,
+                        button,
+                        buttons
+                    }));
                 }
                 pressTarget = null;
                 pointerTarget = null;
