@@ -1,6 +1,6 @@
 package com.seleneworlds.server.players
 
-import com.seleneworlds.server.network.NetworkClientImpl
+import com.seleneworlds.server.network.NetworkPlayerClient
 import com.seleneworlds.server.network.NetworkServer
 
 class PlayersApi(private val networkServer: NetworkServer) {
@@ -14,7 +14,7 @@ class PlayersApi(private val networkServer: NetworkServer) {
      */
     fun getOnlinePlayers(): List<PlayerApi> {
         return networkServer.clients
-            .filterIsInstance<NetworkClientImpl>()
+            .filterIsInstance<NetworkPlayerClient>()
             .map { it.player.api }
     }
 
