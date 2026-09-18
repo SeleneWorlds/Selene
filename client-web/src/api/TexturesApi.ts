@@ -1,0 +1,2 @@
+export interface ScriptableTextureApi { getWidth(): number; getHeight(): number; setPixel(x: number, y: number, color: unknown): void; getPixel(x: number, y: number): readonly [number, number, number, number]; fill(color: unknown): void; copyFrom(source: ScriptableTextureApi, srcX: number, srcY: number, width: number, height: number, dstX: number, dstY: number): void; update(): void; dispose(): void }
+export interface TexturesApi { create(width: number, height: number, format?: string): ScriptableTextureApi }

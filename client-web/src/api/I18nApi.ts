@@ -1,0 +1,1 @@
+export interface I18nApi { get(key: string, locale?: string): string | null; format(key: string, parameters?: Record<string, unknown>, locale?: string): string | null; hasKey(key: string, locale?: string): boolean }

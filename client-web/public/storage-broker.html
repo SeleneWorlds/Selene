@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex">
+    <title>Selene Storage Broker</title>
+  </head>
+  <body>
+    <script>
+      (() => {
+        const brokerHostname = window.location.hostname;
+        const allowedDomain = brokerHostname.startsWith('settings.')
+          ? brokerHostname.slice('settings.'.length)
+          : brokerHostname;
+
+        window.addEventListener('message', (event) => {
+          const origin = new URL(event.origin);
+          const isAllowedOrigin = origin.protocol === 'https:'
+            && (origin.hostname === allowedDomain || origin.hostname.endsWith(`.${allowedDomain}`));
+          if (!isAllowedOrigin || event.data?.type !== 'selene-storage-connect' || event.ports.length !== 1) return;
+
+          const port = event.ports[0];
+          port.addEventListener('message', (messageEvent) => {
+            const request = messageEvent.data;
+            if (!request || typeof request.id !== 'number') return;
+
+            try {
+              if (request.type === 'storage-load' && typeof request.key === 'string') {
+                port.postMessage({
+                  id: request.id,
+                  ok: true,
+                  value: window.localStorage.getItem(request.key),
+                });
+              } else if (
+                request.type === 'storage-save'
+                && typeof request.key === 'string'
+                && typeof request.value === 'string'
+              ) {
+                window.localStorage.setItem(request.key, request.value);
+                port.postMessage({ id: request.id, ok: true });
+              } else {
+                port.postMessage({
+                  id: request.id,
+                  ok: false,
+                  error: 'Unsupported storage request.',
+                });
+              }
+            } catch (error) {
+              port.postMessage({
+                id: request.id,
+                ok: false,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          });
+          port.start();
+          port.postMessage({ type: 'ready' });
+        });
+      })();
+    </script>
+  </body>
+</html>

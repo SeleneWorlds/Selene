@@ -1,0 +1,3 @@
+export interface IdentifierApi { getNamespace(): string; getPath(): string; withPrefix(prefix: string): IdentifierApi; withSuffix(suffix: string): IdentifierApi; toString(): string }
+export interface RegistryObjectApi extends Record<string, unknown> { getId(): number | null; getName(): string; getIdentifier(): IdentifierApi; getMetadata(key: string): unknown; getField(key: string): unknown; hasTag(tag: string): boolean }
+export interface RegistriesApi { add(registry: string, identifier: string, value: unknown): RegistryObjectApi; findAll(registry: string): RegistryObjectApi[]; findByName(registry: string, identifier: string): RegistryObjectApi | null; findByMetadata(registry: string, key: string, value: unknown): RegistryObjectApi | null }
