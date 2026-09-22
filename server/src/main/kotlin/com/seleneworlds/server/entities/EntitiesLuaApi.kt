@@ -21,6 +21,24 @@ class EntitiesLuaApi(
 ) : LuaModule {
     override val name = "selene.entities"
 
+    private val beforeEntityMove = LuaEventSink(EntityEvents.BeforeEntityMove.EVENT) { callback: LuaValue, trace: ScriptTrace ->
+        EntityEvents.BeforeEntityMove { entity, coordinate ->
+            val lua = callback.state()
+            lua.push(callback)
+            lua.push(entity, Lua.Conversion.NONE)
+            lua.push(coordinate, Lua.Conversion.NONE)
+            lua.xpCall(2, 0, trace)
+        }
+    }
+    private val beforeEntityTurn = LuaEventSink(EntityEvents.BeforeEntityTurn.EVENT) { callback: LuaValue, trace: ScriptTrace ->
+        EntityEvents.BeforeEntityTurn { entity, direction ->
+            val lua = callback.state()
+            lua.push(callback)
+            lua.push(entity, Lua.Conversion.NONE)
+            lua.push(direction, Lua.Conversion.NONE)
+            lua.xpCall(2, 0, trace)
+        }
+    }
     private val entitySteppedOnTile = LuaEventSink(EntityEvents.EntitySteppedOnTile.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         EntityEvents.EntitySteppedOnTile { entity, coordinate ->
             val lua = callback.state()
@@ -48,6 +66,8 @@ class EntitiesLuaApi(
         table.register("create", this::create)
         table.register("createTransient", this::createTransient)
         table.register("getByNetworkId", this::getByNetworkId)
+        table.set("beforeMove", beforeEntityMove)
+        table.set("beforeTurn", beforeEntityTurn)
         table.set("steppedOnTile", entitySteppedOnTile)
         table.set("steppedOffTile", entitySteppedOffTile)
     }

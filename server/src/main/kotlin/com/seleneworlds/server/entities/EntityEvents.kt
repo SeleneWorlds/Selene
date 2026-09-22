@@ -3,8 +3,41 @@ package com.seleneworlds.server.entities
 import com.seleneworlds.common.event.EventFactory.arrayBackedEvent
 import com.seleneworlds.common.event.EventFactory.catchLog
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.grid.Direction
 
 class EntityEvents {
+    fun interface BeforeEntityMove {
+        fun beforeEntityMove(entity: EntityApi, coordinate: Coordinate)
+
+        companion object {
+            val EVENT = arrayBackedEvent<BeforeEntityMove> { listeners ->
+                BeforeEntityMove { entity, coordinate ->
+                    listeners.forEach {
+                        catchLog {
+                            it.beforeEntityMove(entity, coordinate)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun interface BeforeEntityTurn {
+        fun beforeEntityTurn(entity: EntityApi, direction: Direction)
+
+        companion object {
+            val EVENT = arrayBackedEvent<BeforeEntityTurn> { listeners ->
+                BeforeEntityTurn { entity, direction ->
+                    listeners.forEach {
+                        catchLog {
+                            it.beforeEntityTurn(entity, direction)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     fun interface EntitySteppedOnTile {
         fun entitySteppedOnTile(entity: EntityApi, coordinate: Coordinate)
 

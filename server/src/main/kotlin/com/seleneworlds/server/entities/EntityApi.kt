@@ -64,8 +64,7 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
     }
 
     fun setFacing(direction: Direction) {
-        delegate.facing = direction
-        delegate.dimension?.syncManager?.entityTurned(delegate, direction)
+        delegate.turnTo(direction)
     }
 
     fun getDimension(): DimensionApi? {

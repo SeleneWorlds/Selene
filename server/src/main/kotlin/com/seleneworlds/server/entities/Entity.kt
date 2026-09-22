@@ -113,12 +113,14 @@ class Entity(
     }
 
     fun turnTo(facing: Direction) {
+        EntityEvents.BeforeEntityTurn.EVENT.invoker().beforeEntityTurn(api, facing)
         this.facing = facing
         val dimension = dimension ?: return
         dimension.syncManager.entityTurned(this, facing)
     }
 
     fun moveTo(coordinate: Coordinate): Boolean {
+        EntityEvents.BeforeEntityMove.EVENT.invoker().beforeEntityMove(api, coordinate)
         this.facing = world.grid.getDirection(this.coordinate, coordinate)
         val dimension = dimension ?: return false
         if (!collisionTags.isEmpty() && world.collisionResolver.collidesAt(dimension, collisionViewer, coordinate)) {
