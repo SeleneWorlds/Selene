@@ -13,7 +13,7 @@ interface MapLayer {
     fun swapTile(coordinate: Coordinate, tileDef: TileDefinition, newTileDef: TileDefinition): Boolean
     fun removeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean
     fun resetTile(coordinate: Coordinate)
-    fun annotateTile(coordinate: Coordinate, key: String, data: SerializedMap?)
+    fun annotateTile(coordinate: Coordinate, key: String, data: SerializedMap?): Boolean
     fun addVisibilityTag(tagName: String)
     fun removeVisibilityTag(tagName: String)
     fun addCollisionTag(tagName: String)

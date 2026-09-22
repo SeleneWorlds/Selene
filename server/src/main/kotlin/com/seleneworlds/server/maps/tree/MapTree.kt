@@ -72,9 +72,9 @@ class MapTree(val registries: Registries) : ExposedApi<MapTreeApi> {
             coordinate: Coordinate,
             key: String,
             data: SerializedMap?
-        ) {
-            baseLayer.annotateTile(coordinate, key, data)
-            notifyListeners(coordinate)
+        ): Boolean {
+            return baseLayer.annotateTile(coordinate, key, data) ||
+                (sparseLayer?.annotateTile(coordinate, key, data) ?: false)
         }
 
         override fun addVisibilityTag(tagName: String) {
@@ -179,7 +179,9 @@ class MapTree(val registries: Registries) : ExposedApi<MapTreeApi> {
 
     fun annotateTile(coordinate: Coordinate, key: String, data: SerializedMap?, layerName: String? = null) {
         val layer = getLayer(layerName ?: "default")
-        layer.annotateTile(coordinate, key, data)
+        if (layer.annotateTile(coordinate, key, data)) {
+            notifyListeners(coordinate)
+        }
     }
 
     fun addListener(listener: MapTreeListener) {

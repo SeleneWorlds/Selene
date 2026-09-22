@@ -36,7 +36,8 @@ object EmptyMapLayer : MapLayer, BaseMapLayer {
         coordinate: Coordinate,
         key: String,
         data: SerializedMap?
-    ) {
+    ): Boolean {
+        return false
     }
 
     override fun addVisibilityTag(tagName: String) {

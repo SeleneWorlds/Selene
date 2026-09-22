@@ -50,7 +50,8 @@ class MapTreeLayer(override val name: String, private val mapTree: MapTree) : Ma
         coordinate: Coordinate,
         key: String,
         data: SerializedMap?
-    ) {
+    ): Boolean {
+        return false
     }
 
     override fun getTileId(coordinate: Coordinate): Int {

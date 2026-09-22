@@ -69,8 +69,9 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
         coordinate: Coordinate,
         key: String,
         data: SerializedMap?
-    ) {
+    ): Boolean {
         getOrCreateChunk(coordinate).setAnnotation(coordinate, key, data)
+        return true
     }
 
     override fun resetTile(coordinate: Coordinate) {

@@ -51,9 +51,10 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
         coordinate: Coordinate,
         key: String,
         data: SerializedMap?
-    ) {
+    ): Boolean {
         val chunk = getOrCreateChunk(coordinate)
         chunk.addOperation(coordinate, SparseTileAnnotation(coordinate, key, data))
+        return true
     }
 
     fun getOperations(coordinate: Coordinate): List<SparseOperation> {
