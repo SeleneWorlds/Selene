@@ -16,8 +16,44 @@ class LuaTablexModule : LuaModule {
 
     override fun register(table: LuaValue) {
         table.register("observable", this::observable)
+        table.register("deepEquals", this::deepEquals)
         table.register("find", this::find)
         table.register("tostring", this::toString)
+    }
+
+    /**
+     * Compares two values recursively, including tables and observable maps.
+     *
+     * ```signatures
+     * deepEquals(left: any, right: any) -> boolean
+     * ```
+     */
+    private fun deepEquals(lua: Lua): Int {
+        val left = lua.toAny(1)
+        val right = lua.toAny(2)
+        lua.push(deepEquals(left, right))
+        return 1
+    }
+
+    private fun deepEquals(left: Any?, right: Any?): Boolean {
+        val leftValue = if (left is ObservableMap) left.map else left
+        val rightValue = if (right is ObservableMap) right.map else right
+
+        return leftValue === rightValue || when (leftValue) {
+            is Map<*, *> if rightValue is Map<*, *> -> {
+                leftValue.size == rightValue.size && leftValue.all { (key, value) ->
+                    rightValue.containsKey(key) && deepEquals(value, rightValue[key])
+                }
+            }
+
+            is List<*> if rightValue is List<*> -> {
+                leftValue.size == rightValue.size && leftValue.indices.all { index ->
+                    deepEquals(leftValue[index], rightValue[index])
+                }
+            }
+
+            else -> leftValue == rightValue
+        }
     }
 
     /**
