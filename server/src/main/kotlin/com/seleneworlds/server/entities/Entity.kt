@@ -159,4 +159,8 @@ class Entity(
     fun playAnimation(animationName: String) {
         dimension?.syncManager?.sendToAllWatching(networkId, EntityAnimationPacket(networkId, animationName))
     }
+
+    fun updateVisuals() {
+        dimension?.syncManager?.entityUpdated(this)
+    }
 }

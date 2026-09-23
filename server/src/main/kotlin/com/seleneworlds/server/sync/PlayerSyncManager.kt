@@ -119,6 +119,12 @@ class PlayerSyncManager(
         }
     }
 
+    fun updateEntity(entity: Entity) {
+        if (entity.networkId in syncedEntities) {
+            sendEntity(entity)
+        }
+    }
+
     private fun shouldSync(window: ChunkWindow): Boolean {
         return window.isInRange(player.camera.coordinate, chunkViewRange, verticalChunkViewRange)
     }
@@ -137,17 +143,21 @@ class PlayerSyncManager(
 
     private fun syncEntity(entity: Entity) {
         if (entity.transient || syncedEntities.add(entity.networkId)) {
-            player.client.send(
-                EntityPacket(
-                    networkId = entity.networkId,
-                    entityId = entity.entityDefinition.id,
-                    coordinate = entity.coordinate,
-                    facing = entity.facing?.angle ?: 0f,
-                    components = entity.resolveComponentsFor(player)
-                        .mapValues { json.encodeToString(it.value) }
-                )
-            )
+            sendEntity(entity)
         }
+    }
+
+    private fun sendEntity(entity: Entity) {
+        player.client.send(
+            EntityPacket(
+                networkId = entity.networkId,
+                entityId = entity.entityDefinition.id,
+                coordinate = entity.coordinate,
+                facing = entity.facing?.angle ?: 0f,
+                components = entity.resolveComponentsFor(player)
+                    .mapValues { json.encodeToString(it.value) }
+            )
+        )
     }
 
     private fun unsyncEntity(entity: Entity) {

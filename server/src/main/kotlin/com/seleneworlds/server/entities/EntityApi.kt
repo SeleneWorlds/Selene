@@ -197,6 +197,10 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
         delegate.playAnimation(animationName)
     }
 
+    fun updateVisuals() {
+        delegate.updateVisuals()
+    }
+
     override fun resolvableReference(): ResolvableReference<Int, Entity> {
         return delegate.resolvableReference()
     }

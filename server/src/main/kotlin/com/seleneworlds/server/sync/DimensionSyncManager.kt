@@ -58,6 +58,10 @@ class DimensionSyncManager {
         )
     }
 
+    fun entityUpdated(entity: Entity) {
+        playerSyncManagers.forEach { it.updateEntity(entity) }
+    }
+
     fun tileUpdated(coordinate: Coordinate) {
         for (manager in playerSyncManagers) {
             manager.tileUpdated(coordinate)

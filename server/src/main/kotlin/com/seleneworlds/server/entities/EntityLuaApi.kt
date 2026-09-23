@@ -329,6 +329,12 @@ object EntityLuaApi {
         return 0
     }
 
+    private fun updateVisuals(lua: Lua): Int {
+        val entity = lua.checkUserdata<EntityApi>(1)
+        entity.updateVisuals()
+        return 0
+    }
+
     val luaMeta = LuaMappedMetatable(EntityApi::class) {
         callable(::getNetworkId)
         callable(::getEntityDefinition)
@@ -367,6 +373,7 @@ object EntityLuaApi {
         callable(::createAttribute)
         callable(::hasTag)
         callable(::playAnimation)
+        callable(::updateVisuals)
         callable(::getRuntimeData)
         callable(::overwriteRuntimeData)
         callable(::hasRuntimeData)
