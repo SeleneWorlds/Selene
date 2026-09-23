@@ -8,7 +8,9 @@ import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.script.ScriptTrace
 import com.seleneworlds.common.lua.util.checkInt
 import com.seleneworlds.common.lua.util.checkRegistry
+import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.register
+import com.seleneworlds.common.lua.util.toAny
 import com.seleneworlds.common.lua.util.xpCall
 import com.seleneworlds.server.data.Registries
 
@@ -66,6 +68,7 @@ class EntitiesLuaApi(
         table.register("create", this::create)
         table.register("createTransient", this::createTransient)
         table.register("getByNetworkId", this::getByNetworkId)
+        table.register("findByRuntimeData", this::findByRuntimeData)
         table.set("beforeMove", beforeEntityMove)
         table.set("beforeTurn", beforeEntityTurn)
         table.set("steppedOnTile", entitySteppedOnTile)
@@ -84,6 +87,31 @@ class EntitiesLuaApi(
 
     private fun getByNetworkId(lua: Lua): Int {
         lua.push(api.getByNetworkId(lua.checkInt(1)), Lua.Conversion.NONE)
+        return 1
+    }
+
+    private fun findByRuntimeData(lua: Lua): Int {
+        val namespace = lua.checkString(1)
+        val key = lua.checkString(2)
+        val expected = lua.toAny(3)
+
+        val entity = api.getAll().firstOrNull { entity ->
+            val runtimeData = entity.delegate.customLuaData ?: return@firstOrNull false
+            val originalTop = lua.top
+            try {
+                runtimeData.push(lua)
+                lua.push(namespace)
+                lua.rawGet(-2)
+                if (!lua.isTable(-1)) return@firstOrNull false
+                lua.push(key)
+                lua.rawGet(-2)
+                lua.toAny(-1) == expected
+            } finally {
+                lua.top = originalTop
+            }
+        }
+
+        lua.push(entity, Lua.Conversion.NONE)
         return 1
     }
 }

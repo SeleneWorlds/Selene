@@ -15,4 +15,8 @@ class EntitiesApi(private val entityManager: EntityManager) {
     fun getByNetworkId(networkId: Int): EntityApi? {
         return entityManager.getEntityByNetworkId(networkId)?.api
     }
+
+    fun getAll(): List<EntityApi> {
+        return entityManager.getEntities().map { it.api }
+    }
 }

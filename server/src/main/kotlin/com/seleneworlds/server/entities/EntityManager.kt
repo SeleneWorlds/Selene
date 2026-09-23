@@ -80,6 +80,10 @@ class EntityManager : ReferenceResolver<Int, Entity> {
         return entities[networkId]
     }
 
+    fun getEntities(): Collection<Entity> {
+        return entities.values
+    }
+
     private fun deactivateEntity(entity: Entity) {
         activeTickingEntities.remove(entity)
     }
