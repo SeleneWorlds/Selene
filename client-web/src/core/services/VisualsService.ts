@@ -10,7 +10,7 @@ export class VisualsService implements VisualsApi {
     const drawable = { getTextureRegion: () => null, getCurrentFrame: () => 0, getElapsedTime: () => 0,
       getDuration: () => numberOr(definition.duration, 0), animationCompleted: { connect: () => undefined }, withoutOffset() { return this; } };
     return Object.assign({}, definition, {
-      getMetadata: (key: string) => definition.getMetadata(key), getSurfaceHeight: () => numberOr(definition.surfaceHeight, 0),
+      getMetadata: (key: string) => definition.getMetadata(key), getSurfaceHeight: () => numberOr(definition.surfaceOffsetY, 0),
       getDrawable: () => drawable, getDefinition: () => definition,
     });
   }

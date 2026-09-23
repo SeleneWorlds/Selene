@@ -67,6 +67,7 @@ export class PixiGameRenderer implements GameRenderer {
       this.textureLoader,
       options.grid,
       this.scene.depthSortedContainer,
+      (coordinate, beforeRenderOrder) => this.tilemapLayer.getSurfaceHeight(coordinate, beforeRenderOrder),
     );
     this.viewport = new PixiViewport(
       this.app, options.host, options.uiHost, this.camera, this.debugState, () => this.drawCameraScene(),

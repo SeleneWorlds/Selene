@@ -46,6 +46,7 @@ export class PixiEntityLayer {
     private readonly textureLoader: ContentTextureLoader,
     private readonly grid: ClientGrid,
     readonly container: Container,
+    private readonly getSurfaceHeight: (coordinate: Coordinate, beforeRenderOrder: number) => number = () => 0,
   ) {}
 
   update(deltaMs: number): void {
@@ -54,7 +55,6 @@ export class PixiEntityLayer {
         rendered.motion.elapsedMs += deltaMs;
         const progress = Math.min(1, rendered.motion.elapsedMs / rendered.motion.durationMs);
         rendered.coordinate = interpolateCoordinate(rendered.motion.start, rendered.motion.end, progress);
-        this.positionEntity(rendered);
         if (progress >= 1) {
           rendered.coordinate = { ...rendered.motion.end };
           rendered.motion = null;
@@ -63,6 +63,8 @@ export class PixiEntityLayer {
       } else {
         rendered.motionGraceRemainingMs = Math.max(0, rendered.motionGraceRemainingMs - deltaMs);
       }
+      // Surface heights can change independently when a map stack is updated.
+      this.positionEntity(rendered);
       this.updateAnimation(id, rendered, deltaMs);
     }
   }
@@ -247,7 +249,6 @@ export class PixiEntityLayer {
 
   private positionEntity(entity: RenderedEntity): void {
     const position = projectCoordinate(entity.coordinate);
-    entity.container.position.set(position.x, position.y);
     // Tiles occupy discrete sort rows. A continuously interpolated zIndex made
     // Pixi re-sort and rebuild the tile-heavy render list every movement frame,
     // even though ordering can only change when the entity crosses a row.
@@ -255,6 +256,15 @@ export class PixiEntityLayer {
     const zIndex = -(
       rowSortLayer - (entity.visual?.sortLayerOffset ?? 0)
     ) * 1000 + ENTITY_LOCAL_SORT_LAYER;
+    const surfaceCoordinate = {
+      x: Math.round(entity.coordinate.x),
+      y: Math.round(entity.coordinate.y),
+      z: Math.round(entity.coordinate.z),
+    };
+    entity.container.position.set(
+      position.x,
+      position.y - this.getSurfaceHeight(surfaceCoordinate, zIndex),
+    );
     if (entity.container.zIndex !== zIndex) {
       entity.container.zIndex = zIndex;
     }

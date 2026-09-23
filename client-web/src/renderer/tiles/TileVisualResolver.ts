@@ -11,6 +11,7 @@ export interface ResolvedTileVisual {
     instanced: boolean;
   } | null;
   sortLayerOffset: number;
+  surfaceHeight: number;
   offsetX: number;
   offsetY: number;
   flipX: boolean;
@@ -56,6 +57,7 @@ export class TileVisualResolver {
       texturePath,
       animation,
       sortLayerOffset: visualDefinition.sortLayerOffset ?? 0,
+      surfaceHeight: visualDefinition.surfaceOffsetY ?? 0,
       offsetX: visualDefinition.offsetX ?? 0,
       offsetY: visualDefinition.offsetY ?? 0,
       flipX: visualDefinition.flipX ?? false,

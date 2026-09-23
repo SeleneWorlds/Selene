@@ -104,6 +104,13 @@ export class PixiTilemapLayer {
 
   hasTileAt(coordinate: Coordinate): boolean { return this.renderedStacks.has(coordinateKey(coordinate)); }
 
+  getSurfaceHeight(coordinate: Coordinate, beforeRenderOrder: number): number {
+    return this.renderedStacks.get(coordinateKey(coordinate))?.surfaces.reduce(
+      (height, surface) => surface.renderOrder < beforeRenderOrder ? height + surface.height : height,
+      0,
+    ) ?? 0;
+  }
+
   setUpperLayerAlpha(focusZ: number, alpha: number): void {
     if (!this.upperLayerDirty && this.upperLayerFocusZ === focusZ && this.upperLayerAlpha === alpha) return;
     this.upperLayerFocusZ = focusZ;

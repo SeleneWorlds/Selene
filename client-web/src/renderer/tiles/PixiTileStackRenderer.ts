@@ -18,19 +18,32 @@ export class PixiTileStackRenderer {
 
   createStack(coordinate: Coordinate, tileIds: readonly number[], generation: number): RenderedTileStack {
     const position = projectCoordinate(coordinate);
-    const containers = tileIds.map((tileId, localSortLayer) => {
-      const visual = this.visualResolver.resolve(tileId, coordinate);
+    const visuals = tileIds.map(tileId => this.visualResolver.resolve(tileId, coordinate));
+    const renderOrders = visuals.map((visual, localSortLayer) =>
+      getRenderOrder(coordinate, visual?.sortLayerOffset ?? 0, localSortLayer));
+    const surfaces = visuals.map((visual, index) => ({
+      renderOrder: renderOrders[index],
+      height: visual?.surfaceHeight ?? 0,
+    }));
+    const surfaceOffsets = renderOrders.map(renderOrder => surfaces.reduce(
+      (height, surface) => surface.renderOrder < renderOrder ? height + surface.height : height,
+      0,
+    ));
+    const containers = tileIds.map((_, localSortLayer) => {
+      const visual = visuals[localSortLayer];
       // A Sprite is itself a Container in Pixi v8. Avoiding a wrapper around
       // every ordinary tile roughly halves scene-graph traversal for maps.
       const container = visual ? new Sprite() : new Container();
-      container.position.set(position.x, position.y);
-      container.zIndex = getRenderOrder(coordinate, visual?.sortLayerOffset ?? 0, localSortLayer);
+      container.position.set(position.x, position.y - surfaceOffsets[localSortLayer]);
+      container.zIndex = renderOrders[localSortLayer];
       this.parent.addChild(container);
       return container;
     });
 
     return {
       containers,
+      surfaceOffsets,
+      surfaces,
       localBounds: containers.map(() => null),
       coordinate,
       tileIds,
@@ -84,7 +97,10 @@ export class PixiTileStackRenderer {
         sprite.texture = texture;
         sprite.anchor.set(0.5, 1);
         const position = projectCoordinate(stack.coordinate);
-        sprite.position.set(position.x + visual.offsetX, position.y - visual.offsetY);
+        sprite.position.set(
+          position.x + visual.offsetX,
+          position.y - stack.surfaceOffsets[localSortLayer] - visual.offsetY,
+        );
         sprite.scale.x = visual.flipX ? -1 : 1;
         sprite.scale.y = visual.flipY ? -1 : 1;
         this.boundsChanged(stack, localSortLayer);

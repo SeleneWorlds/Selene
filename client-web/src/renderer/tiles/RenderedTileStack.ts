@@ -13,6 +13,8 @@ export interface RenderedAnimatedTile {
 
 export interface RenderedTileStack {
   containers: Container[];
+  surfaceOffsets: number[];
+  surfaces: { renderOrder: number; height: number }[];
   localBounds: (WorldBounds | null)[];
   coordinate: Coordinate;
   tileIds: readonly number[];
