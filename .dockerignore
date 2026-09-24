@@ -1,0 +1,26 @@
+# Version Control
+.git
+.gitignore
+
+# IDEs and OS Junk
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Backend / Build Tools (Gradle)
+.gradle/
+**/build/
+
+# Frontend (client-web) & Node Node
+**/node_modules/
+client-web/dist/
+client-web/*.tsbuildinfo
+
+# Secrets and Local Configurations
+**/.env
+client-web/*.local
+
+# Docker files (Optional but keeps context clean)
+Dockerfile
+.dockerignore

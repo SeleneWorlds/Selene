@@ -1,6 +1,11 @@
+FROM node:24.16.0-bookworm AS node
+RUN npm install --global pnpm@11.5.2
+
 FROM gradle:9.3-jdk25 AS build
+COPY --from=node /usr/local/ /usr/local/
 COPY --chown=gradle:gradle . /app
 WORKDIR /app
+RUN pnpm --dir client-web install --frozen-lockfile
 RUN gradle :server:installDist --no-daemon
 RUN mv /app/server/build/install/server/lib/server.jar /app/server/build/install/server/server.jar
 
