@@ -138,6 +138,7 @@ class HttpServer(
                     call.respond(HttpStatusCode.SeeOther)
                 }
                 get("/status") {
+                    call.response.header(HttpHeaders.AccessControlAllowOrigin, "*")
                     call.respond(
                         ServerStatusResponse(
                             type = "selene",
