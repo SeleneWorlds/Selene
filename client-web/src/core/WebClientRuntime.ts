@@ -56,8 +56,8 @@ class DefaultWebClientRuntime implements WebClientRuntime {
 
   async start(options: BootstrapClientOptions): Promise<void> {
     const loadingStartedAt = performance.now();
-    const serverApiUrl = requireEnv(import.meta.env.VITE_SELENE_SERVER_API_URL, 'VITE_SELENE_SERVER_API_URL');
-    const webSocketUrl = requireEnv(import.meta.env.VITE_SELENE_WEBSOCKET_URL, 'VITE_SELENE_WEBSOCKET_URL');
+    const serverApiUrl = configuredUrl(import.meta.env.VITE_SELENE_SERVER_API_URL) ?? window.location.origin;
+    const webSocketUrl = configuredUrl(import.meta.env.VITE_SELENE_WEBSOCKET_URL) ?? defaultWebSocketUrl();
     const authToken = readJoinToken();
 
     const registries = await this.timeLoad('Registry loading', () =>
@@ -179,10 +179,12 @@ export async function bootstrapClient(options: BootstrapClientOptions): Promise<
   return runtime;
 }
 
-function requireEnv(value: string | undefined, name: string): string {
+function configuredUrl(value: string | undefined): string | null {
   const trimmedValue = value?.trim();
-  if (!trimmedValue) {
-    throw new Error(`Missing required server configuration: ${name}.`);
-  }
-  return trimmedValue;
+  return trimmedValue || null;
+}
+
+function defaultWebSocketUrl(): string {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${protocol}//${window.location.host}/ws`;
 }

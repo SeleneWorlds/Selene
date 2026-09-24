@@ -1,4 +1,5 @@
 import java.time.Instant
+import org.gradle.api.tasks.Sync
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -31,6 +32,34 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+}
+
+val buildWebClient by tasks.registering(Exec::class) {
+    description = "Builds the browser client for embedding in the server"
+    group = "build"
+    workingDir(rootProject.file("client-web"))
+    commandLine("pnpm", "build")
+    environment("VITE_SELENE_SERVER_API_URL", "")
+    environment("VITE_SELENE_WEBSOCKET_URL", "")
+    environment("VITE_SELENE_BASE_DOMAIN", "")
+    inputs.files(rootProject.fileTree("client-web") {
+        exclude("dist/**", "node_modules/**", ".env", "*.local", "*.tsbuildinfo")
+    })
+    outputs.dir(rootProject.file("client-web/dist"))
+}
+
+val copyWebClient by tasks.registering(Sync::class) {
+    dependsOn(buildWebClient)
+    from(rootProject.file("client-web/dist"))
+    into(layout.buildDirectory.dir("generated-resources/web-client"))
+}
+
+sourceSets.main {
+    resources.srcDir(copyWebClient.map { it.destinationDir.parentFile })
+}
+
+tasks.processResources {
+    dependsOn(copyWebClient)
 }
 
 tasks.register("generateLibrariesJson") {

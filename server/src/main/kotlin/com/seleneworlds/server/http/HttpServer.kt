@@ -10,6 +10,7 @@ import io.ktor.server.plugins.cors.routing.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import io.ktor.server.http.content.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -100,7 +101,43 @@ class HttpServer(
                 }
             }
             routing {
-                get("/") {
+                post("/bootstrap") {
+                    val contentLength = call.request.header(HttpHeaders.ContentLength)?.toLongOrNull()
+                    if (contentLength != null && contentLength > MAX_BOOTSTRAP_BODY_BYTES) {
+                        call.respond(HttpStatusCode.PayloadTooLarge, "Bootstrap request body is too large.")
+                        return@post
+                    }
+
+                    val token = when {
+                        call.request.contentType().match(ContentType.Application.Json) ->
+                            call.receive<BootstrapRequest>().token
+                        else -> call.receiveParameters()["token"]
+                    }?.trim()
+
+                    if (token.isNullOrEmpty()) {
+                        call.respond(HttpStatusCode.BadRequest, "A non-empty token field is required.")
+                        return@post
+                    }
+
+                    val forwardedProtocol = call.request.header(HttpHeaders.XForwardedProto)
+                        ?.substringBefore(',')
+                        ?.trim()
+                    val secure = forwardedProtocol.equals("https", ignoreCase = true)
+                        || call.request.local.scheme.equals("https", ignoreCase = true)
+                    call.response.cookies.append(
+                        Cookie(
+                            name = JOIN_TOKEN_COOKIE_NAME,
+                            value = token,
+                            path = "/",
+                            secure = secure,
+                            httpOnly = false,
+                            extensions = mapOf("SameSite" to "Strict")
+                        )
+                    )
+                    call.response.header(HttpHeaders.Location, "/")
+                    call.respond(HttpStatusCode.SeeOther)
+                }
+                get("/status") {
                     call.respond(
                         ServerStatusResponse(
                             type = "selene",
@@ -288,6 +325,7 @@ class HttpServer(
                         queue.removeUser(principal.userId)
                     }
                 }
+                staticResources("/", "web-client", index = "index.html")
             }
         }
 
@@ -300,6 +338,12 @@ class HttpServer(
         engine = null
     }
 }
+
+private const val JOIN_TOKEN_COOKIE_NAME = "selene_join_token"
+private const val MAX_BOOTSTRAP_BODY_BYTES = 64 * 1024L
+
+@Serializable
+private data class BootstrapRequest(val token: String? = null)
 
 private suspend fun ApplicationCall.respondAssetManifest(manifest: VersionedAssetManifest) {
     response.header(HttpHeaders.CacheControl, ClientAssetIndex.MANIFEST_CACHE_CONTROL)

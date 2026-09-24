@@ -32,7 +32,7 @@ function createStorageBroker(): StorageBroker {
   if (isLocalhost(window.location.hostname)) return new LocalStorageBroker();
 
   const rootDomain = import.meta.env.VITE_SELENE_BASE_DOMAIN?.trim().replace(/^\./, '');
-  if (!rootDomain) throw new Error('Missing required storage configuration: VITE_SELENE_BASE_DOMAIN.');
+  if (!rootDomain) return new LocalStorageBroker();
   if (!isDomainOrSubdomain(window.location.hostname, rootDomain)) {
     throw new Error(`Storage is not available outside ${rootDomain}.`);
   }
