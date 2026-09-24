@@ -10,6 +10,7 @@ on:
       - 'Dockerfile'
       - 'common/**'
       - 'server/**'
+      - 'client-web/**'
   workflow_dispatch:  # Allows manual triggering
 
 env:
