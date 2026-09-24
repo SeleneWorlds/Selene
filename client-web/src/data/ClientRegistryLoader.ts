@@ -30,6 +30,16 @@ export interface ClientRegistryLoaderOptions {
   authToken: string;
 }
 
+export class ClientRegistryRequestError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ClientRegistryRequestError';
+  }
+}
+
 export async function loadClientRegistries(options: ClientRegistryLoaderOptions): Promise<ClientRegistrySnapshots> {
   const index = parseIndex(await fetchJson(
     joinServerApiUrl(options.serverApiUrl, '/client/registries'),
@@ -100,7 +110,10 @@ async function fetchJson(url: string, authToken: string, label: string): Promise
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch ${label}: ${response.status} ${response.statusText}`);
+    throw new ClientRegistryRequestError(
+      `Failed to fetch ${label}: ${response.status} ${response.statusText}`,
+      response.status,
+    );
   }
 
   return response.json() as Promise<unknown>;

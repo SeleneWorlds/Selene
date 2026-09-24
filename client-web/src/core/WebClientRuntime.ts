@@ -34,6 +34,12 @@ export interface BootstrapClientOptions {
   bundleUiHost: HTMLElement;
   fitToScreen: boolean;
   debugState?: DebugState;
+  onStartupProgress?: (progress: StartupProgress) => void;
+}
+
+export interface StartupProgress {
+  label: string;
+  progress: number;
 }
 
 export interface WebClientRuntime {
@@ -56,16 +62,24 @@ class DefaultWebClientRuntime implements WebClientRuntime {
 
   async start(options: BootstrapClientOptions): Promise<void> {
     const loadingStartedAt = performance.now();
+    const reportProgress = (label: string, progress: number): void => {
+      options.onStartupProgress?.({ label, progress });
+    };
+
+    reportProgress('Connecting to server', 0.08);
     const serverApiUrl = configuredUrl(import.meta.env.VITE_SELENE_SERVER_API_URL) ?? window.location.origin;
     const webSocketUrl = configuredUrl(import.meta.env.VITE_SELENE_WEBSOCKET_URL)
       ?? await loadWebSocketUrl(serverApiUrl);
     const authToken = readJoinToken();
 
+    reportProgress('Loading game data', 0.2);
     const registries = await this.timeLoad('Registry loading', () =>
       loadClientRegistries({ serverApiUrl, authToken }),
     );
+    reportProgress('Loading assets', 0.42);
     const assetManifest = await loadClientAssetManifest({ serverApiUrl, authToken });
 
+    reportProgress('Preparing renderer', 0.55);
     const gameClient = new GameClient({
       canvasHost: options.viewportHost,
       debugState: this.debugState,
@@ -118,6 +132,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     };
 
     const luaRuntime = new LuaRuntime();
+    reportProgress('Preparing game scripts', 0.68);
     await this.timeLoad('Lua bindings', async () => {
       await registerCameraLuaModule(luaRuntime, gameClient.getCameraApi());
       await registerEntitiesLuaModule(luaRuntime, gameClient.getEntitiesApi(), entityApis);
@@ -129,6 +144,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       await registerCommonLuaModules(luaRuntime, commonApis);
       await registerClientFeatureLuaModules(luaRuntime, featureApis);
     });
+    reportProgress('Loading game scripts', 0.78);
     await this.timeLoad('Client Lua loading', () =>
       loadAndRunClientLua({ serverApiUrl, authToken, runtime: luaRuntime }),
     );
@@ -157,10 +173,13 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       getMapTiles: () => gameClient.getMapTiles(),
       onMapChanged: (listener) => gameClient.addMapChangedListener(listener),
     });
+    reportProgress('Loading interface', 0.88);
     await this.timeLoad('Bundle UI loading', () => bundleUiManager.load());
+    reportProgress('Joining game', 0.96);
     await gameClient.start();
 
     this.debugState.update({ loadTotalMs: performance.now() - loadingStartedAt });
+    reportProgress('Connected', 1);
     console.info(`[Timing] Total startup: ${this.debugState.snapshot.value.loadTotalMs.toFixed(1)} ms`);
   }
 

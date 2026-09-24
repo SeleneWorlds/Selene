@@ -62,29 +62,89 @@ select {
   pointer-events: none;
 }
 
-.startup-error {
+.startup-screen {
+  position: absolute;
+  z-index: 900;
+  inset: 0;
   display: grid;
-  min-height: 100%;
   place-content: center;
   padding: 24px;
-  background: #111817;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(58, 105, 81, 0.24), transparent 42%),
+    #090d0c;
   color: #e7edf0;
   text-align: center;
 }
 
-.startup-error h1 {
-  margin: 0 0 8px;
+.startup-screen__panel {
+  width: min(420px, calc(100vw - 48px));
+}
+
+.startup-screen__mark {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 22px;
+  border: 1px solid rgba(140, 226, 176, 0.42);
+  border-radius: 14px;
+  background: rgba(112, 190, 149, 0.1);
+  color: #8ce2b0;
+  font-size: 25px;
+  font-weight: 700;
+  place-items: center;
+}
+
+.startup-screen h1 {
+  margin: 0 0 9px;
   color: #ffffff;
-  font-size: 24px;
+  font-size: 26px;
   line-height: 1.2;
 }
 
-.startup-error p {
-  max-width: 560px;
+.startup-screen p {
   margin: 0;
   color: rgba(231, 237, 240, 0.74);
   font-size: 14px;
   line-height: 1.5;
+}
+
+.startup-screen__progress {
+  height: 4px;
+  margin-top: 24px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(231, 237, 240, 0.12);
+}
+
+.startup-screen__progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #70be95;
+  box-shadow: 0 0 14px rgba(112, 190, 149, 0.5);
+  transition: width 240ms ease;
+}
+
+.startup-screen .startup-screen__error {
+  color: #ffb0b0;
+  overflow-wrap: anywhere;
+}
+
+.startup-screen button {
+  margin-top: 24px;
+  padding: 9px 18px;
+  border: 1px solid rgba(140, 226, 176, 0.4);
+  border-radius: 7px;
+  background: rgba(112, 190, 149, 0.14);
+  color: #dff8e9;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.startup-screen button:hover,
+.startup-screen button:focus-visible {
+  background: rgba(112, 190, 149, 0.24);
+  outline: none;
 }
 
 .debug-overlay {

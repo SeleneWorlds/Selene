@@ -2,14 +2,19 @@
 import { computed, onMounted, ref } from 'vue';
 import { createDebugState, type DebugSnapshot } from '@/core/DebugState';
 import { bootstrapClient, type WebClientRuntime } from '@/core/WebClientRuntime';
+import { ClientRegistryRequestError } from '@/data/ClientRegistryLoader';
 import DebugOverlay from './components/DebugOverlay.vue';
 import SettingsModal from './components/SettingsModal.vue';
+import StartupScreen from './components/StartupScreen.vue';
 import { loadSettings, saveSettings } from './settings';
 
 const viewportEl = ref<HTMLDivElement | null>(null);
 const bundleUiEl = ref<HTMLElement | null>(null);
 const status = ref<'booting' | 'running' | 'failed'>('booting');
 const errorMessage = ref<string | null>(null);
+const canRetryStartup = ref(true);
+const startupLabel = ref('Starting client');
+const startupProgress = ref(0);
 const settings = loadSettings();
 const isDebugOverlayVisible = ref(settings.debugOverlayVisible);
 const fitToScreen = ref(settings.fitToScreen);
@@ -36,6 +41,10 @@ function persistSettings(): void {
     debugOverlayVisible: isDebugOverlayVisible.value,
     fitToScreen: fitToScreen.value,
   });
+}
+
+function retryStartup(): void {
+  window.location.reload();
 }
 
 function handleGlobalKeydown(event: KeyboardEvent): void {
@@ -65,12 +74,18 @@ onMounted(() => {
   window.addEventListener('keydown', handleGlobalKeydown, true);
 });
 
-onMounted(async () => {
+async function startClient(): Promise<void> {
   if (!viewportEl.value || !bundleUiEl.value) {
     status.value = 'failed';
     errorMessage.value = 'Viewport elements were not mounted.';
     return;
   }
+
+  status.value = 'booting';
+  errorMessage.value = null;
+  canRetryStartup.value = true;
+  startupLabel.value = 'Starting client';
+  startupProgress.value = 0;
 
   try {
     clientRuntime = await bootstrapClient({
@@ -78,12 +93,25 @@ onMounted(async () => {
       bundleUiHost: bundleUiEl.value,
       fitToScreen: fitToScreen.value,
       debugState,
+      onStartupProgress: ({ label, progress }) => {
+        startupLabel.value = label;
+        startupProgress.value = progress;
+      },
     });
     status.value = 'running';
   } catch (error) {
     status.value = 'failed';
-    errorMessage.value = error instanceof Error ? error.message : String(error);
+    if (error instanceof ClientRegistryRequestError && error.status === 401) {
+      canRetryStartup.value = false;
+      errorMessage.value = 'This join session is missing or no longer valid. Return to the server and join again to open a new client session.';
+    } else {
+      errorMessage.value = error instanceof Error ? error.message : String(error);
+    }
   }
+}
+
+onMounted(() => {
+  void startClient();
 });
 
 </script>
@@ -92,6 +120,16 @@ onMounted(async () => {
   <main class="client-shell">
     <section ref="viewportEl" class="game-viewport" aria-label="Selene game renderer" />
     <section ref="bundleUiEl" class="bundle-ui-layer" aria-label="Bundle user interface" />
+
+    <StartupScreen
+      v-if="status !== 'running'"
+      :status="status"
+      :label="startupLabel"
+      :progress="startupProgress"
+      :error-message="errorMessage"
+      :can-retry="canRetryStartup"
+      @retry="retryStartup"
+    />
 
     <DebugOverlay
       v-if="isDebugOverlayVisible"
