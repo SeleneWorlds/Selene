@@ -1,3 +1,4 @@
+import java.io.File
 import java.time.Instant
 import org.gradle.api.tasks.Sync
 
@@ -38,7 +39,23 @@ val buildWebClient by tasks.registering(Exec::class) {
     description = "Builds the browser client for embedding in the server"
     group = "build"
     workingDir(rootProject.file("client-web"))
-    commandLine("pnpm", "build")
+
+    val nodeVersion = rootProject.file(".nvmrc").readText().trim().removePrefix("v")
+    val nvmDir = System.getenv("NVM_DIR")?.let(::File)
+        ?: File(System.getProperty("user.home"), ".nvm")
+    val nvmNodeBin = nvmDir.resolve("versions/node/v$nodeVersion/bin")
+    val nvmNode = nvmNodeBin.resolve("node")
+    val nvmPnpm = nvmNodeBin.resolve("pnpm")
+
+    if (nvmNode.isFile && nvmPnpm.exists()) {
+        commandLine(nvmPnpm.absolutePath, "build")
+        environment(
+            "PATH",
+            nvmNodeBin.absolutePath + File.pathSeparator + (System.getenv("PATH") ?: ""),
+        )
+    } else {
+        commandLine("pnpm", "build")
+    }
     environment("VITE_SELENE_SERVER_API_URL", "")
     environment("VITE_SELENE_WEBSOCKET_URL", "")
     inputs.files(rootProject.fileTree("client-web") {
