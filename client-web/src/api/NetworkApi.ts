@@ -3,5 +3,6 @@ export type ClientNetworkPayloadHandler = (payload: ClientNetworkPayload) => voi
 
 export interface NetworkApi {
   handlePayload: (payloadId: string, callback: ClientNetworkPayloadHandler) => () => void;
+  onConnected: (callback: () => void) => () => void;
   sendToServer: (payloadId: string, payload?: ClientNetworkPayload) => void;
 }

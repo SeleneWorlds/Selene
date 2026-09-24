@@ -14,6 +14,10 @@ class NetworkApi(
     private val json: Json,
     private val payloadRegistry: PayloadHandlerRegistry<Unit>
 ) {
+    private val connectionLock = Any()
+    private val connectionCallbacks = mutableSetOf<() -> Unit>()
+    private var connectionReady = false
+
     fun handlePayload(payloadId: String, callback: (SerializedMap) -> Unit): () -> Unit {
         return payloadRegistry.registerHandler(payloadId) {
             _, payload -> callback(payload)
@@ -22,5 +26,24 @@ class NetworkApi(
 
     fun sendToServer(payloadId: String, payload: SerializedMap) {
         networkClient.send(CustomPayloadPacket(payloadId, json.encodeToString(SerializedMapSerializer, payload)))
+    }
+
+    fun onConnected(callback: () -> Unit): () -> Unit {
+        val runNow = synchronized(connectionLock) {
+            if (connectionReady) true else {
+                connectionCallbacks.add(callback)
+                false
+            }
+        }
+        if (runNow) callback()
+        return { synchronized(connectionLock) { connectionCallbacks.remove(callback) } }
+    }
+
+    fun markConnectionReady() {
+        val callbacks = synchronized(connectionLock) {
+            connectionReady = true
+            connectionCallbacks.toList().also { connectionCallbacks.clear() }
+        }
+        callbacks.forEach { it() }
     }
 }

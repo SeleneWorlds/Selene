@@ -57,6 +57,7 @@ class CefUiBridge(
                 val message = json.parseToJsonElement(request).jsonObject
                 when (message.requiredString("type")) {
                     "sendPayloadToServer" -> sendPayloadToServer(message, callback)
+                    "subscribeToConnection" -> subscribeToConnection(queryId, persistent, callback)
                     "subscribeToServerPayload" -> subscribeToServerPayload(
                         browser, frame, queryId, persistent, message, callback)
                     "updateInteractionState" -> updateInteractionState(message, callback)
@@ -102,6 +103,12 @@ class CefUiBridge(
             networkApi.sendToServer(payloadId, payload)
             callback.success("")
         }
+    }
+
+    private fun subscribeToConnection(queryId: Long, persistent: Boolean, callback: CefQueryCallback) {
+        require(persistent) { "Connection subscriptions must be persistent queries" }
+        val remove = networkApi.onConnected { callback.success("") }
+        subscriptions.put(queryId, Subscription(remove, callback))?.remove?.invoke()
     }
 
     private fun subscribeToServerPayload(browser: CefBrowser, frame: CefFrame, queryId: Long, persistent: Boolean,

@@ -60,6 +60,7 @@ interface BundleUiApi {
   readonly network: {
     sendToServer: (payloadId: string, payload?: ClientNetworkPayload) => void;
     onPayload: (payloadId: string, callback: (payload: ClientNetworkPayload) => void) => () => void;
+    onConnected: (callback: () => void) => () => void;
   };
   readonly world: {
     getCameraCoordinate: CameraApi['getCoordinate'];
@@ -163,6 +164,10 @@ export class BundleUiManager {
           this.registerPointerListener('pointerup', callback),
       }),
       network: Object.freeze({
+        onConnected: (callback: () => void) => {
+          if (typeof callback !== 'function') throw new Error('Connected callback must be a function.');
+          return this.options.network.onConnected(callback);
+        },
         sendToServer: (payloadId: string, payload: ClientNetworkPayload = {}) => {
           requirePayloadId(payloadId);
           requirePayload(payload);

@@ -16,6 +16,7 @@ import com.seleneworlds.client.sounds.AudioRegistry
 import com.seleneworlds.client.rendering.visual.VisualRegistry
 import com.seleneworlds.client.network.NetworkClient
 import com.seleneworlds.client.network.NetworkClientImpl
+import com.seleneworlds.client.network.NetworkApi
 import com.seleneworlds.client.rendering.drawable.DrawableManager
 import com.seleneworlds.client.rendering.visual.VisualDefinition
 import com.seleneworlds.common.bundles.BundleLifecycleManager
@@ -43,6 +44,7 @@ import kotlin.math.pow
 class SeleneClient(
     private val config: ClientConfig,
     private val networkClient: NetworkClient,
+    private val networkApi: NetworkApi,
     private val bundleLoader: BundleLoader,
     private val bundleLifecycleManager: BundleLifecycleManager,
     private val luaManager: LuaManager,
@@ -166,6 +168,7 @@ class SeleneClient(
                         networkClient.send(AuthenticatePacket(runtimeConfig.token.ifBlank { createOfflineToken() }))
                         networkClient.send(PreferencesPacket(Locale.getDefault().toString()))
                         networkClient.send(FinalizeJoinPacket())
+                        networkApi.markConnectionReady()
                     }
                 }.await()
                 if (future.isSuccess) {

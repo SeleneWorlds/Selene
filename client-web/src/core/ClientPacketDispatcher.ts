@@ -57,6 +57,19 @@ export class ClientPacketDispatcher {
           }
         };
       },
+      onConnected: (callback) => {
+        if (this.networkClient.status === 'connected') {
+          callback();
+          return () => undefined;
+        }
+        const listener = () => {
+          if (this.networkClient.status !== 'connected') return;
+          this.networkClient.removeStatusListener(listener);
+          callback();
+        };
+        this.networkClient.addStatusListener(listener);
+        return () => this.networkClient.removeStatusListener(listener);
+      },
       sendToServer: (payloadId, payload = {}) => {
         this.networkClient.sendCustomPayload(payloadId, serializeCustomPayload(payloadId, payload));
       },
