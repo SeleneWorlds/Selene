@@ -164,6 +164,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       host: options.bundleUiHost,
       serverApiUrl,
       authToken,
+      assetManifest,
       network: gameClient.getNetworkApi(),
       input: gameClient.getBundleUiInputClaims(),
       camera: gameClient.getCameraApi(),

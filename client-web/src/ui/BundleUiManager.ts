@@ -11,13 +11,14 @@ import type { EntitiesApi } from '@/api/EntitiesApi';
 import type { Coordinate } from '@/networking/GameProtocol';
 import type { ClientMapTile } from '@/core/ClientMap';
 import type { ClientVisualDefinition } from '@/data/ClientRegistrySchemas';
+import type { ClientAssetManifest } from '@/core/services/ClientAssetManifest';
 import {
   ClientUiIndexResponseSchema,
   parseServerResponse,
   type ClientUiEntrypoint,
 } from '@/data/ClientServerResponseSchemas';
 
-const API_VERSION = 5;
+const API_VERSION = 6;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -27,6 +28,7 @@ interface BundleUiManagerOptions {
   host: HTMLElement;
   serverApiUrl: string;
   authToken: string;
+  assetManifest: ClientAssetManifest;
   network: NetworkApi;
   input: BundleUiInputClaims;
   camera: CameraApi;
@@ -41,7 +43,7 @@ interface BundleUiModule {
 }
 interface BundleUiApi {
   readonly apiVersion: number;
-  readonly resolveAsset: (path: string) => string;
+  readonly resolveAsset: (path: string) => Promise<string>;
   readonly visuals: {
     getDefinition: (identifier: string) => Promise<ClientVisualDefinition>;
   };
@@ -79,6 +81,8 @@ interface BundleUiPointerEvent {
 }
 interface BundleUiWorldEntity { networkId: number; tags: string[]; visual?: string }
 export class BundleUiManager {
+  private readonly clientAssetUrls = new Map<string, Promise<string>>();
+
   constructor(private readonly options: BundleUiManagerOptions) {}
 
   async load(): Promise<void> {
@@ -108,17 +112,21 @@ export class BundleUiManager {
 
     for (const style of parsed.querySelectorAll('style')) root.append(style.cloneNode(true));
     for (const link of parsed.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]')) {
-      const shadowLink = document.createElement('link');
-      shadowLink.rel = 'stylesheet';
-      shadowLink.href = new URL(link.getAttribute('href')!, entrypointUrl).href;
-      root.append(shadowLink);
+      const stylesheetUrl = new URL(link.getAttribute('href')!, entrypointUrl).href;
+      const response = await fetch(stylesheetUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch ${entrypoint.bundle}:${entrypoint.id} stylesheet: ${response.status} ${response.statusText}`);
+      }
+      const shadowStyle = document.createElement('style');
+      shadowStyle.textContent = await response.text();
+      root.append(shadowStyle);
     }
 
     const content = document.createDocumentFragment();
     for (const child of [...parsed.body.childNodes]) content.append(child.cloneNode(true));
     root.append(content);
 
-    const api = this.createApi(entrypointUrl, entrypoint);
+    const api = this.createApi(entrypoint);
     for (const script of parsed.querySelectorAll<HTMLScriptElement>('script[type="module"][src]')) {
       const moduleUrl = new URL(script.getAttribute('src')!, entrypointUrl).href;
       const module = await import(/* @vite-ignore */ moduleUrl) as Partial<BundleUiModule>;
@@ -129,15 +137,12 @@ export class BundleUiManager {
     }
   }
 
-  private createApi(entrypointUrl: string, entrypoint: ClientUiEntrypoint): BundleUiApi {
+  private createApi(entrypoint: ClientUiEntrypoint): BundleUiApi {
     let subscriptionCount = 0;
     const storagePrefix = `selene.bundle.${entrypoint.bundle}.${entrypoint.id}.`;
     return Object.freeze({
       apiVersion: API_VERSION,
-      resolveAsset: (path: string) => {
-        if (typeof path !== 'string' || path.length === 0) throw new Error('Asset path must be a non-empty string.');
-        return new URL(path, entrypointUrl).href;
-      },
+      resolveAsset: (path: string) => this.resolveAsset(path),
       visuals: Object.freeze({
         getDefinition: async (identifier: string) => {
           requireVisualIdentifier(identifier);
@@ -235,6 +240,31 @@ export class BundleUiManager {
     };
     window.addEventListener(type, listener, true);
     return () => window.removeEventListener(type, listener, true);
+  }
+
+  private resolveAsset(path: string): Promise<string> {
+    const normalized = path.replace(/^\/+/, '');
+    if (!normalized || normalized.includes('..')) {
+      return Promise.reject(new Error('Client asset path must be a non-empty relative path.'));
+    }
+
+    let url = this.clientAssetUrls.get(normalized);
+    if (!url) {
+      url = this.fetchAsset(normalized);
+      this.clientAssetUrls.set(normalized, url);
+    }
+    return url;
+  }
+
+  private async fetchAsset(path: string): Promise<string> {
+    const assetPath = this.options.assetManifest.assets[path];
+    if (!assetPath) throw new Error(`Client asset is missing: ${path}`);
+
+    const response = await fetch(resolveServerUrl(this.options.serverApiUrl, assetPath), {
+      headers: { Authorization: `Bearer ${this.options.authToken}` },
+    });
+    if (!response.ok) throw new Error(`Failed to fetch client asset: ${response.status} ${response.statusText}`);
+    return URL.createObjectURL(await response.blob());
   }
 
   private async fetchJson(path: string, label: string): Promise<unknown> {
