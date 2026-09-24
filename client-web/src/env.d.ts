@@ -3,7 +3,6 @@
 interface ImportMetaEnv {
   readonly VITE_SELENE_SERVER_API_URL: string;
   readonly VITE_SELENE_WEBSOCKET_URL: string;
-  readonly VITE_SELENE_BASE_DOMAIN: string;
 }
 
 interface ImportMeta {

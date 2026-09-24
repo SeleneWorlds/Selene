@@ -1,5 +1,3 @@
-import { getStorageBroker, isRecord, type StorageBroker } from './storageBroker';
-
 export interface ClientSettings {
   debugOverlayVisible: boolean;
   fitToScreen: boolean;
@@ -44,20 +42,22 @@ export function saveSettings(settings: ClientSettings): void {
 }
 
 function createSettingsStore(): SettingsStore {
-  return new StorageSettingsStore(getStorageBroker());
+  return new LocalStorageSettingsStore();
 }
 
-class StorageSettingsStore implements SettingsStore {
-  constructor(private readonly storage: StorageBroker) {}
-
+class LocalStorageSettingsStore implements SettingsStore {
   async load(): Promise<ClientSettings> {
-    const storedSettings = await this.storage.load(SETTINGS_STORAGE_KEY);
+    const storedSettings = window.localStorage.getItem(SETTINGS_STORAGE_KEY);
     return storedSettings ? sanitizeSettings(JSON.parse(storedSettings)) : { ...defaultSettings };
   }
 
   async save(settings: ClientSettings): Promise<void> {
-    await this.storage.save(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 function sanitizeSettings(value: unknown): ClientSettings {

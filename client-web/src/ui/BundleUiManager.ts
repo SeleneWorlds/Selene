@@ -10,7 +10,6 @@ import type { GridApi } from '@/api/GridApi';
 import type { EntitiesApi } from '@/api/EntitiesApi';
 import type { Coordinate } from '@/networking/GameProtocol';
 import type { ClientMapTile } from '@/core/ClientMap';
-import { getStorageBroker, type StorageBroker } from '@/ui/storageBroker';
 import type { ClientVisualDefinition } from '@/data/ClientRegistrySchemas';
 import {
   ClientUiIndexResponseSchema,
@@ -79,8 +78,6 @@ interface BundleUiPointerEvent {
 }
 interface BundleUiWorldEntity { networkId: number; tags: string[]; visual?: string }
 export class BundleUiManager {
-  private storage: StorageBroker | null = null;
-
   constructor(private readonly options: BundleUiManagerOptions) {}
 
   async load(): Promise<void> {
@@ -149,10 +146,10 @@ export class BundleUiManager {
         },
       }),
       storage: Object.freeze({
-        load: (key: string) => this.getStorage().load(`${storagePrefix}${requireStorageKey(key)}`),
-        save: (key: string, value: string) => {
+        load: async (key: string) => window.localStorage.getItem(`${storagePrefix}${requireStorageKey(key)}`),
+        save: async (key: string, value: string) => {
           if (typeof value !== 'string') throw new Error('Storage value must be a string.');
-          return this.getStorage().save(`${storagePrefix}${requireStorageKey(key)}`, value);
+          window.localStorage.setItem(`${storagePrefix}${requireStorageKey(key)}`, value);
         },
       }),
       input: Object.freeze({
@@ -212,11 +209,6 @@ export class BundleUiManager {
         },
       }),
     });
-  }
-
-  private getStorage(): StorageBroker {
-    this.storage ??= getStorageBroker();
-    return this.storage;
   }
 
   private registerPointerListener(
