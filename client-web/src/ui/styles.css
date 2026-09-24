@@ -1,6 +1,20 @@
 :root {
-  color: #e7edf0;
-  background: #000;
+  --color-primary: #fb7185;
+  --color-primary-light: #fda4af;
+  --color-primary-soft: rgba(251, 113, 133, 0.14);
+  --color-primary-soft-hover: rgba(251, 113, 133, 0.24);
+  --color-neutral-50: #fafafa;
+  --color-neutral-200: #e4e4e7;
+  --color-neutral-300: #d4d4d8;
+  --color-neutral-400: #a1a1aa;
+  --color-neutral-800: #27272a;
+  --color-neutral-900: #18181b;
+  --color-neutral-950: #09090b;
+  --color-success: #a3e635;
+  --color-warning: #facc15;
+  --color-error: #f87171;
+  color: var(--color-neutral-200);
+  background: var(--color-neutral-950);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-synthesis: none;
@@ -70,9 +84,9 @@ select {
   place-content: center;
   padding: 24px;
   background:
-    radial-gradient(circle at 50% 35%, rgba(58, 105, 81, 0.24), transparent 42%),
-    #090d0c;
-  color: #e7edf0;
+    radial-gradient(circle at 50% 35%, rgba(251, 113, 133, 0.24), transparent 42%),
+    var(--color-neutral-950);
+  color: var(--color-neutral-200);
   text-align: center;
 }
 
@@ -85,10 +99,10 @@ select {
   width: 52px;
   height: 52px;
   margin: 0 auto 22px;
-  border: 1px solid rgba(140, 226, 176, 0.42);
+  border: 1px solid rgba(251, 113, 133, 0.42);
   border-radius: 14px;
-  background: rgba(112, 190, 149, 0.1);
-  color: #8ce2b0;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-light);
   font-size: 25px;
   font-weight: 700;
   place-items: center;
@@ -96,14 +110,14 @@ select {
 
 .startup-screen h1 {
   margin: 0 0 9px;
-  color: #ffffff;
+  color: var(--color-neutral-50);
   font-size: 26px;
   line-height: 1.2;
 }
 
 .startup-screen p {
   margin: 0;
-  color: rgba(231, 237, 240, 0.74);
+  color: var(--color-neutral-400);
   font-size: 14px;
   line-height: 1.5;
 }
@@ -113,37 +127,37 @@ select {
   margin-top: 24px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(231, 237, 240, 0.12);
+  background: var(--color-neutral-800);
 }
 
 .startup-screen__progress span {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: #70be95;
-  box-shadow: 0 0 14px rgba(112, 190, 149, 0.5);
+  background: var(--color-primary);
+  box-shadow: 0 0 14px rgba(251, 113, 133, 0.5);
   transition: width 240ms ease;
 }
 
 .startup-screen .startup-screen__error {
-  color: #ffb0b0;
+  color: var(--color-error);
   overflow-wrap: anywhere;
 }
 
 .startup-screen button {
   margin-top: 24px;
   padding: 9px 18px;
-  border: 1px solid rgba(140, 226, 176, 0.4);
+  border: 1px solid rgba(251, 113, 133, 0.4);
   border-radius: 7px;
-  background: rgba(112, 190, 149, 0.14);
-  color: #dff8e9;
+  background: var(--color-primary-soft);
+  color: #ffe4e6;
   cursor: pointer;
   font-weight: 650;
 }
 
 .startup-screen button:hover,
 .startup-screen button:focus-visible {
-  background: rgba(112, 190, 149, 0.24);
+  background: var(--color-primary-soft-hover);
   outline: none;
 }
 
@@ -153,9 +167,9 @@ select {
   left: 16px;
   width: min(360px, calc(100vw - 32px));
   padding: 14px;
-  border: 1px solid rgba(199, 220, 208, 0.2);
+  border: 1px solid rgba(212, 212, 216, 0.2);
   border-radius: 8px;
-  background: rgba(12, 17, 17, 0.78);
+  background: rgba(24, 24, 27, 0.78);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(12px);
 }
@@ -171,28 +185,28 @@ select {
 .debug-overlay__title {
   font-size: 13px;
   font-weight: 700;
-  color: #f2f7f4;
+  color: var(--color-neutral-50);
 }
 
 .debug-overlay__status {
   flex: 0 0 auto;
   padding: 3px 8px;
   border-radius: 999px;
-  background: rgba(224, 207, 139, 0.16);
-  color: #f3dc8c;
+  background: rgba(250, 204, 21, 0.16);
+  color: var(--color-warning);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
 }
 
 .debug-overlay__status[data-status='running'] {
-  background: rgba(112, 190, 149, 0.16);
-  color: #8ce2b0;
+  background: rgba(163, 230, 53, 0.16);
+  color: var(--color-success);
 }
 
 .debug-overlay__status[data-status='failed'] {
-  background: rgba(219, 95, 95, 0.16);
-  color: #ff9c9c;
+  background: rgba(248, 113, 113, 0.16);
+  color: var(--color-error);
 }
 
 .debug-grid {
@@ -208,14 +222,14 @@ select {
 
 .debug-grid dt {
   margin-bottom: 2px;
-  color: rgba(231, 237, 232, 0.64);
+  color: var(--color-neutral-400);
   font-size: 11px;
   text-transform: uppercase;
 }
 
 .debug-grid dd {
   margin: 0;
-  color: #ffffff;
+  color: var(--color-neutral-50);
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-size: 12px;
   overflow-wrap: anywhere;
@@ -223,7 +237,7 @@ select {
 
 .debug-overlay__error {
   margin: 12px 0 0;
-  color: #ffb0b0;
+  color: var(--color-error);
   font-size: 12px;
   line-height: 1.4;
 }
@@ -231,12 +245,12 @@ select {
 .debug-timings {
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px solid rgba(199, 220, 208, 0.14);
+  border-top: 1px solid rgba(212, 212, 216, 0.14);
 }
 
 .debug-timings h2 {
   margin: 0 0 7px;
-  color: rgba(231, 237, 232, 0.64);
+  color: var(--color-neutral-400);
   font-size: 11px;
   font-weight: 500;
   text-transform: uppercase;
@@ -250,13 +264,13 @@ select {
 }
 
 .debug-timings__summary {
-  color: rgba(231, 237, 232, 0.72);
+  color: var(--color-neutral-300);
   font-size: 11px;
 }
 
 .debug-timings__summary strong,
 .debug-timing-list dd {
-  color: #fff;
+  color: var(--color-neutral-50);
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   font-weight: 400;
 }
@@ -267,7 +281,7 @@ select {
 
 .debug-timings summary {
   cursor: pointer;
-  color: rgba(231, 237, 232, 0.72);
+  color: var(--color-neutral-300);
   font-size: 11px;
 }
 
@@ -313,9 +327,9 @@ select {
 .settings-modal__dialog {
   width: min(520px, 100%);
   overflow: hidden;
-  border: 1px solid rgba(199, 220, 208, 0.2);
+  border: 1px solid rgba(212, 212, 216, 0.2);
   border-radius: 10px;
-  background: #111817;
+  background: var(--color-neutral-900);
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
 }
 
@@ -324,12 +338,12 @@ select {
   align-items: center;
   justify-content: space-between;
   padding: 16px 18px;
-  border-bottom: 1px solid rgba(199, 220, 208, 0.14);
+  border-bottom: 1px solid rgba(212, 212, 216, 0.14);
 }
 
 .settings-modal__header h1 {
   margin: 0;
-  color: #f2f7f4;
+  color: var(--color-neutral-50);
   font-size: 18px;
 }
 
@@ -341,7 +355,7 @@ select {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: rgba(231, 237, 240, 0.7);
+  color: var(--color-neutral-400);
   cursor: pointer;
   font-size: 24px;
   line-height: 1;
@@ -351,7 +365,7 @@ select {
 .settings-modal__close:hover,
 .settings-modal__close:focus-visible {
   background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  color: var(--color-neutral-50);
 }
 
 .settings-modal__body {
@@ -372,12 +386,12 @@ select {
 }
 
 .settings-toggle strong {
-  color: #f2f7f4;
+  color: var(--color-neutral-50);
   font-size: 14px;
 }
 
 .settings-toggle small {
-  color: rgba(231, 237, 240, 0.64);
+  color: var(--color-neutral-400);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -385,7 +399,7 @@ select {
 .settings-toggle input {
   width: 18px;
   height: 18px;
-  accent-color: #70be95;
+  accent-color: var(--color-primary);
 }
 
 @media (max-width: 560px) {
