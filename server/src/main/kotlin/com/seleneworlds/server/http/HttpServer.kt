@@ -177,6 +177,14 @@ class HttpServer(
                         )
                     )
                 }
+                get("/client/config") {
+                    call.respond(
+                        WebClientConfigResponse(
+                            webSocketUrl = config.announcedWebSocket.ifBlank { null },
+                            webSocketPort = config.webSocketPort
+                        )
+                    )
+                }
                 get("/client/ui/content/{bundleName}/{id}/{path...}") {
                     val bundleName = call.parameters["bundleName"] ?: return@get
                     val id = call.parameters["id"] ?: return@get
@@ -344,6 +352,12 @@ private const val MAX_BOOTSTRAP_BODY_BYTES = 64 * 1024L
 
 @Serializable
 private data class BootstrapRequest(val token: String? = null)
+
+@Serializable
+private data class WebClientConfigResponse(
+    val webSocketUrl: String?,
+    val webSocketPort: Int
+)
 
 private suspend fun ApplicationCall.respondAssetManifest(manifest: VersionedAssetManifest) {
     response.header(HttpHeaders.CacheControl, ClientAssetIndex.MANIFEST_CACHE_CONTROL)

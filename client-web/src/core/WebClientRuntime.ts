@@ -57,7 +57,8 @@ class DefaultWebClientRuntime implements WebClientRuntime {
   async start(options: BootstrapClientOptions): Promise<void> {
     const loadingStartedAt = performance.now();
     const serverApiUrl = configuredUrl(import.meta.env.VITE_SELENE_SERVER_API_URL) ?? window.location.origin;
-    const webSocketUrl = configuredUrl(import.meta.env.VITE_SELENE_WEBSOCKET_URL) ?? defaultWebSocketUrl();
+    const webSocketUrl = configuredUrl(import.meta.env.VITE_SELENE_WEBSOCKET_URL)
+      ?? await loadWebSocketUrl(serverApiUrl);
     const authToken = readJoinToken();
 
     const registries = await this.timeLoad('Registry loading', () =>
@@ -184,7 +185,29 @@ function configuredUrl(value: string | undefined): string | null {
   return trimmedValue || null;
 }
 
-function defaultWebSocketUrl(): string {
+interface WebClientConfig {
+  webSocketUrl?: unknown;
+  webSocketPort?: unknown;
+}
+
+async function loadWebSocketUrl(serverApiUrl: string): Promise<string> {
+  const response = await fetch(new URL('/client/config', ensureTrailingSlash(serverApiUrl)));
+  if (!response.ok) {
+    throw new Error(`Could not load web client configuration (${response.status} ${response.statusText}).`);
+  }
+
+  const config = await response.json() as WebClientConfig;
+  if (typeof config.webSocketUrl === 'string' && config.webSocketUrl.trim()) {
+    return config.webSocketUrl.trim();
+  }
+  if (!Number.isInteger(config.webSocketPort) || (config.webSocketPort as number) < 1) {
+    throw new Error('The server returned an invalid WebSocket configuration.');
+  }
+
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${window.location.host}/ws`;
+  return `${protocol}//${window.location.hostname}:${String(config.webSocketPort)}/ws`;
+}
+
+function ensureTrailingSlash(url: string): string {
+  return url.endsWith('/') ? url : `${url}/`;
 }
