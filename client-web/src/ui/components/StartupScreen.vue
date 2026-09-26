@@ -15,7 +15,7 @@ const emit = defineEmits<{
 <template>
   <section class="startup-screen" :data-status="status" aria-live="polite">
     <div class="startup-screen__panel">
-      <div class="startup-screen__mark" aria-hidden="true">S</div>
+      <img class="startup-screen__mark" src="/favicon.svg" alt="" />
 
       <template v-if="status === 'booting'">
         <h1>Connecting</h1>

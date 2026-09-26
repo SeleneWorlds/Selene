@@ -95,17 +95,11 @@ select {
 }
 
 .startup-screen__mark {
-  display: grid;
+  display: block;
   width: 52px;
   height: 52px;
   margin: 0 auto 22px;
-  border: 1px solid rgba(251, 113, 133, 0.42);
   border-radius: 14px;
-  background: var(--color-primary-soft);
-  color: var(--color-primary-light);
-  font-size: 25px;
-  font-weight: 700;
-  place-items: center;
 }
 
 .startup-screen h1 {
