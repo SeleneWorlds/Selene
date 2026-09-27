@@ -56,8 +56,6 @@ val buildWebClient by tasks.registering(Exec::class) {
     } else {
         commandLine("pnpm", "build")
     }
-    environment("VITE_SELENE_SERVER_API_URL", "")
-    environment("VITE_SELENE_WEBSOCKET_URL", "")
     inputs.files(rootProject.fileTree("client-web") {
         exclude("dist/**", "node_modules/**", ".env", "*.local", "*.tsbuildinfo")
     })

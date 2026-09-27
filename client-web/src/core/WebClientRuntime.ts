@@ -67,9 +67,10 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     };
 
     reportProgress('Connecting to server', 0.08);
-    const serverApiUrl = configuredUrl(import.meta.env.VITE_SELENE_SERVER_API_URL) ?? window.location.origin;
-    const webSocketUrl = configuredUrl(import.meta.env.VITE_SELENE_WEBSOCKET_URL)
-      ?? await loadWebSocketUrl(serverApiUrl);
+    const serverApiUrl = window.location.origin;
+    const webSocketUrl = import.meta.env.DEV
+      ? developmentWebSocketUrl()
+      : await loadWebSocketUrl(serverApiUrl);
     const authToken = await acquireSessionToken(serverApiUrl);
 
     reportProgress('Waiting to join', 0.12);
@@ -247,9 +248,10 @@ async function joinServer(serverApiUrl: string, authToken: string): Promise<void
   throw new ClientJoinError('Timed out waiting for the server to accept the join request.');
 }
 
-function configuredUrl(value: string | undefined): string | null {
-  const trimmedValue = value?.trim();
-  return trimmedValue || null;
+function developmentWebSocketUrl(): string {
+  const url = new URL('/ws', window.location.origin);
+  url.protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return url.toString();
 }
 
 interface WebClientConfig {
