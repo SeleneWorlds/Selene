@@ -24,7 +24,9 @@ class SessionAuthentication(
     data class TokenData(val userId: String)
 
     val issuer = systemConfig.authBrokerIssuer
-    private val jwkProvider: JwkProvider = JwkProviderBuilder(URI(systemConfig.authBrokerJwksUrl).toURL())
+    private val jwkProvider: JwkProvider = JwkProviderBuilder(
+        URI(systemConfig.authBrokerUrl.trimEnd('/') + "/.well-known/jwks.json").toURL()
+    )
         .cached(10, 24, TimeUnit.HOURS)
         .build()
 
