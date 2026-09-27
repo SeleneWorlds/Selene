@@ -1,5 +1,9 @@
 package com.seleneworlds.server.http
 
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
@@ -25,9 +29,11 @@ import com.seleneworlds.server.bundles.ClientLuaModules
 import com.seleneworlds.server.bundles.ClientUiAssets
 import com.seleneworlds.server.bundles.ClientRegistrySnapshots
 import com.seleneworlds.server.config.ServerConfig
+import com.seleneworlds.server.config.SystemConfig
 import com.seleneworlds.server.heartbeat.ServerHeartbeat
 import com.seleneworlds.server.login.LoginQueue
 import com.seleneworlds.server.login.LoginQueueStatus
+import com.seleneworlds.server.login.ClientAuthorization
 import com.seleneworlds.server.login.SessionAuthentication
 import com.seleneworlds.server.players.PlayerManager
 import com.seleneworlds.server.startupTime
@@ -44,7 +50,10 @@ class HttpServer(
     private val playerManager: PlayerManager,
     private val sessionAuth: SessionAuthentication,
     private val serverHeartbeat: ServerHeartbeat,
-    private val clientAssetIndexProvider: ClientAssetIndexProvider
+    private val clientAssetIndexProvider: ClientAssetIndexProvider,
+    private val systemConfig: SystemConfig,
+    private val httpClient: HttpClient,
+    private val clientAuthorization: ClientAuthorization
 ) : Disposable {
     private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
     private val clientLuaModules = ClientLuaModules(bundleDatabase, clientBundleCache)
@@ -101,41 +110,86 @@ class HttpServer(
                 }
             }
             routing {
-                post("/bootstrap") {
-                    val contentLength = call.request.header(HttpHeaders.ContentLength)?.toLongOrNull()
-                    if (contentLength != null && contentLength > MAX_BOOTSTRAP_BODY_BYTES) {
-                        call.respond(HttpStatusCode.PayloadTooLarge, "Bootstrap request body is too large.")
-                        return@post
+                get("/authorize") {
+                    val requestParameters = call.request.queryParameters
+                    val clientState = requestParameters["state"]
+                    val redirectUri = requestParameters["redirect_uri"]
+                    val codeChallenge = requestParameters["code_challenge"]
+                    val publicOrigin = call.publicServerOrigin(config.announcedApi)
+                    if (requestParameters["response_type"] != "code" || clientState.isNullOrBlank() ||
+                        redirectUri.isNullOrBlank() || codeChallenge.isNullOrBlank() ||
+                        requestParameters["code_challenge_method"] != "S256" ||
+                        !isAllowedClientRedirect(redirectUri, publicOrigin)) {
+                        call.respond(HttpStatusCode.BadRequest, "Invalid authorization request.")
+                        return@get
                     }
 
-                    val token = when {
-                        call.request.contentType().match(ContentType.Application.Json) ->
-                            call.receive<BootstrapRequest>().token
-                        else -> call.receiveParameters()["token"]
-                    }?.trim()
-
-                    if (token.isNullOrEmpty()) {
-                        call.respond(HttpStatusCode.BadRequest, "A non-empty token field is required.")
-                        return@post
+                    val flow = clientAuthorization.begin(clientState, redirectUri, codeChallenge)
+                    val callbackUrl = "$publicOrigin/oauth/broker/callback"
+                    val brokerUrl = URLBuilder(systemConfig.authBrokerUrl.trimEnd('/') + "/authorize").apply {
+                        parameters.append("response_type", "code")
+                        parameters.append("server_id", serverHeartbeat.serverId)
+                        parameters.append("redirect_uri", callbackUrl)
+                        parameters.append("state", flow.brokerState)
+                        parameters.append("code_challenge", ClientAuthorization.sha256UrlSafe(flow.brokerCodeVerifier))
+                        parameters.append("code_challenge_method", "S256")
+                    }.buildString()
+                    call.respondRedirect(brokerUrl)
+                }
+                get("/oauth/broker/callback") {
+                    val code = call.request.queryParameters["code"]
+                    val state = call.request.queryParameters["state"]
+                    val flow = state?.let(clientAuthorization::consumeBrokerFlow)
+                    if (code.isNullOrBlank() || flow == null) {
+                        call.respond(HttpStatusCode.BadRequest, "Invalid or expired OAuth callback.")
+                        return@get
                     }
 
-                    val forwardedProtocol = call.request.header(HttpHeaders.XForwardedProto)
-                        ?.substringBefore(',')
-                        ?.trim()
-                    val secure = forwardedProtocol.equals("https", ignoreCase = true)
-                        || call.request.local.scheme.equals("https", ignoreCase = true)
-                    call.response.cookies.append(
-                        Cookie(
-                            name = JOIN_TOKEN_COOKIE_NAME,
-                            value = token,
-                            path = "/",
-                            secure = secure,
-                            httpOnly = false,
-                            extensions = mapOf("SameSite" to "Strict")
-                        )
-                    )
-                    call.response.header(HttpHeaders.Location, "/")
-                    call.respond(HttpStatusCode.SeeOther)
+                    val callbackUrl = call.publicServerOrigin(config.announcedApi) + "/oauth/broker/callback"
+                    val response = httpClient.post(systemConfig.authBrokerUrl.trimEnd('/') + "/authorize/token") {
+                        setBody(FormDataContent(Parameters.build {
+                            append("grant_type", "authorization_code")
+                            append("code", code)
+                            append("code_verifier", flow.brokerCodeVerifier)
+                            append("redirect_uri", callbackUrl)
+                            append("server_id", serverHeartbeat.serverId)
+                        }))
+                    }
+                    if (!response.status.isSuccess()) {
+                        call.respond(HttpStatusCode.Unauthorized, "The authentication broker rejected the authorization code.")
+                        return@get
+                    }
+                    val token = response.body<BrokerCodeExchangeResponse>().accessToken.trim()
+                    val brokerIdentity = token.takeIf(String::isNotEmpty)?.let { sessionAuth.parseBrokerToken(it).getOrNull() }
+                    if (brokerIdentity == null) {
+                        call.respond(HttpStatusCode.Unauthorized, "The authentication broker returned an invalid credential.")
+                        return@get
+                    }
+
+                    val clientCode = clientAuthorization.issueCode(flow, brokerIdentity.userId)
+                    val destination = URLBuilder(flow.clientRedirectUri).apply {
+                        parameters.append("code", clientCode)
+                        parameters.append("state", flow.clientState)
+                    }.buildString()
+                    call.respondRedirect(destination)
+                }
+                post("/token") {
+                    val request = call.receiveParameters()
+                    if (request["grant_type"] != "authorization_code") {
+                        call.respond(HttpStatusCode.BadRequest, "Unsupported grant type.")
+                        return@post
+                    }
+                    val code = request["code"] ?: ""
+                    val verifier = request["code_verifier"] ?: ""
+                    val redirectUri = request["redirect_uri"] ?: ""
+                    val session = clientAuthorization.exchangeCode(code, verifier, redirectUri)
+                    if (session == null) {
+                        call.respond(HttpStatusCode.Unauthorized, "Invalid or expired authorization code.")
+                        return@post
+                    }
+                    call.response.header(HttpHeaders.CacheControl, "no-store")
+                    call.response.header(HttpHeaders.Pragma, "no-cache")
+                    call.respond(ClientTokenResponse(session.first))
                 }
                 get("/status") {
                     call.respond(
@@ -347,11 +401,29 @@ class HttpServer(
     }
 }
 
-private const val JOIN_TOKEN_COOKIE_NAME = "selene_join_token"
-private const val MAX_BOOTSTRAP_BODY_BYTES = 64 * 1024L
+private fun ApplicationCall.publicServerOrigin(announcedApi: String): String {
+    announcedApi.trim().takeIf(String::isNotEmpty)?.let { return it.trimEnd('/') }
+    val protocol = request.header(HttpHeaders.XForwardedProto)?.substringBefore(',')?.trim() ?: request.local.scheme
+    val host = request.header(HttpHeaders.XForwardedHost)?.substringBefore(',')?.trim() ?: request.host()
+    return "$protocol://$host"
+}
+
+private fun isAllowedClientRedirect(rawRedirectUri: String, publicOrigin: String): Boolean {
+    if (rawRedirectUri == "selene://auth") return true
+    val redirect = runCatching { URI(rawRedirectUri) }.getOrNull() ?: return false
+    val origin = runCatching { URI(publicOrigin) }.getOrNull() ?: return false
+    return redirect.scheme == origin.scheme && redirect.authority == origin.authority
+}
 
 @Serializable
-private data class BootstrapRequest(val token: String? = null)
+private data class BrokerCodeExchangeResponse(@SerialName("access_token") val accessToken: String)
+
+@Serializable
+private data class ClientTokenResponse(
+    @SerialName("access_token") val accessToken: String,
+    @SerialName("token_type") val tokenType: String = "Bearer",
+    @SerialName("expires_in") val expiresIn: Int = 300
+)
 
 @Serializable
 private data class WebClientConfigResponse(

@@ -1,4 +1,4 @@
-import { readJoinToken } from '@/auth/JoinToken';
+import { acquireSessionToken, restartAuthorization } from '@/auth/AuthorizationFlow';
 import { createDebugState, type DebugState, type RendererDebugOptions } from '@/core/DebugState';
 import { GameClient } from '@/core/GameClient';
 import { loadClientAssetManifest } from '@/core/services/ClientAssetManifest';
@@ -70,7 +70,15 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     const serverApiUrl = configuredUrl(import.meta.env.VITE_SELENE_SERVER_API_URL) ?? window.location.origin;
     const webSocketUrl = configuredUrl(import.meta.env.VITE_SELENE_WEBSOCKET_URL)
       ?? await loadWebSocketUrl(serverApiUrl);
-    const authToken = readJoinToken();
+    const authToken = await acquireSessionToken(serverApiUrl);
+
+    reportProgress('Waiting to join', 0.12);
+    try {
+      await joinServer(serverApiUrl, authToken);
+    } catch (error) {
+      if (error instanceof ClientJoinError && error.status === 401) await restartAuthorization(serverApiUrl);
+      throw error;
+    }
 
     reportProgress('Loading game data', 0.2);
     const registries = await this.timeLoad('Registry loading', () =>
@@ -198,6 +206,45 @@ export async function bootstrapClient(options: BootstrapClientOptions): Promise<
   const runtime = new DefaultWebClientRuntime(options.debugState ?? createDebugState());
   await runtime.start(options);
   return runtime;
+}
+
+export class ClientJoinError extends Error {
+  constructor(message: string, readonly status?: number) {
+    super(message);
+    this.name = 'ClientJoinError';
+  }
+}
+
+interface JoinResponse {
+  status?: unknown;
+  message?: unknown;
+  token?: unknown;
+}
+
+async function joinServer(serverApiUrl: string, authToken: string): Promise<void> {
+  const deadline = Date.now() + 60_000;
+  while (Date.now() <= deadline) {
+    const response = await fetch(new URL('/join', ensureTrailingSlash(serverApiUrl)), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+    if (!response.ok) {
+      throw new ClientJoinError(`The server rejected the join request (${response.status} ${response.statusText}).`, response.status);
+    }
+
+    const join = await response.json() as JoinResponse;
+    if (join.status === 'Accepted') {
+      return;
+    }
+    if (join.status === 'Rejected') {
+      throw new ClientJoinError(typeof join.message === 'string' ? join.message : 'The join request was rejected.');
+    }
+    if (join.status !== 'Pending') {
+      throw new ClientJoinError('The server returned an invalid join status.');
+    }
+    await new Promise(resolve => window.setTimeout(resolve, 2_000));
+  }
+  throw new ClientJoinError('Timed out waiting for the server to accept the join request.');
 }
 
 function configuredUrl(value: string | undefined): string | null {

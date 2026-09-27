@@ -71,6 +71,7 @@ import com.seleneworlds.server.heartbeat.ServerHeartbeat
 import com.seleneworlds.server.http.ClientAssetIndexProvider
 import com.seleneworlds.server.http.HttpServer
 import com.seleneworlds.server.login.LoginQueue
+import com.seleneworlds.server.login.ClientAuthorization
 import com.seleneworlds.server.login.SessionAuthentication
 import com.seleneworlds.server.maps.ServerMapApi
 import com.seleneworlds.server.maps.ServerMapLuaApi
@@ -100,6 +101,7 @@ fun main(args: Array<String>) {
     val httpModule = module {
         singleOf(::HttpServer) { bind<Disposable>() }
         singleOf(::SessionAuthentication)
+        singleOf(::ClientAuthorization)
         singleOf(::ServerHeartbeat) { bind<Disposable>() }
         single {
             val json = get<Json>()

@@ -17,7 +17,8 @@ import java.util.concurrent.TimeUnit
 class SessionAuthentication(
     private val serverConfig: ServerConfig,
     systemConfig: SystemConfig,
-    private val serverHeartbeat: ServerHeartbeat
+    private val serverHeartbeat: ServerHeartbeat,
+    private val clientAuthorization: ClientAuthorization
 ) {
 
     data class TokenData(val userId: String)
@@ -28,6 +29,14 @@ class SessionAuthentication(
         .build()
 
     fun parseToken(token: String): Either<Exception, TokenData> {
+        clientAuthorization.authenticate(token)?.let { return TokenData(it).right() }
+        if (!serverConfig.insecureMode) {
+            return IllegalArgumentException("Invalid or expired client session").left()
+        }
+        return parseBrokerToken(token)
+    }
+
+    fun parseBrokerToken(token: String): Either<Exception, TokenData> {
         try {
             val decoded = if (serverConfig.insecureMode)
                 JWT.decode(token)

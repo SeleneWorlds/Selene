@@ -2,7 +2,6 @@
 import { computed, onMounted, ref } from 'vue';
 import { createDebugState, type DebugSnapshot } from '@/core/DebugState';
 import { bootstrapClient, type WebClientRuntime } from '@/core/WebClientRuntime';
-import { ClientRegistryRequestError } from '@/data/ClientRegistryLoader';
 import DebugOverlay from './components/DebugOverlay.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import StartupScreen from './components/StartupScreen.vue';
@@ -101,12 +100,7 @@ async function startClient(): Promise<void> {
     status.value = 'running';
   } catch (error) {
     status.value = 'failed';
-    if (error instanceof ClientRegistryRequestError && error.status === 401) {
-      canRetryStartup.value = false;
-      errorMessage.value = 'This join session is missing or no longer valid. Return to the server and join again to open a new client session.';
-    } else {
-      errorMessage.value = error instanceof Error ? error.message : String(error);
-    }
+    errorMessage.value = error instanceof Error ? error.message : String(error);
   }
 }
 
