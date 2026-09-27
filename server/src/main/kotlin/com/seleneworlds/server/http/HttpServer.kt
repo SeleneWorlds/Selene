@@ -128,7 +128,6 @@ class HttpServer(
                     val callbackUrl = "$publicOrigin/oauth/broker/callback"
                     val brokerUrl = URLBuilder(systemConfig.authBrokerUrl.trimEnd('/') + "/authorize").apply {
                         parameters.append("response_type", "code")
-                        parameters.append("server_id", serverHeartbeat.serverId)
                         parameters.append("redirect_uri", callbackUrl)
                         parameters.append("state", flow.brokerState)
                         parameters.append("code_challenge", ClientAuthorization.sha256UrlSafe(flow.brokerCodeVerifier))
@@ -145,14 +144,14 @@ class HttpServer(
                         return@get
                     }
 
-                    val callbackUrl = call.publicServerOrigin(config.announcedApi) + "/oauth/broker/callback"
+                    val publicOrigin = call.publicServerOrigin(config.announcedApi)
+                    val callbackUrl = "$publicOrigin/oauth/broker/callback"
                     val response = httpClient.post(systemConfig.authBrokerUrl.trimEnd('/') + "/authorize/token") {
                         setBody(FormDataContent(Parameters.build {
                             append("grant_type", "authorization_code")
                             append("code", code)
                             append("code_verifier", flow.brokerCodeVerifier)
                             append("redirect_uri", callbackUrl)
-                            append("server_id", serverHeartbeat.serverId)
                         }))
                     }
                     if (!response.status.isSuccess()) {
@@ -160,7 +159,7 @@ class HttpServer(
                         return@get
                     }
                     val token = response.body<BrokerCodeExchangeResponse>().accessToken.trim()
-                    val brokerIdentity = token.takeIf(String::isNotEmpty)?.let { sessionAuth.parseBrokerToken(it).getOrNull() }
+                    val brokerIdentity = token.takeIf(String::isNotEmpty)?.let { sessionAuth.parseBrokerToken(it, publicOrigin).getOrNull() }
                     if (brokerIdentity == null) {
                         call.respond(HttpStatusCode.Unauthorized, "The authentication broker returned an invalid credential.")
                         return@get

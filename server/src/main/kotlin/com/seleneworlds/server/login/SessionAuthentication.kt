@@ -7,9 +7,8 @@ import com.auth0.jwk.JwkProvider
 import com.auth0.jwk.JwkProviderBuilder
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.seleneworlds.server.config.SystemConfig
-import com.seleneworlds.server.heartbeat.ServerHeartbeat
 import com.seleneworlds.server.config.ServerConfig
+import com.seleneworlds.server.config.SystemConfig
 import java.net.URI
 import java.security.interfaces.RSAPublicKey
 import java.util.concurrent.TimeUnit
@@ -17,7 +16,6 @@ import java.util.concurrent.TimeUnit
 class SessionAuthentication(
     private val serverConfig: ServerConfig,
     systemConfig: SystemConfig,
-    private val serverHeartbeat: ServerHeartbeat,
     private val clientAuthorization: ClientAuthorization
 ) {
 
@@ -35,10 +33,14 @@ class SessionAuthentication(
         if (!serverConfig.insecureMode) {
             return IllegalArgumentException("Invalid or expired client session").left()
         }
-        return parseBrokerToken(token)
+        return try {
+            TokenData(JWT.decode(token).subject).right()
+        } catch (_: Exception) {
+            TokenData(token).right()
+        }
     }
 
-    fun parseBrokerToken(token: String): Either<Exception, TokenData> {
+    fun parseBrokerToken(token: String, audience: String): Either<Exception, TokenData> {
         try {
             val decoded = if (serverConfig.insecureMode)
                 JWT.decode(token)
@@ -48,7 +50,7 @@ class SessionAuthentication(
                     ?: throw IllegalArgumentException("Token key is not RSA")
                 JWT.require(Algorithm.RSA256(publicKey, null))
                     .withIssuer(issuer)
-                    .withAudience(serverHeartbeat.serverId)
+                    .withAudience(audience)
                     .build()
                     .verify(token)
             }
