@@ -440,7 +440,7 @@ class HttpServer(
 
 private fun ApplicationCall.publicServerOrigin(announcedApi: String, trustProxyHeaders: Boolean): String {
     announcedApi.trim().takeIf(String::isNotEmpty)?.let { return it.trimEnd('/') }
-    if (!trustProxyHeaders) return "${request.local.scheme}://${request.host()}"
+    if (!trustProxyHeaders) return "${request.local.scheme}://${request.host()}:${request.port()}"
     val origin = request.origin
     return URLBuilder(
         protocol = URLProtocol.createOrDefault(origin.scheme),
