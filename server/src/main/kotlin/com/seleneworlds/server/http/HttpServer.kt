@@ -126,15 +126,30 @@ class HttpServer(
                     val redirectUri = requestParameters["redirect_uri"]
                     val codeChallenge = requestParameters["code_challenge"]
                     val publicOrigin = call.publicServerOrigin(config.announcedApi, proxyHeaders != ProxyHeaders.NONE)
-                    if (requestParameters["response_type"] != "code" || clientState.isNullOrBlank() ||
-                        redirectUri.isNullOrBlank() || codeChallenge.isNullOrBlank() ||
-                        requestParameters["code_challenge_method"] != "S256" ||
-                        !isAllowedClientRedirect(redirectUri, publicOrigin)) {
-                        call.respond(HttpStatusCode.BadRequest, "Invalid authorization request.")
-                        return@get
+                    val validation = validateAuthorizationRequest(
+                        responseType = requestParameters["response_type"],
+                        clientState = clientState,
+                        redirectUri = redirectUri,
+                        codeChallenge = codeChallenge,
+                        codeChallengeMethod = requestParameters["code_challenge_method"],
+                        publicOrigin = publicOrigin
+                    )
+                    val authorizationRequest = when (validation) {
+                        is ValidAuthorizationRequest -> validation
+                        is InvalidAuthorizationRequest -> {
+                            call.respond(
+                                HttpStatusCode.BadRequest,
+                                "Invalid authorization request: ${validation.reason}"
+                            )
+                            return@get
+                        }
                     }
 
-                    val flow = clientAuthorization.begin(clientState, redirectUri, codeChallenge)
+                    val flow = clientAuthorization.begin(
+                        authorizationRequest.clientState,
+                        authorizationRequest.redirectUri,
+                        authorizationRequest.codeChallenge
+                    )
                     val callbackUrl = "$publicOrigin/oauth/broker/callback"
                     val brokerUrl = URLBuilder(systemConfig.authBrokerUrl.trimEnd('/') + "/authorize").apply {
                         parameters.append("response_type", "code")
@@ -457,6 +472,34 @@ private fun isAllowedClientRedirect(rawRedirectUri: String, publicOrigin: String
     val origin = runCatching { URI(publicOrigin) }.getOrNull() ?: return false
     return redirect.scheme == origin.scheme && redirect.authority == origin.authority
 }
+
+private fun validateAuthorizationRequest(
+    responseType: String?,
+    clientState: String?,
+    redirectUri: String?,
+    codeChallenge: String?,
+    codeChallengeMethod: String?,
+    publicOrigin: String
+): AuthorizationRequestValidation = when {
+    responseType != "code" -> InvalidAuthorizationRequest("response_type must be 'code'.")
+    clientState.isNullOrBlank() -> InvalidAuthorizationRequest("state is required.")
+    redirectUri.isNullOrBlank() -> InvalidAuthorizationRequest("redirect_uri is required.")
+    codeChallenge.isNullOrBlank() -> InvalidAuthorizationRequest("code_challenge is required.")
+    codeChallengeMethod != "S256" -> InvalidAuthorizationRequest("code_challenge_method must be 'S256'.")
+    !isAllowedClientRedirect(redirectUri, publicOrigin) ->
+        InvalidAuthorizationRequest("redirect_uri origin is not allowed.")
+    else -> ValidAuthorizationRequest(clientState, redirectUri, codeChallenge)
+}
+
+private sealed interface AuthorizationRequestValidation
+
+private data class ValidAuthorizationRequest(
+    val clientState: String,
+    val redirectUri: String,
+    val codeChallenge: String
+) : AuthorizationRequestValidation
+
+private data class InvalidAuthorizationRequest(val reason: String) : AuthorizationRequestValidation
 
 @Serializable
 private data class BrokerCodeExchangeResponse(@SerialName("access_token") val accessToken: String)
