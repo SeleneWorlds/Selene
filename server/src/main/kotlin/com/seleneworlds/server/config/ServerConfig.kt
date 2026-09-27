@@ -16,6 +16,7 @@ data class ServerConfig(
     val announcedHost: String = "",
     val announcedApi: String = "",
     val announcedWebSocket: String = "",
+    val proxyHeaders: String = "none",
     val managementCorsOrigins: List<String> = emptyList(),
     val hotReload: String = "true",
     val grid: String = ""

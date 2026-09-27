@@ -11,6 +11,7 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.plugins.forwardedheaders.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -18,6 +19,7 @@ import io.ktor.server.http.content.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.slf4j.Logger
 import java.util.*
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.BundleManifest
@@ -37,6 +39,7 @@ import com.seleneworlds.server.login.ClientAuthorization
 import com.seleneworlds.server.login.SessionAuthentication
 import com.seleneworlds.server.players.PlayerManager
 import com.seleneworlds.server.startupTime
+import io.ktor.server.plugins.origin
 import java.net.URI
 import java.nio.file.Paths
 
@@ -53,7 +56,8 @@ class HttpServer(
     private val clientAssetIndexProvider: ClientAssetIndexProvider,
     private val systemConfig: SystemConfig,
     private val httpClient: HttpClient,
-    private val clientAuthorization: ClientAuthorization
+    private val clientAuthorization: ClientAuthorization,
+    private val logger: Logger
 ) : Disposable {
     private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
     private val clientLuaModules = ClientLuaModules(bundleDatabase, clientBundleCache)
@@ -71,8 +75,14 @@ class HttpServer(
 
     fun start() {
         clientAssetIndexProvider.rebuild()
+        val proxyHeaders = ProxyHeaders.parse(config.proxyHeaders)
 
         val applicationEngine = embeddedServer(Netty, port = config.apiPort) {
+            when (proxyHeaders) {
+                ProxyHeaders.NONE -> Unit
+                ProxyHeaders.FORWARDED -> install(ForwardedHeaders)
+                ProxyHeaders.X_FORWARDED -> install(XForwardedHeaders)
+            }
             install(Authentication) {
                 bearer("broker") {
                     authenticate { tokenCredential ->
@@ -115,7 +125,7 @@ class HttpServer(
                     val clientState = requestParameters["state"]
                     val redirectUri = requestParameters["redirect_uri"]
                     val codeChallenge = requestParameters["code_challenge"]
-                    val publicOrigin = call.publicServerOrigin(config.announcedApi)
+                    val publicOrigin = call.publicServerOrigin(config.announcedApi, proxyHeaders != ProxyHeaders.NONE)
                     if (requestParameters["response_type"] != "code" || clientState.isNullOrBlank() ||
                         redirectUri.isNullOrBlank() || codeChallenge.isNullOrBlank() ||
                         requestParameters["code_challenge_method"] != "S256" ||
@@ -144,7 +154,7 @@ class HttpServer(
                         return@get
                     }
 
-                    val publicOrigin = call.publicServerOrigin(config.announcedApi)
+                    val publicOrigin = call.publicServerOrigin(config.announcedApi, proxyHeaders != ProxyHeaders.NONE)
                     val callbackUrl = "$publicOrigin/oauth/broker/callback"
                     val response = httpClient.post(systemConfig.authBrokerUrl.trimEnd('/') + "/authorize/token") {
                         setBody(FormDataContent(Parameters.build {
@@ -155,12 +165,18 @@ class HttpServer(
                         }))
                     }
                     if (!response.status.isSuccess()) {
+                        logger.warn(
+                            "Authentication broker rejected authorization-code exchange with status {} (broker host: {})",
+                            response.status,
+                            runCatching { URI(systemConfig.authBrokerUrl).host }.getOrNull() ?: "invalid URL"
+                        )
                         call.respond(HttpStatusCode.Unauthorized, "The authentication broker rejected the authorization code.")
                         return@get
                     }
                     val token = response.body<BrokerCodeExchangeResponse>().accessToken.trim()
                     val brokerIdentity = token.takeIf(String::isNotEmpty)?.let { sessionAuth.parseBrokerToken(it, publicOrigin).getOrNull() }
                     if (brokerIdentity == null) {
+                        logger.warn("Authentication broker returned an invalid credential for audience {}", publicOrigin)
                         call.respond(HttpStatusCode.Unauthorized, "The authentication broker returned an invalid credential.")
                         return@get
                     }
@@ -183,6 +199,13 @@ class HttpServer(
                     val redirectUri = request["redirect_uri"] ?: ""
                     val session = clientAuthorization.exchangeCode(code, verifier, redirectUri)
                     if (session == null) {
+                        logger.warn(
+                            "Rejected client authorization-code exchange from {} (redirect URI: {}, code present: {}, verifier present: {})",
+                            call.request.origin.remoteHost,
+                            redirectUri.take(200),
+                            code.isNotBlank(),
+                            verifier.isNotBlank()
+                        )
                         call.respond(HttpStatusCode.Unauthorized, "Invalid or expired authorization code.")
                         return@post
                     }
@@ -400,11 +423,32 @@ class HttpServer(
     }
 }
 
-private fun ApplicationCall.publicServerOrigin(announcedApi: String): String {
+private fun ApplicationCall.publicServerOrigin(announcedApi: String, trustProxyHeaders: Boolean): String {
     announcedApi.trim().takeIf(String::isNotEmpty)?.let { return it.trimEnd('/') }
-    val protocol = request.header(HttpHeaders.XForwardedProto)?.substringBefore(',')?.trim() ?: request.local.scheme
-    val host = request.header(HttpHeaders.XForwardedHost)?.substringBefore(',')?.trim() ?: request.host()
-    return "$protocol://$host"
+    if (!trustProxyHeaders) return "${request.local.scheme}://${request.host()}"
+    val origin = request.origin
+    return URLBuilder(
+        protocol = URLProtocol.createOrDefault(origin.scheme),
+        host = origin.serverHost,
+        port = origin.serverPort
+    ).buildString().trimEnd('/')
+}
+
+private enum class ProxyHeaders {
+    NONE,
+    FORWARDED,
+    X_FORWARDED;
+
+    companion object {
+        fun parse(value: String): ProxyHeaders = when (value.trim().lowercase()) {
+            "none" -> NONE
+            "forwarded" -> FORWARDED
+            "x-forwarded" -> X_FORWARDED
+            else -> throw IllegalArgumentException(
+                "Invalid proxy_headers value '$value'; expected none, forwarded, or x-forwarded."
+            )
+        }
+    }
 }
 
 private fun isAllowedClientRedirect(rawRedirectUri: String, publicOrigin: String): Boolean {
