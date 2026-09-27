@@ -97,7 +97,7 @@ class HttpServer(
             install(ContentNegotiation) {
                 json(seleneJson)
             }
-            val corsOrigins = config.managementCorsOrigins.map { it.trim() }.filter { it.isNotEmpty() }
+            val corsOrigins = config.apiCorsOrigins.map { it.trim() }.filter { it.isNotEmpty() }
             if (corsOrigins.isNotEmpty()) {
                 install(CORS) {
                     if ("*" in corsOrigins) {
