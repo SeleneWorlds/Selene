@@ -86,6 +86,7 @@ import com.seleneworlds.server.players.PlayersLuaApi
 import com.seleneworlds.server.script.ServerLuaScriptProvider
 import com.seleneworlds.server.script.ServerScriptProvider
 import com.seleneworlds.server.saves.*
+import com.seleneworlds.server.serialization.JsonLuaApi
 import com.seleneworlds.server.sounds.SoundsApi
 import com.seleneworlds.server.sounds.SoundsLuaApi
 import com.seleneworlds.server.sqlite.SqliteApi
@@ -166,6 +167,7 @@ fun main(args: Array<String>) {
         singleOf(::AttributesLuaApi) { bind<LuaModule>() }
         singleOf(::PathfindingLuaApi) { bind<LuaModule>() }
         singleOf(::SqliteLuaApi) { bind<LuaModule>() }
+        singleOf(::JsonLuaApi) { bind<LuaModule>() }
     }
     val bundleModule = module {
         single<BundleStateCleaner> {
