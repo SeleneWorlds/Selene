@@ -1,6 +1,7 @@
 package com.seleneworlds.common.jobs
 
 import com.seleneworlds.common.event.EventFactory.arrayBackedEvent
+import com.seleneworlds.common.event.EventFactory.catchLog
 
 class ScheduleEvents {
     fun interface Second {
@@ -8,7 +9,7 @@ class ScheduleEvents {
 
         companion object {
             val EVENT = arrayBackedEvent<Second> { listeners ->
-                Second { listeners.forEach { it.second() } }
+                Second { listeners.forEach { catchLog { it.second() } } }
             }
         }
     }
@@ -18,7 +19,7 @@ class ScheduleEvents {
 
         companion object {
             val EVENT = arrayBackedEvent<Minute> { listeners ->
-                Minute { listeners.forEach { it.minute() } }
+                Minute { listeners.forEach { catchLog { it.minute() } } }
             }
         }
     }
@@ -28,7 +29,7 @@ class ScheduleEvents {
 
         companion object {
             val EVENT = arrayBackedEvent<Hour> { listeners ->
-                Hour { listeners.forEach { it.hour() } }
+                Hour { listeners.forEach { catchLog { it.hour() } } }
             }
         }
     }

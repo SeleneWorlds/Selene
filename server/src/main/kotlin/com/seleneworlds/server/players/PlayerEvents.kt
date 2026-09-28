@@ -1,6 +1,7 @@
 package com.seleneworlds.server.players
 
 import com.seleneworlds.common.event.EventFactory.arrayBackedEvent
+import com.seleneworlds.common.event.EventFactory.catchLog
 import com.seleneworlds.server.login.LoginQueueEntry
 import com.seleneworlds.server.login.LoginQueueStatus
 
@@ -13,7 +14,9 @@ class PlayerEvents {
                 PlayerQueued { player ->
                     var status = LoginQueueStatus.Accepted
                     listeners.forEach {
-                        status = it.playerQueued(player)
+                        status = catchLog(status) {
+                            it.playerQueued(player)
+                        }
                     }
                     return@PlayerQueued status
                 }
@@ -26,7 +29,13 @@ class PlayerEvents {
 
         companion object {
             val EVENT = arrayBackedEvent<PlayerDequeued> { listeners ->
-                PlayerDequeued { player -> listeners.forEach { it.playerDequeued(player) } }
+                PlayerDequeued { player ->
+                    listeners.forEach {
+                        catchLog {
+                            it.playerDequeued(player)
+                        }
+                    }
+                }
             }
         }
     }
@@ -36,7 +45,13 @@ class PlayerEvents {
 
         companion object {
             val EVENT = arrayBackedEvent<PlayerJoined> { listeners ->
-                PlayerJoined { player -> listeners.forEach { it.playerJoined(player) } }
+                PlayerJoined { player ->
+                    listeners.forEach {
+                        catchLog {
+                            it.playerJoined(player)
+                        }
+                    }
+                }
             }
         }
     }
@@ -46,7 +61,13 @@ class PlayerEvents {
 
         companion object {
             val EVENT = arrayBackedEvent<PlayerLeft> { listeners ->
-                PlayerLeft { player -> listeners.forEach { it.playerLeft(player) } }
+                PlayerLeft { player ->
+                    listeners.forEach {
+                        catchLog {
+                            it.playerLeft(player)
+                        }
+                    }
+                }
             }
         }
     }

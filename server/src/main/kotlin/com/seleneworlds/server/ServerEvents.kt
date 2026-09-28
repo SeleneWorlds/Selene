@@ -8,7 +8,7 @@ class ServerEvents {
 
         companion object {
             val EVENT = EventFactory.arrayBackedEvent<ServerStarted> { listeners ->
-                ServerStarted { listeners.forEach { it.serverStarted() } }
+                ServerStarted { listeners.forEach { EventFactory.catchLog { it.serverStarted() } } }
             }
         }
     }
@@ -18,7 +18,7 @@ class ServerEvents {
 
         companion object {
             val EVENT = EventFactory.arrayBackedEvent<ServerReloaded> { listeners ->
-                ServerReloaded { listeners.forEach { it.serverReloaded() } }
+                ServerReloaded { listeners.forEach { EventFactory.catchLog { it.serverReloaded() } } }
             }
         }
     }
