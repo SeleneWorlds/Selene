@@ -27,6 +27,7 @@ dependencies {
     implementation(libs.bundles.ktor.server)
 
     implementation(libs.jline)
+    implementation(libs.sqlite.jdbc)
 
     testImplementation(kotlin("test"))
 }

@@ -88,6 +88,8 @@ import com.seleneworlds.server.script.ServerScriptProvider
 import com.seleneworlds.server.saves.*
 import com.seleneworlds.server.sounds.SoundsApi
 import com.seleneworlds.server.sounds.SoundsLuaApi
+import com.seleneworlds.server.sqlite.SqliteApi
+import com.seleneworlds.server.sqlite.SqliteLuaApi
 import com.seleneworlds.server.sync.ChunkViewManager
 import com.seleneworlds.server.tiles.transitions.TransitionResolver
 import com.seleneworlds.server.world.World
@@ -130,6 +132,7 @@ fun main(args: Array<String>) {
         singleOf(::RegistriesApi)
         singleOf(::SavesApi)
         singleOf(::PathfindingApi)
+        singleOf(::SqliteApi) { bind<Disposable>() }
     }
     val luaModule = module {
         singleOf(::LuaManager)
@@ -162,6 +165,7 @@ fun main(args: Array<String>) {
         singleOf(::I18nLuaApi) { bind<LuaModule>() }
         singleOf(::AttributesLuaApi) { bind<LuaModule>() }
         singleOf(::PathfindingLuaApi) { bind<LuaModule>() }
+        singleOf(::SqliteLuaApi) { bind<LuaModule>() }
     }
     val bundleModule = module {
         single<BundleStateCleaner> {
