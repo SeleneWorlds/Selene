@@ -24,6 +24,18 @@ data class ServerConfig(
     val hotReloadMode: HotReloadMode
         get() = HotReloadMode.parse(hotReload)
 
+    /** Resolves a user-supplied path without allowing it to escape the configured save directory. */
+    fun resolveSavePath(path: String): File {
+        require(!File(path).isAbsolute) { "Save path must be relative: $path" }
+
+        val saveRoot = File(savePath).canonicalFile
+        val resolved = File(saveRoot, path).canonicalFile
+        require(resolved.toPath().startsWith(saveRoot.toPath())) {
+            "Save path escapes the save directory: $path"
+        }
+        return resolved
+    }
+
     companion object {
         fun createDefault() {
             val configFile = File("server.properties")

@@ -2,10 +2,8 @@ package com.seleneworlds.server.saves
 
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.serialization.SerializedMap
-import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.maps.tree.MapTreeApi
-import java.io.File
 
 class SavesApi(val saveManager: SaveManager, val serverConfig: ServerConfig) {
 
@@ -17,7 +15,7 @@ class SavesApi(val saveManager: SaveManager, val serverConfig: ServerConfig) {
      * ```
      */
     fun has(path: String): Boolean {
-        val saveFile = File(serverConfig.savePath, path)
+        val saveFile = serverConfig.resolveSavePath(path)
         return saveFile.exists()
     }
 
@@ -29,7 +27,7 @@ class SavesApi(val saveManager: SaveManager, val serverConfig: ServerConfig) {
      * ```
      */
     fun save(savable: Any, path: String) {
-        val saveFile = File(serverConfig.savePath, path)
+        val saveFile = serverConfig.resolveSavePath(path)
         if (savable is MapTreeApi) {
             saveManager.save(saveFile, savable.mapTree)
         } else {
@@ -45,7 +43,7 @@ class SavesApi(val saveManager: SaveManager, val serverConfig: ServerConfig) {
      * ```
      */
     fun load(path: String): Any? {
-        val saveFile = File(serverConfig.savePath, path)
+        val saveFile = serverConfig.resolveSavePath(path)
         val loaded = saveManager.load(saveFile)
         if (loaded is ExposedApi<*>) {
             return loaded.api
@@ -54,7 +52,7 @@ class SavesApi(val saveManager: SaveManager, val serverConfig: ServerConfig) {
     }
 
     fun loadKeyValueMap(path: String): SerializedMap {
-        val saveFile = File(serverConfig.savePath, path)
+        val saveFile = serverConfig.resolveSavePath(path)
         return saveManager.loadKeyValueMap(saveFile)
     }
 }
