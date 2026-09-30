@@ -88,12 +88,24 @@ export class PixiTilemapLayer {
     this.notifyMapChanged(packet.coordinate, 1, 1);
   }
 
-  getMapTiles(): ClientMapTile[] {
-    return [...this.mapTiles.values()].map(tile => ({
+  getMapTiles(coordinate?: Coordinate, width?: number, height?: number): ClientMapTile[] {
+    const source = coordinate && width !== undefined && height !== undefined
+      ? this.getMapTilesInRegion(coordinate, width, height)
+      : this.mapTiles.values();
+    return [...source].map(tile => ({
       ...tile,
       tileIds: [...tile.tileIds],
       visualMetadata: { ...tile.visualMetadata },
     }));
+  }
+
+  private *getMapTilesInRegion(coordinate: Coordinate, width: number, height: number): Iterable<ClientMapTile> {
+    for (let dy = 0; dy < height; dy += 1) {
+      for (let dx = 0; dx < width; dx += 1) {
+        const tile = this.mapTiles.get(coordinateKey({ x: coordinate.x + dx, y: coordinate.y + dy, z: coordinate.z }));
+        if (tile) yield tile;
+      }
+    }
   }
 
   addMapChangedListener(listener: (coordinate: Coordinate, width: number, height: number) => void): () => void {

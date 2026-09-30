@@ -144,8 +144,8 @@ export class GameClient {
     return this.bundleUiInput;
   }
 
-  getMapTiles(): ClientMapTile[] {
-    return this.renderer.getMapTiles();
+  getMapTiles(coordinate?: Coordinate, width?: number, height?: number): ClientMapTile[] {
+    return this.renderer.getMapTiles(coordinate, width, height);
   }
 
   addMapChangedListener(listener: (coordinate: Coordinate, width: number, height: number) => void): () => void {

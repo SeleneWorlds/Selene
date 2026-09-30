@@ -193,8 +193,8 @@ export class PixiGameRenderer implements GameRenderer {
     return this.viewport.screenToLogical(screenX, screenY);
   }
 
-  getMapTiles(): ClientMapTile[] {
-    return this.tilemapLayer.getMapTiles();
+  getMapTiles(coordinate?: Coordinate, width?: number, height?: number): ClientMapTile[] {
+    return this.tilemapLayer.getMapTiles(coordinate, width, height);
   }
 
   addMapChangedListener(listener: (coordinate: Coordinate, width: number, height: number) => void): () => void {

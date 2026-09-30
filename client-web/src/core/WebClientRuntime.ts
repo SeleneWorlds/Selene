@@ -15,6 +15,7 @@ import { TexturesService } from '@/core/services/TexturesService';
 import { VisualsService } from '@/core/services/VisualsService';
 import { loadClientRegistries } from '@/data/ClientRegistryLoader';
 import { WebSocketNetworkClient } from '@/networking/WebSocketNetworkClient';
+import type { Coordinate } from '@/networking/GameProtocol';
 import { PixiGameRenderer } from '@/renderer/PixiGameRenderer';
 import { registerCameraLuaModule } from '@/scripting/CameraLuaBindings';
 import { registerClientFeatureLuaModules } from '@/scripting/ClientFeatureLuaBindings';
@@ -115,7 +116,8 @@ class DefaultWebClientRuntime implements WebClientRuntime {
 
     const mapApiOptions = {
       nameIdMappings: gameClient.getNameIdMappings(),
-      getMapTiles: () => gameClient.getMapTiles(),
+      getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) =>
+        gameClient.getMapTiles(coordinate, width, height),
       onMapChanged: (listener: Parameters<GameClient['addMapChangedListener']>[0]) =>
         gameClient.addMapChangedListener(listener),
     };
@@ -180,7 +182,8 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       grid: gameClient.getGridApi(),
       entities: gameClient.getEntitiesApi(),
       registries,
-      getMapTiles: () => gameClient.getMapTiles(),
+      getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) =>
+        gameClient.getMapTiles(coordinate, width, height),
       onMapChanged: (listener) => gameClient.addMapChangedListener(listener),
     });
     reportProgress('Loading interface', 0.88);

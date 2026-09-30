@@ -34,8 +34,8 @@ interface BundleUiManagerOptions {
   camera: CameraApi;
   grid: GridApi;
   entities: EntitiesApi;
-  getMapTiles: () => ClientMapTile[];
-  onMapChanged: (listener: () => void) => () => void;
+  getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
+  onMapChanged: (listener: (coordinate: Coordinate, width: number, height: number) => void) => () => void;
   registries: ClientRegistrySnapshots;
 }
 interface BundleUiModule {
@@ -66,10 +66,10 @@ interface BundleUiApi {
   };
   readonly world: {
     getCameraCoordinate: CameraApi['getCoordinate'];
-    getMapTiles: () => ClientMapTile[];
+    getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
     getEntitiesAt: (coordinate: Coordinate) => Promise<BundleUiWorldEntity[]>;
     onCameraCoordinateChanged: CameraApi['addCoordinateChangedListener'];
-    onMapChanged: (callback: () => void) => () => void;
+    onMapChanged: (callback: (coordinate: Coordinate, width: number, height: number) => void) => () => void;
   };
 }
 interface BundleUiPointerEvent {
@@ -196,7 +196,8 @@ export class BundleUiManager {
       }),
       world: Object.freeze({
         getCameraCoordinate: () => this.options.camera.getCoordinate(),
-        getMapTiles: () => this.options.getMapTiles(),
+        getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) =>
+          this.options.getMapTiles(coordinate, width, height),
         getEntitiesAt: async (coordinate: Coordinate) => this.options.entities.getEntitiesAt(coordinate).map((entity) => {
           const definition = entity.getDefinition();
           const component = definition.components?.['illarion:visual'];
@@ -213,7 +214,7 @@ export class BundleUiManager {
           if (typeof callback !== 'function') throw new Error('Camera callback must be a function.');
           return this.options.camera.addCoordinateChangedListener(callback);
         },
-        onMapChanged: (callback: () => void) => {
+        onMapChanged: (callback: (coordinate: Coordinate, width: number, height: number) => void) => {
           if (typeof callback !== 'function') throw new Error('Map callback must be a function.');
           return this.options.onMapChanged(callback);
         },
