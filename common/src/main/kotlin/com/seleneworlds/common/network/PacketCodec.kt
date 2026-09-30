@@ -4,14 +4,18 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import java.io.IOException
 
-class PacketCodec(private val factory: PacketFactory) {
+class PacketCodec(
+    private val factory: PacketFactory,
+    private val inboundDirection: PacketDirection,
+    private val outboundDirection: PacketDirection
+) {
     fun read(buf: ByteBuf): Packet? {
         if (buf.readableBytes() == 0) {
             return null
         }
 
         val packetId = buf.readUnsignedByte().toInt()
-        val packet = factory.readPacket(packetId, buf)
+        val packet = factory.readPacket(packetId, inboundDirection, buf)
             ?: throw IOException("Received an invalid packet id $packetId")
 
         if (buf.readableBytes() != 0) {
@@ -24,7 +28,7 @@ class PacketCodec(private val factory: PacketFactory) {
     fun write(allocator: ByteBufAllocator, packet: Packet): ByteBuf {
         val buf = allocator.buffer()
         try {
-            factory.writePacket(buf, packet)
+            factory.writePacket(buf, outboundDirection, packet)
             return buf
         } catch (e: Exception) {
             buf.release()

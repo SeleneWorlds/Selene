@@ -17,6 +17,7 @@ import com.seleneworlds.common.network.PacketDecoder
 import com.seleneworlds.common.network.PacketEncoder
 import com.seleneworlds.common.network.PacketFactory
 import com.seleneworlds.common.network.PacketHandler
+import com.seleneworlds.common.network.PacketDirection
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.players.PlayerManager
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -35,7 +36,11 @@ class NetworkServerImpl(
     private val maxFrameLength = Short.MAX_VALUE.toInt()
     private val lengthFieldLength = 2
     private val webSocketPath = "/ws"
-    private val packetCodec = PacketCodec(packetFactory)
+    private val packetCodec = PacketCodec(
+        packetFactory,
+        PacketDirection.CLIENT_TO_SERVER,
+        PacketDirection.SERVER_TO_CLIENT
+    )
 
     private val bossGroup: EventLoopGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
     private val workerGroup: EventLoopGroup = MultiThreadIoEventLoopGroup(NioIoHandler.newFactory())
@@ -74,10 +79,10 @@ class NetworkServerImpl(
                                 true
                             )
                         )
-                        .addLast("decoder", PacketDecoder(packetFactory))
+                        .addLast("decoder", PacketDecoder(packetFactory, PacketDirection.CLIENT_TO_SERVER))
                         .addLast("packetHandler", client)
                         .addLast("framePrepender", LengthFieldPrepender(lengthFieldLength, 0, false))
-                        .addLast("encoder", PacketEncoder(packetFactory))
+                        .addLast("encoder", PacketEncoder(packetFactory, PacketDirection.SERVER_TO_CLIENT))
                 }
             })
             .option(ChannelOption.SO_BACKLOG, 128)

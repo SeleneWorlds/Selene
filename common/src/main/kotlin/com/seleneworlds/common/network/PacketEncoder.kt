@@ -6,8 +6,11 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.MessageToByteEncoder
 
 @ChannelHandler.Sharable
-class PacketEncoder(private val factory: PacketFactory) : MessageToByteEncoder<Packet>() {
+class PacketEncoder(
+    private val factory: PacketFactory,
+    private val outboundDirection: PacketDirection
+) : MessageToByteEncoder<Packet>() {
     override fun encode(ctx: ChannelHandlerContext, msg: Packet, buf: ByteBuf) {
-        factory.writePacket(buf, msg)
+        factory.writePacket(buf, outboundDirection, msg)
     }
 }

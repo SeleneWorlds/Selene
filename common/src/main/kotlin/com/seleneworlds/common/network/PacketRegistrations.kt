@@ -6,136 +6,164 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
     fun register() {
         packetFactory.registerPacket(
             1,
+            setOf(PacketDirection.CLIENT_TO_SERVER),
             AuthenticatePacket::class,
             AuthenticatePacket::encode,
             AuthenticatePacket::decode
         )
         packetFactory.registerPacket(
             2,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             NameIdMappingsPacket::class,
             NameIdMappingsPacket::encode,
             NameIdMappingsPacket.Companion::decode
         )
         packetFactory.registerPacket(
             3,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             MapChunkPacket::class,
             MapChunkPacket::encode,
             MapChunkPacket::decode
         )
         packetFactory.registerPacket(
             4,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             EntityPacket::class,
             EntityPacket::encode,
             EntityPacket.Companion::decode
         )
         packetFactory.registerPacket(
             5,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             SetCameraPositionPacket::class,
             SetCameraPositionPacket.Companion::encode,
             SetCameraPositionPacket.Companion::decode
         )
         packetFactory.registerPacket(
             6,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             SetCameraFollowEntityPacket::class,
             SetCameraFollowEntityPacket.Companion::encode,
             SetCameraFollowEntityPacket.Companion::decode
         )
         packetFactory.registerPacket(
             7,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             SetControlledEntityPacket::class,
             SetControlledEntityPacket.Companion::encode,
             SetControlledEntityPacket.Companion::decode
         )
         packetFactory.registerPacket(
             8,
+            setOf(PacketDirection.CLIENT_TO_SERVER),
             RequestMovePacket::class,
             RequestMovePacket::encode,
             RequestMovePacket::decode
         )
         packetFactory.registerPacket(
             9,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             MoveEntityPacket::class,
             MoveEntityPacket::encode,
             MoveEntityPacket::decode
         )
         packetFactory.registerPacket(
             10,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             RemoveEntityPacket::class,
             RemoveEntityPacket::encode,
             RemoveEntityPacket::decode
         )
         packetFactory.registerPacket(
             11,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             RemoveMapChunkPacket::class,
             RemoveMapChunkPacket::encode,
             RemoveMapChunkPacket::decode
         )
         packetFactory.registerPacket(
             12,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             PlaySoundPacket::class,
             PlaySoundPacket::encode,
             PlaySoundPacket::decode
         )
         packetFactory.registerPacket(
             13,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             StopSoundPacket::class,
             StopSoundPacket::encode,
             StopSoundPacket::decode
         )
         packetFactory.registerPacket(
             14,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             UpdateMapTilesPacket::class,
             UpdateMapTilesPacket::encode,
             UpdateMapTilesPacket::decode
         )
         packetFactory.registerPacket(
             15,
+            setOf(PacketDirection.CLIENT_TO_SERVER),
             PreferencesPacket::class,
             PreferencesPacket::encode,
             PreferencesPacket::decode
         )
         packetFactory.registerPacket(
             16,
+            setOf(PacketDirection.CLIENT_TO_SERVER),
             FinalizeJoinPacket::class,
             FinalizeJoinPacket::encode,
             FinalizeJoinPacket::decode
         )
         packetFactory.registerPacket(
             17,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             TurnEntityPacket::class,
             TurnEntityPacket::encode,
             TurnEntityPacket::decode
         )
         packetFactory.registerPacket(
             18,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             EntityAnimationPacket::class,
             EntityAnimationPacket::encode,
             EntityAnimationPacket::decode
         )
         packetFactory.registerPacket(
             19,
+            setOf(PacketDirection.CLIENT_TO_SERVER),
             RequestFacingPacket::class,
             RequestFacingPacket::encode,
             RequestFacingPacket::decode
         )
         packetFactory.registerPacket(
             20,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             NotifyBundleUpdatePacket::class,
             NotifyBundleUpdatePacket::encode,
             NotifyBundleUpdatePacket.Companion::decode
         )
         packetFactory.registerPacket(
             21,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
             SetActiveGridPacket::class,
             SetActiveGridPacket::encode,
             SetActiveGridPacket::decode
         )
         packetFactory.registerPacket(
             254,
+            setOf(PacketDirection.CLIENT_TO_SERVER, PacketDirection.SERVER_TO_CLIENT),
             CustomPayloadPacket::class,
             CustomPayloadPacket::encode,
             CustomPayloadPacket::decode
         )
-        packetFactory.registerPacket(255, DisconnectPacket::class, DisconnectPacket::encode, DisconnectPacket::decode)
+        packetFactory.registerPacket(
+            255,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
+            DisconnectPacket::class,
+            DisconnectPacket::encode,
+            DisconnectPacket::decode
+        )
     }
 }

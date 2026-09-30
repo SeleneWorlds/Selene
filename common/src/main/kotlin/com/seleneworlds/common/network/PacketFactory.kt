@@ -5,41 +5,49 @@ import java.io.IOException
 import kotlin.reflect.KClass
 
 class PacketFactory {
-    private val packetDecoders = mutableMapOf<Int, (ByteBuf) -> Packet>()
-    private val packetEncoders = mutableMapOf<Int, (ByteBuf, Packet) -> Unit>()
-    private val packetToId = mutableMapOf<KClass<out Packet>, Int>()
+    private data class Registration(
+        val directions: Set<PacketDirection>,
+        val decoder: (ByteBuf) -> Packet,
+        val encoder: (ByteBuf, Packet) -> Unit
+    )
+
+    private val registrationsById = mutableMapOf<Int, Registration>()
+    private val packetToRegistration = mutableMapOf<KClass<out Packet>, Pair<Int, Registration>>()
 
     fun <T : Packet> registerPacket(
         packetType: Int,
+        directions: Set<PacketDirection>,
         clazz: KClass<out T>,
         encoder: (ByteBuf, T) -> Unit,
         decoder: (ByteBuf) -> T
     ) {
-        check(!packetDecoders.containsKey(packetType)) {
-            "Could not register $clazz: packet id $packetType is already occupied by ${packetDecoders[packetType]}"
+        require(directions.isNotEmpty()) { "Packet $clazz must have at least one direction" }
+        check(!registrationsById.containsKey(packetType)) {
+            "Could not register $clazz: packet id $packetType is already occupied"
         }
 
-        packetDecoders[packetType] = decoder
         @Suppress("UNCHECKED_CAST")
-        packetEncoders[packetType] = encoder as (ByteBuf, Packet) -> Unit
-        packetToId[clazz] = packetType
+        val registration = Registration(directions, decoder, encoder as (ByteBuf, Packet) -> Unit)
+        registrationsById[packetType] = registration
+        packetToRegistration[clazz] = packetType to registration
     }
 
-    private fun getIdForPacket(packet: Packet): Int {
-        return packetToId[packet::class] ?: throw IllegalStateException("Packet $packet has not been registered.")
+    fun readPacket(id: Int, direction: PacketDirection, buf: ByteBuf): Packet? {
+        val registration = registrationsById[id] ?: return null
+        if (direction !in registration.directions) {
+            throw IOException("Packet id $id is not allowed in direction $direction")
+        }
+        return registration.decoder(buf)
     }
 
-    fun readPacket(id: Int, buf: ByteBuf): Packet? {
-        return packetDecoders[id]?.invoke(buf)
-    }
-
-    fun writePacket(buf: ByteBuf, msg: Packet) {
-        val packetId = getIdForPacket(msg)
-        if (packetId == -1) {
-            throw IOException("Packet type $msg is not registered in the packet factory.")
+    fun writePacket(buf: ByteBuf, direction: PacketDirection, msg: Packet) {
+        val (packetId, registration) = packetToRegistration[msg::class]
+            ?: throw IllegalStateException("Packet $msg has not been registered.")
+        if (direction !in registration.directions) {
+            throw IOException("Packet ${msg::class.simpleName} is not allowed in direction $direction")
         }
 
         buf.writeByte(packetId)
-        packetEncoders[packetId]?.invoke(buf, msg)
+        registration.encoder(buf, msg)
     }
 }

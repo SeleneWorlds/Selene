@@ -50,10 +50,10 @@ class NetworkClientImpl(
                         "frameDecoder",
                         LengthFieldBasedFrameDecoder(maxFrameLength, 0, lengthFieldLength, 0, lengthFieldLength)
                     )
-                    .addLast("decoder", PacketDecoder(packetFactory))
+                    .addLast("decoder", PacketDecoder(packetFactory, PacketDirection.SERVER_TO_CLIENT))
                     .addLast("packetHandler", this@NetworkClientImpl)
                     .addLast("framePrepender", LengthFieldPrepender(lengthFieldLength))
-                    .addLast("encoder", PacketEncoder(packetFactory))
+                    .addLast("encoder", PacketEncoder(packetFactory, PacketDirection.CLIENT_TO_SERVER))
             }
         })
 

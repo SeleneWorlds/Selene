@@ -4,8 +4,8 @@ import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.ByteToMessageDecoder
 
-class PacketDecoder(factory: PacketFactory) : ByteToMessageDecoder() {
-    private val codec = PacketCodec(factory)
+class PacketDecoder(factory: PacketFactory, inboundDirection: PacketDirection) : ByteToMessageDecoder() {
+    private val codec = PacketCodec(factory, inboundDirection, inboundDirection)
 
     override fun decode(ctx: ChannelHandlerContext, buf: ByteBuf, out: MutableList<Any>) {
         val packet = codec.read(buf)
