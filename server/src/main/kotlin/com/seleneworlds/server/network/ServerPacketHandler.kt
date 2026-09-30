@@ -51,13 +51,8 @@ class ServerPacketHandler(
 
     private fun handlePreferences(context: NetworkClient, packet: PreferencesPacket) {
         val player = (context as NetworkPlayerClient).player
-        val localeParts = packet.locale.split("_")
-        player.locale = when (localeParts.size) {
-            1 -> Locale.of(localeParts[0])
-            2 -> Locale.of(localeParts[0], localeParts[1])
-            3 -> Locale.of(localeParts[0], localeParts[1], localeParts[2])
-            else -> Locale.ENGLISH
-        }
+        player.locale = parseClientLocale(packet.locale)
+            ?: throw IllegalArgumentException("Invalid locale")
     }
 
     private fun handleJoin(context: NetworkClient, packet: Packet) {
@@ -129,6 +124,22 @@ class ServerPacketHandler(
             Player.ConnectionState.PENDING_JOIN -> handleJoin(context, packet)
             Player.ConnectionState.READY -> handleGame(context, packet)
             Player.ConnectionState.DISCONNECTED -> {}
+        }
+    }
+
+    internal companion object {
+        private val CLIENT_LOCALE_PATTERN = Regex(
+            "^([A-Za-z]{2,8})(?:[-_]([A-Za-z]{2}|[0-9]{3}))?(?:[-_]([A-Za-z0-9]{1,8}))?$"
+        )
+
+        internal fun parseClientLocale(value: String): Locale? {
+            val match = CLIENT_LOCALE_PATTERN.matchEntire(value) ?: return null
+            val (language, country, variant) = match.destructured
+            return when {
+                variant.isNotEmpty() -> Locale.of(language, country, variant)
+                country.isNotEmpty() -> Locale.of(language, country)
+                else -> Locale.of(language)
+            }
         }
     }
 }
