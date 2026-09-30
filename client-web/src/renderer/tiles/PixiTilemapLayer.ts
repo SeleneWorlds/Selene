@@ -41,16 +41,33 @@ export class PixiTilemapLayer {
   }
 
   setMapChunk(packet: MapChunkPacket): void {
+    const tileIdsByCell = Array.from<unknown, number[]>(
+      { length: packet.width * packet.height },
+      (_, index) => {
+        const baseTileId = packet.baseTiles[index] ?? 0;
+        return baseTileId === 0 ? [] : [baseTileId];
+      },
+    );
+    const outOfBoundsTiles = [];
+
+    for (const tile of packet.additionalTiles) {
+      if (tile.tileId === 0) continue;
+      const dx = tile.coordinate.x - packet.x;
+      const dy = tile.coordinate.y - packet.y;
+      if (tile.coordinate.z === packet.z && dx >= 0 && dx < packet.width && dy >= 0 && dy < packet.height) {
+        tileIdsByCell[dy * packet.width + dx].push(tile.tileId);
+      } else {
+        outOfBoundsTiles.push(tile);
+      }
+    }
+
     for (let dy = 0; dy < packet.height; dy += 1) {
       for (let dx = 0; dx < packet.width; dx += 1) {
         const coordinate = { x: packet.x + dx, y: packet.y + dy, z: packet.z };
-        const baseTileId = packet.baseTiles[dy * packet.width + dx] ?? 0;
-        this.setTileStack(coordinate, baseTileId === 0 ? [] : [baseTileId]);
+        this.setTileStack(coordinate, tileIdsByCell[dy * packet.width + dx]);
       }
     }
-    for (const tile of packet.additionalTiles) {
-      if (tile.tileId !== 0) this.appendTile(tile.coordinate, tile.tileId);
-    }
+    for (const tile of outOfBoundsTiles) this.appendTile(tile.coordinate, tile.tileId);
     this.notifyMapChanged({ x: packet.x, y: packet.y, z: packet.z }, packet.width, packet.height);
   }
 
