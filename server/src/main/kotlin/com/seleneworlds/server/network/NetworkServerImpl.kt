@@ -151,7 +151,12 @@ class NetworkServerImpl(
             var processedPackets = 0
             while (processedPackets < config.maxPacketsPerClientPerTick) {
                 val packet = client.poll() ?: break
-                packetHandler.handle(client, packet)
+                try {
+                    packetHandler.handle(client, packet)
+                } catch (e: Exception) {
+                    reportClientError(client, e)
+                    return@forEach
+                }
                 processedPackets++
             }
 
