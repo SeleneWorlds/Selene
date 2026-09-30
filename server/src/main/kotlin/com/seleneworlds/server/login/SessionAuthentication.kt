@@ -28,10 +28,20 @@ class SessionAuthentication(
         .cached(10, 24, TimeUnit.HOURS)
         .build()
 
-    fun parseToken(token: String): Either<Exception, TokenData> {
-        clientAuthorization.authenticate(token)?.let { return TokenData(it).right() }
+    fun parseJoinToken(token: String): Either<Exception, TokenData> =
+        parseClientToken(token, clientAuthorization::authenticateJoin, "Invalid or expired join session")
+
+    fun parseGameToken(token: String): Either<Exception, TokenData> =
+        parseClientToken(token, clientAuthorization::authenticateGame, "Invalid or expired game session")
+
+    private fun parseClientToken(
+        token: String,
+        authenticate: (String) -> String?,
+        error: String
+    ): Either<Exception, TokenData> {
+        authenticate(token)?.let { return TokenData(it).right() }
         if (!serverConfig.insecureMode) {
-            return IllegalArgumentException("Invalid or expired client session").left()
+            return IllegalArgumentException(error).left()
         }
         return try {
             TokenData(JWT.decode(token).subject).right()

@@ -72,15 +72,17 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     const webSocketUrl = import.meta.env.DEV
       ? developmentWebSocketUrl()
       : await loadWebSocketUrl(serverApiUrl);
-    const authToken = await acquireSessionToken(serverApiUrl);
+    const joinToken = await acquireSessionToken(serverApiUrl);
 
     reportProgress('Waiting to join', 0.12);
+    let authToken: string;
     try {
-      await joinServer(serverApiUrl, authToken);
+      authToken = await joinServer(serverApiUrl, joinToken);
     } catch (error) {
       if (error instanceof ClientJoinError && error.status === 401) await restartAuthorization(serverApiUrl);
       throw error;
     }
+    startSessionRenewal(serverApiUrl, authToken);
 
     reportProgress('Loading game data', 0.2);
     const registries = await this.timeLoad('Registry loading', () =>
@@ -225,7 +227,7 @@ interface JoinResponse {
   token?: unknown;
 }
 
-async function joinServer(serverApiUrl: string, authToken: string): Promise<void> {
+async function joinServer(serverApiUrl: string, authToken: string): Promise<string> {
   const deadline = Date.now() + 60_000;
   while (Date.now() <= deadline) {
     const response = await fetch(new URL('/join', ensureTrailingSlash(serverApiUrl)), {
@@ -238,7 +240,10 @@ async function joinServer(serverApiUrl: string, authToken: string): Promise<void
 
     const join = await response.json() as JoinResponse;
     if (join.status === 'Accepted') {
-      return;
+      if (typeof join.token !== 'string' || !join.token) {
+        throw new ClientJoinError('The server accepted the join without returning a game session.');
+      }
+      return join.token;
     }
     if (join.status === 'Rejected') {
       throw new ClientJoinError(typeof join.message === 'string' ? join.message : 'The join request was rejected.');
@@ -249,6 +254,21 @@ async function joinServer(serverApiUrl: string, authToken: string): Promise<void
     await new Promise(resolve => window.setTimeout(resolve, 2_000));
   }
   throw new ClientJoinError('Timed out waiting for the server to accept the join request.');
+}
+
+function startSessionRenewal(serverApiUrl: string, authToken: string): void {
+  const renew = async (): Promise<void> => {
+    try {
+      const response = await fetch(new URL('/session/renew', ensureTrailingSlash(serverApiUrl)), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (!response.ok) console.warn(`Could not renew the game session (${response.status} ${response.statusText}).`);
+    } catch (error) {
+      console.warn('Could not renew the game session.', error);
+    }
+  };
+  window.setInterval(() => void renew(), 30 * 60 * 1_000);
 }
 
 function developmentWebSocketUrl(): string {

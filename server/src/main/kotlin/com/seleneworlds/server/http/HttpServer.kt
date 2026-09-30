@@ -84,9 +84,18 @@ class HttpServer(
                 ProxyHeaders.X_FORWARDED -> install(XForwardedHeaders)
             }
             install(Authentication) {
-                bearer("broker") {
+                bearer("join") {
                     authenticate { tokenCredential ->
-                        sessionAuth.parseToken(tokenCredential.token)
+                        sessionAuth.parseJoinToken(tokenCredential.token)
+                            .fold(
+                                ifLeft = { null },
+                                ifRight = { SeleneUser(it.userId, tokenCredential.token) }
+                            )
+                    }
+                }
+                bearer("game") {
+                    authenticate { tokenCredential ->
+                        sessionAuth.parseGameToken(tokenCredential.token)
                             .fold(
                                 ifLeft = { null },
                                 ifRight = { SeleneUser(it.userId, tokenCredential.token) }
@@ -288,7 +297,36 @@ class HttpServer(
                     call.response.header(HttpHeaders.CacheControl, "no-cache")
                     call.respondFile(file)
                 }
-                authenticate("broker", optional = config.insecureMode) {
+                authenticate("join", optional = config.insecureMode) {
+                    post("/join") {
+                        val principal = call.authenticatedUser()
+                        val queueStatus = queue.updateUser(principal.userId)
+                        val gameSession = if (queueStatus.status == LoginQueueStatus.Accepted) {
+                            if (config.insecureMode) {
+                                "unauthenticated-user" to null
+                            } else {
+                                principal.token?.let(clientAuthorization::issueGameSession)
+                            }
+                        } else {
+                            null
+                        }
+
+                        if (queueStatus.status == LoginQueueStatus.Accepted && gameSession == null) {
+                            call.respond(HttpStatusCode.Unauthorized, "The join session is invalid or has already been used.")
+                            return@post
+                        }
+
+                        call.respond(
+                            JoinResponse(
+                                status = queueStatus.status.name,
+                                message = queueStatus.message,
+                                token = gameSession?.first,
+                                expiresIn = gameSession?.second?.let { ClientAuthorization.GAME_SESSION_SECONDS.toInt() }
+                            )
+                        )
+                    }
+                }
+                authenticate("game", optional = config.insecureMode) {
                     get("/bundles") {
                         val bundles = bundleDatabase.enabledBundles.associateBy { it.manifest.name }
                             .filter { clientBundleCache.hasClientSide(it.value.dir) }
@@ -402,26 +440,19 @@ class HttpServer(
                     get("/client/ui") {
                         call.respond(clientUiAssets.getIndex())
                     }
-                    post("/join") {
+                    post("/session/renew") {
                         val principal = call.authenticatedUser()
-                        val queueStatus = queue.updateUser(principal.userId)
-                        val completedLogin = if (queueStatus.status == LoginQueueStatus.Accepted) {
-                            queue.completeJoin(principal.userId, principal.token ?: "unauthenticated-user")
-                        } else {
-                            null
+                        if (!config.insecureMode && principal.token?.let(clientAuthorization::renewGameSession) == null) {
+                            call.respond(HttpStatusCode.Unauthorized, "The game session has expired.")
+                            return@post
                         }
-
-                        call.respond(
-                            JoinResponse(
-                                status = queueStatus.status.name,
-                                message = queueStatus.message,
-                                token = completedLogin?.token
-                            )
-                        )
+                        call.response.header(HttpHeaders.CacheControl, "no-store")
+                        call.respond(SessionRenewalResponse(ClientAuthorization.GAME_SESSION_SECONDS.toInt()))
                     }
                     post("/leave") {
                         val principal = call.authenticatedUser()
                         queue.removeUser(principal.userId)
+                        if (!config.insecureMode) principal.token?.let(clientAuthorization::revokeGameSession)
                     }
                 }
                 staticResources("/", "web-client", index = "index.html")
@@ -611,5 +642,9 @@ private data class BundleDescriptorResponse(
 private data class JoinResponse(
     val status: String,
     val message: String?,
-    val token: String?
+    val token: String?,
+    @SerialName("expires_in") val expiresIn: Int?
 )
+
+@Serializable
+private data class SessionRenewalResponse(@SerialName("expires_in") val expiresIn: Int)

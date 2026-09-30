@@ -23,11 +23,12 @@ class ClientAuthorization {
         val expiresAt: Instant
     )
 
-    data class ClientSession(val userId: String, val expiresAt: Instant)
+    data class ClientSession(val userId: String, @Volatile var expiresAt: Instant)
 
     private val brokerFlows = ConcurrentHashMap<String, BrokerFlow>()
     private val authorizationCodes = ConcurrentHashMap<String, AuthorizationCode>()
-    private val sessions = ConcurrentHashMap<String, ClientSession>()
+    private val joinSessions = ConcurrentHashMap<String, ClientSession>()
+    private val gameSessions = ConcurrentHashMap<String, ClientSession>()
 
     fun begin(clientState: String, redirectUri: String, codeChallenge: String): BrokerFlow {
         prune()
@@ -65,20 +66,50 @@ class ClientAuthorization {
         }
         val token = randomValue(48)
         val expiresAt = Instant.now().plusSeconds(300)
-        sessions[token] = ClientSession(authorization.userId, expiresAt)
+        joinSessions[token] = ClientSession(authorization.userId, expiresAt)
         return token to expiresAt
     }
 
-    fun authenticate(token: String): String? = sessions[token]?.takeUnless { it.expiresAt.isBefore(Instant.now()) }?.userId
+    fun authenticateJoin(token: String): String? = authenticate(joinSessions, token)
+
+    fun authenticateGame(token: String): String? = authenticate(gameSessions, token)
+
+    fun issueGameSession(joinToken: String): Pair<String, Instant>? {
+        val joinSession = joinSessions.remove(joinToken)?.takeUnless { it.expiresAt.isBefore(Instant.now()) } ?: return null
+        val token = randomValue(48)
+        val expiresAt = Instant.now().plusSeconds(GAME_SESSION_SECONDS)
+        gameSessions[token] = ClientSession(joinSession.userId, expiresAt)
+        return token to expiresAt
+    }
+
+    fun renewGameSession(token: String): Instant? {
+        val session = gameSessions[token] ?: return null
+        synchronized(session) {
+            if (session.expiresAt.isBefore(Instant.now())) {
+                gameSessions.remove(token, session)
+                return null
+            }
+            return Instant.now().plusSeconds(GAME_SESSION_SECONDS).also { session.expiresAt = it }
+        }
+    }
+
+    fun revokeGameSession(token: String) {
+        gameSessions.remove(token)
+    }
+
+    private fun authenticate(sessions: ConcurrentHashMap<String, ClientSession>, token: String): String? =
+        sessions[token]?.takeUnless { it.expiresAt.isBefore(Instant.now()) }?.userId
 
     private fun prune() {
         val now = Instant.now()
         brokerFlows.entries.removeIf { it.value.expiresAt.isBefore(now) }
         authorizationCodes.entries.removeIf { it.value.expiresAt.isBefore(now) }
-        sessions.entries.removeIf { it.value.expiresAt.isBefore(now) }
+        joinSessions.entries.removeIf { it.value.expiresAt.isBefore(now) }
+        gameSessions.entries.removeIf { it.value.expiresAt.isBefore(now) }
     }
 
     companion object {
+        const val GAME_SESSION_SECONDS = 3600L
         private val random = SecureRandom()
 
         fun sha256UrlSafe(value: String): String = MessageDigest.getInstance("SHA-256")

@@ -28,7 +28,7 @@ class ServerPacketHandler(
     private fun handleAuthentication(context: NetworkClient, packet: Packet) {
         val player = (context as NetworkPlayerClient).player
         if (packet is AuthenticatePacket) {
-            sessionAuthentication.parseToken(packet.token)
+            sessionAuthentication.parseGameToken(packet.token)
                 .onRight {
                     player.userId = it.userId
                     for (scope in nameIdRegistry.mappings.rowKeySet()) {

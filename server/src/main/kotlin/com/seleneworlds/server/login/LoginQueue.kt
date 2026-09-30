@@ -12,8 +12,6 @@ enum class LoginQueueStatus {
 
 data class LoginQueueEntry(val userId: String, var status: LoginQueueStatus, var message: String?)
 
-data class CompletedLogin(val token: String)
-
 class LoginQueue(
     private val mainThreadDispatcher: MainThreadDispatcher,
     private val logger: Logger
@@ -46,11 +44,6 @@ class LoginQueue(
             }
         }
         return entry
-    }
-
-    fun completeJoin(userId: String, token: String): CompletedLogin {
-        logger.info("Completing accepted join for user {}", userId)
-        return CompletedLogin(token)
     }
 
     fun removeUser(userId: String) {

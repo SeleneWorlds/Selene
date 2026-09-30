@@ -21,7 +21,15 @@ class ClientAuthorizationTest {
         val code = authorization.issueCode(consumedFlow, "user-1")
         val session = authorization.exchangeCode(code, verifier, "selene://auth")
         assertNotNull(session)
-        assertEquals("user-1", authorization.authenticate(session.first))
+        assertEquals("user-1", authorization.authenticateJoin(session.first))
         assertNull(authorization.exchangeCode(code, verifier, "selene://auth"))
+
+        val gameSession = authorization.issueGameSession(session.first)
+        assertNotNull(gameSession)
+        assertNull(authorization.authenticateJoin(session.first))
+        assertEquals("user-1", authorization.authenticateGame(gameSession.first))
+        assertNotNull(authorization.renewGameSession(gameSession.first))
+        authorization.revokeGameSession(gameSession.first)
+        assertNull(authorization.authenticateGame(gameSession.first))
     }
 }
