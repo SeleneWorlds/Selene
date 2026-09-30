@@ -15,6 +15,10 @@ class EntitiesApi(
         return entity.api
     }
 
+    fun getEntityByNetworkId(networkId: Int): EntityApi? {
+        return clientMap.getEntityByNetworkId(networkId)?.api
+    }
+
     fun getEntitiesAt(coordinate: Coordinate): List<EntityApi> {
         return clientMap.getEntitiesAt(coordinate).map { it.api }
     }

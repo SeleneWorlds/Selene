@@ -23,6 +23,13 @@ export async function registerEntitiesLuaModule(runtime: LuaRuntime, entities: E
 
     return entities.getEntitiesAt(coordinate).map((entity) => toLuaEntity(entity, apis));
   };
+  const getEntityByNetworkId = (networkIdValue: unknown) => {
+    const args = new LuaArguments('selene.entities.getEntityByNetworkId');
+    const networkId = args.integer(networkIdValue, 'networkId');
+    const entity = entities.getEntityByNetworkId(networkId);
+
+    return entity ? toLuaEntity(entity, apis) : null;
+  };
   const findEntitiesAt = (coordinateValue: unknown, criteriaValue?: unknown) => {
     const args = new LuaArguments('selene.entities.findEntitiesAt');
     const coordinate = args.coordinate(coordinateValue, 'coordinate');
@@ -33,6 +40,7 @@ export async function registerEntitiesLuaModule(runtime: LuaRuntime, entities: E
 
   await runtime.preloadModule('selene.entities', () => ({
     create,
+    getEntityByNetworkId,
     getEntitiesAt,
     findEntitiesAt,
   }));

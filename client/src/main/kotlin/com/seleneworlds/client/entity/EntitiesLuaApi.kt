@@ -35,8 +35,14 @@ class EntitiesLuaApi(
 
     override fun register(table: LuaValue) {
         table.register("create", this::create)
+        table.register("getEntityByNetworkId", this::getEntityByNetworkId)
         table.register("getEntitiesAt", this::getEntitiesAt)
         table.register("findEntitiesAt", this::findEntitiesAt)
+    }
+
+    private fun getEntityByNetworkId(lua: Lua): Int {
+        lua.push(api.getEntityByNetworkId(lua.toInteger(1).toInt()), Lua.Conversion.NONE)
+        return 1
     }
 
     private fun create(lua: Lua): Int {
