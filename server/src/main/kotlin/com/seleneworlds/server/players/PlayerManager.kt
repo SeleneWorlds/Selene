@@ -29,10 +29,10 @@ class PlayerManager(
     fun removePlayer(client: NetworkClient) {
         val player = _players[client]
         if (player != null) {
-            val dimension = player.camera.dimension
-            dimension?.syncManager?.playerSyncManagers?.remove(player.syncManager)
             mainThreadDispatcher.runOnMainThread {
                 try {
+                    val dimension = player.camera.dimension
+                    dimension?.syncManager?.playerSyncManagers?.remove(player.syncManager)
                     PlayerEvents.PlayerLeft.EVENT.invoker().playerLeft(player.api)
                 } finally {
                     _players.remove(client, player)
