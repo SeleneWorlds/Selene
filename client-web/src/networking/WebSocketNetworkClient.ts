@@ -38,6 +38,7 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
 
     return new Promise((resolve, reject) => {
       let opened = false;
+      let connectionWasEstablished = false;
       const socket = new WebSocket(this.options.url);
       socket.binaryType = 'arraybuffer';
       this.socket = socket;
@@ -48,6 +49,7 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
           opened = true;
           try {
             await this.authenticate(socket);
+            connectionWasEstablished = true;
             this.setStatus('connected');
             resolve();
           } catch (error) {
@@ -63,20 +65,25 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
         void this.handleMessage(event);
       });
 
-      socket.addEventListener('close', () => {
+      socket.addEventListener('close', (event) => {
+        const connectionWasLost = connectionWasEstablished && this.status !== 'disconnecting';
         this.socket = null;
         this.setStatus('disconnected');
 
         if (!opened) {
           reject(new Error(`Connection to ${this.options.url} closed before opening`));
+        } else if (connectionWasLost) {
+          this.options.onDisconnected?.(event.reason || 'Connection to the server was lost.');
         }
       });
 
       socket.addEventListener(
         'error',
         () => {
-          this.setStatus('error');
-          reject(new Error(`Could not connect to ${this.options.url}`));
+          if (!connectionWasEstablished) {
+            this.setStatus('error');
+            reject(new Error(`Could not connect to ${this.options.url}`));
+          }
         },
         { once: true },
       );
@@ -91,8 +98,6 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
 
     this.setStatus('disconnecting');
     this.socket.close();
-    this.socket = null;
-    this.setStatus('disconnected');
   }
 
   sendMoveRequest(coordinate: Coordinate): void {
