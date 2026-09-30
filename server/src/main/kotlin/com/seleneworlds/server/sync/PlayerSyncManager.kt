@@ -72,20 +72,23 @@ class PlayerSyncManager(
             chunkViewRange,
             verticalChunkViewRange
         )
-        windows.asSequence().filter { it !in syncedChunks }.forEach { window ->
+        val missingWindows = windows.filter { it !in syncedChunks }
+        missingWindows.forEach { window ->
             val chunk = chunkViewManager.atWindow(dimension, player.camera, window)
-            player.client.send(
-                MapChunkPacket(
-                    window.x,
-                    window.y,
-                    window.z,
-                    window.width,
-                    window.height,
-                    chunk.padding,
-                    chunk.baseTiles,
-                    chunk.additionalTiles
+            if (!chunk.isEmptyForTransfer()) {
+                player.client.send(
+                    MapChunkPacket(
+                        window.x,
+                        window.y,
+                        window.z,
+                        window.width,
+                        window.height,
+                        chunk.padding,
+                        chunk.baseTiles,
+                        chunk.additionalTiles
+                    )
                 )
-            )
+            }
             syncedChunks.add(window)
         }
     }
@@ -196,4 +199,5 @@ class PlayerSyncManager(
             )
         )
     }
+
 }

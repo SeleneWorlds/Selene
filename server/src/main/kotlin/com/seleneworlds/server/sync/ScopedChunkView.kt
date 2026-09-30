@@ -132,6 +132,20 @@ class ScopedChunkView(val window: ChunkWindow) : ExposedApi<ScopedChunkViewApi> 
         return annotations.get(coordinate, key)
     }
 
+    fun isEmptyForTransfer(): Boolean {
+        if (!additionalTiles.isEmpty) {
+            return false
+        }
+        for (y in 0 until window.height) {
+            for (x in 0 until window.width) {
+                if (getBaseTileAtRelative(x, y) != 0) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
     companion object {
         fun create(dimension: Dimension, viewer: Viewer, window: ChunkWindow): ScopedChunkView {
             return create(dimension.mapTree, viewer, window)
