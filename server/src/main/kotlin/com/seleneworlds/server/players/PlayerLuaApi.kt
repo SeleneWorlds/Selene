@@ -129,6 +129,19 @@ object PlayerLuaApi {
     }
 
     /**
+     * Disconnects this player with the given reason.
+     *
+     * ```signatures
+     * Kick(reason: string)
+     * ```
+     */
+    private fun kick(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        player.kick(lua.checkString(2))
+        return 0
+    }
+
+    /**
      * Entity controlled by this player or `nil`.
      *
      * ```property
@@ -241,6 +254,7 @@ object PlayerLuaApi {
         callable(::getUserId)
         callable(::getLocale)
         callable(::getLanguage)
+        callable(::kick)
         callable(::getControlledEntity)
         callable(::setControlledEntity)
         callable(::getCameraEntity)

@@ -2,6 +2,7 @@ package com.seleneworlds.server.players
 
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.network.packet.DisconnectPacket
 import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.util.IdResolvable
 import com.seleneworlds.common.util.ResolvableReference
@@ -38,6 +39,11 @@ class PlayerApi(val delegate: Player) : IdResolvable<String, Player> {
 
     fun getLanguageString(): String {
         return delegate.languageString
+    }
+
+    fun kick(reason: String) {
+        delegate.client.send(DisconnectPacket(reason))
+        delegate.client.disconnect()
     }
 
     fun getControlledEntity(): EntityApi? {
