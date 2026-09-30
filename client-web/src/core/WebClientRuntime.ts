@@ -36,6 +36,7 @@ export interface BootstrapClientOptions {
   fitToScreen: boolean;
   debugState?: DebugState;
   onStartupProgress?: (progress: StartupProgress) => void;
+  onDisconnected?: (reason: string) => void;
 }
 
 export interface StartupProgress {
@@ -111,6 +112,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       networkClient: new WebSocketNetworkClient({
         url: webSocketUrl,
         authToken: () => Promise.resolve(authToken),
+        onDisconnected: options.onDisconnected,
       }),
     });
     this.gameClient = gameClient;

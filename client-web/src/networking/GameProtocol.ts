@@ -20,6 +20,7 @@ const PacketId = {
   RequestFacing: 19,
   SetActiveGrid: 21,
   CustomPayload: 254,
+  Disconnect: 255,
 } as const;
 
 export type GamePacket =
@@ -36,6 +37,7 @@ export type GamePacket =
   | TurnEntityPacket
   | SetActiveGridPacket
   | CustomPayloadPacket
+  | DisconnectPacket
   | UnknownGamePacket;
 
 export interface Coordinate {
@@ -142,6 +144,11 @@ export interface CustomPayloadPacket {
   payload: string;
 }
 
+export interface DisconnectPacket {
+  type: 'disconnect';
+  reason: string;
+}
+
 export function encodeAuthenticatePacket(token: string): ArrayBuffer {
   return encodePacket(PacketId.Authenticate, (writer) => writer.writeString(token));
 }
@@ -200,9 +207,17 @@ export function decodeGamePacket(data: ArrayBuffer): GamePacket {
       return decodeSetActiveGridPacket(reader);
     case PacketId.CustomPayload:
       return decodeCustomPayloadPacket(reader);
+    case PacketId.Disconnect:
+      return decodeDisconnectPacket(reader);
     default:
       return { type: 'unknown', packetId };
   }
+}
+
+function decodeDisconnectPacket(reader: PacketReader): DisconnectPacket {
+  const reason = reader.readString();
+  reader.assertFullyRead();
+  return { type: 'disconnect', reason };
 }
 
 function encodePacket(packetId: number, writeBody?: (writer: PacketWriter) => void): ArrayBuffer {

@@ -3,6 +3,7 @@ defineProps<{
   status: 'booting' | 'failed';
   label: string;
   progress: number;
+  errorTitle: string;
   errorMessage: string | null;
   canRetry: boolean;
 }>();
@@ -33,7 +34,7 @@ const emit = defineEmits<{
       </template>
 
       <template v-else>
-        <h1>Unable to connect</h1>
+        <h1>{{ errorTitle }}</h1>
         <p class="startup-screen__error">{{ errorMessage || 'An unexpected error occurred.' }}</p>
         <button v-if="canRetry" type="button" @click="emit('retry')">Try again</button>
       </template>

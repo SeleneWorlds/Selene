@@ -10,6 +10,7 @@ import { loadSettings, saveSettings } from './settings';
 const viewportEl = ref<HTMLDivElement | null>(null);
 const bundleUiEl = ref<HTMLElement | null>(null);
 const status = ref<'booting' | 'running' | 'failed'>('booting');
+const errorTitle = ref('Unable to connect');
 const errorMessage = ref<string | null>(null);
 const canRetryStartup = ref(true);
 const startupLabel = ref('Starting client');
@@ -81,6 +82,7 @@ async function startClient(): Promise<void> {
   }
 
   status.value = 'booting';
+  errorTitle.value = 'Unable to connect';
   errorMessage.value = null;
   canRetryStartup.value = true;
   startupLabel.value = 'Starting client';
@@ -96,8 +98,15 @@ async function startClient(): Promise<void> {
         startupLabel.value = label;
         startupProgress.value = progress;
       },
+      onDisconnected: (reason) => {
+        status.value = 'failed';
+        errorTitle.value = 'Disconnected';
+        errorMessage.value = reason || 'The server disconnected the client.';
+      },
     });
-    status.value = 'running';
+    if (status.value === 'booting') {
+      status.value = 'running';
+    }
   } catch (error) {
     status.value = 'failed';
     errorMessage.value = error instanceof Error ? error.message : String(error);
@@ -120,6 +129,7 @@ onMounted(() => {
       :status="status"
       :label="startupLabel"
       :progress="startupProgress"
+      :error-title="errorTitle"
       :error-message="errorMessage"
       :can-retry="canRetryStartup"
       @retry="retryStartup"

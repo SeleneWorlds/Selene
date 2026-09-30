@@ -16,6 +16,7 @@ export interface WebSocketNetworkClientOptions {
   url: string;
   authToken: () => Promise<string>;
   locale?: string;
+  onDisconnected?: ((reason: string) => void) | undefined;
 }
 
 export class WebSocketNetworkClient extends AbstractNetworkClient implements NetworkClient {
@@ -137,6 +138,12 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
 
       if (packet.type === 'unknown') {
         console.debug(`Ignoring unsupported Selene packet ${packet.packetId}.`);
+      }
+
+      if (packet.type === 'disconnect') {
+        this.options.onDisconnected?.(packet.reason);
+        this.disconnect();
+        return;
       }
 
       this.emitPacket(packet);
