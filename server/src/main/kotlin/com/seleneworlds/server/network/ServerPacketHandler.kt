@@ -78,7 +78,16 @@ class ServerPacketHandler(
         if (packet is RequestMovePacket) {
             player.resetLastInputTime()
             val controlledEntity = player.controlledEntity ?: return
-            if (!controlledEntity.moveTo(packet.coordinate)) {
+            val isAllowedStep = grid.isAllowedStep(controlledEntity.coordinate, packet.coordinate)
+            val movementDuration = if (isAllowedStep) {
+                controlledEntity.getMovementDuration(packet.coordinate)
+            } else {
+                null
+            }
+            if (movementDuration == null ||
+                !player.acquireMoveRequestCooldown(movementDuration) ||
+                !controlledEntity.moveTo(packet.coordinate, movementDuration)
+            ) {
                 context.send(
                     MoveEntityPacket(
                         controlledEntity.networkId,

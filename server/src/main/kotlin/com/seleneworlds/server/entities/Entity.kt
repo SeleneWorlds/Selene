@@ -9,6 +9,7 @@ import com.seleneworlds.common.network.packet.EntityAnimationPacket
 import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.common.util.IdResolvable
 import com.seleneworlds.common.util.ResolvableReference
 import com.seleneworlds.server.entities.component.EntityComponent
@@ -119,7 +120,14 @@ class Entity(
         dimension.syncManager.entityTurned(this, facing)
     }
 
-    fun moveTo(coordinate: Coordinate): Boolean {
+    fun getMovementDuration(coordinate: Coordinate): Float {
+        val dimension = dimension ?: return TileDefinition.DEFAULT_MOVEMENT_DURATION
+        val chunkView = world.chunkViewManager.atCoordinate(dimension, collisionViewer, coordinate)
+        val tileId = chunkView.getBaseTileAt(coordinate)
+        return registries.tiles.get(tileId)?.movementDuration ?: TileDefinition.DEFAULT_MOVEMENT_DURATION
+    }
+
+    fun moveTo(coordinate: Coordinate, duration: Float = getMovementDuration(coordinate)): Boolean {
         EntityEvents.BeforeEntityMove.EVENT.invoker().beforeEntityMove(api, coordinate)
         this.facing = world.grid.getDirection(this.coordinate, coordinate)
         val dimension = dimension ?: return false
@@ -128,7 +136,7 @@ class Entity(
         }
         val prevCoordinate = this.coordinate
         this.coordinate = coordinate
-        dimension.syncManager.entityMoved(this, prevCoordinate, coordinate, 0.2f)
+        dimension.syncManager.entityMoved(this, prevCoordinate, coordinate, duration)
         EntityEvents.EntitySteppedOffTile.EVENT.invoker().entitySteppedOffTile(api, prevCoordinate)
         EntityEvents.EntitySteppedOnTile.EVENT.invoker().entitySteppedOnTile(api, coordinate)
         return true
@@ -163,4 +171,5 @@ class Entity(
     fun updateVisuals() {
         dimension?.syncManager?.entityUpdated(this)
     }
+
 }

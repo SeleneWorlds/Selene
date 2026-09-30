@@ -43,6 +43,24 @@ open class Grid {
         }
     }
 
+    /**
+     * Returns whether [to] is exactly one configured, non-zero grid step from [from].
+     * Differences are calculated as longs so coordinates near Int boundaries cannot wrap
+     * around and masquerade as a neighboring tile.
+     */
+    fun isAllowedStep(from: Coordinate, to: Coordinate): Boolean {
+        val dx = to.x.toLong() - from.x.toLong()
+        val dy = to.y.toLong() - from.y.toLong()
+        val dz = to.z.toLong() - from.z.toLong()
+        return directions.values.any { direction ->
+            val vector = direction.vector
+            vector != Coordinate.Zero &&
+                dx == vector.x.toLong() &&
+                dy == vector.y.toLong() &&
+                dz == vector.z.toLong()
+        }
+    }
+
     fun getDirectionByName(name: String): Direction? {
         return directions[name]
     }

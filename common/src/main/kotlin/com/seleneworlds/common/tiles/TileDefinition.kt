@@ -13,7 +13,18 @@ data class TileDefinition(
     val visual: Identifier,
     val impassable: Boolean = false,
     val passableAbove: Boolean = false,
+    val movementDuration: Float = DEFAULT_MOVEMENT_DURATION,
     @Serializable(with = SerializedMapSerializer::class)
     override val metadata: SerializedMap = emptyMap(),
     override val tags: Set<String> = emptySet()
-) : MetadataHolder, TagHolder, RegistryAdoptedObject<TileDefinition>()
+) : MetadataHolder, TagHolder, RegistryAdoptedObject<TileDefinition>() {
+    init {
+        require(movementDuration.isFinite() && movementDuration >= 0f) {
+            "movementDuration must be a finite, non-negative number"
+        }
+    }
+
+    companion object {
+        const val DEFAULT_MOVEMENT_DURATION = 0.2f
+    }
+}

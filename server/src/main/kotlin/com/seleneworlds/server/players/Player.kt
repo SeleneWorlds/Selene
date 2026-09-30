@@ -57,9 +57,18 @@ class Player(
     var cameraEntity: Entity? = null
 
     var lastInputTime = System.currentTimeMillis()
+    private var nextMoveRequestTimeNanos = Long.MIN_VALUE
 
     fun resetLastInputTime() {
         lastInputTime = System.currentTimeMillis()
+    }
+
+    fun acquireMoveRequestCooldown(durationSeconds: Float, nowNanos: Long = System.nanoTime()): Boolean {
+        if (nowNanos < nextMoveRequestTimeNanos) {
+            return false
+        }
+        nextMoveRequestTimeNanos = nowNanos + (durationSeconds * NANOS_PER_SECOND).toLong()
+        return true
     }
 
     fun update() {
@@ -87,5 +96,9 @@ class Player(
     }
 
     val idleTime get() = ((System.currentTimeMillis() - lastInputTime) / 1000L).toInt()
+
+    private companion object {
+        const val NANOS_PER_SECOND = 1_000_000_000L
+    }
 
 }
