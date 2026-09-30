@@ -134,7 +134,7 @@ class HttpServer(
                     val clientState = requestParameters["state"]
                     val redirectUri = requestParameters["redirect_uri"]
                     val codeChallenge = requestParameters["code_challenge"]
-                    val publicOrigin = call.publicServerOrigin(config.announcedApi, proxyHeaders != ProxyHeaders.NONE)
+                    val publicOrigin = call.publicServerOriginOrRespond(config, proxyHeaders) ?: return@get
                     val validation = validateAuthorizationRequest(
                         responseType = requestParameters["response_type"],
                         clientState = clientState,
@@ -178,7 +178,7 @@ class HttpServer(
                         return@get
                     }
 
-                    val publicOrigin = call.publicServerOrigin(config.announcedApi, proxyHeaders != ProxyHeaders.NONE)
+                    val publicOrigin = call.publicServerOriginOrRespond(config, proxyHeaders) ?: return@get
                     val callbackUrl = "$publicOrigin/oauth/broker/callback"
                     val response = httpClient.post(systemConfig.authBrokerUrl.trimEnd('/') + "/authorize/token") {
                         setBody(FormDataContent(Parameters.build {
@@ -469,16 +469,72 @@ class HttpServer(
     }
 }
 
-private fun ApplicationCall.publicServerOrigin(announcedApi: String, trustProxyHeaders: Boolean): String {
-    announcedApi.trim().takeIf(String::isNotEmpty)?.let { return it.trimEnd('/') }
-    if (!trustProxyHeaders) return "${request.local.scheme}://${request.host()}:${request.port()}"
-    val origin = request.origin
-    return URLBuilder(
-        protocol = URLProtocol.createOrDefault(origin.scheme),
-        host = origin.serverHost,
-        port = origin.serverPort
-    ).buildString().trimEnd('/')
+private suspend fun ApplicationCall.publicServerOriginOrRespond(
+    config: ServerConfig,
+    proxyHeaders: ProxyHeaders
+): String? = try {
+    publicServerOrigin(config.announcedApi, proxyHeaders, config.insecureMode)
+} catch (e: InvalidPublicOriginException) {
+    respond(HttpStatusCode.ServiceUnavailable, e.message ?: "The server's public origin is not configured safely.")
+    null
 }
+
+private fun ApplicationCall.publicServerOrigin(
+    announcedApi: String,
+    proxyHeaders: ProxyHeaders,
+    insecureMode: Boolean
+): String {
+    announcedApi.trim().takeIf(String::isNotEmpty)?.let {
+        return validatePublicOrigin(it, insecureMode)
+    }
+
+    if (proxyHeaders != ProxyHeaders.NONE) {
+        val origin = request.origin
+        val proxyOrigin = URLBuilder(
+            protocol = URLProtocol.createOrDefault(origin.scheme),
+            host = origin.serverHost,
+            port = origin.serverPort
+        ).buildString()
+        return validatePublicOrigin(proxyOrigin, insecureMode)
+    }
+
+    val host = request.host()
+    if (!insecureMode && !isLoopbackHost(host)) {
+        throw InvalidPublicOriginException(
+            "OAuth requires announced_api or explicitly trusted proxy_headers for non-loopback requests."
+        )
+    }
+    val uriHost = if (':' in host && !host.startsWith('[')) "[$host]" else host
+    return validatePublicOrigin("${request.local.scheme}://$uriHost:${request.port()}", insecureMode)
+}
+
+internal fun validatePublicOrigin(rawOrigin: String, insecureMode: Boolean): String {
+    val uri = runCatching { URI(rawOrigin.trim()) }.getOrNull()
+        ?: throw InvalidPublicOriginException("The configured public origin is not a valid URI.")
+    val scheme = uri.scheme?.lowercase()
+    val host = uri.host?.lowercase()
+    if (scheme !in setOf("http", "https") || host.isNullOrBlank() || uri.userInfo != null ||
+        uri.query != null || uri.fragment != null || (uri.path.isNotEmpty() && uri.path != "/")) {
+        throw InvalidPublicOriginException("The public origin must contain only an HTTP(S) scheme, host, and optional port.")
+    }
+    if (!insecureMode && scheme != "https" && !isLoopbackHost(host)) {
+        throw InvalidPublicOriginException("The public origin must use HTTPS for non-loopback requests.")
+    }
+
+    val port = uri.port
+    val normalizedPort = when {
+        port == -1 || scheme == "https" && port == 443 || scheme == "http" && port == 80 -> ""
+        port in 1..65535 -> ":$port"
+        else -> throw InvalidPublicOriginException("The public origin contains an invalid port.")
+    }
+    val normalizedHost = if (':' in host) "[$host]" else host
+    return "$scheme://$normalizedHost$normalizedPort"
+}
+
+internal fun isLoopbackHost(host: String): Boolean =
+    host.equals("localhost", ignoreCase = true) || host == "127.0.0.1" || host == "::1" || host == "[::1]"
+
+internal class InvalidPublicOriginException(message: String) : IllegalArgumentException(message)
 
 private enum class ProxyHeaders {
     NONE,
