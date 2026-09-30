@@ -8,16 +8,19 @@ import io.netty.channel.socket.SocketChannel
 import com.seleneworlds.common.network.Packet
 import com.seleneworlds.server.players.PlayerManager
 import java.net.InetSocketAddress
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 
 class NetworkClientImpl(
     private val server: NetworkServer,
     playerManager: PlayerManager,
-    private val channel: SocketChannel
+    private val channel: SocketChannel,
+    maxQueuedPackets: Int
 ) : ChannelInboundHandlerAdapter(), ChannelFutureListener, NetworkPlayerClient {
 
     override val player = playerManager.createPlayer(this)
-    private val incomingPackets = ConcurrentLinkedQueue<Packet>()
+    private val incomingPackets = IncomingPacketQueue(maxQueuedPackets)
+    private val disconnecting = AtomicBoolean()
+    private val queueOverflowReported = AtomicBoolean()
 
     override fun poll(): Packet? = incomingPackets.poll()
 
@@ -32,6 +35,7 @@ class NetworkClientImpl(
     }
 
     override fun disconnect() {
+        if (!disconnecting.compareAndSet(false, true)) return
         channel.disconnect().addListener {
             channel.close()
         }
@@ -40,7 +44,9 @@ class NetworkClientImpl(
     override val address: InetSocketAddress get() = channel.remoteAddress() as InetSocketAddress
 
     override fun channelRead(ctx: ChannelHandlerContext, msg: Any) {
-        incomingPackets.add(msg as Packet)
+        if (!incomingPackets.offer(msg as Packet) && queueOverflowReported.compareAndSet(false, true)) {
+            server.reportClientError(this, IllegalStateException("Incoming packet queue limit exceeded"))
+        }
     }
 
     override fun exceptionCaught(ctx: ChannelHandlerContext?, cause: Throwable) {

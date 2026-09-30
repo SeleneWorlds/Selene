@@ -32,6 +32,11 @@ class NetworkServerImpl(
     private val logger: Logger
 ) : ChannelInboundHandlerAdapter(), NetworkServer {
 
+    init {
+        require(config.maxQueuedPacketsPerClient > 0) { "maxQueuedPacketsPerClient must be positive" }
+        require(config.maxPacketsPerClientPerTick > 0) { "maxPacketsPerClientPerTick must be positive" }
+    }
+
     private val networkReadTimeout: Int = 60000
     private val maxFrameLength = Short.MAX_VALUE.toInt()
     private val lengthFieldLength = 2
@@ -62,7 +67,12 @@ class NetworkServerImpl(
             .channel(NioServerSocketChannel::class.java)
             .childHandler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(channel: SocketChannel) {
-                    val client = NetworkClientImpl(this@NetworkServerImpl, playerManager, channel)
+                    val client = NetworkClientImpl(
+                        this@NetworkServerImpl,
+                        playerManager,
+                        channel,
+                        config.maxQueuedPacketsPerClient
+                    )
                     channel.attr(NetworkClientAttributes.CLIENT).set(client)
                     clients.add(client)
                     channel.pipeline()
@@ -103,7 +113,13 @@ class NetworkServerImpl(
             .channel(NioServerSocketChannel::class.java)
             .childHandler(object : ChannelInitializer<SocketChannel>() {
                 override fun initChannel(channel: SocketChannel) {
-                    val client = WebSocketNetworkClient(this@NetworkServerImpl, playerManager, channel, packetCodec)
+                    val client = WebSocketNetworkClient(
+                        this@NetworkServerImpl,
+                        playerManager,
+                        channel,
+                        packetCodec,
+                        config.maxQueuedPacketsPerClient
+                    )
                     channel.attr(NetworkClientAttributes.CLIENT).set(client)
                     clients.add(client)
                     channel.pipeline()
@@ -132,10 +148,11 @@ class NetworkServerImpl(
 
     override fun process() {
         clients.forEach { client ->
-            var packet = client.poll()
-            while (packet != null) {
+            var processedPackets = 0
+            while (processedPackets < config.maxPacketsPerClientPerTick) {
+                val packet = client.poll() ?: break
                 packetHandler.handle(client, packet)
-                packet = client.poll()
+                processedPackets++
             }
 
             (client as NetworkPlayerClient).player.update()
