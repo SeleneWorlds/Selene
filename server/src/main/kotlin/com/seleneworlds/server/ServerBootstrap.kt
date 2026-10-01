@@ -38,6 +38,7 @@ import com.seleneworlds.common.jobs.SchedulesLuaApi
 import com.seleneworlds.common.lua.EventsLuaApi
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.LuaModule
+import com.seleneworlds.common.lua.LoggingLuaApi
 import com.seleneworlds.common.lua.libraries.*
 import com.seleneworlds.common.network.*
 import com.seleneworlds.common.sounds.SoundRegistry
@@ -147,6 +148,7 @@ fun main(args: Array<String>) {
         singleOf(::LuaMathxModule) { bind<LuaModule>() }
         singleOf(::LuaStringxModule) { bind<LuaModule>() }
         singleOf(::LuaTablexModule) { bind<LuaModule>() }
+        singleOf(::LoggingLuaApi) { bind<LuaModule>() }
         singleOf(::EventsLuaApi) { bind<LuaModule>() }
         singleOf(::TaskLuaApi) { bind<LuaModule>() }
         singleOf(::ServerLuaApi) { bind<LuaModule>() }
