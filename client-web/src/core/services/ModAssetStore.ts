@@ -120,7 +120,7 @@ export async function installMod(file: File, onProgress?: (progress: ModInstallP
     storing.onsuccess = () => {
       const progress = 0.4 + (++stored / assets.length) * 0.59;
       const percent = Math.floor(progress * 100);
-      if (percent !== lastPercent) { lastPercent = percent; onProgress?.({ label: `Storing files (${stored.toLocaleString()} of ${assets.length.toLocaleString()})`, progress }); }
+      if (percent !== lastPercent) { lastPercent = percent; onProgress?.({ label: `Unpacking files (${stored.toLocaleString()} of ${assets.length.toLocaleString()})`, progress }); }
     };
   }
   transaction.objectStore(META_STORE).put(nextMods, MOD_LIST_KEY);
