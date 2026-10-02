@@ -1,6 +1,23 @@
 package com.seleneworlds.common.bundles
 
+import com.seleneworlds.common.event.EventFactory
 import org.slf4j.Logger
+
+object BundleEvents {
+    fun interface BundleUnloading {
+        fun bundleUnloading(bundle: Bundle)
+
+        companion object {
+            val EVENT = EventFactory.arrayBackedEvent<BundleUnloading> { listeners ->
+                BundleUnloading { bundle ->
+                    listeners.forEach { listener ->
+                        EventFactory.catchLog { listener.bundleUnloading(bundle) }
+                    }
+                }
+            }
+        }
+    }
+}
 
 class BundleLifecycleManager(
     private val logger: Logger,

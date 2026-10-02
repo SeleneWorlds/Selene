@@ -7,6 +7,8 @@ import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.*
 import com.seleneworlds.common.lua.util.xpCall
 import com.seleneworlds.common.script.ScriptTrace
+import com.seleneworlds.common.bundles.BundleEvents
+import com.seleneworlds.common.bundles.BundleExecutionContext
 
 /**
  * Server management and server-related events.
@@ -91,6 +93,17 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
         }
     }
 
+    val bundleUnloading = LuaEventSink(BundleEvents.BundleUnloading.EVENT) { callback: LuaValue, trace: ScriptTrace ->
+        val owningBundle = BundleExecutionContext.currentBundle
+        BundleEvents.BundleUnloading { unloadingBundle ->
+            if (unloadingBundle == owningBundle) {
+                val lua = callback.state()
+                lua.push(callback)
+                lua.xpCall(0, 0, trace)
+            }
+        }
+    }
+
     override fun register(table: LuaValue) {
         table.register("getRuntimeData", this::getRuntimeData)
         table.register("overwriteRuntimeData", this::overwriteRuntimeData)
@@ -98,5 +111,6 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
         table.register("removeRuntimeData", this::removeRuntimeData)
         table.set("serverStarted", serverStarted)
         table.set("serverReloaded", serverReloaded)
+        table.set("bundleUnloading", bundleUnloading)
     }
 }

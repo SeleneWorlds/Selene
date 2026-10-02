@@ -136,6 +136,7 @@ class BundleLoader(
     }
 
     override fun clearBundleState(bundle: Bundle, deletedFiles: Set<String>) {
+        BundleEvents.BundleUnloading.EVENT.invoker().bundleUnloading(bundle)
         bundleStateCleaner.clearBundleState(bundle)
         val moduleNames = listLuaModuleNames(bundle) + deletedFiles.mapNotNull { moduleNameForLuaFile(bundle, it.replace('\\', '/')) }
         for (moduleName in moduleNames) {
