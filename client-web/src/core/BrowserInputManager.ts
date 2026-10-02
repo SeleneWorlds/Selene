@@ -128,8 +128,11 @@ export class BrowserInputManager implements InputApi {
   }
 
   private readonly handleKeyDown = (event: KeyboardEvent): void => {
-    if (this.uiInput.consumes(event)) return;
     const key = normalizeKeyboardEvent(event);
+    if (this.uiInput.consumes(event)) {
+      if (isModifierKey(event)) this.pressedKeys.add(key);
+      return;
+    }
     const wasPressed = this.pressedKeys.has(key);
 
     this.pressedKeys.add(key);
@@ -141,8 +144,11 @@ export class BrowserInputManager implements InputApi {
   };
 
   private readonly handleKeyUp = (event: KeyboardEvent): void => {
-    if (this.uiInput.consumes(event)) return;
     const key = normalizeKeyboardEvent(event);
+    if (this.uiInput.consumes(event)) {
+      if (isModifierKey(event)) this.pressedKeys.delete(key);
+      return;
+    }
 
     this.pressedKeys.delete(key);
     this.keyboardReleaseActions.get(key)?.();
@@ -185,6 +191,10 @@ export class BrowserInputManager implements InputApi {
 
 function normalizeKeyboardEvent(event: KeyboardEvent): string {
   return event.code || event.key;
+}
+
+function isModifierKey(event: KeyboardEvent): boolean {
+  return event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt' || event.key === 'Meta';
 }
 
 function normalizeKeyboardKey(key: string): string {
