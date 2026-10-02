@@ -3,6 +3,7 @@ import type { SoundsApi } from '@/api/SoundsApi';
 import { resolveServerUrl } from '@/data/ClientRegistryLoader';
 import type { ClientAssetManifest } from './ClientAssetManifest';
 import { clamp, numberOr } from './utils';
+import { getModAsset } from './ModAssetStore';
 
 export class SoundsService implements SoundsApi {
   private readonly playing = new Map<string, Set<HTMLAudioElement>>();
@@ -11,13 +12,18 @@ export class SoundsService implements SoundsApi {
   constructor(private readonly registries: RegistriesApi, private readonly manifest: ClientAssetManifest, private readonly serverUrl: string, private readonly authToken: string) {}
   playSound(value: string | RegistryObjectApi, options: { volume?: number; pitch?: number } = {}) {
     const [name, sound] = this.resolve(value); const file = requireString(sound.file, 'sound file').replace(/^\/+/, '');
-    const source = resolveServerUrl(this.serverUrl, this.manifest.assets[file] ?? `/client/content/${file}`);
     const controller = new AbortController(); let pending = this.pending.get(name);
     if (!pending) { pending = new Set(); this.pending.set(name, pending); } pending.add(controller);
-    void fetch(source, { headers: { Authorization: `Bearer ${this.authToken}` }, signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
-        const objectUrl = URL.createObjectURL(await response.blob());
+    void getModAsset(file).then(async (modAsset) => {
+      if (controller.signal.aborted) throw new DOMException('The request was aborted.', 'AbortError');
+      if (modAsset) return modAsset;
+      const source = resolveServerUrl(this.serverUrl, this.manifest.assets[file] ?? `/client/content/${file}`);
+      const response = await fetch(source, { headers: { Authorization: `Bearer ${this.authToken}` }, signal: controller.signal });
+      if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+      return response.blob();
+    })
+      .then(async (blob) => {
+        const objectUrl = URL.createObjectURL(blob);
         const audio = new Audio(objectUrl); this.objectUrls.set(audio, objectUrl);
         audio.volume = clamp(options.volume ?? numberOr(sound.volume, 1), 0, 1); audio.playbackRate = clamp(options.pitch ?? numberOr(sound.pitch, 1), .25, 4);
         audio.loop = sound.loop === true || sound.type === 'music'; let set = this.playing.get(name);

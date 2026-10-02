@@ -2,6 +2,7 @@ import { acquireSessionToken, restartAuthorization } from '@/auth/AuthorizationF
 import { createDebugState, type DebugState, type RendererDebugOptions } from '@/core/DebugState';
 import { GameClient } from '@/core/GameClient';
 import { loadClientAssetManifest } from '@/core/services/ClientAssetManifest';
+import { applyModRegistryOverrides } from '@/core/services/ModAssetStore';
 import { EventsService } from '@/core/services/EventsService';
 import { HttpService } from '@/core/services/HttpService';
 import { I18nService } from '@/core/services/I18nService';
@@ -86,9 +87,10 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     startSessionRenewal(serverApiUrl, authToken);
 
     reportProgress('Loading game data', 0.2);
-    const registries = await this.timeLoad('Registry loading', () =>
+    const serverRegistries = await this.timeLoad('Registry loading', () =>
       loadClientRegistries({ serverApiUrl, authToken }),
     );
+    const registries = await applyModRegistryOverrides(serverRegistries);
     reportProgress('Loading assets', 0.42);
     const assetManifest = await loadClientAssetManifest({ serverApiUrl, authToken });
 

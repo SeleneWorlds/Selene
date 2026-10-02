@@ -1,13 +1,16 @@
 import type { ResourcesApi } from '@/api/ResourcesApi';
 import { resolveServerUrl } from '@/data/ClientRegistryLoader';
 import type { ClientAssetManifest } from './ClientAssetManifest';
+import { getModAsset, hasModAsset, listModAssetPaths } from './ModAssetStore';
 
 export class ResourcesService implements ResourcesApi {
   constructor(private readonly manifest: ClientAssetManifest, private readonly serverUrl: string, private readonly token: string) {}
-  listFiles(bundle: string, filter: string) { const pattern = globRegex(filter); return Object.keys(this.manifest.assets).filter((p) => pattern.test(p)).map((p) => `${bundle}/${p}`); }
-  fileExists(path: string) { return this.logical(path) in this.manifest.assets; }
+  listFiles(bundle: string, filter: string) { const pattern = globRegex(filter); return [...new Set([...Object.keys(this.manifest.assets), ...listModAssetPaths()])].filter((p) => pattern.test(p)).map((p) => `${bundle}/${p}`); }
+  fileExists(path: string) { const logical = this.logical(path); return hasModAsset(logical) || logical in this.manifest.assets; }
   async loadAsString(pathValue: string) {
     const path = this.logical(pathValue);
+    const modAsset = await getModAsset(path);
+    if (modAsset) return modAsset.text();
     const asset = this.manifest.assets[path];
     if (!asset) throw new Error(`File not found: ${pathValue}`);
 

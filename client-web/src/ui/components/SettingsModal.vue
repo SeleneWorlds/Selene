@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import ModsPanel from './ModsPanel.vue';
+
 defineProps<{
   debugOverlayVisible: boolean;
   fitToScreen: boolean;
 }>();
 
+const page = ref<'settings' | 'mods'>('settings');
 const emit = defineEmits<{
   close: [];
   debugOverlayVisibleChanged: [visible: boolean];
@@ -20,13 +24,22 @@ const emit = defineEmits<{
       aria-labelledby="settings-title"
     >
       <header class="settings-modal__header">
-        <h1 id="settings-title">Settings</h1>
+        <button
+          v-if="page === 'mods'"
+          class="settings-modal__back"
+          type="button"
+          aria-label="Back to settings"
+          @click="page = 'settings'"
+        >
+          ‹
+        </button>
+        <h1 id="settings-title">{{ page === 'mods' ? 'Mods' : 'Settings' }}</h1>
         <button class="settings-modal__close" type="button" aria-label="Close settings" @click="emit('close')">
           ×
         </button>
       </header>
 
-      <div class="settings-modal__body">
+      <div v-if="page === 'settings'" class="settings-modal__body">
         <label class="settings-toggle">
           <span>
             <strong>Fit to Screen</strong>
@@ -50,7 +63,17 @@ const emit = defineEmits<{
             @change="emit('debugOverlayVisibleChanged', ($event.target as HTMLInputElement).checked)"
           >
         </label>
+
+        <button class="settings-menu-button" type="button" @click="page = 'mods'">
+          <span>
+            <strong>Mods</strong>
+            <small>Override game assets with files from a ZIP archive.</small>
+          </span>
+          <span aria-hidden="true">›</span>
+        </button>
       </div>
+
+      <ModsPanel v-else />
     </section>
   </div>
 </template>

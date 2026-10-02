@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { createDebugState, type DebugSnapshot } from '@/core/DebugState';
 import { bootstrapClient, type WebClientRuntime } from '@/core/WebClientRuntime';
 import DebugOverlay from './components/DebugOverlay.vue';
+import ModDropInstaller from './components/ModDropInstaller.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import StartupScreen from './components/StartupScreen.vue';
 import { loadSettings, saveSettings } from './settings';
@@ -67,11 +68,17 @@ function handleGlobalKeydown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && isSettingsOpen.value) {
     event.preventDefault();
     isSettingsOpen.value = false;
+    return;
   }
+
 }
 
 onMounted(() => {
   window.addEventListener('keydown', handleGlobalKeydown, true);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown, true);
 });
 
 async function startClient(): Promise<void> {
@@ -151,5 +158,7 @@ onMounted(() => {
       @debug-overlay-visible-changed="setDebugOverlayVisible"
       @fit-to-screen-changed="setFitToScreen"
     />
+
+    <ModDropInstaller />
   </main>
 </template>

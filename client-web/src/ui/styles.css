@@ -333,12 +333,23 @@ select {
   justify-content: space-between;
   padding: 16px 18px;
   border-bottom: 1px solid rgba(212, 212, 216, 0.14);
+  gap: 10px;
 }
 
 .settings-modal__header h1 {
+  flex: 1;
   margin: 0;
   color: var(--color-neutral-50);
   font-size: 18px;
+}
+
+.settings-modal__back {
+  border: 0;
+  background: transparent;
+  color: var(--color-neutral-300);
+  cursor: pointer;
+  font-size: 28px;
+  line-height: 1;
 }
 
 .settings-modal__close {
@@ -374,6 +385,11 @@ select {
   cursor: pointer;
 }
 
+.settings-toggle + .settings-toggle,
+.settings-toggle + .settings-menu-button {
+  margin-top: 18px;
+}
+
 .settings-toggle span {
   display: grid;
   gap: 4px;
@@ -394,6 +410,155 @@ select {
   width: 18px;
   height: 18px;
   accent-color: var(--color-primary);
+}
+
+.settings-menu-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px;
+  border: 1px solid rgba(212, 212, 216, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-neutral-200);
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings-menu-button span:first-child,
+.mods-panel__installed span {
+  display: grid;
+  gap: 4px;
+}
+
+.settings-menu-button small,
+.mods-panel small,
+.mods-panel__description,
+.mods-panel__empty {
+  color: var(--color-neutral-400);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mods-panel__description { margin: 0; }
+
+.mods-panel__installed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid rgba(212, 212, 216, 0.16);
+  border-radius: 8px;
+  color: var(--color-neutral-50);
+}
+
+.mods-panel__list {
+  display: grid;
+  gap: 8px;
+  max-height: min(42vh, 360px);
+  margin-top: 18px;
+  overflow-y: auto;
+}
+
+.mods-panel__actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 5px;
+}
+
+.mods-panel__actions button { min-width: 34px; padding: 7px 9px; }
+
+.mods-panel__empty { margin: 18px 0; }
+.mods-panel__error { color: #fca5a5; font-size: 12px; }
+
+.mods-panel__progress { margin-top: 18px; }
+
+.mods-panel__progress-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 7px;
+  color: var(--color-neutral-300);
+  font-size: 12px;
+}
+
+.mods-panel__progress progress {
+  display: block;
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-neutral-800);
+  accent-color: var(--color-primary);
+}
+
+.mods-panel__progress progress::-webkit-progress-bar { background: var(--color-neutral-800); }
+.mods-panel__progress progress::-webkit-progress-value { background: var(--color-primary); }
+.mods-panel__progress progress::-moz-progress-bar { background: var(--color-primary); }
+
+.mods-panel button {
+  padding: 8px 12px;
+  border: 1px solid rgba(212, 212, 216, 0.25);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-neutral-50);
+  cursor: pointer;
+}
+
+.mods-panel button:disabled { cursor: wait; opacity: 0.6; }
+.mods-panel__upload { width: 100%; margin-top: 18px; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.mod-drop-overlay {
+  position: absolute;
+  z-index: 1200;
+  inset: 0;
+  display: grid;
+  padding: 24px;
+  border: 3px dashed var(--color-primary);
+  background: rgba(9, 9, 11, 0.82);
+  backdrop-filter: blur(5px);
+  pointer-events: none;
+  place-items: center;
+}
+
+.mod-drop-overlay__panel {
+  display: grid;
+  width: min(440px, 100%);
+  gap: 12px;
+  padding: 28px;
+  border: 1px solid rgba(212, 212, 216, 0.2);
+  border-radius: 12px;
+  background: var(--color-neutral-900);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  color: var(--color-neutral-400);
+  text-align: center;
+  pointer-events: auto;
+}
+
+.mod-drop-overlay__panel strong { color: var(--color-neutral-50); font-size: 18px; }
+.mod-drop-overlay__panel span { font-size: 13px; }
+.mod-drop-overlay__panel progress { width: 100%; accent-color: var(--color-primary); }
+.mod-drop-overlay__panel button {
+  justify-self: center;
+  padding: 8px 18px;
+  border: 1px solid rgba(212, 212, 216, 0.25);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-neutral-50);
+  cursor: pointer;
 }
 
 @media (max-width: 560px) {

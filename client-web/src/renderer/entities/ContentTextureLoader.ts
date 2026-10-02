@@ -1,6 +1,7 @@
 import { Texture } from 'pixi.js';
 import type { ClientAssetManifest } from '@/core/services/ClientAssetManifest';
 import { resolveServerUrl } from '@/data/ClientRegistryLoader';
+import { getModAsset } from '@/core/services/ModAssetStore';
 
 export class ContentTextureLoader {
   private readonly texturePromises = new Map<string, Promise<Texture>>();
@@ -23,16 +24,19 @@ export class ContentTextureLoader {
   }
 
   private async fetchTexture(texturePath: string): Promise<Texture> {
-    const response = await fetch(await this.resolveTextureUrl(texturePath), {
-      headers: {
-        Authorization: `Bearer ${this.authToken}`,
-      },
-    });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch texture: ${response.status} ${response.statusText}`);
+    const modAsset = await getModAsset(texturePath);
+    let blob: Blob;
+    if (modAsset) {
+      blob = modAsset;
+    } else {
+      const response = await fetch(this.resolveTextureUrl(texturePath), {
+        headers: { Authorization: `Bearer ${this.authToken}` },
+      });
+      if (!response.ok) throw new Error(`Failed to fetch texture: ${response.status} ${response.statusText}`);
+      blob = await response.blob();
     }
 
-    const imageBitmap = await createImageBitmap(await response.blob());
+    const imageBitmap = await createImageBitmap(blob);
     const texture = Texture.from({
       resource: imageBitmap,
       scaleMode: 'nearest',
@@ -42,7 +46,7 @@ export class ContentTextureLoader {
     return texture;
   }
 
-  private async resolveTextureUrl(texturePath: string): Promise<string> {
+  private resolveTextureUrl(texturePath: string): string {
     const normalizedTexturePath = texturePath.replace(/^\/+/, '');
     const manifestUrl = this.assetManifest.assets[normalizedTexturePath];
 

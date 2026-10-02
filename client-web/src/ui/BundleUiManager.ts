@@ -17,6 +17,7 @@ import {
   parseServerResponse,
   type ClientUiEntrypoint,
 } from '@/data/ClientServerResponseSchemas';
+import { getModAsset } from '@/core/services/ModAssetStore';
 
 const API_VERSION = 6;
 const MAX_PAYLOAD_ID_LENGTH = 128;
@@ -258,6 +259,8 @@ export class BundleUiManager {
   }
 
   private async fetchAsset(path: string): Promise<string> {
+    const modAsset = await getModAsset(path);
+    if (modAsset) return URL.createObjectURL(modAsset);
     const assetPath = this.options.assetManifest.assets[path];
     if (!assetPath) throw new Error(`Client asset is missing: ${path}`);
 
