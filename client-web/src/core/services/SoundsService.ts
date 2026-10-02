@@ -6,17 +6,33 @@ import { clamp, numberOr } from './utils';
 
 export class SoundsService implements SoundsApi {
   private readonly playing = new Map<string, Set<HTMLAudioElement>>();
-  constructor(private readonly registries: RegistriesApi, private readonly manifest: ClientAssetManifest, private readonly serverUrl: string) {}
+  private readonly pending = new Map<string, Set<AbortController>>();
+  private readonly objectUrls = new Map<HTMLAudioElement, string>();
+  constructor(private readonly registries: RegistriesApi, private readonly manifest: ClientAssetManifest, private readonly serverUrl: string, private readonly authToken: string) {}
   playSound(value: string | RegistryObjectApi, options: { volume?: number; pitch?: number } = {}) {
     const [name, sound] = this.resolve(value); const file = requireString(sound.file, 'sound file').replace(/^\/+/, '');
-    const audio = new Audio(resolveServerUrl(this.serverUrl, this.manifest.assets[file] ?? `/client/content/${file}`));
-    audio.volume = clamp(options.volume ?? numberOr(sound.volume, 1), 0, 1); audio.playbackRate = clamp(options.pitch ?? numberOr(sound.pitch, 1), .25, 4);
-    audio.loop = sound.loop === true || sound.type === 'music'; let set = this.playing.get(name);
-    if (!set) { set = new Set(); this.playing.set(name, set); } set.add(audio);
-    audio.addEventListener('ended', () => set?.delete(audio), { once: true }); void audio.play().catch((e) => console.error(`[Lua] Failed to play sound ${name}`, e));
+    const source = resolveServerUrl(this.serverUrl, this.manifest.assets[file] ?? `/client/content/${file}`);
+    const controller = new AbortController(); let pending = this.pending.get(name);
+    if (!pending) { pending = new Set(); this.pending.set(name, pending); } pending.add(controller);
+    void fetch(source, { headers: { Authorization: `Bearer ${this.authToken}` }, signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+        const objectUrl = URL.createObjectURL(await response.blob());
+        const audio = new Audio(objectUrl); this.objectUrls.set(audio, objectUrl);
+        audio.volume = clamp(options.volume ?? numberOr(sound.volume, 1), 0, 1); audio.playbackRate = clamp(options.pitch ?? numberOr(sound.pitch, 1), .25, 4);
+        audio.loop = sound.loop === true || sound.type === 'music'; let set = this.playing.get(name);
+        if (!set) { set = new Set(); this.playing.set(name, set); } set.add(audio);
+        audio.addEventListener('ended', () => this.releaseAudio(name, audio), { once: true });
+        await audio.play();
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === 'AbortError')) console.error(`[Lua] Failed to play sound ${name}`, error);
+      })
+      .finally(() => { pending?.delete(controller); if (pending?.size === 0) this.pending.delete(name); });
   }
-  stopSound(value: string | RegistryObjectApi) { const [name] = this.resolve(value); for (const audio of this.playing.get(name) ?? []) { audio.pause(); audio.currentTime = 0; } this.playing.delete(name); }
-  stopAllSounds() { for (const name of [...this.playing.keys()]) { const sound = this.registries.findByName('sounds', name); if (sound) this.stopSound(sound); else { for (const audio of this.playing.get(name) ?? []) audio.pause(); this.playing.delete(name); } } }
+  stopSound(value: string | RegistryObjectApi) { const [name] = this.resolve(value); for (const request of this.pending.get(name) ?? []) request.abort(); this.pending.delete(name); for (const audio of this.playing.get(name) ?? []) { audio.pause(); audio.currentTime = 0; this.releaseAudio(name, audio); } this.playing.delete(name); }
+  stopAllSounds() { for (const name of new Set([...this.playing.keys(), ...this.pending.keys()])) { const sound = this.registries.findByName('sounds', name); if (sound) this.stopSound(sound); else { for (const request of this.pending.get(name) ?? []) request.abort(); this.pending.delete(name); for (const audio of this.playing.get(name) ?? []) { audio.pause(); this.releaseAudio(name, audio); } this.playing.delete(name); } } }
+  private releaseAudio(name: string, audio: HTMLAudioElement) { this.playing.get(name)?.delete(audio); const objectUrl = this.objectUrls.get(audio); if (objectUrl) URL.revokeObjectURL(objectUrl); this.objectUrls.delete(audio); }
   private resolve(value: string | RegistryObjectApi): [string, RegistryObjectApi] {
     const sound = typeof value === 'string' ? this.registries.findByName('sounds', value) : value;
     if (!sound) throw new Error(`Unknown sound: ${String(value)}`); const name = sound.getName();

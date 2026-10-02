@@ -128,7 +128,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     const registriesApi = new RegistriesService(registries, gameClient.getNameIdMappings());
     const visualsApi = new VisualsService(registriesApi);
     const schedulesService = new SchedulesService();
-    const soundsService = new SoundsService(registriesApi, assetManifest, serverApiUrl);
+    const soundsService = new SoundsService(registriesApi, assetManifest, serverApiUrl, authToken);
     const entityApis = { registries: registriesApi, visuals: visualsApi };
     const commonApis = {
       events: new EventsService(),
