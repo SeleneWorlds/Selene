@@ -52,6 +52,7 @@ export class BrowserInputManager implements InputApi {
   constructor(private readonly inputHost: HTMLElement, private readonly uiInput: BundleUiInputClaims) {
     window.addEventListener('keydown', this.handleKeyDown, true);
     window.addEventListener('keyup', this.handleKeyUp, true);
+    window.addEventListener('blur', this.handleWindowBlur);
     this.inputHost.addEventListener('mousedown', this.handleMouseDown);
     this.inputHost.addEventListener('mouseup', this.handleMouseUp);
     this.inputHost.addEventListener('mousemove', this.handleMouseMove);
@@ -153,6 +154,11 @@ export class BrowserInputManager implements InputApi {
     this.pressedKeys.delete(key);
     this.keyboardReleaseActions.get(key)?.();
     if (this.uiInput.isProtectedKey(event.key)) event.stopImmediatePropagation();
+  };
+
+  private readonly handleWindowBlur = (): void => {
+    this.pressedKeys.clear();
+    this.pressedMouseButtons.clear();
   };
 
   private readonly handleMouseDown = (event: MouseEvent): void => {
