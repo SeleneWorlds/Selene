@@ -181,6 +181,24 @@ function resolveAnimations(
   componentOffsetX: number,
   componentOffsetY: number,
 ): Record<string, ResolvedEntityAnimation> | undefined {
+  if (visual.type === 'animated') {
+    const textures = visual.textures?.filter((texture): texture is string => typeof texture === 'string') ?? [];
+    if (textures.length === 0) {
+      return undefined;
+    }
+    const duration = typeof visual.duration === 'number' && visual.duration > 0 ? visual.duration : 1;
+    return {
+      default: {
+        textures,
+        frameDuration: duration / textures.length,
+        offsetX: (visual.offsetX ?? 0) + componentOffsetX,
+        offsetY: (visual.offsetY ?? 0) + componentOffsetY,
+        flipX: visual.flipX ?? false,
+        flipY: visual.flipY ?? false,
+      },
+    };
+  }
+
   const entries = Object.entries(visual.animations ?? {}).flatMap(([name, animation]) => {
     const textures = animation.textures?.filter((texture): texture is string => typeof texture === 'string') ?? [];
     if (textures.length === 0) {

@@ -23,8 +23,9 @@ export class ClientEntities implements EntitiesApi {
 
   create(entityDefinition: string | ClientEntityDefinition): EntityApi {
     const { entityName, definition } = this.resolveEntityDefinition(entityDefinition);
+    const entityId = this.allocateLocalId();
     const entity = new ClientEntity(
-      this.nextLocalId,
+      entityId,
       entityName,
       definition,
       (snapshot) => this.emitEntityChanged(snapshot),
@@ -33,7 +34,6 @@ export class ClientEntities implements EntitiesApi {
       (scriptedEntity, isScripted) => this.updateScriptedEntity(scriptedEntity, isScripted),
     );
 
-    this.nextLocalId -= 1;
     this.entitiesById.set(entity.id, entity);
     return entity;
   }
@@ -76,11 +76,10 @@ export class ClientEntities implements EntitiesApi {
     }
   }
 
-  handlePacket(packet: GamePacket): void {
+  handlePacket(packet: GamePacket): GamePacket {
     switch (packet.type) {
       case 'entity':
-        this.upsertNetworkEntity(packet);
-        break;
+        return this.upsertNetworkEntity(packet);
       case 'moveEntity':
         this.entitiesById.get(packet.networkId)?.applyNetworkMove(packet.end, packet.facing);
         break;
@@ -93,27 +92,32 @@ export class ClientEntities implements EntitiesApi {
       default:
         break;
     }
+    return packet;
   }
 
-  private upsertNetworkEntity(packet: EntityPacket): void {
+  private upsertNetworkEntity(packet: EntityPacket): EntityPacket {
     const entityName = this.nameIdMappings.getName('entities', packet.entityId);
     if (!entityName) {
-      return;
+      return packet;
     }
 
     const definition = getRegistryEntry(this.registries, 'entities', entityName);
     if (!definition) {
-      return;
+      return packet;
     }
 
-    const existing = this.entitiesById.get(packet.networkId);
+    // The server deliberately reuses -1 for fire-and-forget entities. Give each
+    // one a unique client id so simultaneous effects do not replace each other.
+    const transient = packet.networkId === -1;
+    const entityId = transient ? this.allocateLocalId() : packet.networkId;
+    const existing = transient ? undefined : this.entitiesById.get(entityId);
     if (existing) {
       existing.applyNetworkState(packet.coordinate, packet.facing, packet.components);
-      return;
+      return packet;
     }
 
     const entity = new ClientEntity(
-      packet.networkId,
+      entityId,
       entityName,
       definition,
       (snapshot) => this.emitEntityChanged(snapshot),
@@ -124,7 +128,14 @@ export class ClientEntities implements EntitiesApi {
     );
     entity.applyNetworkState(packet.coordinate, packet.facing, packet.components);
     entity.applyNetworkSpawn();
-    this.entitiesById.set(packet.networkId, entity);
+    this.entitiesById.set(entityId, entity);
+    return transient ? { ...packet, networkId: entityId } : packet;
+  }
+
+  private allocateLocalId(): number {
+    const id = this.nextLocalId;
+    this.nextLocalId -= 1;
+    return id;
   }
 
   private resolveEntityDefinition(entityDefinition: string | ClientEntityDefinition): {
@@ -284,7 +295,7 @@ class ClientEntity implements EntityApi {
   }
 
   isClientScriptActive(): boolean {
-    return this.spawned && this.networkId === 0 && this.clientScriptModule !== null;
+    return this.spawned && this.networkId <= 0 && this.clientScriptModule !== null;
   }
 
   private updateScriptedState(): void {
@@ -324,6 +335,7 @@ class ClientEntity implements EntityApi {
 
   applyNetworkSpawn(): void {
     this.spawned = true;
+    this.updateScriptedState();
   }
 
   private notifyChanged(): void {

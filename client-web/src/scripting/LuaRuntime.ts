@@ -89,6 +89,9 @@ function __selene_register_client_entity(moduleName, entityId, entity)
     clientScriptEntityById[entityId] = entity
     clientScriptTickByEntity[entityId] = module.TickEntity or false
     clientScriptDataByEntity[entityId] = clientScriptDataByEntity[entityId] or {}
+    if module.Initialize then
+        module.Initialize(entity, clientScriptDataByEntity[entityId])
+    end
 end
 
 function __selene_tick_client_entity(entityId, delta)

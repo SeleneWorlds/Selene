@@ -37,8 +37,8 @@ export class ClientPacketDispatcher {
       this.movementGrid.confirmMove(packet.networkId, packet.duration);
     }
 
-    this.entities.handlePacket(packet);
-    this.renderer.handlePacket(packet);
+    const rendererPacket = this.entities.handlePacket(packet);
+    this.renderer.handlePacket(rendererPacket);
   };
 
   getNetworkApi(): NetworkApi {
