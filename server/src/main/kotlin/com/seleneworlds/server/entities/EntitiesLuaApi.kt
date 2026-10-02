@@ -67,6 +67,7 @@ class EntitiesLuaApi(
     override fun register(table: LuaValue) {
         table.register("create", this::create)
         table.register("createTransient", this::createTransient)
+        table.register("getAll", this::getAll)
         table.register("getByNetworkId", this::getByNetworkId)
         table.register("findByRuntimeData", this::findByRuntimeData)
         table.set("beforeMove", beforeEntityMove)
@@ -87,6 +88,11 @@ class EntitiesLuaApi(
 
     private fun getByNetworkId(lua: Lua): Int {
         lua.push(api.getByNetworkId(lua.checkInt(1)), Lua.Conversion.NONE)
+        return 1
+    }
+
+    private fun getAll(lua: Lua): Int {
+        lua.push(api.getAll(), Lua.Conversion.FULL)
         return 1
     }
 
