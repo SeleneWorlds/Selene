@@ -5,7 +5,7 @@ import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.server.dimensions.DimensionApi
 
-class TransientTileApi(val tile: TransientTile) {
+data class TransientTileApi(val tile: TransientTile) {
 
     fun getDefinition(): RegistryReference<TileDefinition> {
         return tile.definition
@@ -48,4 +48,5 @@ class TransientTileApi(val tile: TransientTile) {
             ?: error("Tried to swap tile at ${tile.coordinate} but tile definition ${tile.definition.identifier} is not valid")
         return tile.dimension.swapTile(tile.coordinate, oldTileDef, newTileDef, layerName).api
     }
+
 }

@@ -6,7 +6,7 @@ import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.server.dimensions.Dimension
 
-class TransientTile(
+data class TransientTile(
     val definition: RegistryReference<TileDefinition>,
     val dimension: Dimension,
     val coordinate: Coordinate
