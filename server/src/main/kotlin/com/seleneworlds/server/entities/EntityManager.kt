@@ -84,6 +84,12 @@ class EntityManager : ReferenceResolver<Int, Entity> {
         return entities.values
     }
 
+    fun findEntitiesByTag(tag: String): List<Entity> {
+        return entities.values.filter { entity ->
+            entity.dimension != null && entity.entityDefinition.tags.contains(tag)
+        }
+    }
+
     private fun deactivateEntity(entity: Entity) {
         activeTickingEntities.remove(entity)
     }

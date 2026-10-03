@@ -19,4 +19,8 @@ class EntitiesApi(private val entityManager: EntityManager) {
     fun getAll(): List<EntityApi> {
         return entityManager.getEntities().map { it.api }
     }
+
+    fun findAllByTag(tag: String): List<EntityApi> {
+        return entityManager.findEntitiesByTag(tag).map { it.api }
+    }
 }

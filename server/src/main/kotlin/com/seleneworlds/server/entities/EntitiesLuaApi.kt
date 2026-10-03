@@ -68,6 +68,7 @@ class EntitiesLuaApi(
         table.register("create", this::create)
         table.register("createTransient", this::createTransient)
         table.register("getAll", this::getAll)
+        table.register("findAllByTag", this::findAllByTag)
         table.register("getByNetworkId", this::getByNetworkId)
         table.register("findByRuntimeData", this::findByRuntimeData)
         table.set("beforeMove", beforeEntityMove)
@@ -93,6 +94,16 @@ class EntitiesLuaApi(
 
     private fun getAll(lua: Lua): Int {
         lua.push(api.getAll(), Lua.Conversion.FULL)
+        return 1
+    }
+
+    /**
+     * Finds all currently spawned entities whose definition has the given tag.
+     *
+     * findAllByTag(tag: string) -> Entity[]
+     */
+    private fun findAllByTag(lua: Lua): Int {
+        lua.push(api.findAllByTag(lua.checkString(1)), Lua.Conversion.FULL)
         return 1
     }
 
