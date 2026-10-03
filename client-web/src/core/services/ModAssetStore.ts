@@ -95,19 +95,19 @@ export async function installMod(file: File, onProgress?: (progress: ModInstallP
   if (!database) throw new Error('Browser mod storage is not available.');
   let archive: Record<string, Uint8Array>;
   try {
-    onProgress?.({ label: 'Reading ZIP', progress: 0 });
-    const bytes = await readFileWithProgress(file, (p) => onProgress?.({ label: 'Reading ZIP', progress: p * 0.2 }));
+    onProgress?.({ label: 'Reading archive', progress: 0 });
+    const bytes = await readFileWithProgress(file, (p) => onProgress?.({ label: 'Reading archive', progress: p * 0.2 }));
     onProgress?.({ label: 'Extracting files', progress: 0.2 });
     archive = await unzipArchive(bytes);
     onProgress?.({ label: 'Preparing files', progress: 0.4 });
   } catch (error) {
-    console.warn('Could not read mod ZIP.', error);
-    throw new Error('The selected file is not a valid ZIP archive.');
+    console.warn('Could not read mod bundle.', error);
+    throw new Error('The selected file is not a valid mod bundle.');
   }
   const entries = Object.entries(archive).filter(([path]) => !path.endsWith('/'))
     .map(([path, contents]) => ({ path: normalizeAssetPath(path), contents }))
     .filter((entry) => entry.path && !entry.path.startsWith('__MACOSX/'));
-  if (!entries.length) throw new Error('The ZIP archive does not contain any files.');
+  if (!entries.length) throw new Error('The archive does not contain any files.');
   const root = findArchiveRoot(entries.map((entry) => entry.path), file.name);
   const id = crypto.randomUUID();
   const assets = entries.map(({ path, contents }) => ({ modId: id, path: root ? path.slice(root.length + 1) : path, blob: new Blob([new Uint8Array(contents).buffer]) })).filter(({ path }) => path);
