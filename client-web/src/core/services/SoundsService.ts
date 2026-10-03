@@ -2,6 +2,7 @@ import type { RegistryObjectApi, RegistriesApi } from '@/api/RegistriesApi';
 import type { SoundsApi } from '@/api/SoundsApi';
 import { resolveServerUrl } from '@/data/ClientRegistryLoader';
 import type { ClientAssetManifest } from './ClientAssetManifest';
+import type { GamePacket } from '@/networking/GameProtocol';
 import { clamp, numberOr } from './utils';
 import { getModAsset } from './ModAssetStore';
 
@@ -10,6 +11,18 @@ export class SoundsService implements SoundsApi {
   private readonly pending = new Map<string, Set<AbortController>>();
   private readonly objectUrls = new Map<HTMLAudioElement, string>();
   constructor(private readonly registries: RegistriesApi, private readonly manifest: ClientAssetManifest, private readonly serverUrl: string, private readonly authToken: string) {}
+  readonly handlePacket = (packet: GamePacket) => {
+    if (packet.type === 'playSound') {
+      const sound = this.findSoundById(packet.soundId);
+      if (!sound) { console.warn(`Could not play sound with id ${packet.soundId}`); return; }
+      this.playSound(sound, { volume: packet.volume, pitch: packet.pitch });
+    } else if (packet.type === 'stopSound') {
+      if (packet.soundId === -1) { this.stopAllSounds(); return; }
+      const sound = this.findSoundById(packet.soundId);
+      if (!sound) { console.warn(`Could not stop sound with id ${packet.soundId}`); return; }
+      this.stopSound(sound);
+    }
+  };
   playSound(value: string | RegistryObjectApi, options: { volume?: number; pitch?: number } = {}) {
     const [name, sound] = this.resolve(value); const file = requireString(sound.file, 'sound file').replace(/^\/+/, '');
     const controller = new AbortController(); let pending = this.pending.get(name);
@@ -39,6 +52,7 @@ export class SoundsService implements SoundsApi {
   stopSound(value: string | RegistryObjectApi) { const [name] = this.resolve(value); for (const request of this.pending.get(name) ?? []) request.abort(); this.pending.delete(name); for (const audio of this.playing.get(name) ?? []) { audio.pause(); audio.currentTime = 0; this.releaseAudio(name, audio); } this.playing.delete(name); }
   stopAllSounds() { for (const name of new Set([...this.playing.keys(), ...this.pending.keys()])) { const sound = this.registries.findByName('sounds', name); if (sound) this.stopSound(sound); else { for (const request of this.pending.get(name) ?? []) request.abort(); this.pending.delete(name); for (const audio of this.playing.get(name) ?? []) { audio.pause(); this.releaseAudio(name, audio); } this.playing.delete(name); } } }
   private releaseAudio(name: string, audio: HTMLAudioElement) { this.playing.get(name)?.delete(audio); const objectUrl = this.objectUrls.get(audio); if (objectUrl) URL.revokeObjectURL(objectUrl); this.objectUrls.delete(audio); }
+  private findSoundById(id: number) { return this.registries.findAll('sounds').find((sound) => sound.getId() === id) ?? null; }
   private resolve(value: string | RegistryObjectApi): [string, RegistryObjectApi] {
     const sound = typeof value === 'string' ? this.registries.findByName('sounds', value) : value;
     if (!sound) throw new Error(`Unknown sound: ${String(value)}`); const name = sound.getName();

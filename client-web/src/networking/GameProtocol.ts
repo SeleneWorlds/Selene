@@ -13,6 +13,8 @@ const PacketId = {
   MoveEntity: 9,
   RemoveEntity: 10,
   RemoveMapChunk: 11,
+  PlaySound: 12,
+  StopSound: 13,
   UpdateMapTiles: 14,
   Preferences: 15,
   FinalizeJoin: 16,
@@ -33,6 +35,8 @@ export type GamePacket =
   | MoveEntityPacket
   | RemoveEntityPacket
   | RemoveMapChunkPacket
+  | PlaySoundPacket
+  | StopSoundPacket
   | UpdateMapTilesPacket
   | TurnEntityPacket
   | SetActiveGridPacket
@@ -120,6 +124,19 @@ export interface RemoveMapChunkPacket {
   height: number;
 }
 
+export interface PlaySoundPacket {
+  type: 'playSound';
+  soundId: number;
+  volume: number;
+  pitch: number;
+  coordinate: Coordinate | null;
+}
+
+export interface StopSoundPacket {
+  type: 'stopSound';
+  soundId: number;
+}
+
 export interface UpdateMapTilesPacket {
   type: 'updateMapTiles';
   coordinate: Coordinate;
@@ -199,6 +216,10 @@ export function decodeGamePacket(data: ArrayBuffer): GamePacket {
       return decodeRemoveEntityPacket(reader);
     case PacketId.RemoveMapChunk:
       return decodeRemoveMapChunkPacket(reader);
+    case PacketId.PlaySound:
+      return decodePlaySoundPacket(reader);
+    case PacketId.StopSound:
+      return decodeStopSoundPacket(reader);
     case PacketId.UpdateMapTiles:
       return decodeUpdateMapTilesPacket(reader);
     case PacketId.TurnEntity:
@@ -346,6 +367,23 @@ function decodeRemoveMapChunkPacket(reader: PacketReader): RemoveMapChunkPacket 
   return { type: 'removeMapChunk', x, y, z, width, height };
 }
 
+function decodePlaySoundPacket(reader: PacketReader): PlaySoundPacket {
+  const soundId = reader.readInt();
+  const volume = reader.readFloat();
+  const pitch = reader.readFloat();
+  const coordinate = reader.readBoolean() ? reader.readCoordinate() : null;
+
+  reader.assertFullyRead();
+  return { type: 'playSound', soundId, volume, pitch, coordinate };
+}
+
+function decodeStopSoundPacket(reader: PacketReader): StopSoundPacket {
+  const soundId = reader.readInt();
+
+  reader.assertFullyRead();
+  return { type: 'stopSound', soundId };
+}
+
 function decodeUpdateMapTilesPacket(reader: PacketReader): UpdateMapTilesPacket {
   const coordinate = reader.readCoordinate();
   const baseTileId = reader.readInt();
@@ -449,6 +487,10 @@ class PacketReader {
     const value = this.view.getInt8(this.offset);
     this.offset += 1;
     return value;
+  }
+
+  readBoolean(): boolean {
+    return this.readUnsignedByte() !== 0;
   }
 
   readShort(): number {

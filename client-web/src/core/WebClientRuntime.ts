@@ -95,6 +95,11 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     const assetManifest = await loadClientAssetManifest({ serverApiUrl, authToken });
 
     reportProgress('Preparing renderer', 0.55);
+    const networkClient = new WebSocketNetworkClient({
+      url: webSocketUrl,
+      authToken: () => Promise.resolve(authToken),
+      onDisconnected: options.onDisconnected,
+    });
     const gameClient = new GameClient({
       canvasHost: options.viewportHost,
       debugState: this.debugState,
@@ -111,11 +116,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
         serverApiUrl,
         authToken,
       }),
-      networkClient: new WebSocketNetworkClient({
-        url: webSocketUrl,
-        authToken: () => Promise.resolve(authToken),
-        onDisconnected: options.onDisconnected,
-      }),
+      networkClient,
     });
     this.gameClient = gameClient;
     gameClient.setFitToScreen(options.fitToScreen);
@@ -131,6 +132,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     const visualsApi = new VisualsService(registriesApi);
     const schedulesService = new SchedulesService();
     const soundsService = new SoundsService(registriesApi, assetManifest, serverApiUrl, authToken);
+    networkClient.addPacketListener(soundsService.handlePacket);
     const entityApis = { registries: registriesApi, visuals: visualsApi };
     const commonApis = {
       events: new EventsService(),
