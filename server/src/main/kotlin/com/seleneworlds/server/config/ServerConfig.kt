@@ -20,7 +20,7 @@ data class ServerConfig(
     val announcedWebSocket: String = "",
     val proxyHeaders: String = "none",
     val apiCorsOrigins: List<String> = emptyList(),
-    val hotReload: String = "true",
+    val hotReload: String = "false",
     val grid: String = ""
 ) {
     val hotReloadMode: HotReloadMode
