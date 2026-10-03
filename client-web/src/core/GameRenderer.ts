@@ -29,6 +29,8 @@ export interface GameRenderer {
   setFitToScreen(enabled: boolean): void;
   setDebugOption(option: keyof RendererDebugOptions, enabled: boolean): void;
   screenToLogical(screenX: number, screenY: number): { x: number; y: number };
+  projectCoordinate(coordinate: Coordinate): { x: number; y: number };
+  projectEntity(networkId: number): { x: number; y: number } | null;
   getMapTiles(coordinate?: Coordinate, width?: number, height?: number): ClientMapTile[];
   addMapChangedListener(listener: (coordinate: Coordinate, width: number, height: number) => void): () => void;
 }

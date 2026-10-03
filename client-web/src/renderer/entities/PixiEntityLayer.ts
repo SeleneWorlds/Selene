@@ -120,6 +120,18 @@ export class PixiEntityLayer {
     };
   }
 
+  projectEntity(networkId: number): { x: number; y: number } | null {
+    const rendered = this.renderedEntities.get(networkId);
+    if (!rendered) {
+      return null;
+    }
+    const bounds = (rendered.sprite ?? rendered.fallback).getBounds();
+    return {
+      x: bounds.x + bounds.width / 2,
+      y: bounds.y,
+    };
+  }
+
   setUpperLayerAlpha(focusZ: number, alpha: number): void {
     if (this.upperLayerFocusZ === focusZ && this.upperLayerAlpha === alpha) {
       return;

@@ -18,6 +18,7 @@ import { TileVisualResolver } from '@/renderer/tiles/TileVisualResolver';
 import type { Coordinate, GamePacket } from '@/networking/GameProtocol';
 import type { NameIdMappings } from '@/networking/NameIdMappings';
 import type { ClientGrid } from '@/core/ClientGrid';
+import { projectCoordinate as projectWorldCoordinate } from '@/core/WorldProjection';
 
 export interface PixiGameRendererOptions {
   host: HTMLElement;
@@ -191,6 +192,18 @@ export class PixiGameRenderer implements GameRenderer {
 
   screenToLogical(screenX: number, screenY: number): { x: number; y: number } {
     return this.viewport.screenToLogical(screenX, screenY);
+  }
+
+  projectCoordinate(coordinate: Coordinate): { x: number; y: number } {
+    const projected = projectWorldCoordinate(coordinate);
+    return {
+      x: this.scene.container.x + projected.x,
+      y: this.scene.container.y + projected.y,
+    };
+  }
+
+  projectEntity(networkId: number): { x: number; y: number } | null {
+    return this.entityLayer.projectEntity(networkId);
   }
 
   getMapTiles(coordinate?: Coordinate, width?: number, height?: number): ClientMapTile[] {

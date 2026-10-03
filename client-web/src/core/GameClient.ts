@@ -148,6 +148,14 @@ export class GameClient {
     return this.renderer.getMapTiles(coordinate, width, height);
   }
 
+  projectCoordinate(coordinate: Coordinate): { x: number; y: number } {
+    return this.renderer.projectCoordinate(coordinate);
+  }
+
+  projectEntity(networkId: number): { x: number; y: number } | null {
+    return this.renderer.projectEntity(networkId);
+  }
+
   addMapChangedListener(listener: (coordinate: Coordinate, width: number, height: number) => void): () => void {
     return this.renderer.addMapChangedListener(listener);
   }

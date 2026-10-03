@@ -190,6 +190,8 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       registries,
       getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) =>
         gameClient.getMapTiles(coordinate, width, height),
+      projectCoordinate: (coordinate) => gameClient.projectCoordinate(coordinate),
+      projectEntity: (networkId) => gameClient.projectEntity(networkId),
       onMapChanged: (listener) => gameClient.addMapChangedListener(listener),
     });
     reportProgress('Loading interface', 0.88);

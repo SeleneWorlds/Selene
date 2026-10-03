@@ -19,7 +19,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 6;
+const API_VERSION = 7;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -36,6 +36,8 @@ interface BundleUiManagerOptions {
   grid: GridApi;
   entities: EntitiesApi;
   getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
+  projectCoordinate: (coordinate: Coordinate) => { x: number; y: number };
+  projectEntity: (networkId: number) => { x: number; y: number } | null;
   onMapChanged: (listener: (coordinate: Coordinate, width: number, height: number) => void) => () => void;
   registries: ClientRegistrySnapshots;
 }
@@ -68,7 +70,9 @@ interface BundleUiApi {
   readonly world: {
     getCameraCoordinate: CameraApi['getCoordinate'];
     getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
+    projectCoordinate: (coordinate: Coordinate) => { x: number; y: number };
     getEntitiesAt: (coordinate: Coordinate) => Promise<BundleUiWorldEntity[]>;
+    projectEntity: (networkId: number) => { x: number; y: number } | null;
     onCameraCoordinateChanged: CameraApi['addCoordinateChangedListener'];
     onMapChanged: (callback: (coordinate: Coordinate, width: number, height: number) => void) => () => void;
   };
@@ -199,6 +203,7 @@ export class BundleUiManager {
         getCameraCoordinate: () => this.options.camera.getCoordinate(),
         getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) =>
           this.options.getMapTiles(coordinate, width, height),
+        projectCoordinate: (coordinate: Coordinate) => this.options.projectCoordinate(requireCoordinate(coordinate)),
         getEntitiesAt: async (coordinate: Coordinate) => this.options.entities.getEntitiesAt(coordinate).map((entity) => {
           const definition = entity.getDefinition();
           const component = definition.components?.['illarion:visual'];
@@ -211,6 +216,10 @@ export class BundleUiManager {
             ...(typeof visual === 'string' ? { visual } : {}),
           };
         }),
+        projectEntity: (networkId: number) => {
+          if (!Number.isSafeInteger(networkId)) throw new Error('Entity network ID must be an integer.');
+          return this.options.projectEntity(networkId);
+        },
         onCameraCoordinateChanged: (callback: Parameters<CameraApi['addCoordinateChangedListener']>[0]) => {
           if (typeof callback !== 'function') throw new Error('Camera callback must be a function.');
           return this.options.camera.addCoordinateChangedListener(callback);
@@ -285,6 +294,19 @@ function requireStorageKey(value: string): string {
     throw new Error('Storage key must contain 1-128 letters, numbers, dots, underscores, or hyphens.');
   }
   return value;
+}
+
+function requireCoordinate(value: Coordinate): Coordinate {
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    !Number.isFinite(value.x) ||
+    !Number.isFinite(value.y) ||
+    !Number.isFinite(value.z)
+  ) {
+    throw new Error('Coordinate must contain finite x, y, and z values.');
+  }
+  return { x: value.x, y: value.y, z: value.z };
 }
 
 function requirePayloadId(value: string): void {
