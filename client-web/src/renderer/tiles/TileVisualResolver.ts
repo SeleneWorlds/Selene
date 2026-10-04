@@ -2,6 +2,7 @@ import { getRegistryEntry, type ClientRegistrySnapshots } from '@/data/ClientReg
 import type { Coordinate } from '@/networking/GameProtocol';
 import type { NameIdMappings } from '@/networking/NameIdMappings';
 import type { ClientVisualDefinition } from '@/data/ClientRegistrySchemas';
+import type { TileLight } from '@/api/EnvironmentApi';
 
 export interface ResolvedTileVisual {
   texturePath: string;
@@ -16,6 +17,7 @@ export interface ResolvedTileVisual {
   offsetY: number;
   flipX: boolean;
   flipY: boolean;
+  light: TileLight | null;
   metadata: Readonly<Record<string, unknown>>;
 }
 
@@ -62,6 +64,7 @@ export class TileVisualResolver {
       offsetY: visualDefinition.offsetY ?? 0,
       flipX: visualDefinition.flipX ?? false,
       flipY: visualDefinition.flipY ?? false,
+      light: tileDefinition.light ?? null,
       metadata: { ...(tileDefinition.metadata ?? {}), ...(visualDefinition.metadata ?? {}) },
     };
   }

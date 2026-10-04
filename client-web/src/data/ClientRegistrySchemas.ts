@@ -6,10 +6,19 @@ export type RegistryMetadata = z.infer<typeof RegistryMetadataSchema>;
 const tagsSchema = z.array(z.string()).default([]);
 const metadataSchema = RegistryMetadataSchema.default({});
 
+const tileLightSchema = z.object({
+  radius: z.number().finite().positive(),
+  intensity: z.number().finite().nonnegative().default(1),
+  red: z.number().finite().default(1),
+  green: z.number().finite().default(1),
+  blue: z.number().finite().default(1),
+});
+
 export const ClientTileDefinitionSchema = z.object({
   visual: z.string(),
   impassable: z.boolean().optional(),
   passableAbove: z.boolean().optional(),
+  light: tileLightSchema.nullish(),
   metadata: metadataSchema,
   tags: tagsSchema,
 });

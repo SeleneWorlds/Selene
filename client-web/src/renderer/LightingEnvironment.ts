@@ -12,7 +12,7 @@ const WHITE: LightColor = { red: 1, green: 1, blue: 1 };
 
 export class LightingEnvironment {
   private ambient: LightColor = { ...WHITE };
-  private readonly metadataLights = new Map<string, LightSource>();
+  private readonly tileDefinitionLights = new Map<string, LightSource>();
   private readonly explicitLights = new Map<string, LightSource>();
   private readonly entityLights = new Map<number, LightSource>();
   private revision = 0;
@@ -28,16 +28,16 @@ export class LightingEnvironment {
     this.revision += 1;
   }
 
-  setMetadataLight(coordinate: Coordinate, value: unknown): void {
+  setTileDefinitionLight(coordinate: Coordinate, value: TileLight | null): void {
     const key = coordinateKey(coordinate);
     const light = parseLight(value);
-    if (light) this.metadataLights.set(key, { coordinate: { ...coordinate }, ...light });
-    else this.metadataLights.delete(key);
+    if (light) this.tileDefinitionLights.set(key, { coordinate: { ...coordinate }, ...light });
+    else this.tileDefinitionLights.delete(key);
     this.revision += 1;
   }
 
-  removeMetadataLight(coordinate: Coordinate): void {
-    if (this.metadataLights.delete(coordinateKey(coordinate))) this.revision += 1;
+  removeTileDefinitionLight(coordinate: Coordinate): void {
+    if (this.tileDefinitionLights.delete(coordinateKey(coordinate))) this.revision += 1;
   }
 
   setTileLight(coordinate: Coordinate, value: TileLight | null): void {
@@ -91,7 +91,7 @@ export class LightingEnvironment {
   }
 
   private *sources(): Iterable<LightSource> {
-    yield* this.metadataLights.values();
+    yield* this.tileDefinitionLights.values();
     yield* this.explicitLights.values();
     yield* this.entityLights.values();
   }
