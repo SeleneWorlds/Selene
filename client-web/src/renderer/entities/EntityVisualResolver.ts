@@ -21,6 +21,7 @@ export interface ResolvedEntityVisual {
 
 export interface ResolvedEntityNameTag {
   text: string;
+  origin: string;
   offsetX: number;
   offsetY: number;
 }
@@ -158,6 +159,7 @@ function resolveNameTag(
     }
     return {
       text,
+      origin: component.position?.origin ?? 'top',
       offsetX: component.position?.offsetX ?? 0,
       offsetY: component.position?.offsetY ?? 0,
     };

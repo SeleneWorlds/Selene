@@ -441,7 +441,6 @@ function applyNameTag(rendered: RenderedEntity): void {
         stroke: { color: 0x000000, width: 3 },
       },
     });
-    rendered.nameTag.anchor.set(0.5, 1);
     rendered.nameTag.zIndex = 1;
     rendered.container.addChild(rendered.nameTag);
   } else {
@@ -456,10 +455,40 @@ function positionNameTag(rendered: RenderedEntity): void {
   if (!nameTag || !resolved) {
     return;
   }
-  const visualTop = rendered.sprite
-    ? rendered.sprite.position.y - rendered.sprite.height
-    : rendered.fallback.getLocalBounds().y;
-  nameTag.position.set(resolved.offsetX, visualTop - resolved.offsetY);
+  const visual = rendered.sprite ?? rendered.fallback;
+  const bounds = visual.getLocalBounds();
+  const left = visual.position.x + bounds.x;
+  const top = visual.position.y + bounds.y;
+  const right = left + bounds.width;
+  const bottom = top + bounds.height;
+
+  switch (resolved.origin) {
+    case 'bottom_right':
+      nameTag.anchor.set(1, 1);
+      nameTag.position.set(right + resolved.offsetX, bottom - resolved.offsetY);
+      break;
+    case 'bottom_left':
+      nameTag.anchor.set(0, 1);
+      nameTag.position.set(left + resolved.offsetX, bottom - resolved.offsetY);
+      break;
+    case 'top_right':
+      nameTag.anchor.set(1, 1);
+      nameTag.position.set(right + resolved.offsetX, top - resolved.offsetY);
+      break;
+    case 'top_left':
+      nameTag.anchor.set(0, 1);
+      nameTag.position.set(left + resolved.offsetX, top - resolved.offsetY);
+      break;
+    case 'bottom':
+      nameTag.anchor.set(0.5, 1);
+      nameTag.position.set((left + right) / 2 + resolved.offsetX, bottom - resolved.offsetY);
+      break;
+    case 'top':
+    default:
+      nameTag.anchor.set(0.5, 1);
+      nameTag.position.set((left + right) / 2 + resolved.offsetX, top - resolved.offsetY);
+      break;
+  }
 }
 
 function applySpriteVisual(
