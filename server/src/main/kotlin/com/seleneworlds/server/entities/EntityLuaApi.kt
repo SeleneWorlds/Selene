@@ -286,6 +286,9 @@ object EntityLuaApi {
             callbackLua.push(player.api, Lua.Conversion.NONE)
             callbackLua.xpCall(2, 1, ConstantTrace("[dynamic component \"$name\"] registered in $registrationSite"))
             try {
+                if (callbackLua.isNil(-1)) {
+                    return@addDynamicComponent null
+                }
                 seleneJson.decodeFromJsonElement(
                     ComponentConfiguration.serializer(),
                     (callbackLua.toSerializedMap(-1) ?: emptyMap()).toJsonElement()
