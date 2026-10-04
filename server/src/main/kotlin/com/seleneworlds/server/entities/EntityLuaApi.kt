@@ -135,6 +135,12 @@ object EntityLuaApi {
         return 1
     }
 
+    private fun getInteractionViewer(lua: Lua): Int {
+        val entity = lua.checkUserdata<EntityApi>(1)
+        lua.push(entity.getInteractionViewer(), Lua.Conversion.NONE)
+        return 1
+    }
+
     private fun ref(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.delegate.resolvableReference(), Lua.Conversion.NONE)
@@ -273,6 +279,35 @@ object EntityLuaApi {
         return 0
     }
 
+    private fun hasInteractions(lua: Lua): Int {
+        val entity = lua.checkUserdata<EntityApi>(1)
+        val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+        lua.push(entity.hasInteractions(tagName))
+        return 1
+    }
+
+    private fun setInteractions(lua: Lua): Int {
+        val entity = lua.checkUserdata<EntityApi>(1)
+        val enabled = lua.checkBoolean(2)
+        val tagName = if (lua.isString(3)) lua.checkString(3) else "default"
+        entity.setInteractions(enabled, tagName)
+        return 0
+    }
+
+    private fun enableInteractions(lua: Lua): Int {
+        val entity = lua.checkUserdata<EntityApi>(1)
+        val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+        entity.enableInteractions(tagName)
+        return 0
+    }
+
+    private fun disableInteractions(lua: Lua): Int {
+        val entity = lua.checkUserdata<EntityApi>(1)
+        val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
+        entity.disableInteractions(tagName)
+        return 0
+    }
+
     private fun addDynamicComponent(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val name = lua.checkString(2)
@@ -349,6 +384,7 @@ object EntityLuaApi {
         callable(::getMap)
         callable(::getCollisionViewer)
         callable(::getVisionViewer)
+        callable(::getInteractionViewer)
         callable(::spawn)
         callable(::despawn)
         callable(::remove)
@@ -370,6 +406,10 @@ object EntityLuaApi {
         callable(::setCollisions)
         callable(::enableCollisions)
         callable(::disableCollisions)
+        callable(::hasInteractions)
+        callable(::setInteractions)
+        callable(::enableInteractions)
+        callable(::disableInteractions)
         callable(::addDynamicComponent)
         callable(::getControllingPlayers)
         callable(::getAttribute)

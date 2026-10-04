@@ -65,6 +65,15 @@ class Entity(
             return entity.collisionTags.any { collisionTags.contains(it) }
         }
     }
+    val interactionViewer = object : Viewer {
+        override fun canView(layer: MapLayer): Boolean {
+            return layer.collisionTags.any { interactionTags.contains(it) }
+        }
+
+        override fun canView(entity: Entity): Boolean {
+            return entity.collisionTags.any { interactionTags.contains(it) }
+        }
+    }
 
     interface ComponentResolver {
         fun resolveForPlayer(player: Player): ComponentConfiguration?
@@ -73,6 +82,7 @@ class Entity(
     val visibilityTags = mutableSetOf("default")
     val visionTags = mutableSetOf("default")
     val collisionTags = mutableSetOf("default")
+    val interactionTags = mutableSetOf("default")
 
     override fun resolvableReference(): ResolvableReference<Int, Entity> {
         return ResolvableReference(Entity::class, networkId, world.entityManager)

@@ -83,6 +83,10 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
         return delegate.visionViewer
     }
 
+    fun getInteractionViewer(): Viewer {
+        return delegate.interactionViewer
+    }
+
     fun spawn(dimension: Dimension?) {
         val targetDimension = dimension ?: delegate.world.dimensionManager.getOrCreateDimension(0)
         delegate.dimension = targetDimension
@@ -165,6 +169,26 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
 
     fun disableCollisions(tagName: String = "default") {
         delegate.collisionTags.remove(tagName)
+    }
+
+    fun hasInteractions(tagName: String = "default"): Boolean {
+        return delegate.interactionTags.contains(tagName)
+    }
+
+    fun setInteractions(enabled: Boolean, tagName: String = "default") {
+        if (enabled) {
+            delegate.interactionTags.add(tagName)
+        } else {
+            delegate.interactionTags.remove(tagName)
+        }
+    }
+
+    fun enableInteractions(tagName: String = "default") {
+        delegate.interactionTags.add(tagName)
+    }
+
+    fun disableInteractions(tagName: String = "default") {
+        delegate.interactionTags.remove(tagName)
     }
 
     fun addDynamicComponent(name: String, callback: (Player) -> ComponentConfiguration?) {
