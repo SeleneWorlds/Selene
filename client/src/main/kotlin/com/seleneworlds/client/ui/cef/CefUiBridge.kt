@@ -2,6 +2,7 @@ package com.seleneworlds.client.ui.cef
 
 import com.seleneworlds.client.network.NetworkApi
 import com.seleneworlds.client.camera.CameraManager
+import com.seleneworlds.client.entity.component.DraggableComponent
 import com.seleneworlds.client.game.ClientEvents
 import com.seleneworlds.client.maps.ClientMap
 import com.seleneworlds.client.rendering.visual.VisualDefinition
@@ -212,6 +213,10 @@ class CefUiBridge(
                         put("networkId", entity.networkId)
                         put("tags", buildJsonArray { definition.tags.forEach { add(JsonPrimitive(it)) } })
                         visual?.let { put("visual", it.toString()) }
+                        put(
+                            "draggable",
+                            (entity.components["illarion:draggable"] as? DraggableComponent)?.enabled == true
+                        )
                     })
                 }
             }.toString())

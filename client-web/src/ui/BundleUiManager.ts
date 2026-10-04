@@ -84,7 +84,7 @@ interface BundleUiPointerEvent {
   shiftKey: boolean;
   coordinate: Coordinate;
 }
-interface BundleUiWorldEntity { networkId: number; tags: string[]; visual?: string }
+interface BundleUiWorldEntity { networkId: number; tags: string[]; visual?: string; draggable: boolean }
 export class BundleUiManager {
   private readonly clientAssetUrls = new Map<string, Promise<string>>();
 
@@ -210,9 +210,14 @@ export class BundleUiManager {
           const visual = component && typeof component === 'object'
             ? (component as Record<string, unknown>).visual
             : undefined;
+          const draggableComponent = entity.getComponent('illarion:draggable');
+          const draggable = draggableComponent !== null
+            && typeof draggableComponent === 'object'
+            && (draggableComponent as Record<string, unknown>).enabled === true;
           return {
             networkId: entity.getNetworkId(),
             tags: [...(definition.tags ?? [])],
+            draggable,
             ...(typeof visual === 'string' ? { visual } : {}),
           };
         }),

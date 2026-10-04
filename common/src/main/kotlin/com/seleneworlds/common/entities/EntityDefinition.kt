@@ -27,6 +27,12 @@ data class ImpassableComponentConfiguration(
 ) : ComponentConfiguration
 
 @Serializable
+@SerialName("draggable")
+data class DraggableComponentConfiguration(
+    val enabled: Boolean = true
+) : ComponentConfiguration
+
+@Serializable
 data class VisualComponentPosition(val origin: String = "none", val offsetX: Float = 0f, val offsetY: Float = 0f) {
     companion object {
         val Default = VisualComponentPosition()
