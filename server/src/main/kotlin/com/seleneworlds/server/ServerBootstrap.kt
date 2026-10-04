@@ -89,6 +89,8 @@ import com.seleneworlds.server.script.ServerScriptProvider
 import com.seleneworlds.server.saves.*
 import com.seleneworlds.server.serialization.JsonLuaApi
 import com.seleneworlds.server.sounds.SoundsApi
+import com.seleneworlds.server.environment.EnvironmentApi
+import com.seleneworlds.server.environment.EnvironmentLuaApi
 import com.seleneworlds.server.sounds.SoundsLuaApi
 import com.seleneworlds.server.sqlite.SqliteApi
 import com.seleneworlds.server.sqlite.SqliteLuaApi
@@ -121,6 +123,7 @@ fun main(args: Array<String>) {
         singleOf(::PlayersApi)
         singleOf(::NetworkApi)
         singleOf(::SoundsApi)
+        singleOf(::EnvironmentApi)
         singleOf(::ServerMapApi)
         singleOf(::EntitiesApi)
         singleOf(::DimensionsApi)
@@ -155,6 +158,7 @@ fun main(args: Array<String>) {
         singleOf(::PlayersLuaApi) { bind<LuaModule>() }
         singleOf(::NetworkLuaApi) { bind<LuaModule>() }
         singleOf(::SoundsLuaApi) { bind<LuaModule>() }
+        singleOf(::EnvironmentLuaApi) { bind<LuaModule>() }
         singleOf(::GridLuaApi) { bind<LuaModule>() }
         singleOf(::ResourcesLuaApi) { bind<LuaModule>() }
         singleOf(::SavesLuaApi) { bind<LuaModule>() }

@@ -15,6 +15,7 @@ import com.seleneworlds.common.entities.DraggableComponentConfiguration
 import com.seleneworlds.common.entities.ImpassableComponentConfiguration
 import com.seleneworlds.common.entities.ServerScriptComponentConfiguration
 import com.seleneworlds.common.entities.VisualComponentConfiguration
+import com.seleneworlds.common.entities.LightComponentConfiguration
 
 class EntityComponentFactory(
     private val visualRegistry: VisualRegistry,
@@ -48,6 +49,7 @@ class EntityComponentFactory(
             is ServerScriptComponentConfiguration -> null
             is ImpassableComponentConfiguration -> null
             is DraggableComponentConfiguration -> DraggableComponent(configuration.enabled)
+            is LightComponentConfiguration -> null
         }
     }
 }

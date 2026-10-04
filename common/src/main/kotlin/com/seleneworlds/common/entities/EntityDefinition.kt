@@ -33,6 +33,16 @@ data class DraggableComponentConfiguration(
 ) : ComponentConfiguration
 
 @Serializable
+@SerialName("light")
+data class LightComponentConfiguration(
+    val radius: Float,
+    val intensity: Float = 1f,
+    val red: Float = 1f,
+    val green: Float = 1f,
+    val blue: Float = 1f,
+) : ComponentConfiguration
+
+@Serializable
 data class VisualComponentPosition(val origin: String = "none", val offsetX: Float = 0f, val offsetY: Float = 0f) {
     companion object {
         val Default = VisualComponentPosition()

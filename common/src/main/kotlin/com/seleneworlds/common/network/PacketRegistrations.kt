@@ -152,6 +152,13 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             SetActiveGridPacket::decode
         )
         packetFactory.registerPacket(
+            22,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
+            SetEnvironmentLightPacket::class,
+            SetEnvironmentLightPacket::encode,
+            SetEnvironmentLightPacket::decode
+        )
+        packetFactory.registerPacket(
             254,
             setOf(PacketDirection.CLIENT_TO_SERVER, PacketDirection.SERVER_TO_CLIENT),
             CustomPayloadPacket::class,

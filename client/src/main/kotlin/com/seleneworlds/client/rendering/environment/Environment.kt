@@ -16,6 +16,11 @@ class Environment(val cameraManager: CameraManager, val grid: ClientGrid) {
     private var interiorFadeAlpha = 1f
 
     private val focusBounds = Rectangle()
+    private val ambientLight = Color.WHITE.cpy()
+
+    fun setLight(red: Float, green: Float, blue: Float) {
+        ambientLight.set(red.coerceIn(0f, 1f), green.coerceIn(0f, 1f), blue.coerceIn(0f, 1f), 1f)
+    }
 
     fun update(delta: Float) {
         surfaceOffsets.clear()
@@ -55,7 +60,7 @@ class Environment(val cameraManager: CameraManager, val grid: ClientGrid) {
     }
 
     fun getColor(coordinate: Coordinate): Color {
-        val baseColor = Color.WHITE.cpy()
+        val baseColor = ambientLight.cpy()
         if (coordinate.z > cameraManager.focusCoordinate.z) {
             baseColor.a = interiorFadeAlpha
         }
