@@ -19,6 +19,7 @@ val seleneJson = Json {
     ignoreUnknownKeys = true
     decodeEnumsCaseInsensitive = true
     explicitNulls = false
+    encodeDefaults = true
 }
 
 typealias SerializedMap = Map<String, Any?>
