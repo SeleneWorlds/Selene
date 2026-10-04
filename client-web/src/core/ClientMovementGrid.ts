@@ -1,5 +1,5 @@
 import type { ClientDirection } from '@/api/GridApi';
-import type { EntitiesApi } from '@/api/EntitiesApi';
+import type { EntitiesApi, EntityApi } from '@/api/EntitiesApi';
 import type { MovementGridApi } from '@/api/MovementGridApi';
 import type { NetworkClient } from '@/networking/NetworkClient';
 
@@ -19,6 +19,10 @@ export class ClientMovementGrid implements MovementGridApi {
     this.controlledEntityNetworkId = networkId;
     this.requestedStep = false;
     this.movementRemainingMs = 0;
+  }
+
+  getControlledEntity(): EntityApi | null {
+    return this.entities.getEntityByNetworkId(this.controlledEntityNetworkId);
   }
 
   setMotion(direction: ClientDirection): void {

@@ -1,7 +1,7 @@
 import { BrowserInputManager } from '@/core/BrowserInputManager';
 import { BundleUiInputClaims } from '@/ui/BundleUiInputClaims';
 import { ClientEntities } from '@/core/ClientEntities';
-import type { EntitiesApi, ClientEntityScriptRunner } from '@/api/EntitiesApi';
+import type { EntitiesApi, ClientEntityScriptRunner, EntityApi } from '@/api/EntitiesApi';
 import type { DebugState, RendererDebugOptions } from './DebugState';
 import type { CameraApi } from '@/api/CameraApi';
 import type { GameApi } from '@/api/GameApi';
@@ -162,6 +162,10 @@ export class GameClient {
 
   getMovementGridApi(): MovementGridApi {
     return this.movementGrid;
+  }
+
+  getControlledEntity(): EntityApi | null {
+    return this.movementGrid.getControlledEntity();
   }
 
   setRendererDebugOption(option: keyof RendererDebugOptions, enabled: boolean): void {

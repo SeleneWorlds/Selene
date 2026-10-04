@@ -38,6 +38,7 @@ interface BundleUiManagerOptions {
   getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
   projectCoordinate: (coordinate: Coordinate) => { x: number; y: number };
   projectEntity: (networkId: number) => { x: number; y: number } | null;
+  getControlledEntity: () => ReturnType<EntitiesApi['getEntityByNetworkId']>;
   onMapChanged: (listener: (coordinate: Coordinate, width: number, height: number) => void) => () => void;
   registries: ClientRegistrySnapshots;
 }
@@ -69,6 +70,7 @@ interface BundleUiApi {
   };
   readonly world: {
     getCameraCoordinate: CameraApi['getCoordinate'];
+    getControlledEntity: () => BundleUiWorldEntity | null;
     getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
     projectCoordinate: (coordinate: Coordinate) => { x: number; y: number };
     getEntitiesAt: (coordinate: Coordinate) => Promise<BundleUiWorldEntity[]>;
@@ -84,7 +86,13 @@ interface BundleUiPointerEvent {
   shiftKey: boolean;
   coordinate: Coordinate;
 }
-interface BundleUiWorldEntity { networkId: number; tags: string[]; visual?: string; draggable: boolean }
+interface BundleUiWorldEntity {
+  networkId: number;
+  coordinate: Coordinate;
+  tags: string[];
+  visual?: string;
+  draggable: boolean;
+}
 export class BundleUiManager {
   private readonly clientAssetUrls = new Map<string, Promise<string>>();
 
@@ -201,26 +209,15 @@ export class BundleUiManager {
       }),
       world: Object.freeze({
         getCameraCoordinate: () => this.options.camera.getCoordinate(),
+        getControlledEntity: () => {
+          const entity = this.options.getControlledEntity();
+          return entity ? this.toWorldEntity(entity) : null;
+        },
         getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) =>
           this.options.getMapTiles(coordinate, width, height),
         projectCoordinate: (coordinate: Coordinate) => this.options.projectCoordinate(requireCoordinate(coordinate)),
-        getEntitiesAt: async (coordinate: Coordinate) => this.options.entities.getEntitiesAt(coordinate).map((entity) => {
-          const definition = entity.getDefinition();
-          const component = definition.components?.['illarion:visual'];
-          const visual = component && typeof component === 'object'
-            ? (component as Record<string, unknown>).visual
-            : undefined;
-          const draggableComponent = entity.getComponent('illarion:draggable');
-          const draggable = draggableComponent !== null
-            && typeof draggableComponent === 'object'
-            && (draggableComponent as Record<string, unknown>).enabled === true;
-          return {
-            networkId: entity.getNetworkId(),
-            tags: [...(definition.tags ?? [])],
-            draggable,
-            ...(typeof visual === 'string' ? { visual } : {}),
-          };
-        }),
+        getEntitiesAt: async (coordinate: Coordinate) =>
+          this.options.entities.getEntitiesAt(coordinate).map((entity) => this.toWorldEntity(entity)),
         projectEntity: (networkId: number) => {
           if (!Number.isSafeInteger(networkId)) throw new Error('Entity network ID must be an integer.');
           return this.options.projectEntity(networkId);
@@ -235,6 +232,25 @@ export class BundleUiManager {
         },
       }),
     });
+  }
+
+  private toWorldEntity(entity: NonNullable<ReturnType<EntitiesApi['getEntityByNetworkId']>>): BundleUiWorldEntity {
+    const definition = entity.getDefinition();
+    const component = definition.components?.['illarion:visual'];
+    const visual = component && typeof component === 'object'
+      ? (component as Record<string, unknown>).visual
+      : undefined;
+    const draggableComponent = entity.getComponent('illarion:draggable');
+    const draggable = draggableComponent !== null
+      && typeof draggableComponent === 'object'
+      && (draggableComponent as Record<string, unknown>).enabled === true;
+    return {
+      networkId: entity.getNetworkId(),
+      coordinate: entity.getCoordinate(),
+      tags: [...(definition.tags ?? [])],
+      draggable,
+      ...(typeof visual === 'string' ? { visual } : {}),
+    };
   }
 
   private registerPointerListener(
