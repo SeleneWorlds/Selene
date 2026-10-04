@@ -49,7 +49,7 @@ export class TileOcclusionFader {
 
 function fadeStack(stack: RenderedTileStack, focus: Coordinate, focusBounds: WorldBounds, deltaMs: number): boolean {
   const inFront = getSortLayer(focus) - getSortLayer(stack.coordinate) >= ROW_SORT_SCALE;
-  for (let index = 0; index < stack.containers.length; index += 1) {
+  for (let index = 1; index < stack.containers.length; index += 1) {
     const container = stack.containers[index];
     const bounds = stack.localBounds[index];
     const current = stack.occlusionAlphas[index];
