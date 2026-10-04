@@ -97,6 +97,7 @@ import com.seleneworlds.server.sqlite.SqliteLuaApi
 import com.seleneworlds.server.sync.ChunkViewManager
 import com.seleneworlds.server.tiles.transitions.TransitionResolver
 import com.seleneworlds.server.timeline.TimelinesApi
+import com.seleneworlds.server.timeline.TimelinesLuaApi
 import com.seleneworlds.server.world.World
 
 @OptIn(ExperimentalHoplite::class)
@@ -176,6 +177,7 @@ fun main(args: Array<String>) {
         singleOf(::PathfindingLuaApi) { bind<LuaModule>() }
         singleOf(::SqliteLuaApi) { bind<LuaModule>() }
         singleOf(::JsonLuaApi) { bind<LuaModule>() }
+        singleOf(::TimelinesLuaApi) { bind<LuaModule>() }
     }
     val bundleModule = module {
         single<BundleStateCleaner> {
