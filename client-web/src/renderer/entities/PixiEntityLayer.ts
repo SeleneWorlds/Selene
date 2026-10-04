@@ -37,6 +37,11 @@ export interface WorldBounds {
   height: number;
 }
 
+interface TileSurface {
+  height: number;
+  renderOrder: number | null;
+}
+
 export class PixiEntityLayer {
   private readonly renderedEntities = new Map<number, RenderedEntity>();
   private upperLayerFocusZ: number | null = null;
@@ -47,7 +52,7 @@ export class PixiEntityLayer {
     private readonly textureLoader: ContentTextureLoader,
     private readonly grid: ClientGrid,
     readonly container: Container,
-    private readonly getSurfaceHeight: (coordinate: Coordinate, beforeRenderOrder: number) => number = () => 0,
+    private readonly getSurface: (coordinate: Coordinate) => TileSurface = () => ({ height: 0, renderOrder: null }),
     private readonly lighting?: LightingEnvironment,
   ) {}
 
@@ -274,7 +279,7 @@ export class PixiEntityLayer {
     // Pixi re-sort and rebuild the tile-heavy render list every movement frame,
     // even though ordering can only change when the entity crosses a row.
     const rowSortLayer = Math.round(getSortLayer(entity.coordinate) / ROW_SORT_SCALE) * ROW_SORT_SCALE;
-    const zIndex = -(
+    let zIndex = -(
       rowSortLayer - (entity.visual?.sortLayerOffset ?? 0)
     ) * 1000 + ENTITY_LOCAL_SORT_LAYER;
     const surfaceCoordinate = {
@@ -282,10 +287,13 @@ export class PixiEntityLayer {
       y: Math.round(entity.coordinate.y),
       z: Math.round(entity.coordinate.z),
     };
-    entity.container.position.set(
-      position.x,
-      position.y - this.getSurfaceHeight(surfaceCoordinate, zIndex),
-    );
+    const surface = entity.visual?.ignoresElevation
+      ? { height: 0, renderOrder: null }
+      : this.getSurface(surfaceCoordinate);
+    if (surface.renderOrder !== null) {
+      zIndex = Math.max(zIndex, surface.renderOrder + ENTITY_LOCAL_SORT_LAYER);
+    }
+    entity.container.position.set(position.x, position.y - surface.height);
     if (entity.container.zIndex !== zIndex) {
       entity.container.zIndex = zIndex;
     }

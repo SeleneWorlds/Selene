@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import com.seleneworlds.client.controls.EntityMotion
 import com.seleneworlds.client.entity.component.EntityComponent
 import com.seleneworlds.client.entity.component.EntityComponentFactory
+import com.seleneworlds.client.entity.component.IgnoresElevationComponent
 import com.seleneworlds.client.entity.component.TickableComponent
 import com.seleneworlds.client.entity.component.rendering.IsoComponent
 import com.seleneworlds.client.entity.component.rendering.RenderableComponent
@@ -178,7 +179,12 @@ class Entity(
         lastRenderBounds.set(0f, 0f, 0f, 0f)
         processComponents {
             renderableComponents.forEach { component ->
-                tmpDisplayPos.set(screenX, screenY + environment.getSurfaceOffset(coordinate))
+                val surfaceOffset = if (components.values.any { it is IgnoresElevationComponent }) {
+                    0f
+                } else {
+                    environment.getSurfaceOffset(coordinate)
+                }
+                tmpDisplayPos.set(screenX, screenY + surfaceOffset)
                 component.positioner.applyPositioning(this, tmpDisplayPos)
                 tmpDisplayPos.set(
                     round(tmpDisplayPos.x),

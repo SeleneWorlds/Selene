@@ -19,6 +19,7 @@ export interface ResolvedEntityVisual {
   flipY: boolean;
   nameTag?: ResolvedEntityNameTag | undefined;
   light?: TileLight | undefined;
+  ignoresElevation: boolean;
 }
 
 export interface ResolvedEntityNameTag {
@@ -140,6 +141,7 @@ export class EntityVisualResolver {
       flipY: visualDefinition?.flipY ?? false,
       nameTag: resolveNameTag(this.registries, visualComponents),
       light: resolveLight(components),
+      ignoresElevation: components.some(isIgnoresElevationComponent),
     };
   }
 
@@ -171,6 +173,12 @@ function finiteOr(value: number | undefined, fallback: number): number {
 
 function isLightComponent(value: unknown): value is LightComponentConfiguration {
   return typeof value === 'object' && value !== null && (value as LightComponentConfiguration).type === 'light';
+}
+
+function isIgnoresElevationComponent(value: unknown): boolean {
+  return typeof value === 'object'
+    && value !== null
+    && (value as { type?: unknown }).type === 'ignores_elevation';
 }
 
 function resolveNameTag(

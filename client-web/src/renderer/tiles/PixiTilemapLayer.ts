@@ -145,11 +145,16 @@ export class PixiTilemapLayer {
 
   hasTileAt(coordinate: Coordinate): boolean { return this.renderedStacks.has(coordinateKey(coordinate)); }
 
-  getSurfaceHeight(coordinate: Coordinate, beforeRenderOrder: number): number {
+  getSurface(coordinate: Coordinate): { height: number; renderOrder: number | null } {
     return this.renderedStacks.get(coordinateKey(coordinate))?.surfaces.reduce(
-      (height, surface) => surface.renderOrder < beforeRenderOrder ? height + surface.height : height,
-      0,
-    ) ?? 0;
+      (surfaceLevel, surface) => ({
+        height: surfaceLevel.height + surface.height,
+        renderOrder: surface.height !== 0
+          ? Math.max(surfaceLevel.renderOrder ?? Number.NEGATIVE_INFINITY, surface.renderOrder)
+          : surfaceLevel.renderOrder,
+      }),
+      { height: 0, renderOrder: null } as { height: number; renderOrder: number | null },
+    ) ?? { height: 0, renderOrder: null };
   }
 
   setUpperLayerAlpha(focusZ: number, alpha: number): void {
