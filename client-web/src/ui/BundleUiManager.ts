@@ -92,6 +92,7 @@ interface BundleUiWorldEntity {
   tags: string[];
   visual?: string;
   draggable: boolean;
+  getComponent(name: string): unknown;
 }
 export class BundleUiManager {
   private readonly clientAssetUrls = new Map<string, Promise<string>>();
@@ -249,6 +250,7 @@ export class BundleUiManager {
       coordinate: entity.getCoordinate(),
       tags: [...(definition.tags ?? [])],
       draggable,
+      getComponent: (name) => entity.getComponent(name),
       ...(typeof visual === 'string' ? { visual } : {}),
     };
   }
