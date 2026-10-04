@@ -228,6 +228,7 @@ class ClientRegistrySnapshots(
             "render_grids",
             "sounds",
             "tiles",
+            "timelines",
             "transitions",
             "visuals"
         ).associateWith { Identifier.withDefaultNamespace(it) }

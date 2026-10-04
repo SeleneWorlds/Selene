@@ -96,6 +96,7 @@ import com.seleneworlds.server.sqlite.SqliteApi
 import com.seleneworlds.server.sqlite.SqliteLuaApi
 import com.seleneworlds.server.sync.ChunkViewManager
 import com.seleneworlds.server.tiles.transitions.TransitionResolver
+import com.seleneworlds.server.timeline.TimelinesApi
 import com.seleneworlds.server.world.World
 
 @OptIn(ExperimentalHoplite::class)
@@ -123,6 +124,7 @@ fun main(args: Array<String>) {
         singleOf(::PlayersApi)
         singleOf(::NetworkApi)
         singleOf(::SoundsApi)
+        singleOf(::TimelinesApi)
         singleOf(::EnvironmentApi)
         singleOf(::ServerMapApi)
         singleOf(::EntitiesApi)

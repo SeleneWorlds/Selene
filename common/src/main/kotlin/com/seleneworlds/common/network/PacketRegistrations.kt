@@ -159,6 +159,13 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             SetEnvironmentLightPacket::decode
         )
         packetFactory.registerPacket(
+            23,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
+            PlayTimelinePacket::class,
+            PlayTimelinePacket::encode,
+            PlayTimelinePacket::decode
+        )
+        packetFactory.registerPacket(
             254,
             setOf(PacketDirection.CLIENT_TO_SERVER, PacketDirection.SERVER_TO_CLIENT),
             CustomPayloadPacket::class,

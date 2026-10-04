@@ -93,6 +93,21 @@ export const ClientAudioDefinitionSchema = z.object({
 });
 export type ClientAudioDefinition = z.infer<typeof ClientAudioDefinitionSchema>;
 
+export const VisualAnimationTimelineEventSchema = z.object({
+  type: z.literal('visual_animation'),
+  time: z.number().finite().nonnegative().default(0),
+  visual: z.string().min(1),
+  duration: z.number().finite().positive().optional(),
+  position: z.string().min(1).default('position'),
+});
+export type VisualAnimationTimelineEvent = z.infer<typeof VisualAnimationTimelineEventSchema>;
+
+export const ClientTimelineDefinitionSchema = z.object({
+  events: z.array(z.discriminatedUnion('type', [VisualAnimationTimelineEventSchema])),
+  metadata: metadataSchema,
+});
+export type ClientTimelineDefinition = z.infer<typeof ClientTimelineDefinitionSchema>;
+
 export const ClientGridDirectionDefinitionSchema = z.object({
   name: z.string().min(1),
   x: z.number().int(),
@@ -116,6 +131,7 @@ export const clientRegistryEntrySchemas = {
   sounds: ClientSoundDefinitionSchema,
   audio: ClientAudioDefinitionSchema,
   grids: ClientGridDefinitionSchema,
+  timelines: ClientTimelineDefinitionSchema,
 } satisfies Record<string, z.ZodType>;
 
 export type ClientRegistryEntryMap = {

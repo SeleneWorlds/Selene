@@ -21,6 +21,7 @@ import type { ClientGrid } from '@/core/ClientGrid';
 import { projectCoordinate as projectWorldCoordinate } from '@/core/WorldProjection';
 import { LightingEnvironment } from './LightingEnvironment';
 import type { LightColor, TileLight } from '@/api/EnvironmentApi';
+import { TimelinePlayer } from '@/renderer/timeline/TimelinePlayer';
 
 export interface PixiGameRendererOptions {
   host: HTMLElement;
@@ -47,6 +48,7 @@ export class PixiGameRenderer implements GameRenderer {
   private readonly viewport: PixiViewport;
   private readonly pipeline: RenderPipeline;
   private readonly lighting = new LightingEnvironment();
+  private readonly timelinePlayer: TimelinePlayer;
 
   private rendererOptions: RendererDebugOptions;
 
@@ -61,6 +63,7 @@ export class PixiGameRenderer implements GameRenderer {
       options.authToken,
     );
     this.scene = new PixiScene(this.camera);
+    this.timelinePlayer = new TimelinePlayer(options.registries, this.textureLoader, this.scene.depthSortedContainer);
     this.tilemapLayer = new PixiTilemapLayer(
       new TileVisualResolver(options.registries, options.nameIdMappings),
       this.textureLoader,
@@ -106,6 +109,7 @@ export class PixiGameRenderer implements GameRenderer {
   }
 
   update(deltaMs: number): Record<string, number> {
+    this.timelinePlayer.update(deltaMs);
     return this.pipeline.update(deltaMs, this.rendererOptions);
   }
 
@@ -154,6 +158,9 @@ export class PixiGameRenderer implements GameRenderer {
         break;
       case 'setEnvironmentLight':
         this.lighting.setAmbientLight(packet);
+        break;
+      case 'playTimeline':
+        this.timelinePlayer.play(packet);
         break;
       default:
         break;

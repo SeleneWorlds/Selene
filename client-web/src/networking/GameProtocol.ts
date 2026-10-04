@@ -22,6 +22,7 @@ const PacketId = {
   RequestFacing: 19,
   SetActiveGrid: 21,
   SetEnvironmentLight: 22,
+  PlayTimeline: 23,
   CustomPayload: 254,
   Disconnect: 255,
 } as const;
@@ -42,6 +43,7 @@ export type GamePacket =
   | TurnEntityPacket
   | SetActiveGridPacket
   | SetEnvironmentLightPacket
+  | PlayTimelinePacket
   | CustomPayloadPacket
   | DisconnectPacket
   | UnknownGamePacket;
@@ -164,6 +166,12 @@ export interface SetEnvironmentLightPacket {
   blue: number;
 }
 
+export interface PlayTimelinePacket {
+  type: 'playTimeline';
+  timeline: string;
+  parameters: Readonly<Record<string, unknown>>;
+}
+
 export interface CustomPayloadPacket {
   type: 'customPayload';
   payloadId: string;
@@ -237,6 +245,8 @@ export function decodeGamePacket(data: ArrayBuffer): GamePacket {
       return decodeSetActiveGridPacket(reader);
     case PacketId.SetEnvironmentLight:
       return decodeSetEnvironmentLightPacket(reader);
+    case PacketId.PlayTimeline:
+      return decodePlayTimelinePacket(reader);
     case PacketId.CustomPayload:
       return decodeCustomPayloadPacket(reader);
     case PacketId.Disconnect:
@@ -250,6 +260,21 @@ function decodeSetEnvironmentLightPacket(reader: PacketReader): SetEnvironmentLi
   const packet = { type: 'setEnvironmentLight' as const, red: reader.readFloat(), green: reader.readFloat(), blue: reader.readFloat() };
   reader.assertFullyRead();
   return packet;
+}
+
+function decodePlayTimelinePacket(reader: PacketReader): PlayTimelinePacket {
+  const timeline = reader.readString();
+  const parameters = parseTimelineParameters(timeline, reader.readString());
+  reader.assertFullyRead();
+  return { type: 'playTimeline', timeline, parameters };
+}
+
+function parseTimelineParameters(timeline: string, encoded: string): Record<string, unknown> {
+  const value: unknown = JSON.parse(encoded);
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    throw new Error(`Timeline parameters for ${timeline} must be a JSON object.`);
+  }
+  return value as Record<string, unknown>;
 }
 
 function decodeDisconnectPacket(reader: PacketReader): DisconnectPacket {
