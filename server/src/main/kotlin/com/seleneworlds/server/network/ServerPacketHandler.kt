@@ -33,7 +33,7 @@ class ServerPacketHandler(
                     player.userId = it.userId
                     for (scope in nameIdRegistry.mappings.rowKeySet()) {
                         val mappings = nameIdRegistry.mappings.row(scope)
-                        mappings.entries.windowed(500, partialWindows = true).forEach { chunk ->
+                        mappings.entries.chunked(500).forEach { chunk ->
                             context.send(NameIdMappingsPacket(scope, chunk))
                         }
                         context.send(NameIdMappingsPacket(scope, emptyList()))
