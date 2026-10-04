@@ -73,7 +73,7 @@ class Tile(
         val displayY = round(grid.getScreenY(coordinate) + environment.getSurfaceOffset(coordinate))
         val bounds = getBounds(displayX, displayY, tmpRenderBounds)
         if (environment.shouldRender(coordinate, bounds)) {
-            val occluding = environment.occludesFocus(coordinate, bounds)
+            val occluding = visual.occlusionFade && environment.occludesFocus(coordinate, bounds)
             targetOcclusionAlpha = if (occluding) 0.3f else 1f
             batch.color.set(environment.getColor(coordinate))
             batch.color = batch.color.mul(1f, 1f, 1f, currentOcclusionAlpha)

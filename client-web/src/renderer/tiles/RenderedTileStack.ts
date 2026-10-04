@@ -20,6 +20,7 @@ export interface RenderedTileStack {
   tileIds: readonly number[];
   generation: number;
   animatedTiles: RenderedAnimatedTile[];
+  occlusionFade: boolean[];
   occlusionAlphas: number[];
   targetOcclusionAlphas: number[];
   upperLayerAlpha: number;

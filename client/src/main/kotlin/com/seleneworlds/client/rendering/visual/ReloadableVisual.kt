@@ -12,6 +12,7 @@ sealed interface ReloadableVisual : IsoVisual {
     override val api: ReloadableVisualApi
     override val sortLayerOffset: Int
     override val surfaceHeight: Float
+    val occlusionFade: Boolean
 
     override fun initialize(): Awaitable<Void?>
     fun dispose()
@@ -83,6 +84,9 @@ sealed interface ReloadableVisual : IsoVisual {
 
         override val surfaceHeight: Float
             get() = (visual as? IsoVisual)?.surfaceHeight ?: 0f
+
+        override val occlusionFade: Boolean
+            get() = reference.get()?.occlusionFade ?: true
     }
 
     object None : ReloadableVisual {
@@ -90,6 +94,7 @@ sealed interface ReloadableVisual : IsoVisual {
         override val api = ReloadableVisualApi(this)
         override val sortLayerOffset: Int = 0
         override val surfaceHeight: Float = 0f
+        override val occlusionFade: Boolean = true
         override fun initialize(): Awaitable<Void?> = Awaitable.completed(null)
         override fun getBounds(
             x: Float,

@@ -58,6 +58,7 @@ export const ClientVisualDefinitionSchema = z.object({
   offsetY: z.number().finite().optional(),
   flipX: z.boolean().optional(),
   flipY: z.boolean().optional(),
+  occlusionFade: z.boolean().default(true),
   metadata: metadataSchema,
 }).superRefine((value, context) => {
   const requireField = (field: 'texture' | 'textures' | 'text' | 'animator' | 'animations') => {

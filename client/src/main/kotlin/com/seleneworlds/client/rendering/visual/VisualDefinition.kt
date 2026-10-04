@@ -11,7 +11,9 @@ import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.common.serialization.SerializedMapSerializer
 
 @Serializable
-sealed class VisualDefinition : MetadataHolder, RegistryAdoptedObject<VisualDefinition>()
+sealed class VisualDefinition : MetadataHolder, RegistryAdoptedObject<VisualDefinition>() {
+    abstract val occlusionFade: Boolean
+}
 
 @Serializable
 @SerialName("simple")
@@ -23,6 +25,7 @@ data class SimpleVisualDefinition(
     val sortLayerOffset: Int = 0,
     val flipX: Boolean = false,
     val flipY: Boolean = false,
+    override val occlusionFade: Boolean = true,
     @Serializable(with = SerializedMapSerializer::class)
     override val metadata: SerializedMap = emptyMap()
 ) : VisualDefinition()
@@ -37,6 +40,7 @@ data class VariantsVisualDefinition(
     val sortLayerOffset: Int = 0,
     val flipX: Boolean = false,
     val flipY: Boolean = false,
+    override val occlusionFade: Boolean = true,
     @Serializable(with = SerializedMapSerializer::class)
     override val metadata: SerializedMap = emptyMap()
 ) : VisualDefinition()
@@ -53,6 +57,7 @@ data class AnimatedVisualDefinition(
     val flipX: Boolean = false,
     val flipY: Boolean = false,
     val instanced: Boolean = false,
+    override val occlusionFade: Boolean = true,
     @Serializable(with = SerializedMapSerializer::class)
     override val metadata: SerializedMap = emptyMap()
 ) : VisualDefinition()
@@ -66,6 +71,7 @@ data class AnimatorVisualDefinition(
     val offsetY: Float = 0f,
     val surfaceOffsetY: Float = 0f,
     val sortLayerOffset: Int = 0,
+    override val occlusionFade: Boolean = true,
     @Serializable(with = SerializedMapSerializer::class)
     override val metadata: SerializedMap = emptyMap()
 ) : VisualDefinition()
@@ -92,6 +98,7 @@ enum class HorizontalAlign(val align: Int) {
 data class TextVisualDefinition(
     val text: String,
     val align: HorizontalAlign = HorizontalAlign.LEFT,
+    override val occlusionFade: Boolean = true,
     @Serializable(with = SerializedMapSerializer::class)
     override val metadata: SerializedMap = emptyMap()
 ) : VisualDefinition()

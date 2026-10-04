@@ -17,6 +17,7 @@ export interface ResolvedTileVisual {
   offsetY: number;
   flipX: boolean;
   flipY: boolean;
+  occlusionFade: boolean;
   light: TileLight | null;
   metadata: Readonly<Record<string, unknown>>;
 }
@@ -64,6 +65,7 @@ export class TileVisualResolver {
       offsetY: visualDefinition.offsetY ?? 0,
       flipX: visualDefinition.flipX ?? false,
       flipY: visualDefinition.flipY ?? false,
+      occlusionFade: visualDefinition.occlusionFade,
       light: tileDefinition.light ?? null,
       metadata: { ...(tileDefinition.metadata ?? {}), ...(visualDefinition.metadata ?? {}) },
     };

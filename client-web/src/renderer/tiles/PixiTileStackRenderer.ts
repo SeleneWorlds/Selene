@@ -49,6 +49,7 @@ export class PixiTileStackRenderer {
       tileIds,
       generation,
       animatedTiles: [],
+      occlusionFade: visuals.map(visual => visual?.occlusionFade ?? true),
       occlusionAlphas: containers.map(() => 1),
       targetOcclusionAlphas: containers.map(() => 1),
       upperLayerAlpha: 1,

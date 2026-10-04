@@ -49,14 +49,17 @@ export class TileOcclusionFader {
 
 function fadeStack(stack: RenderedTileStack, focus: Coordinate, focusBounds: WorldBounds, deltaMs: number): boolean {
   const inFront = getSortLayer(focus) - getSortLayer(stack.coordinate) >= ROW_SORT_SCALE;
-  for (let index = 1; index < stack.containers.length; index += 1) {
+  for (let index = 0; index < stack.containers.length; index += 1) {
     const container = stack.containers[index];
     const bounds = stack.localBounds[index];
     const current = stack.occlusionAlphas[index];
+    if (!stack.occlusionFade[index] && current === 1) continue;
     if (!inFront && current === 1) continue;
     const overlapsFocus = bounds !== null && overlapsTranslated(bounds, container.x, container.y, focusBounds);
     const canOcclude = bounds !== null && (bounds.height >= focusBounds.height || stack.coordinate.z > focus.z);
-    stack.targetOcclusionAlphas[index] = inFront && overlapsFocus && canOcclude ? OCCLUDED_ALPHA : 1;
+    stack.targetOcclusionAlphas[index] = stack.occlusionFade[index] && inFront && overlapsFocus && canOcclude
+      ? OCCLUDED_ALPHA
+      : 1;
     const target = stack.targetOcclusionAlphas[index];
     const step = FADE_SPEED * (deltaMs / 1000);
     const next = Math.abs(target - current) <= step ? target : current + Math.sign(target - current) * step;
