@@ -27,7 +27,7 @@ data class ChunkWindow(val x: Int, val y: Int, val z: Int, val width: Int, val h
             val chunkY = Math.floorDiv(coordinate.y, chunkSize) * chunkSize
             val chunkZ = coordinate.z
             val windows = mutableListOf<ChunkWindow>()
-            val verticalOffsets = if (chunkZ < 0) 0..0 else maxOf(-verticalViewRange, -chunkZ)..verticalViewRange
+            val verticalOffsets = -verticalViewRange..verticalViewRange
             for (dz in verticalOffsets) {
                 for (dx in -viewRange..viewRange) {
                     for (dy in -viewRange..viewRange) {
