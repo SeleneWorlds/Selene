@@ -6,7 +6,7 @@ import type {
   VisualAnimationTimelineEvent,
 } from '@/data/ClientRegistrySchemas';
 import type { Coordinate, PlayTimelinePacket } from '@/networking/GameProtocol';
-import { getRenderOrder, projectCoordinate } from '@/renderer/IsoProjection';
+import { ENTITY_LOCAL_SORT_LAYER, getRenderOrder, projectCoordinate } from '@/renderer/IsoProjection';
 import type { ContentTextureLoader } from '@/renderer/entities/ContentTextureLoader';
 
 interface Playback {
@@ -29,6 +29,11 @@ interface VisualEffect {
   revision: number;
 }
 
+interface TileSurface {
+  height: number;
+  renderOrder: number | null;
+}
+
 /** Schedules typed timeline events and owns their temporary scene objects. */
 export class TimelinePlayer {
   private readonly playbacks: Playback[] = [];
@@ -38,6 +43,7 @@ export class TimelinePlayer {
     private readonly registries: ClientRegistrySnapshots,
     private readonly textureLoader: ContentTextureLoader,
     private readonly scene: Container,
+    private readonly getSurface: (coordinate: Coordinate) => TileSurface,
   ) {}
 
   play(packet: PlayTimelinePacket): void {
@@ -113,9 +119,17 @@ export class TimelinePlayer {
     const durationMs = (event.duration ?? visual.duration ?? 1) * 1000;
     const sprite = new Sprite();
     const projected = projectCoordinate(position);
-    sprite.position.set(projected.x + (visual.offsetX ?? 0), projected.y - (visual.offsetY ?? 0));
+    const surface = this.getSurface(position);
+    sprite.anchor.set(0.5, 1);
+    sprite.position.set(
+      projected.x + (visual.offsetX ?? 0),
+      projected.y - surface.height - (visual.offsetY ?? 0),
+    );
     sprite.scale.set(visual.flipX ? -1 : 1, visual.flipY ? -1 : 1);
-    sprite.zIndex = getRenderOrder(position, visual.sortLayerOffset ?? 0, 0.75);
+    const visualOrder = getRenderOrder(position, visual.sortLayerOffset ?? 0, ENTITY_LOCAL_SORT_LAYER);
+    sprite.zIndex = surface.renderOrder === null
+      ? visualOrder
+      : Math.max(visualOrder, surface.renderOrder + ENTITY_LOCAL_SORT_LAYER);
     const effect: VisualEffect = { sprite, textures, elapsedMs: 0, durationMs, frame: 0, revision: 0 };
     this.effects.push(effect);
     this.scene.addChild(sprite);

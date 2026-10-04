@@ -63,12 +63,17 @@ export class PixiGameRenderer implements GameRenderer {
       options.authToken,
     );
     this.scene = new PixiScene(this.camera);
-    this.timelinePlayer = new TimelinePlayer(options.registries, this.textureLoader, this.scene.depthSortedContainer);
     this.tilemapLayer = new PixiTilemapLayer(
       new TileVisualResolver(options.registries, options.nameIdMappings),
       this.textureLoader,
       this.scene.depthSortedContainer,
       this.lighting,
+    );
+    this.timelinePlayer = new TimelinePlayer(
+      options.registries,
+      this.textureLoader,
+      this.scene.depthSortedContainer,
+      coordinate => this.tilemapLayer.getSurface(coordinate),
     );
     this.entityLayer = new PixiEntityLayer(
       new EntityVisualResolver(options.registries, options.nameIdMappings),
