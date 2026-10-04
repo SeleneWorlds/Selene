@@ -9,6 +9,7 @@ import type { TileVisualResolver } from './TileVisualResolver';
 import { TileCuller } from './TileCuller';
 import { TileOcclusionFader } from './TileOcclusionFader';
 import { TileSpatialIndex } from './TileSpatialIndex';
+import type { LightingEnvironment } from '../LightingEnvironment';
 
 /** Coordinates map state and delegates tile rendering and visibility policy. */
 export class PixiTilemapLayer {
@@ -28,6 +29,7 @@ export class PixiTilemapLayer {
     private readonly visualResolver: TileVisualResolver,
     textureLoader: ContentTextureLoader,
     readonly container: Container,
+    private readonly lighting?: LightingEnvironment,
   ) {
     this.stackRenderer = new PixiTileStackRenderer(
       visualResolver,
@@ -117,6 +119,15 @@ export class PixiTilemapLayer {
     this.stackRenderer.updateAnimations(deltaMs, stack => this.isCurrent(stack));
   }
 
+  updateLighting(): void {
+    if (!this.lighting) return;
+    for (const stack of this.renderedStacks.values()) {
+      const color = this.lighting.getColor(stack.coordinate);
+      const tint = toTint(color.red, color.green, color.blue);
+      for (const container of stack.containers) container.tint = tint;
+    }
+  }
+
   updateOcclusion(deltaMs: number, focusCoordinate: Coordinate, focusBounds: WorldBounds): void {
     this.occlusionFader.update(deltaMs, focusCoordinate, focusBounds);
   }
@@ -162,6 +173,9 @@ export class PixiTilemapLayer {
       return;
     }
     const visualMetadata = this.visualResolver.resolve(baseTileId, coordinate)?.metadata ?? {};
+    const light = tileIds.reduce<unknown>((result, id) =>
+      this.visualResolver.resolve(id, coordinate)?.metadata.light ?? result, null);
+    this.lighting?.setMetadataLight(coordinate, light);
     this.mapTiles.set(key, { ...coordinate, tileIds: [...tileIds], visualMetadata: { ...visualMetadata } });
     const stack = this.stackRenderer.createStack(coordinate, tileIds, ++this.generation);
     this.renderedStacks.set(key, stack);
@@ -173,7 +187,11 @@ export class PixiTilemapLayer {
   private removeTileStack(coordinate: Coordinate): void {
     const key = coordinateKey(coordinate);
     const stack = this.renderedStacks.get(key);
-    if (!stack) return;
+    if (!stack) {
+      this.lighting?.removeMetadataLight(coordinate);
+      return;
+    }
+    this.lighting?.removeMetadataLight(coordinate);
     stack.generation = -1;
     this.culler.remove(stack);
     this.occlusionFader.remove(stack);
@@ -189,6 +207,10 @@ export class PixiTilemapLayer {
   private notifyMapChanged(coordinate: Coordinate, width: number, height: number): void {
     for (const listener of [...this.mapChangedListeners]) listener(coordinate, width, height);
   }
+}
+
+function toTint(red: number, green: number, blue: number): number {
+  return (Math.round(red * 255) << 16) | (Math.round(green * 255) << 8) | Math.round(blue * 255);
 }
 
 function coordinateKey(coordinate: Coordinate): string {

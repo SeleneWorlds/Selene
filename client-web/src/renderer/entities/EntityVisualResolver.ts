@@ -3,6 +3,7 @@ import type { ClientEntityDefinition } from '@/api/EntitiesApi';
 import type { EntityPacket } from '@/networking/GameProtocol';
 import type { NameIdMappings } from '@/networking/NameIdMappings';
 import type { ClientVisualDefinition } from '@/data/ClientRegistrySchemas';
+import type { TileLight } from '@/api/EnvironmentApi';
 
 export interface ResolvedEntityVisual {
   texturePath?: string | undefined;
@@ -17,6 +18,7 @@ export interface ResolvedEntityVisual {
   flipX: boolean;
   flipY: boolean;
   nameTag?: ResolvedEntityNameTag | undefined;
+  light?: TileLight | undefined;
 }
 
 export interface ResolvedEntityNameTag {
@@ -50,6 +52,15 @@ interface VisualComponentConfiguration {
   overrides?: {
     text?: unknown;
   };
+}
+
+interface LightComponentConfiguration {
+  type: 'light';
+  radius: number;
+  intensity?: number;
+  red?: number;
+  green?: number;
+  blue?: number;
 }
 
 export class EntityVisualResolver {
@@ -128,6 +139,7 @@ export class EntityVisualResolver {
       flipX: visualDefinition?.flipX ?? false,
       flipY: visualDefinition?.flipY ?? false,
       nameTag: resolveNameTag(this.registries, visualComponents),
+      light: resolveLight(components),
     };
   }
 
@@ -139,6 +151,26 @@ export class EntityVisualResolver {
     this.warnedReasons.add(key);
     console.warn(`[Entities] ${message}`);
   }
+}
+
+function resolveLight(components: unknown[]): TileLight | undefined {
+  const component = components.find(isLightComponent);
+  if (!component || !Number.isFinite(component.radius) || component.radius <= 0) return undefined;
+  return {
+    radius: component.radius,
+    intensity: finiteOr(component.intensity, 1),
+    red: finiteOr(component.red, 1),
+    green: finiteOr(component.green, 1),
+    blue: finiteOr(component.blue, 1),
+  };
+}
+
+function finiteOr(value: number | undefined, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function isLightComponent(value: unknown): value is LightComponentConfiguration {
+  return typeof value === 'object' && value !== null && (value as LightComponentConfiguration).type === 'light';
 }
 
 function resolveNameTag(

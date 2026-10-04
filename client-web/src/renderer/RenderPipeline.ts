@@ -5,6 +5,7 @@ import type { InteriorFadeController } from '@/renderer/InteriorFadeController';
 import type { PixiScene } from '@/renderer/PixiScene';
 import type { PixiViewport } from '@/renderer/PixiViewport';
 import type { PixiTilemapLayer } from '@/renderer/tiles/PixiTilemapLayer';
+import type { LightingEnvironment } from '@/renderer/LightingEnvironment';
 
 export class RenderPipeline {
   private frame = 0;
@@ -19,6 +20,7 @@ export class RenderPipeline {
     private readonly entityLayer: PixiEntityLayer,
     private readonly tilemapLayer: PixiTilemapLayer,
     private readonly interiorFade: InteriorFadeController,
+    private readonly lighting: LightingEnvironment,
   ) {}
 
   update(deltaMs: number, options: RendererDebugOptions): Record<string, number> {
@@ -26,6 +28,14 @@ export class RenderPipeline {
     const timings: Record<string, number> = {};
     this.measure(timings, 'Renderer: entities', () => {
       if (options.entityUpdates) this.entityLayer.update(deltaMs);
+    });
+    this.measure(timings, 'Renderer: lighting', () => {
+      const revision = this.lighting.getRevision();
+      if (revision !== this.lastLightingRevision) {
+        this.lastLightingRevision = revision;
+        this.tilemapLayer.updateLighting();
+        this.entityLayer.updateLighting();
+      }
     });
     this.measure(timings, 'Renderer: camera', () => this.scene.updateCamera(this.entityLayer));
     const focus = this.measure(timings, 'Renderer: focus bounds', () => this.scene.getFocus(this.entityLayer));
@@ -51,6 +61,8 @@ export class RenderPipeline {
     });
     return timings;
   }
+
+  private lastLightingRevision = -1;
 
   private recordFrame(deltaMs: number): void {
     this.frame += 1;

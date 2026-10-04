@@ -19,6 +19,8 @@ import type { Coordinate, GamePacket } from '@/networking/GameProtocol';
 import type { NameIdMappings } from '@/networking/NameIdMappings';
 import type { ClientGrid } from '@/core/ClientGrid';
 import { projectCoordinate as projectWorldCoordinate } from '@/core/WorldProjection';
+import { LightingEnvironment } from './LightingEnvironment';
+import type { LightColor, TileLight } from '@/api/EnvironmentApi';
 
 export interface PixiGameRendererOptions {
   host: HTMLElement;
@@ -44,6 +46,7 @@ export class PixiGameRenderer implements GameRenderer {
   private readonly scene: PixiScene;
   private readonly viewport: PixiViewport;
   private readonly pipeline: RenderPipeline;
+  private readonly lighting = new LightingEnvironment();
 
   private rendererOptions: RendererDebugOptions;
 
@@ -62,6 +65,7 @@ export class PixiGameRenderer implements GameRenderer {
       new TileVisualResolver(options.registries, options.nameIdMappings),
       this.textureLoader,
       this.scene.depthSortedContainer,
+      this.lighting,
     );
     this.entityLayer = new PixiEntityLayer(
       new EntityVisualResolver(options.registries, options.nameIdMappings),
@@ -69,6 +73,7 @@ export class PixiGameRenderer implements GameRenderer {
       options.grid,
       this.scene.depthSortedContainer,
       (coordinate, beforeRenderOrder) => this.tilemapLayer.getSurfaceHeight(coordinate, beforeRenderOrder),
+      this.lighting,
     );
     this.viewport = new PixiViewport(
       this.app, options.host, options.uiHost, this.camera, this.debugState, () => this.drawCameraScene(),
@@ -76,6 +81,7 @@ export class PixiGameRenderer implements GameRenderer {
     this.pipeline = new RenderPipeline(
       this.app, this.debugState, this.scene, this.viewport, this.entityLayer, this.tilemapLayer,
       new InteriorFadeController(this.tilemapLayer, this.entityLayer),
+      this.lighting,
     );
   }
 
@@ -146,6 +152,9 @@ export class PixiGameRenderer implements GameRenderer {
         this.entityLayer.removeServerEntity(packet.networkId);
         this.drawCameraScene();
         break;
+      case 'setEnvironmentLight':
+        this.lighting.setAmbientLight(packet);
+        break;
       default:
         break;
     }
@@ -213,5 +222,10 @@ export class PixiGameRenderer implements GameRenderer {
   addMapChangedListener(listener: (coordinate: Coordinate, width: number, height: number) => void): () => void {
     return this.tilemapLayer.addMapChangedListener(listener);
   }
+
+  setAmbientLight(color: LightColor): void { this.lighting.setAmbientLight(color); }
+  getAmbientLight(): LightColor { return this.lighting.getAmbientLight(); }
+  setTileLight(coordinate: Coordinate, light: TileLight | null): void { this.lighting.setTileLight(coordinate, light); }
+  clearTileLights(): void { this.lighting.clearTileLights(); }
 
 }

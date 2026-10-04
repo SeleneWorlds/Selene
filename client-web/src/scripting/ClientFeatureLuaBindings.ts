@@ -8,8 +8,9 @@ import type { LuaRuntime } from './LuaRuntime';
 import { LuaArguments } from './LuaArguments';
 import { toLuaCoordinate } from './LuaObjects';
 import { createSignal } from './LuaSignal';
+import type { EnvironmentApi, LightColor, TileLight } from '@/api/EnvironmentApi';
 
-export interface ClientFeatureLuaApis { map: MapApi; sounds: SoundsApi; resources: ResourcesApi; textures: TexturesApi; visuals: VisualsApi }
+export interface ClientFeatureLuaApis { map: MapApi; sounds: SoundsApi; resources: ResourcesApi; textures: TexturesApi; visuals: VisualsApi; environment: EnvironmentApi }
 
 export async function registerClientFeatureLuaModules(runtime: LuaRuntime, apis: ClientFeatureLuaApis): Promise<void> {
   const changed = createSignal('selene.map.onChunkChanged', (callback) => apis.map.addChunkChangedListener((coordinate, width, height) => callback(toLuaCoordinate(coordinate), width, height)));
@@ -28,6 +29,27 @@ export async function registerClientFeatureLuaModules(runtime: LuaRuntime, apis:
   const createVisual = (id: unknown) => apis.visuals.create(str('visuals.create', id, 'identifier'));
   await runtime.preloadModule('selene.visuals.internal', () => ({ create: createVisual }));
   await runtime.preloadModule('selene.visuals', () => ({ create: createVisual }));
+  await runtime.preloadModule('selene.environment', () => ({
+    setAmbientLight: (value: unknown) => apis.environment.setAmbientLight(color(value)),
+    getAmbientLight: () => apis.environment.getAmbientLight(),
+    setTileLight: (position: unknown, value: unknown) => apis.environment.setTileLight(
+      coordinate('environment.setTileLight', position), light(value),
+    ),
+    clearTileLights: () => apis.environment.clearTileLights(),
+  }));
+}
+
+function color(value: unknown): LightColor {
+  const result = record(value);
+  if (!result) throw new Error('Expected a color table.');
+  return { red: Number(result.red ?? result.r), green: Number(result.green ?? result.g), blue: Number(result.blue ?? result.b) };
+}
+function light(value: unknown): TileLight | null {
+  if (value == null) return null;
+  const result = record(value);
+  if (!result) throw new Error('Expected a light table or nil.');
+  const parsed = { ...color(result.color ?? result), radius: Number(result.radius ?? result.size) };
+  return result.intensity == null ? parsed : { ...parsed, intensity: Number(result.intensity) };
 }
 
 function textureObject(api: ReturnType<TexturesApi['create']>): Record<string, unknown> {

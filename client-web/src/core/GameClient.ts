@@ -20,6 +20,7 @@ import type { Coordinate } from '@/networking/GameProtocol';
 import type { ClientMapTile } from '@/core/ClientMap';
 import { ClientPacketDispatcher } from '@/core/ClientPacketDispatcher';
 import { ClientTickPipeline } from '@/core/ClientTickPipeline';
+import type { EnvironmentApi } from '@/api/EnvironmentApi';
 
 export interface GameClientOptions {
   canvasHost: HTMLElement;
@@ -117,6 +118,15 @@ export class GameClient {
       clearWindowAspectRatio: () => this.renderer.clearWindowAspectRatio(),
       setOffscreenRendering: (width, height) => this.renderer.setOffscreenRendering(width, height),
       setNativeRendering: () => this.renderer.setNativeRendering(),
+    };
+  }
+
+  getEnvironmentApi(): EnvironmentApi {
+    return {
+      setAmbientLight: color => this.renderer.setAmbientLight(color),
+      getAmbientLight: () => this.renderer.getAmbientLight(),
+      setTileLight: (coordinate, light) => this.renderer.setTileLight(coordinate, light),
+      clearTileLights: () => this.renderer.clearTileLights(),
     };
   }
 

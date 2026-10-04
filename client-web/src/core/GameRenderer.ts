@@ -5,6 +5,7 @@ import type { ClientMapTile } from '@/core/ClientMap';
 import type { RendererDebugOptions } from '@/core/DebugState';
 import type { Coordinate, GamePacket } from '@/networking/GameProtocol';
 import type { NameIdMappings } from '@/networking/NameIdMappings';
+import type { LightColor, TileLight } from '@/api/EnvironmentApi';
 
 export interface GameRendererContext {
   camera: ClientCamera;
@@ -33,4 +34,8 @@ export interface GameRenderer {
   projectEntity(networkId: number): { x: number; y: number } | null;
   getMapTiles(coordinate?: Coordinate, width?: number, height?: number): ClientMapTile[];
   addMapChangedListener(listener: (coordinate: Coordinate, width: number, height: number) => void): () => void;
+  setAmbientLight(color: LightColor): void;
+  getAmbientLight(): LightColor;
+  setTileLight(coordinate: Coordinate, light: TileLight | null): void;
+  clearTileLights(): void;
 }

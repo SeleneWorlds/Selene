@@ -148,6 +148,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       resources: new ResourcesService(assetManifest, serverApiUrl, authToken),
       textures: new TexturesService(),
       visuals: visualsApi,
+      environment: gameClient.getEnvironmentApi(),
     };
 
     const luaRuntime = new LuaRuntime();

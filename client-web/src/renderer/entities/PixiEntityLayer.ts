@@ -11,6 +11,7 @@ import type { ContentTextureLoader } from './ContentTextureLoader';
 import type { EntityVisualResolver } from './EntityVisualResolver';
 import type { ResolvedEntityAnimation, ResolvedEntityVisual } from './EntityVisualResolver';
 import type { ClientGrid } from '@/core/ClientGrid';
+import type { LightingEnvironment } from '../LightingEnvironment';
 
 interface RenderedEntity {
   container: Container;
@@ -47,6 +48,7 @@ export class PixiEntityLayer {
     private readonly grid: ClientGrid,
     readonly container: Container,
     private readonly getSurfaceHeight: (coordinate: Coordinate, beforeRenderOrder: number) => number = () => 0,
+    private readonly lighting?: LightingEnvironment,
   ) {}
 
   update(deltaMs: number): void {
@@ -65,8 +67,14 @@ export class PixiEntityLayer {
       }
       // Surface heights can change independently when a map stack is updated.
       this.positionEntity(rendered);
+      this.updateEntityLight(id, rendered);
+      this.applyLighting(rendered);
       this.updateAnimation(id, rendered, deltaMs);
     }
+  }
+
+  updateLighting(): void {
+    for (const rendered of this.renderedEntities.values()) this.applyLighting(rendered);
   }
 
   upsertServerEntity(packet: EntityPacket): void {
@@ -225,6 +233,7 @@ export class PixiEntityLayer {
     }
 
     rendered.container.destroy({ children: true });
+    this.lighting?.removeEntityLight(networkId);
     this.renderedEntities.delete(networkId);
   }
 
@@ -288,6 +297,18 @@ export class PixiEntityLayer {
     }
   }
 
+  private applyLighting(entity: RenderedEntity): void {
+    if (!this.lighting || !entity.sprite || !entity.visual) return;
+    const light = this.lighting.getColor(entity.coordinate);
+    entity.sprite.tint = (Math.round(light.red * entity.visual.red * 255) << 16)
+      | (Math.round(light.green * entity.visual.green * 255) << 8)
+      | Math.round(light.blue * entity.visual.blue * 255);
+  }
+
+  private updateEntityLight(id: number, entity: RenderedEntity): void {
+    this.lighting?.setEntityLight(id, entity.coordinate, entity.visual?.light ?? null);
+  }
+
   private async applyVisual(
     id: number,
     rendered: RenderedEntity,
@@ -310,6 +331,7 @@ export class PixiEntityLayer {
     }
 
     rendered.visual = visual;
+    this.updateEntityLight(id, rendered);
     applyNameTag(rendered);
     this.positionEntity(rendered);
     rendered.animationName = null;

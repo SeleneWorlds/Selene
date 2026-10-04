@@ -21,6 +21,7 @@ const PacketId = {
   TurnEntity: 17,
   RequestFacing: 19,
   SetActiveGrid: 21,
+  SetEnvironmentLight: 22,
   CustomPayload: 254,
   Disconnect: 255,
 } as const;
@@ -40,6 +41,7 @@ export type GamePacket =
   | UpdateMapTilesPacket
   | TurnEntityPacket
   | SetActiveGridPacket
+  | SetEnvironmentLightPacket
   | CustomPayloadPacket
   | DisconnectPacket
   | UnknownGamePacket;
@@ -155,6 +157,13 @@ export interface SetActiveGridPacket {
   identifier: string;
 }
 
+export interface SetEnvironmentLightPacket {
+  type: 'setEnvironmentLight';
+  red: number;
+  green: number;
+  blue: number;
+}
+
 export interface CustomPayloadPacket {
   type: 'customPayload';
   payloadId: string;
@@ -226,6 +235,8 @@ export function decodeGamePacket(data: ArrayBuffer): GamePacket {
       return decodeTurnEntityPacket(reader);
     case PacketId.SetActiveGrid:
       return decodeSetActiveGridPacket(reader);
+    case PacketId.SetEnvironmentLight:
+      return decodeSetEnvironmentLightPacket(reader);
     case PacketId.CustomPayload:
       return decodeCustomPayloadPacket(reader);
     case PacketId.Disconnect:
@@ -233,6 +244,12 @@ export function decodeGamePacket(data: ArrayBuffer): GamePacket {
     default:
       return { type: 'unknown', packetId };
   }
+}
+
+function decodeSetEnvironmentLightPacket(reader: PacketReader): SetEnvironmentLightPacket {
+  const packet = { type: 'setEnvironmentLight' as const, red: reader.readFloat(), green: reader.readFloat(), blue: reader.readFloat() };
+  reader.assertFullyRead();
+  return packet;
 }
 
 function decodeDisconnectPacket(reader: PacketReader): DisconnectPacket {

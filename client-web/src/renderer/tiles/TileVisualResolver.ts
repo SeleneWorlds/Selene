@@ -62,7 +62,7 @@ export class TileVisualResolver {
       offsetY: visualDefinition.offsetY ?? 0,
       flipX: visualDefinition.flipX ?? false,
       flipY: visualDefinition.flipY ?? false,
-      metadata: { ...(visualDefinition.metadata ?? {}) },
+      metadata: { ...(tileDefinition.metadata ?? {}), ...(visualDefinition.metadata ?? {}) },
     };
   }
 
