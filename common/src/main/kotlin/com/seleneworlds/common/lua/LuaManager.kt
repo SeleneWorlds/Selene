@@ -1,8 +1,10 @@
 package com.seleneworlds.common.lua
 
 import org.koin.mp.KoinPlatform.getKoin
+import org.slf4j.LoggerFactory
 import party.iroiro.luajava.ClassPathLoader
 import party.iroiro.luajava.Lua
+import party.iroiro.luajava.LuaException
 import party.iroiro.luajava.lua54.Lua54
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.IdentifierLuaApi
@@ -16,6 +18,8 @@ import com.seleneworlds.common.grid.Direction
 import com.seleneworlds.common.grid.DirectionLuaApi
 import com.seleneworlds.common.lua.libraries.LuaPackageModule
 import com.seleneworlds.common.lua.util.newTable
+import com.seleneworlds.common.lua.util.register
+import com.seleneworlds.common.lua.util.xpCall
 import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.observable.ObservableMapLuaApi
 import com.seleneworlds.common.util.ResolvableReference
@@ -46,6 +50,7 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         luaPackage.initializeEarly(lua)
         lua.setExternalLoader(ClassPathLoader())
         loadInternalLuaModule("bit32")
+        lua.register("xpcall", ::xpCall)
 
         // Load standard libraries, but only those that are safe
         val libraries = setOf("string", "math", "table", "coroutine")
@@ -65,6 +70,23 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         // Reset _G to make sure it doesn't leak access to anything we don't want
         lua.newTable()
         lua.setGlobal("_G")
+    }
+
+    private fun xpCall(lua: Lua): Int {
+        return try {
+            lua.xpCall(lua.top - 1, -1)
+            val resultCount = lua.top
+            lua.push(true)
+            lua.insert(1)
+            resultCount + 1
+        } catch (exception: LuaException) {
+            val message = exception.message ?: "no error message available"
+            LOGGER.error(message)
+            lua.top = 0
+            lua.push(false)
+            lua.push(message)
+            2
+        }
     }
 
     fun loadInternalLuaModule(module: String) {
@@ -184,6 +206,8 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
     }
 
     companion object {
+        private val LOGGER = LoggerFactory.getLogger(LuaManager::class.java)
+
         private val metatables = mutableMapOf<KClass<*>, LuaMetatable>()
 
         fun registerMetatable(clazz: KClass<*>, metatable: LuaMetatable) {
