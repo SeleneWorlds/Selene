@@ -4,6 +4,7 @@ import com.seleneworlds.common.data.RegistryReference
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.entities.EntityDefinition
 import com.seleneworlds.common.entities.ImpassableComponentConfiguration
+import com.seleneworlds.common.entities.PassableAboveComponentConfiguration
 import com.seleneworlds.common.grid.Direction
 import com.seleneworlds.common.network.packet.EntityAnimationPacket
 import com.seleneworlds.common.observable.ObservableMap
@@ -31,6 +32,7 @@ class Entity(
 ) : IdResolvable<Int, Entity>, ExposedApi<EntityApi> {
     override val api = EntityApi(this)
     var impassable: Boolean = true
+    var passableAbove: Boolean = false
     var networkId: Int = -1
     var entityDefinition: RegistryReference<EntityDefinition> = RegistryReference.unbound()
     var name = "John Selene"
@@ -101,6 +103,9 @@ class Entity(
     fun loadComponents(entityDefinition: EntityDefinition) {
         impassable = entityDefinition.components.values.any {
             it is ImpassableComponentConfiguration && it.enabled
+        }
+        passableAbove = entityDefinition.components.values.any {
+            it is PassableAboveComponentConfiguration && it.enabled
         }
         components.clear()
         tickableComponents.clear()

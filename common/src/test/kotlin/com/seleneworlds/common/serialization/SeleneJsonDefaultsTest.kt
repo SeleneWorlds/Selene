@@ -3,6 +3,7 @@ package com.seleneworlds.common.serialization
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.entities.DraggableComponentConfiguration
 import com.seleneworlds.common.entities.IgnoresElevationComponentConfiguration
+import com.seleneworlds.common.entities.PassableAboveComponentConfiguration
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -23,6 +24,16 @@ class SeleneJsonDefaultsTest {
 
         assertEquals(
             "{\"type\":\"ignores_elevation\"}",
+            seleneJson.encodeToString(component)
+        )
+    }
+
+    @Test
+    fun `passable above component serializes with its default`() {
+        val component: ComponentConfiguration = PassableAboveComponentConfiguration()
+
+        assertEquals(
+            "{\"type\":\"passable_above\",\"enabled\":true}",
             seleneJson.encodeToString(component)
         )
     }

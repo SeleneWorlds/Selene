@@ -25,12 +25,12 @@ class CollisionResolver(
                 passable = true
             }
         }
-        if (passable) {
-            val entities = dimension.getEntitiesAt(coordinate)
-            entities.forEach { entity ->
-                if (entity.impassable) {
-                    passable = false
-                }
+        val entities = dimension.getEntitiesAt(coordinate)
+        entities.forEach { entity ->
+            if (entity.impassable) {
+                passable = false
+            } else if (entity.passableAbove) {
+                passable = true
             }
         }
         return !passable

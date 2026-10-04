@@ -27,6 +27,12 @@ data class ImpassableComponentConfiguration(
 ) : ComponentConfiguration
 
 @Serializable
+@SerialName("passable_above")
+data class PassableAboveComponentConfiguration(
+    val enabled: Boolean = true
+) : ComponentConfiguration
+
+@Serializable
 @SerialName("draggable")
 data class DraggableComponentConfiguration(
     val enabled: Boolean = true

@@ -13,6 +13,7 @@ import com.seleneworlds.common.entities.ClientScriptComponentConfiguration
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.entities.DraggableComponentConfiguration
 import com.seleneworlds.common.entities.ImpassableComponentConfiguration
+import com.seleneworlds.common.entities.PassableAboveComponentConfiguration
 import com.seleneworlds.common.entities.IgnoresElevationComponentConfiguration
 import com.seleneworlds.common.entities.ServerScriptComponentConfiguration
 import com.seleneworlds.common.entities.VisualComponentConfiguration
@@ -49,6 +50,7 @@ class EntityComponentFactory(
             is ClientScriptComponentConfiguration -> ClientScriptComponent(scriptProvider.loadEntityScript(configuration.script))
             is ServerScriptComponentConfiguration -> null
             is ImpassableComponentConfiguration -> null
+            is PassableAboveComponentConfiguration -> null
             is DraggableComponentConfiguration -> DraggableComponent(configuration.enabled)
             is IgnoresElevationComponentConfiguration -> IgnoresElevationComponent()
             is LightComponentConfiguration -> null
