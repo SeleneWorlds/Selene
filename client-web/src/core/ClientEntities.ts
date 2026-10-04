@@ -321,7 +321,13 @@ class ClientEntity implements EntityApi {
   applyNetworkState(coordinate: Coordinate, facing: number, components: Record<string, unknown>): void {
     this.coordinate = { ...coordinate };
     this.facing = facing;
-    Object.assign(this.components, components);
+    const parsedComponents = Object.fromEntries(
+      Object.entries(components).map(([name, component]) => [name, parseNetworkComponent(component)]),
+    );
+    Object.assign(
+      this.components,
+      parsedComponents,
+    );
   }
 
   applyNetworkMove(coordinate: Coordinate, facing: number): void {
@@ -358,6 +364,17 @@ function isClientScriptComponent(value: unknown): value is { type: string; scrip
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function parseNetworkComponent(value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return value;
+  }
 }
 
 function findClientScriptModule(components: Record<string, unknown>): string | null {
