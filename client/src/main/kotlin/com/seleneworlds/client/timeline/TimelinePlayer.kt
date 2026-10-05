@@ -1,5 +1,8 @@
 package com.seleneworlds.client.timeline
 
+import com.badlogic.gdx.graphics.Color
+import com.badlogic.gdx.graphics.Pixmap
+import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.Batch
 import com.badlogic.gdx.graphics.g2d.ParticleEffect
 import com.badlogic.gdx.graphics.g2d.ParticleEmitter
@@ -13,9 +16,13 @@ import com.seleneworlds.client.rendering.scene.Scene
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.threading.MainThreadDispatcher
+import com.seleneworlds.common.util.Disposable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.floatOrNull
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import org.slf4j.Logger
 
@@ -29,7 +36,14 @@ class TimelinePlayer(
     private val grid: ClientGrid,
     private val cameraManager: CameraManager,
     private val logger: Logger
-) {
+) : Disposable {
+    private var overlayTexture: Texture? = null
+
+    override fun dispose() {
+        overlayTexture?.dispose()
+        overlayTexture = null
+    }
+
     private data class Playback(
         val instanceId: String,
         val timeline: String,
@@ -46,8 +60,15 @@ class TimelinePlayer(
         val screenSpace: Boolean,
     )
 
+    private data class OwnedOverlay(
+        val instanceId: String,
+        val event: ScreenOverlayTimelineEvent,
+        var elapsed: Float = 0f
+    )
+
     private val playbacks = mutableListOf<Playback>()
     private val effects = mutableListOf<OwnedEffect>()
+    private val overlays = mutableListOf<OwnedOverlay>()
     private val instanceTimelines = mutableMapOf<String, String>()
     private val pendingEffects = mutableMapOf<String, Int>()
     private val stoppedInstances = mutableSetOf<String>()
@@ -71,6 +92,7 @@ class TimelinePlayer(
             stoppedInstances += target
             playbacks.removeAll { it.instanceId == target }
             effects.filter { it.instanceId == target }.forEach { it.effect.allowCompletion() }
+            overlays.removeAll { it.instanceId == target }
             cleanupInstance(target)
         }
     }
@@ -102,6 +124,16 @@ class TimelinePlayer(
                 cleanupInstance(owned.instanceId)
             }
         }
+
+        val overlayIterator = overlays.iterator()
+        while (overlayIterator.hasNext()) {
+            val owned = overlayIterator.next()
+            owned.elapsed += delta
+            if (owned.elapsed >= owned.event.duration) {
+                overlayIterator.remove()
+                cleanupInstance(owned.instanceId)
+            }
+        }
     }
 
     fun renderScreen(batch: Batch, width: Float, height: Float) {
@@ -110,11 +142,23 @@ class TimelinePlayer(
             configureScreenEffect(owned.effect, width, height)
             owned.effect.draw(batch)
         }
+        for (owned in overlays) {
+            val color = Color.valueOf(owned.event.keyedString("color", owned.event.color, owned.elapsed).removePrefix("#"))
+            val alpha = owned.event.keyedFloat("alpha", owned.event.alpha, owned.elapsed).coerceIn(0f, 1f) * color.a
+            if (alpha <= 0f) continue
+            batch.setColor(color.r, color.g, color.b, alpha)
+            batch.draw(whiteTexture(), 0f, 0f, width, height)
+        }
+        batch.setColor(1f, 1f, 1f, 1f)
     }
 
     private fun execute(event: TimelineEvent, playback: Playback) {
         when (event) {
             is ParticleSystemTimelineEvent -> playParticleSystem(event, playback)
+            is ScreenOverlayTimelineEvent -> overlays += OwnedOverlay(
+                playback.instanceId,
+                event
+            )
             is VisualAnimationTimelineEvent -> logger.warn("Visual animation timeline events are not supported by this client")
         }
     }
@@ -182,10 +226,41 @@ class TimelinePlayer(
     private fun cleanupInstance(instanceId: String) {
         if (playbacks.any { it.instanceId == instanceId }) return
         if (effects.any { it.instanceId == instanceId }) return
+        if (overlays.any { it.instanceId == instanceId }) return
         if (pendingEffects.containsKey(instanceId)) return
         instanceTimelines.remove(instanceId)
         stoppedInstances.remove(instanceId)
     }
+
+    private fun whiteTexture(): Texture = overlayTexture ?: run {
+        val pixmap = Pixmap(1, 1, Pixmap.Format.RGBA8888)
+        pixmap.setColor(Color.WHITE)
+        pixmap.fill()
+        Texture(pixmap).also {
+            pixmap.dispose()
+            overlayTexture = it
+        }
+    }
+}
+
+internal fun TimelineEvent.keyedFloat(property: String, base: Float, elapsed: Float): Float =
+    keyedValue(property, elapsed, JsonPrimitive(base)).floatOrNull ?: base
+
+internal fun TimelineEvent.keyedString(property: String, base: String, elapsed: Float): String =
+    keyedValue(property, elapsed, JsonPrimitive(base)).contentOrNull ?: base
+
+private fun TimelineEvent.keyedValue(property: String, elapsed: Float, base: JsonPrimitive): JsonPrimitive {
+    val propertyKeys = keys[property]?.sortedBy { it.time }.orEmpty()
+    val currentIndex = propertyKeys.indexOfLast { it.time <= elapsed }
+    if (currentIndex < 0) return base
+    val current = propertyKeys[currentIndex]
+    val next = propertyKeys.getOrNull(currentIndex + 1) ?: return current.value
+    if (current.interpolation == TimelineKeyInterpolation.STEP) return current.value
+
+    val from = current.value.floatOrNull ?: return current.value
+    val to = next.value.floatOrNull ?: return current.value
+    val progress = ((elapsed - current.time) / (next.time - current.time)).coerceIn(0f, 1f)
+    return JsonPrimitive(from + (to - from) * progress)
 }
 
 private fun JsonElement.toCoordinate(): Coordinate? {

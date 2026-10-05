@@ -289,7 +289,7 @@ class SeleneApplication(
         }
         val renderingModule = module {
             singleOf(::ParticleSystemLoader)
-            singleOf(::TimelinePlayer)
+            singleOf(::TimelinePlayer) { bind<Disposable>() }
             singleOf(::VisualFactory)
             singleOf(::CameraManager)
             singleOf(::SceneRenderer)

@@ -1,9 +1,10 @@
-import { Container, Sprite } from 'pixi.js';
+import { Container, Sprite, Texture } from 'pixi.js';
 import { getRegistryEntry, type ClientRegistrySnapshots } from '@/data/ClientRegistryLoader';
 import type {
   ClientTimelineDefinition,
   ClientVisualDefinition,
   ParticleSystemTimelineEvent,
+  ScreenOverlayTimelineEvent,
   VisualAnimationTimelineEvent,
 } from '@/data/ClientRegistrySchemas';
 import type { Coordinate, PlayTimelinePacket, StopTimelinePacket } from '@/networking/GameProtocol';
@@ -45,11 +46,19 @@ interface ParticleEffect {
   screenSpace: boolean;
 }
 
+interface OverlayEffect {
+  instanceId: string;
+  event: ScreenOverlayTimelineEvent;
+  sprite: Sprite;
+  elapsedMs: number;
+}
+
 /** Schedules typed timeline events and owns their temporary scene objects. */
 export class TimelinePlayer {
   private readonly playbacks: Playback[] = [];
   private readonly effects: VisualEffect[] = [];
   private readonly particleEffects: ParticleEffect[] = [];
+  private readonly overlayEffects: OverlayEffect[] = [];
   private readonly instanceTimelines = new Map<string, string>();
   private readonly instanceTags = new Map<string, ReadonlySet<string>>();
   private readonly pendingEffects = new Map<string, number>();
@@ -103,6 +112,11 @@ export class TimelinePlayer {
       for (const effect of this.particleEffects) {
         if (effect.instanceId === instanceId) effect.system.stop();
       }
+      for (let index = this.overlayEffects.length - 1; index >= 0; index -= 1) {
+        if (this.overlayEffects[index].instanceId !== instanceId) continue;
+        this.overlayEffects[index].sprite.destroy();
+        this.overlayEffects.splice(index, 1);
+      }
       this.cleanupInstance(instanceId);
     }
   }
@@ -142,6 +156,17 @@ export class TimelinePlayer {
       );
       if (nextFrame !== effect.frame) void this.setFrame(effect, nextFrame);
     }
+    for (let index = this.overlayEffects.length - 1; index >= 0; index -= 1) {
+      const effect = this.overlayEffects[index];
+      effect.elapsedMs += deltaMs;
+      if (effect.elapsedMs >= effect.event.duration * 1000) {
+        effect.sprite.destroy();
+        this.overlayEffects.splice(index, 1);
+        this.cleanupInstance(effect.instanceId);
+        continue;
+      }
+      this.updateOverlay(effect);
+    }
   }
 
   private updatePlaybacks(deltaMs: number): void {
@@ -168,7 +193,29 @@ export class TimelinePlayer {
       case 'particle_system':
         void this.playParticleSystem(event, playback);
         break;
+      case 'screen_overlay':
+        this.playScreenOverlay(event, playback);
+        break;
     }
+  }
+
+  private playScreenOverlay(event: ScreenOverlayTimelineEvent, playback: Playback): void {
+    const sprite = new Sprite(Texture.WHITE);
+    const effect = { instanceId: playback.instanceId, event, sprite, elapsedMs: 0 };
+    this.overlayEffects.push(effect);
+    this.screenScene.addChild(sprite);
+    this.updateOverlay(effect);
+  }
+
+  private updateOverlay(effect: OverlayEffect): void {
+    const viewport = this.getViewport();
+    effect.sprite.position.set(viewport.x, viewport.y);
+    effect.sprite.width = viewport.width;
+    effect.sprite.height = viewport.height;
+    effect.sprite.tint = keyedValue(effect.event, 'color', effect.event.color, effect.elapsedMs / 1000) as string;
+    effect.sprite.alpha = Math.min(1, Math.max(0,
+      keyedValue(effect.event, 'alpha', effect.event.alpha, effect.elapsedMs / 1000) as number,
+    ));
   }
 
   private async playParticleSystem(
@@ -289,11 +336,30 @@ export class TimelinePlayer {
     if (this.playbacks.some(playback => playback.instanceId === instanceId)) return;
     if (this.effects.some(effect => effect.instanceId === instanceId)) return;
     if (this.particleEffects.some(effect => effect.instanceId === instanceId)) return;
+    if (this.overlayEffects.some(effect => effect.instanceId === instanceId)) return;
     if (this.pendingEffects.has(instanceId)) return;
     this.instanceTimelines.delete(instanceId);
     this.instanceTags.delete(instanceId);
     this.stoppedInstances.delete(instanceId);
   }
+}
+
+function keyedValue(
+  event: ScreenOverlayTimelineEvent,
+  property: string,
+  base: string | number,
+  elapsed: number,
+): string | number | boolean {
+  const keys = [...(event.keys[property] ?? [])].sort((left, right) => left.time - right.time);
+  let currentIndex = -1;
+  for (let index = 0; index < keys.length && keys[index].time <= elapsed; index += 1) currentIndex = index;
+  if (currentIndex < 0) return base;
+  const current = keys[currentIndex];
+  const next = keys[currentIndex + 1];
+  if (!next || current.interpolation === 'step') return current.value;
+  if (typeof current.value !== 'number' || typeof next.value !== 'number') return current.value;
+  const progress = Math.min(1, Math.max(0, (elapsed - current.time) / (next.time - current.time)));
+  return current.value + (next.value - current.value) * progress;
 }
 
 function getAnimationTextures(visual: ClientVisualDefinition | undefined): string[] {

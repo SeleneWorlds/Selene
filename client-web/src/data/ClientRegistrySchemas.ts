@@ -153,12 +153,21 @@ export const ClientParticleSystemDefinitionSchema = z.object({
 });
 export type ClientParticleSystemDefinition = z.infer<typeof ClientParticleSystemDefinitionSchema>;
 
+const timelineKeyframeSchema = z.object({
+  time: z.number().finite().nonnegative(),
+  value: z.union([z.number().finite(), z.string(), z.boolean()]),
+  interpolation: z.enum(['linear', 'step']).default('linear'),
+});
+
+const timelineKeysSchema = z.record(z.string(), z.array(timelineKeyframeSchema)).default({});
+
 export const VisualAnimationTimelineEventSchema = z.object({
   type: z.literal('visual_animation'),
   time: z.number().finite().nonnegative().default(0),
   visual: z.string().min(1),
   duration: z.number().finite().positive().optional(),
   position: z.string().min(1).default('position'),
+  keys: timelineKeysSchema,
 });
 export type VisualAnimationTimelineEvent = z.infer<typeof VisualAnimationTimelineEventSchema>;
 
@@ -169,13 +178,25 @@ export const ParticleSystemTimelineEventSchema = z.object({
   space: z.enum(['world', 'screen']).default('world'),
   position: z.string().min(1).default('position'),
   emissionRateMultiplier: z.string().min(1).optional(),
+  keys: timelineKeysSchema,
 });
 export type ParticleSystemTimelineEvent = z.infer<typeof ParticleSystemTimelineEventSchema>;
+
+export const ScreenOverlayTimelineEventSchema = z.object({
+  type: z.literal('screen_overlay'),
+  time: z.number().finite().nonnegative().default(0),
+  duration: z.number().finite().positive(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/).default('#ffffff'),
+  alpha: z.number().min(0).max(1).default(1),
+  keys: timelineKeysSchema,
+});
+export type ScreenOverlayTimelineEvent = z.infer<typeof ScreenOverlayTimelineEventSchema>;
 
 export const ClientTimelineDefinitionSchema = z.object({
   events: z.array(z.discriminatedUnion('type', [
     VisualAnimationTimelineEventSchema,
     ParticleSystemTimelineEventSchema,
+    ScreenOverlayTimelineEventSchema,
   ])),
   metadata: metadataSchema,
 });
