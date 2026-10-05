@@ -71,7 +71,7 @@ export class BundleUiInputClaims {
     };
   }
 
-  private hasEditableFocus(): boolean {
+  hasEditableFocus(): boolean {
     for (const root of this.roots) {
       const active = root.activeElement;
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ||

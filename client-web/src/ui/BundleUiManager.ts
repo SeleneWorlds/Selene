@@ -19,7 +19,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 7;
+const API_VERSION = 8;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -60,6 +60,7 @@ interface BundleUiApi {
     captureText: () => () => void;
     passThroughKeys: (...keys: string[]) => () => void;
     isPassthroughKey: (key: string) => boolean;
+    hasEditableFocus: () => boolean;
     onPointerDown: (callback: (event: BundleUiPointerEvent) => void) => () => void;
     onPointerUp: (callback: (event: BundleUiPointerEvent) => void) => () => void;
   };
@@ -177,6 +178,7 @@ export class BundleUiManager {
         captureText: () => this.options.input.captureText(),
         passThroughKeys: (...keys: string[]) => this.options.input.passThroughKeys(...keys),
         isPassthroughKey: (key: string) => this.options.input.isPassthroughKey(key),
+        hasEditableFocus: () => this.options.input.hasEditableFocus(),
         onPointerDown: (callback: (event: BundleUiPointerEvent) => void) =>
           this.registerPointerListener('pointerdown', callback),
         onPointerUp: (callback: (event: BundleUiPointerEvent) => void) =>
