@@ -36,6 +36,7 @@ data class ParticleSystemDefinition(
     val scaleMinimumMultiplier: Float = 1f,
     val alpha: ParticleTransition = ParticleTransition(),
     val color: ParticleColorTransition = ParticleColorTransition(),
+    val angle: ParticleRange = ParticleRange(0f, 0f),
     val rotation: ParticleRange = ParticleRange(0f, 0f),
     val spawn: ParticleSpawn = ParticleSpawn.Point,
     val additive: Boolean = false,
@@ -48,6 +49,7 @@ data class ParticleSystemDefinition(
         require(speed.start >= 0f && speed.end >= 0f && speedMinimumMultiplier in 0f..1f)
         require(scale.start >= 0f && scale.end >= 0f && scaleMinimumMultiplier in 0f..1f)
         require(alpha.start in 0f..1f && alpha.end in 0f..1f)
+        require(angle.max >= angle.min)
         require(rotation.max >= rotation.min)
         require(Regex("^#[0-9a-fA-F]{6}$").matches(color.start))
         require(Regex("^#[0-9a-fA-F]{6}$").matches(color.end))

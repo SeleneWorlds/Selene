@@ -38,6 +38,7 @@ interface TileSurface {
 
 interface ParticleEffect {
   system: PixiParticleSystem;
+  screenSpace: boolean;
 }
 
 /** Schedules typed timeline events and owns their temporary scene objects. */
@@ -50,7 +51,9 @@ export class TimelinePlayer {
     private readonly registries: ClientRegistrySnapshots,
     private readonly textureLoader: ContentTextureLoader,
     private readonly scene: Container,
+    private readonly screenScene: Container,
     private readonly getSurface: (coordinate: Coordinate) => TileSurface,
+    private readonly getViewport: () => { x: number; y: number; width: number; height: number },
   ) {}
 
   play(packet: PlayTimelinePacket): void {
@@ -73,6 +76,11 @@ export class TimelinePlayer {
     const deltaSeconds = deltaMs / 1000;
     for (let index = this.particleEffects.length - 1; index >= 0; index -= 1) {
       const effect = this.particleEffects[index];
+      if (effect.screenSpace) {
+        const viewport = this.getViewport();
+        effect.system.container.position.set(viewport.x + viewport.width / 2, viewport.y);
+        effect.system.setScreenSpawnWidth(viewport.width);
+      }
       effect.system.update(deltaSeconds);
       if (effect.system.complete) {
         effect.system.destroy();
@@ -124,8 +132,8 @@ export class TimelinePlayer {
     event: ParticleSystemTimelineEvent,
     parameters: TimelineParameters,
   ): Promise<void> {
-    const position = readCoordinate(parameters.values[event.position]);
-    if (!position) {
+    const position = event.space === 'world' ? readCoordinate(parameters.values[event.position]) : null;
+    if (event.space === 'world' && !position) {
       console.warn(`[Timelines] Particle event ${event.particle} requires coordinate parameter ${event.position}.`);
       return;
     }
@@ -136,17 +144,26 @@ export class TimelinePlayer {
     }
     try {
       const texture = await this.textureLoader.load(definition.texture);
-      const system = loadPixiParticleSystem(definition, texture);
+      const initialViewport = event.space === 'screen' ? this.getViewport() : null;
+      const system = loadPixiParticleSystem(definition, texture, initialViewport?.width ?? null);
       const container = system.container;
-      const projected = projectCoordinate(position);
-      const surface = this.getSurface(position);
-      container.position.set(projected.x, projected.y - surface.height);
-      const particleOrder = getRenderOrder(position, 0, ENTITY_LOCAL_SORT_LAYER);
-      container.zIndex = surface.renderOrder === null
-        ? particleOrder
-        : Math.max(particleOrder, surface.renderOrder + ENTITY_LOCAL_SORT_LAYER);
-      this.scene.addChild(container);
-      this.particleEffects.push({ system });
+      if (event.space === 'screen') {
+        const viewport = this.getViewport();
+        container.position.set(viewport.x + viewport.width / 2, viewport.y);
+        system.setScreenSpawnWidth(viewport.width);
+        this.screenScene.addChild(container);
+      } else {
+        const worldPosition = position!;
+        const projected = projectCoordinate(worldPosition);
+        const surface = this.getSurface(worldPosition);
+        container.position.set(projected.x, projected.y - surface.height);
+        const particleOrder = getRenderOrder(worldPosition, 0, ENTITY_LOCAL_SORT_LAYER);
+        container.zIndex = surface.renderOrder === null
+          ? particleOrder
+          : Math.max(particleOrder, surface.renderOrder + ENTITY_LOCAL_SORT_LAYER);
+        this.scene.addChild(container);
+      }
+      this.particleEffects.push({ system, screenSpace: event.space === 'screen' });
     } catch (error) {
       console.warn(`[Timelines] Failed to start particle system ${event.particle}.`, error);
     }

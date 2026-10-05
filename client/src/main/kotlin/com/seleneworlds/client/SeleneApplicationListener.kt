@@ -24,6 +24,7 @@ import com.seleneworlds.client.input.SystemInputProcessor
 import com.seleneworlds.client.network.NetworkClient
 import com.seleneworlds.client.rendering.DebugRenderer
 import com.seleneworlds.client.rendering.SceneRenderer
+import com.seleneworlds.client.timeline.TimelinePlayer
 import com.seleneworlds.client.rendering.drawable.DrawableManager
 import com.seleneworlds.client.ui.UI
 import com.seleneworlds.client.ui.cef.CefBrowserUi
@@ -44,6 +45,7 @@ class SeleneApplicationListener(
     private val drawableManager: DrawableManager,
     private val gridMovement: GridMovement,
     private val sceneRenderer: SceneRenderer,
+    private val timelinePlayer: TimelinePlayer,
     private val debugRenderer: DebugRenderer,
     private val bundleWatcher: ClientBundleWatcher,
     private val mainThreadDispatcher: MainThreadDispatcher,
@@ -157,6 +159,8 @@ class SeleneApplicationListener(
         sceneRenderer.render(spriteBatch)
         spriteBatch.end()
 
+        renderScreenEffects(cameraManager.camera.viewportWidth, cameraManager.camera.viewportHeight)
+
         cameraManager.applyRenderViewport()
         debugRenderer.render(cameraManager.camera.combined)
     }
@@ -173,6 +177,8 @@ class SeleneApplicationListener(
         spriteBatch.begin()
         sceneRenderer.render(spriteBatch)
         spriteBatch.end()
+
+        renderScreenEffects(cameraManager.camera.viewportWidth, cameraManager.camera.viewportHeight)
 
         cameraManager.applyLogicalRenderViewport()
         debugRenderer.render(cameraManager.camera.combined)
@@ -219,5 +225,13 @@ class SeleneApplicationListener(
                 flip(false, true)
             }
         }
+    }
+
+    private fun renderScreenEffects(width: Float, height: Float) {
+        spriteBatch.projectionMatrix = screenProjection.setToOrtho2D(0f, 0f, width, height)
+        spriteBatch.setColor(1f, 1f, 1f, 1f)
+        spriteBatch.begin()
+        timelinePlayer.renderScreen(spriteBatch, width, height)
+        spriteBatch.end()
     }
 }

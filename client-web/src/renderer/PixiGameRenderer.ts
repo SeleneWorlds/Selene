@@ -1,4 +1,4 @@
-import { Application } from 'pixi.js';
+import { Application, Container } from 'pixi.js';
 import type { ClientEntitySnapshot } from '@/api/EntitiesApi';
 import type { DebugState, RendererDebugOptions } from '@/core/DebugState';
 import type { ClientAssetManifest } from '@/core/services/ClientAssetManifest';
@@ -49,6 +49,7 @@ export class PixiGameRenderer implements GameRenderer {
   private readonly pipeline: RenderPipeline;
   private readonly lighting = new LightingEnvironment();
   private readonly timelinePlayer: TimelinePlayer;
+  private readonly screenEffects = new Container();
 
   private rendererOptions: RendererDebugOptions;
 
@@ -73,7 +74,9 @@ export class PixiGameRenderer implements GameRenderer {
       options.registries,
       this.textureLoader,
       this.scene.depthSortedContainer,
+      this.screenEffects,
       coordinate => this.tilemapLayer.getSurface(coordinate),
+      () => this.camera.getViewportRect(),
     );
     this.entityLayer = new PixiEntityLayer(
       new EntityVisualResolver(options.registries, options.nameIdMappings),
@@ -109,6 +112,7 @@ export class PixiGameRenderer implements GameRenderer {
     this.app.ticker.stop();
     this.host.appendChild(this.app.canvas);
     this.app.stage.addChild(this.scene.container);
+    this.app.stage.addChild(this.screenEffects);
     this.viewport.initialize();
     this.debugState.update({ rendererStatus: 'ready' });
   }

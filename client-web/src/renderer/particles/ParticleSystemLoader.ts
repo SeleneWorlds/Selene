@@ -17,12 +17,15 @@ export class PixiParticleSystem {
   private readonly particles: ActiveParticle[] = [];
   private elapsed = 0;
   private spawnTimer = 0;
+  private screenSpawnWidth: number | null = null;
 
   constructor(
     private readonly definition: ClientParticleSystemDefinition,
     private readonly texture: Texture,
+    screenSpawnWidth: number | null = null,
     private readonly random: () => number = Math.random,
   ) {
+    this.screenSpawnWidth = screenSpawnWidth;
     this.container = new ParticleContainer({
       texture,
       dynamicProperties: { position: true, rotation: false, vertex: true, color: true },
@@ -62,6 +65,10 @@ export class PixiParticleSystem {
     return this.elapsed >= this.definition.emitterLifetime && this.particles.length === 0;
   }
 
+  setScreenSpawnWidth(width: number): void {
+    this.screenSpawnWidth = width;
+  }
+
   destroy(): void {
     this.particles.length = 0;
     this.container.removeFromParent();
@@ -77,18 +84,20 @@ export class PixiParticleSystem {
   }
 
   private spawnParticle(): void {
-    const angle = randomBetween(this.definition.rotation.min, this.definition.rotation.max, this.random);
-    const radians = angle * Math.PI / 180;
+    const angle = randomBetween(this.definition.angle.min, this.definition.angle.max, this.random) * Math.PI / 180;
+    const rotation = randomBetween(this.definition.rotation.min, this.definition.rotation.max, this.random) * Math.PI / 180;
     const scaleMultiplier = randomBetween(this.definition.scaleMinimumMultiplier, 1, this.random);
     const scale = this.definition.scale.start * scaleMultiplier;
-    const position = spawnPosition(this.definition.spawn, this.random);
+    const position = this.screenSpawnWidth === null
+      ? spawnPosition(this.definition.spawn, this.random)
+      : { x: (this.random() - 0.5) * this.screenSpawnWidth, y: 0 };
     const view = new Particle({
       texture: this.texture,
       x: position.x,
       y: position.y,
       anchorX: 0.5,
       anchorY: 0.5,
-      rotation: radians,
+      rotation,
       scaleX: scale,
       scaleY: scale,
       tint: this.definition.color.start,
@@ -99,8 +108,8 @@ export class PixiParticleSystem {
       view,
       age: 0,
       lifetime: randomBetween(this.definition.lifetime.min, this.definition.lifetime.max, this.random),
-      directionX: Math.cos(radians),
-      directionY: Math.sin(radians),
+      directionX: Math.cos(angle),
+      directionY: Math.sin(angle),
       speedMultiplier: randomBetween(this.definition.speedMinimumMultiplier, 1, this.random),
       scaleMultiplier,
     });
@@ -110,8 +119,9 @@ export class PixiParticleSystem {
 export function loadPixiParticleSystem(
   definition: ClientParticleSystemDefinition,
   texture: Texture,
+  screenSpawnWidth: number | null = null,
 ): PixiParticleSystem {
-  return new PixiParticleSystem(definition, texture);
+  return new PixiParticleSystem(definition, texture, screenSpawnWidth);
 }
 
 function spawnPosition(

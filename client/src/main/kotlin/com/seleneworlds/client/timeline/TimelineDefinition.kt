@@ -24,8 +24,15 @@ data class VisualAnimationTimelineEvent(
 data class ParticleSystemTimelineEvent(
     override val time: Float = 0f,
     val particle: String,
+    val space: ParticleSystemSpace = ParticleSystemSpace.WORLD,
     val position: String = "position"
 ) : TimelineEvent()
+
+@Serializable
+enum class ParticleSystemSpace {
+    @SerialName("world") WORLD,
+    @SerialName("screen") SCREEN
+}
 
 @Serializable
 data class TimelineDefinition(

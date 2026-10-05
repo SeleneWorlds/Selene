@@ -4,8 +4,12 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
+import com.badlogic.gdx.graphics.g2d.Batch
+import com.badlogic.gdx.graphics.g2d.ParticleEffect
+import com.badlogic.gdx.graphics.g2d.ParticleEmitter
 import org.slf4j.Logger
 import com.seleneworlds.client.assets.AssetProvider
+import com.seleneworlds.client.camera.CameraManager
 import com.seleneworlds.client.grid.ClientGrid
 import com.seleneworlds.client.particles.ParticleEffectRenderable
 import com.seleneworlds.client.particles.ParticleSystemLoader
@@ -23,6 +27,7 @@ class TimelinePlayer(
     private val mainThread: MainThreadDispatcher,
     private val scene: Scene,
     private val grid: ClientGrid,
+    private val cameraManager: CameraManager,
     private val logger: Logger
 ) {
     private data class Playback(
@@ -32,7 +37,10 @@ class TimelinePlayer(
         val parameters: JsonObject
     )
 
+    private data class ScreenEffect(val effect: ParticleEffect)
+
     private val playbacks = mutableListOf<Playback>()
+    private val screenEffects = mutableListOf<ScreenEffect>()
 
     fun play(identifier: String, parameters: JsonObject) {
         val definition = timelines.get(Identifier.parse(identifier))
@@ -55,6 +63,20 @@ class TimelinePlayer(
             }
             if (playback.nextEvent == playback.events.size) iterator.remove()
         }
+        val screenIterator = screenEffects.iterator()
+        while (screenIterator.hasNext()) {
+            val effect = screenIterator.next().effect
+            configureScreenEffect(effect, cameraManager.camera.viewportWidth, cameraManager.camera.viewportHeight)
+            effect.update(delta)
+            if (effect.isComplete) screenIterator.remove()
+        }
+    }
+
+    fun renderScreen(batch: Batch, width: Float, height: Float) {
+        for ((effect) in screenEffects) {
+            configureScreenEffect(effect, width, height)
+            effect.draw(batch)
+        }
     }
 
     private fun execute(event: TimelineEvent, parameters: JsonObject) {
@@ -65,8 +87,8 @@ class TimelinePlayer(
     }
 
     private fun playParticleSystem(event: ParticleSystemTimelineEvent, parameters: JsonObject) {
-        val coordinate = parameters[event.position]?.toCoordinate()
-        if (coordinate == null) {
+        val coordinate = if (event.space == ParticleSystemSpace.WORLD) parameters[event.position]?.toCoordinate() else null
+        if (event.space == ParticleSystemSpace.WORLD && coordinate == null) {
             logger.warn("Particle event ${event.particle} requires coordinate parameter ${event.position}")
             return
         }
@@ -79,9 +101,26 @@ class TimelinePlayer(
             if (error != null) return@invokeOnCompletion
             mainThread.runOnMainThread {
                 val texture = assets.getLoadedTexture(definition.texture) ?: return@runOnMainThread
-                scene.add(ParticleEffectRenderable(coordinate, particleLoader.load(definition, texture), grid))
+                val effect = particleLoader.load(definition, texture)
+                if (event.space == ParticleSystemSpace.SCREEN) {
+                    configureScreenEffect(effect, cameraManager.camera.viewportWidth, cameraManager.camera.viewportHeight)
+                    effect.start()
+                    screenEffects += ScreenEffect(effect)
+                } else {
+                    scene.add(ParticleEffectRenderable(coordinate!!, effect, grid))
+                }
             }
         }
+    }
+
+    private fun configureScreenEffect(effect: ParticleEffect, width: Float, height: Float) {
+        val emitter = effect.emitters.first()
+        emitter.spawnShape.setShape(ParticleEmitter.SpawnShape.square)
+        emitter.spawnWidth.setLow(width)
+        emitter.spawnWidth.setHigh(width)
+        emitter.spawnHeight.setLow(0f)
+        emitter.spawnHeight.setHigh(0f)
+        effect.setPosition(width / 2f, height)
     }
 }
 

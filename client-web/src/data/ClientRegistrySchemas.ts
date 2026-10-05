@@ -135,6 +135,12 @@ export const ClientParticleSystemDefinitionSchema = z.object({
   scaleMinimumMultiplier: z.number().finite().min(0).max(1).default(1),
   alpha: alphaTransitionSchema,
   color: colorTransitionSchema,
+  angle: z.object({
+    min: z.number().finite(),
+    max: z.number().finite(),
+  }).refine((value) => value.max >= value.min, {
+    message: 'max must be greater than or equal to min',
+  }).default({ min: 0, max: 0 }),
   rotation: z.object({
     min: z.number().finite(),
     max: z.number().finite(),
@@ -160,6 +166,7 @@ export const ParticleSystemTimelineEventSchema = z.object({
   type: z.literal('particle_system'),
   time: z.number().finite().nonnegative().default(0),
   particle: z.string().min(1),
+  space: z.enum(['world', 'screen']).default('world'),
   position: z.string().min(1).default('position'),
 });
 export type ParticleSystemTimelineEvent = z.infer<typeof ParticleSystemTimelineEventSchema>;

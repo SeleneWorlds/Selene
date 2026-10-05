@@ -2,6 +2,7 @@ package com.seleneworlds.client.particles
 
 import com.seleneworlds.client.timeline.ParticleSystemTimelineEvent
 import com.seleneworlds.client.timeline.TimelineDefinition
+import com.seleneworlds.client.timeline.ParticleSystemSpace
 import com.seleneworlds.common.serialization.seleneJson
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -44,5 +45,15 @@ class ParticleSystemFormatTest {
         val event = assertIs<ParticleSystemTimelineEvent>(timeline.events.single())
         assertEquals("example:sparks", event.particle)
         assertEquals("target", event.position)
+    }
+
+    @Test
+    fun `screen particle event does not need a position parameter`() {
+        val timeline = seleneJson.decodeFromString<TimelineDefinition>(
+            """{ "events": [{ "type": "particle_system", "particle": "example:rain", "space": "screen" }] }"""
+        )
+
+        val event = assertIs<ParticleSystemTimelineEvent>(timeline.events.single())
+        assertEquals(ParticleSystemSpace.SCREEN, event.space)
     }
 }

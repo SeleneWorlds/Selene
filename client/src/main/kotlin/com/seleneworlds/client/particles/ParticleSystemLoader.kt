@@ -24,7 +24,7 @@ class ParticleSystemLoader {
             emission.configureConstant(1f / definition.frequency)
             life.configureRange(definition.lifetime.min * 1000f, definition.lifetime.max * 1000f)
             velocity.configureTransition(definition.speed, definition.speedMinimumMultiplier)
-            angle.configureRange(definition.rotation.min, definition.rotation.max)
+            angle.configureRange(definition.angle.min, definition.angle.max)
             rotation.configureRange(definition.rotation.min, definition.rotation.max)
             xScale.configureTransition(
                 ParticleTransition(definition.scale.start * texture.width, definition.scale.end * texture.width),
