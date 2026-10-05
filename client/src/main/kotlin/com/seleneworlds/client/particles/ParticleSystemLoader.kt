@@ -9,9 +9,14 @@ import com.badlogic.gdx.utils.Array
 
 /** Converts Selene's portable particle subset to a configured libGDX ParticleEffect. */
 class ParticleSystemLoader {
-    fun load(definition: ParticleSystemDefinition, texture: Texture): ParticleEffect {
+    fun load(
+        definition: ParticleSystemDefinition,
+        texture: Texture,
+        emissionRateMultiplier: Float = 1f
+    ): ParticleEffect {
         require(definition.frequency > 0f)
         require(definition.lifetime.min > 0f && definition.lifetime.max >= definition.lifetime.min)
+        require(emissionRateMultiplier >= 0f && emissionRateMultiplier.isFinite())
         val emitter = ParticleEmitter().apply {
             name = definition.identifier.toString()
             setMaxParticleCount(definition.maxParticles)
@@ -21,7 +26,7 @@ class ParticleSystemLoader {
             setCleansUpBlendFunction(true)
             setSprites(Array.with(Sprite(texture)))
             definition.emitterLifetime?.let { getDuration().setLow(it * 1000f) }
-            emission.configureConstant(1f / definition.frequency)
+            emission.configureConstant((1f / definition.frequency) * emissionRateMultiplier)
             life.configureRange(definition.lifetime.min * 1000f, definition.lifetime.max * 1000f)
             velocity.configureTransition(definition.speed, definition.speedMinimumMultiplier)
             angle.configureRange(definition.angle.min, definition.angle.max)

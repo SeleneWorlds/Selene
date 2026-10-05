@@ -48,6 +48,7 @@ data class ParticleSystemTimelineEvent(
     val particle: String,
     val space: ParticleSystemSpace = ParticleSystemSpace.WORLD,
     val position: String = "position",
+    val emissionRateMultiplier: String? = null,
     override val keys: Map<String, List<TimelineKeyframe>> = emptyMap()
 ) : TimelineEvent()
 

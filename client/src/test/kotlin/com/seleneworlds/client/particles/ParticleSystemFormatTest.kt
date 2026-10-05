@@ -51,11 +51,13 @@ class ParticleSystemFormatTest {
     @Test
     fun `screen particle event does not need a position parameter`() {
         val timeline = seleneJson.decodeFromString<TimelineDefinition>(
-            """{ "events": [{ "type": "particle_system", "particle": "example:rain", "space": "screen" }] }"""
+            """{ "events": [{ "type": "particle_system", "particle": "example:rain", "space": "screen",
+              "emissionRateMultiplier": "strength" }] }"""
         )
 
         val event = assertIs<ParticleSystemTimelineEvent>(timeline.events.single())
         assertEquals(ParticleSystemSpace.SCREEN, event.space)
+        assertEquals("strength", event.emissionRateMultiplier)
     }
 
     @Test

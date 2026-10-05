@@ -194,7 +194,10 @@ class TimelinePlayer(
                     markPending(playback.instanceId, -1)
                     return@runOnMainThread
                 }
-                val effect = particleLoader.load(definition, texture)
+                val emissionRateMultiplier = event.emissionRateMultiplier?.let { parameter ->
+                    playback.parameters[parameter]?.jsonPrimitive?.floatOrNull
+                }?.takeIf { it.isFinite() && it >= 0f } ?: 1f
+                val effect = particleLoader.load(definition, texture, emissionRateMultiplier)
                 if (event.space == ParticleSystemSpace.SCREEN) {
                     configureScreenEffect(effect, cameraManager.camera.viewportWidth, cameraManager.camera.viewportHeight)
                     effect.start()
