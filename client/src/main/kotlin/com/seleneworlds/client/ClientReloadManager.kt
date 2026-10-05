@@ -38,6 +38,8 @@ class ClientReloadManager(
         registries.renderGrids.load(bundleDatabase)
         registries.visuals.load(bundleDatabase)
         registries.audios.load(bundleDatabase)
+        registries.particles.load(bundleDatabase)
+        registries.timelines.load(bundleDatabase)
         registries.customRegistries.load(bundleDatabase)
         val activeGridId = activeGrid.reapply()
         val renderGrid = registries.renderGrids.get(activeGridId)
@@ -68,6 +70,8 @@ class ClientReloadManager(
             registries.renderGrids,
             registries.visuals,
             registries.audios,
+            registries.particles,
+            registries.timelines,
             registries.customRegistries
         ).forEach {
             it.registryPopulated(nameIdRegistry, false)

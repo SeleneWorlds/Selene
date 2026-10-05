@@ -3,6 +3,8 @@ package com.seleneworlds.client.data
 import com.seleneworlds.client.grid.RenderGridRegistry
 import com.seleneworlds.client.rendering.visual.VisualRegistry
 import com.seleneworlds.client.sounds.AudioRegistry
+import com.seleneworlds.client.particles.ParticleSystemRegistry
+import com.seleneworlds.client.timeline.TimelineRegistry
 import com.seleneworlds.common.data.*
 import com.seleneworlds.common.data.custom.CustomRegistries
 import com.seleneworlds.common.entities.EntityRegistry
@@ -18,6 +20,8 @@ class Registries(
     val visuals: VisualRegistry,
     val sounds: SoundRegistry,
     val audios: AudioRegistry,
+    val particles: ParticleSystemRegistry,
+    val timelines: TimelineRegistry,
     val customRegistries: CustomRegistries
 ) : RegistryProvider {
 
@@ -30,6 +34,8 @@ class Registries(
             VisualRegistry.IDENTIFIER -> visuals
             SoundRegistry.IDENTIFIER -> sounds
             AudioRegistry.IDENTIFIER -> audios
+            ParticleSystemRegistry.IDENTIFIER -> particles
+            TimelineRegistry.IDENTIFIER -> timelines
             CustomRegistries.IDENTIFIER -> customRegistries
             else -> customRegistries.getCustomRegistry(identifier)
         }

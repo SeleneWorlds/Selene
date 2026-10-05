@@ -10,6 +10,7 @@ import com.seleneworlds.client.data.Registries
 import com.seleneworlds.client.maps.ClientMap
 import com.seleneworlds.client.sounds.SoundManager
 import com.seleneworlds.client.rendering.environment.Environment
+import com.seleneworlds.client.timeline.TimelinePlayer
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.data.mappings.NameIdRegistry
 import com.seleneworlds.common.grid.ActiveGrid
@@ -33,6 +34,7 @@ class ClientPacketHandler(
     private val activeGrid: ActiveGrid,
     private val runtimeBundleUpdateManager: RuntimeBundleUpdateManager,
     private val environment: Environment,
+    private val timelinePlayer: TimelinePlayer,
 ) : PacketHandler<NetworkClient> {
     override fun handle(
         context: NetworkClient,
@@ -184,6 +186,10 @@ class ClientPacketHandler(
 
             is SetEnvironmentLightPacket -> {
                 context.enqueueWork { environment.setLight(packet.red, packet.green, packet.blue) }
+            }
+
+            is PlayTimelinePacket -> {
+                context.enqueueWork { timelinePlayer.play(packet.timeline, packet.parameters) }
             }
 
             is DisconnectPacket -> {

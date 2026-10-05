@@ -69,6 +69,10 @@ import com.seleneworlds.client.script.ClientLuaScriptProvider
 import com.seleneworlds.client.script.ClientScriptProvider
 import com.seleneworlds.client.sounds.AudioRegistry
 import com.seleneworlds.client.sounds.SoundManager
+import com.seleneworlds.client.particles.ParticleSystemLoader
+import com.seleneworlds.client.particles.ParticleSystemRegistry
+import com.seleneworlds.client.timeline.TimelinePlayer
+import com.seleneworlds.client.timeline.TimelineRegistry
 import com.seleneworlds.client.sounds.SoundsApi
 import com.seleneworlds.client.sounds.SoundsLuaApi
 import com.seleneworlds.client.tiles.Tile
@@ -239,6 +243,8 @@ class SeleneApplication(
             singleOf(::RenderGridRegistry)
             singleOf(::VisualRegistry)
             singleOf(::AudioRegistry)
+            singleOf(::ParticleSystemRegistry)
+            singleOf(::TimelineRegistry)
             singleOf(::CustomRegistries)
             singleOf(::NameIdRegistry)
             singleOf(::Registries) { bind<RegistryProvider>() }
@@ -282,6 +288,8 @@ class SeleneApplication(
             factoryOf(::Entity)
         }
         val renderingModule = module {
+            singleOf(::ParticleSystemLoader)
+            singleOf(::TimelinePlayer)
             singleOf(::VisualFactory)
             singleOf(::CameraManager)
             singleOf(::SceneRenderer)
