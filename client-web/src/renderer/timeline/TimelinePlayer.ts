@@ -188,7 +188,15 @@ export class TimelinePlayer {
       const texture = await this.textureLoader.load(definition.texture);
       if (this.stoppedInstances.has(playback.instanceId)) return;
       const initialViewport = event.space === 'screen' ? this.getViewport() : null;
-      const system = loadPixiParticleSystem(definition, texture, initialViewport?.width ?? null);
+      const emissionRateMultiplier = event.emissionRateMultiplier === undefined
+        ? 1
+        : readNonNegativeNumber(playback.parameters.values[event.emissionRateMultiplier], 1);
+      const system = loadPixiParticleSystem(
+        definition,
+        texture,
+        initialViewport?.width ?? null,
+        emissionRateMultiplier,
+      );
       const container = system.container;
       if (event.space === 'screen') {
         const viewport = this.getViewport();
@@ -296,4 +304,9 @@ function readCoordinate(value: unknown): Coordinate | null {
   return Number.isInteger(coordinate.x) && Number.isInteger(coordinate.y) && Number.isInteger(coordinate.z)
     ? { x: coordinate.x as number, y: coordinate.y as number, z: coordinate.z as number }
     : null;
+}
+
+function readNonNegativeNumber(value: unknown, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
+  return Math.max(value, 0);
 }

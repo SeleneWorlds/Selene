@@ -24,6 +24,7 @@ export class PixiParticleSystem {
     private readonly definition: ClientParticleSystemDefinition,
     private readonly texture: Texture,
     screenSpawnWidth: number | null = null,
+    private readonly emissionRateMultiplier = 1,
     private readonly random: () => number = Math.random,
   ) {
     this.screenSpawnWidth = screenSpawnWidth;
@@ -32,7 +33,7 @@ export class PixiParticleSystem {
       dynamicProperties: { position: true, rotation: false, vertex: true, color: true },
     });
     if (definition.additive) this.container.blendMode = 'add';
-    this.spawnWave();
+    if (emissionRateMultiplier > 0) this.spawnWave();
   }
 
   update(deltaSeconds: number): void {
@@ -40,8 +41,11 @@ export class PixiParticleSystem {
     this.spawnTimer += deltaSeconds;
     const withinLifetime = this.definition.emitterLifetime === null
       || this.elapsed <= this.definition.emitterLifetime;
-    while (this.emitting && withinLifetime && this.spawnTimer >= this.definition.frequency) {
-      this.spawnTimer -= this.definition.frequency;
+    const frequency = this.emissionRateMultiplier > 0
+      ? this.definition.frequency / this.emissionRateMultiplier
+      : Number.POSITIVE_INFINITY;
+    while (this.emitting && withinLifetime && this.spawnTimer >= frequency) {
+      this.spawnTimer -= frequency;
       this.spawnWave();
     }
     for (let index = this.particles.length - 1; index >= 0; index -= 1) {
@@ -129,8 +133,9 @@ export function loadPixiParticleSystem(
   definition: ClientParticleSystemDefinition,
   texture: Texture,
   screenSpawnWidth: number | null = null,
+  emissionRateMultiplier = 1,
 ): PixiParticleSystem {
-  return new PixiParticleSystem(definition, texture, screenSpawnWidth);
+  return new PixiParticleSystem(definition, texture, screenSpawnWidth, emissionRateMultiplier);
 }
 
 function spawnPosition(

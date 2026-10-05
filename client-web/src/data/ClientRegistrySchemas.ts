@@ -168,6 +168,7 @@ export const ParticleSystemTimelineEventSchema = z.object({
   particle: z.string().min(1),
   space: z.enum(['world', 'screen']).default('world'),
   position: z.string().min(1).default('position'),
+  emissionRateMultiplier: z.string().min(1).optional(),
 });
 export type ParticleSystemTimelineEvent = z.infer<typeof ParticleSystemTimelineEventSchema>;
 
