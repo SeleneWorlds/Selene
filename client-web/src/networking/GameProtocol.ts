@@ -173,12 +173,14 @@ export interface PlayTimelinePacket {
   instanceId: string;
   timeline: string;
   parameters: Readonly<Record<string, unknown>>;
+  tags: readonly string[];
 }
 
 export interface StopTimelinePacket {
   type: 'stopTimeline';
   instanceId: string | null;
   timeline: string | null;
+  tag: string | null;
 }
 
 export interface CustomPayloadPacket {
@@ -277,18 +279,20 @@ function decodePlayTimelinePacket(reader: PacketReader): PlayTimelinePacket {
   const instanceId = reader.readString();
   const timeline = reader.readString();
   const parameters = parseTimelineParameters(timeline, reader.readString());
+  const tags = Array.from({ length: reader.readInt() }, () => reader.readString());
   reader.assertFullyRead();
-  return { type: 'playTimeline', instanceId, timeline, parameters };
+  return { type: 'playTimeline', instanceId, timeline, parameters, tags };
 }
 
 function decodeStopTimelinePacket(reader: PacketReader): StopTimelinePacket {
   const instanceId = reader.readString() || null;
   const timeline = reader.readString() || null;
-  if ((instanceId === null) === (timeline === null)) {
+  const tag = reader.readString() || null;
+  if ([instanceId, timeline, tag].filter(value => value !== null).length !== 1) {
     throw new Error('Stop timeline packet must contain exactly one target.');
   }
   reader.assertFullyRead();
-  return { type: 'stopTimeline', instanceId, timeline };
+  return { type: 'stopTimeline', instanceId, timeline, tag };
 }
 
 function parseTimelineParameters(timeline: string, encoded: string): Record<string, unknown> {

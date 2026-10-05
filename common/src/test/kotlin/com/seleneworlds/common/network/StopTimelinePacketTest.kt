@@ -16,6 +16,11 @@ class StopTimelinePacketTest {
         assertRoundTrip(StopTimelinePacket(timeline = "example:rain"))
     }
 
+    @Test
+    fun `round trips tag target`() {
+        assertRoundTrip(StopTimelinePacket(tag = "example:weather"))
+    }
+
     private fun assertRoundTrip(expected: StopTimelinePacket) {
         val buffer = Unpooled.buffer()
         try {

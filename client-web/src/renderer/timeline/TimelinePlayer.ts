@@ -51,6 +51,7 @@ export class TimelinePlayer {
   private readonly effects: VisualEffect[] = [];
   private readonly particleEffects: ParticleEffect[] = [];
   private readonly instanceTimelines = new Map<string, string>();
+  private readonly instanceTags = new Map<string, ReadonlySet<string>>();
   private readonly pendingEffects = new Map<string, number>();
   private readonly stoppedInstances = new Set<string>();
 
@@ -71,6 +72,7 @@ export class TimelinePlayer {
     }
     this.stoppedInstances.delete(packet.instanceId);
     this.instanceTimelines.set(packet.instanceId, packet.timeline);
+    this.instanceTags.set(packet.instanceId, new Set(packet.tags));
     this.playbacks.push({
       instanceId: packet.instanceId,
       timeline: packet.timeline,
@@ -83,9 +85,11 @@ export class TimelinePlayer {
   }
 
   stop(packet: StopTimelinePacket): void {
-    const targets = packet.instanceId === null
-      ? [...this.instanceTimelines].filter(([, timeline]) => timeline === packet.timeline).map(([id]) => id)
-      : [packet.instanceId];
+    const targets = packet.instanceId !== null
+      ? [packet.instanceId]
+      : packet.timeline !== null
+        ? [...this.instanceTimelines].filter(([, timeline]) => timeline === packet.timeline).map(([id]) => id)
+        : [...this.instanceTags].filter(([, tags]) => tags.has(packet.tag!)).map(([id]) => id);
     for (const instanceId of targets) {
       this.stoppedInstances.add(instanceId);
       for (let index = this.playbacks.length - 1; index >= 0; index -= 1) {
@@ -287,6 +291,7 @@ export class TimelinePlayer {
     if (this.particleEffects.some(effect => effect.instanceId === instanceId)) return;
     if (this.pendingEffects.has(instanceId)) return;
     this.instanceTimelines.delete(instanceId);
+    this.instanceTags.delete(instanceId);
     this.stoppedInstances.delete(instanceId);
   }
 }

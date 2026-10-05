@@ -14,18 +14,23 @@ data class PlayTimelinePacket(
     val timeline: String,
     /** Arbitrary values interpreted by the client-side event implementations. */
     val parameters: JsonObject = JsonObject(emptyMap()),
+    val tags: List<String> = emptyList(),
 ) : Packet {
     companion object {
         fun decode(buf: ByteBuf): PlayTimelinePacket {
             val instanceId = buf.readString()
             val timeline = buf.readString()
-            return PlayTimelinePacket(instanceId, timeline, Json.parseToJsonElement(buf.readString()).jsonObject)
+            val parameters = Json.parseToJsonElement(buf.readString()).jsonObject
+            val tags = List(buf.readInt()) { buf.readString() }
+            return PlayTimelinePacket(instanceId, timeline, parameters, tags)
         }
 
         fun encode(buf: ByteBuf, packet: PlayTimelinePacket) {
             buf.writeString(packet.instanceId)
             buf.writeString(packet.timeline)
             buf.writeString(Json.encodeToString(JsonObject.serializer(), packet.parameters))
+            buf.writeInt(packet.tags.size)
+            packet.tags.forEach { buf.writeString(it) }
         }
     }
 }

@@ -16,6 +16,7 @@ class PlayTimelinePacketTest {
             parameters = Json.parseToJsonElement(
                 """{"position":{"x":12,"y":-4,"z":2},"strength":0.75,"variants":["blue",2]}"""
             ).jsonObject,
+            tags = listOf("example:weather", "example:ambient"),
         )
         val factory = PacketFactory().also { PacketRegistrations(it).register() }
         val buf = Unpooled.buffer()

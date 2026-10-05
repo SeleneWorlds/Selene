@@ -17,10 +17,11 @@ class TimelinesApi(private val world: World) {
         player: PlayerApi,
         timeline: String,
         parameters: SerializedMap = emptyMap(),
+        tags: List<String> = emptyList(),
     ): String {
         val instanceId = UUID.randomUUID().toString()
         player.delegate.client.send(
-            packet(instanceId, timeline, parameters)
+            packet(instanceId, timeline, parameters, tags)
         )
         return instanceId
     }
@@ -30,11 +31,17 @@ class TimelinesApi(private val world: World) {
         timeline: String,
         dimension: Dimension = world.dimensionManager.getOrCreateDimension(0),
         parameters: SerializedMap = emptyMap(),
+        tags: List<String> = emptyList(),
     ): String {
         val instanceId = UUID.randomUUID().toString()
         dimension.syncManager.sendToAllWatching(
             position,
-            packet(instanceId, timeline, parameters + ("position" to mapOf("x" to position.x, "y" to position.y, "z" to position.z)))
+            packet(
+                instanceId,
+                timeline,
+                parameters + ("position" to mapOf("x" to position.x, "y" to position.y, "z" to position.z)),
+                tags,
+            )
         )
         return instanceId
     }
@@ -45,6 +52,10 @@ class TimelinesApi(private val world: World) {
 
     fun stopAll(player: PlayerApi, timeline: String) {
         player.delegate.client.send(StopTimelinePacket(timeline = Identifier.parse(timeline).toString()))
+    }
+
+    fun stopTag(player: PlayerApi, tag: String) {
+        player.delegate.client.send(StopTimelinePacket(tag = Identifier.parse(tag).toString()))
     }
 
     fun stopAt(
@@ -66,9 +77,26 @@ class TimelinesApi(private val world: World) {
         )
     }
 
-    private fun packet(instanceId: String, timeline: String, parameters: SerializedMap) = PlayTimelinePacket(
+    fun stopTagAt(
+        position: Coordinate,
+        tag: String,
+        dimension: Dimension = world.dimensionManager.getOrCreateDimension(0),
+    ) {
+        dimension.syncManager.sendToAllWatching(
+            position,
+            StopTimelinePacket(tag = Identifier.parse(tag).toString())
+        )
+    }
+
+    private fun packet(
+        instanceId: String,
+        timeline: String,
+        parameters: SerializedMap,
+        tags: List<String>,
+    ) = PlayTimelinePacket(
         instanceId,
         Identifier.parse(timeline).toString(),
-        parameters.toJsonElement()
+        parameters.toJsonElement(),
+        tags.map { Identifier.parse(it).toString() }.distinct(),
     )
 }
