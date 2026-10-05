@@ -1,13 +1,15 @@
-import { Sprite, type Container } from 'pixi.js';
+import { Container, Sprite } from 'pixi.js';
 import { getRegistryEntry, type ClientRegistrySnapshots } from '@/data/ClientRegistryLoader';
 import type {
   ClientTimelineDefinition,
   ClientVisualDefinition,
+  ParticleSystemTimelineEvent,
   VisualAnimationTimelineEvent,
 } from '@/data/ClientRegistrySchemas';
 import type { Coordinate, PlayTimelinePacket } from '@/networking/GameProtocol';
 import { ENTITY_LOCAL_SORT_LAYER, getRenderOrder, projectCoordinate } from '@/renderer/IsoProjection';
 import type { ContentTextureLoader } from '@/renderer/entities/ContentTextureLoader';
+import { loadPixiParticleSystem, type PixiParticleSystem } from '@/renderer/particles/ParticleSystemLoader';
 
 interface Playback {
   elapsedMs: number;
@@ -34,10 +36,15 @@ interface TileSurface {
   renderOrder: number | null;
 }
 
+interface ParticleEffect {
+  system: PixiParticleSystem;
+}
+
 /** Schedules typed timeline events and owns their temporary scene objects. */
 export class TimelinePlayer {
   private readonly playbacks: Playback[] = [];
   private readonly effects: VisualEffect[] = [];
+  private readonly particleEffects: ParticleEffect[] = [];
 
   constructor(
     private readonly registries: ClientRegistrySnapshots,
@@ -63,6 +70,15 @@ export class TimelinePlayer {
 
   update(deltaMs: number): void {
     this.updatePlaybacks(deltaMs);
+    const deltaSeconds = deltaMs / 1000;
+    for (let index = this.particleEffects.length - 1; index >= 0; index -= 1) {
+      const effect = this.particleEffects[index];
+      effect.system.update(deltaSeconds);
+      if (effect.system.complete) {
+        effect.system.destroy();
+        this.particleEffects.splice(index, 1);
+      }
+    }
     for (let index = this.effects.length - 1; index >= 0; index -= 1) {
       const effect = this.effects[index];
       effect.elapsedMs += deltaMs;
@@ -98,6 +114,41 @@ export class TimelinePlayer {
       case 'visual_animation':
         void this.playVisualAnimation(event, parameters);
         break;
+      case 'particle_system':
+        void this.playParticleSystem(event, parameters);
+        break;
+    }
+  }
+
+  private async playParticleSystem(
+    event: ParticleSystemTimelineEvent,
+    parameters: TimelineParameters,
+  ): Promise<void> {
+    const position = readCoordinate(parameters.values[event.position]);
+    if (!position) {
+      console.warn(`[Timelines] Particle event ${event.particle} requires coordinate parameter ${event.position}.`);
+      return;
+    }
+    const definition = getRegistryEntry(this.registries, 'particles', event.particle);
+    if (!definition) {
+      console.warn(`[Timelines] Particle event references unknown system ${event.particle}.`);
+      return;
+    }
+    try {
+      const texture = await this.textureLoader.load(definition.texture);
+      const system = loadPixiParticleSystem(definition, texture);
+      const container = system.container;
+      const projected = projectCoordinate(position);
+      const surface = this.getSurface(position);
+      container.position.set(projected.x, projected.y - surface.height);
+      const particleOrder = getRenderOrder(position, 0, ENTITY_LOCAL_SORT_LAYER);
+      container.zIndex = surface.renderOrder === null
+        ? particleOrder
+        : Math.max(particleOrder, surface.renderOrder + ENTITY_LOCAL_SORT_LAYER);
+      this.scene.addChild(container);
+      this.particleEffects.push({ system });
+    } catch (error) {
+      console.warn(`[Timelines] Failed to start particle system ${event.particle}.`, error);
     }
   }
 

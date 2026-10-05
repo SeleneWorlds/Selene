@@ -224,6 +224,7 @@ class ClientRegistrySnapshots(
             "components",
             "entities",
             "grids",
+            "particles",
             "registries",
             "render_grids",
             "sounds",

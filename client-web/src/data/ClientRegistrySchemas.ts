@@ -93,6 +93,60 @@ export const ClientAudioDefinitionSchema = z.object({
 });
 export type ClientAudioDefinition = z.infer<typeof ClientAudioDefinitionSchema>;
 
+const rangeSchema = z.object({
+  min: z.number().finite().positive(),
+  max: z.number().finite().positive(),
+}).refine((value) => value.max >= value.min, { message: 'max must be greater than or equal to min' });
+
+const transitionSchema = z.object({
+  start: z.number().finite().nonnegative(),
+  end: z.number().finite().nonnegative(),
+}).default({ start: 1, end: 1 });
+
+const alphaTransitionSchema = z.object({
+  start: z.number().finite().min(0).max(1),
+  end: z.number().finite().min(0).max(1),
+}).default({ start: 1, end: 1 });
+
+const colorTransitionSchema = z.object({
+  start: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  end: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+}).default({ start: '#ffffff', end: '#ffffff' });
+
+const particleSpawnSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('point') }),
+  z.object({
+    type: z.literal('rectangle'),
+    width: z.number().finite().nonnegative(),
+    height: z.number().finite().nonnegative(),
+  }),
+]);
+
+/** Portable subset supported by PixiJS 8 ParticleContainer and libGDX ParticleEmitter. */
+export const ClientParticleSystemDefinitionSchema = z.object({
+  texture: z.string().min(1),
+  lifetime: rangeSchema,
+  frequency: z.number().finite().positive(),
+  emitterLifetime: z.number().finite().positive(),
+  maxParticles: z.number().int().positive().default(100),
+  speed: transitionSchema,
+  speedMinimumMultiplier: z.number().finite().min(0).max(1).default(1),
+  scale: transitionSchema,
+  scaleMinimumMultiplier: z.number().finite().min(0).max(1).default(1),
+  alpha: alphaTransitionSchema,
+  color: colorTransitionSchema,
+  rotation: z.object({
+    min: z.number().finite(),
+    max: z.number().finite(),
+  }).refine((value) => value.max >= value.min, {
+    message: 'max must be greater than or equal to min',
+  }).default({ min: 0, max: 0 }),
+  spawn: particleSpawnSchema.default({ type: 'point' }),
+  additive: z.boolean().default(false),
+  metadata: metadataSchema,
+});
+export type ClientParticleSystemDefinition = z.infer<typeof ClientParticleSystemDefinitionSchema>;
+
 export const VisualAnimationTimelineEventSchema = z.object({
   type: z.literal('visual_animation'),
   time: z.number().finite().nonnegative().default(0),
@@ -102,8 +156,19 @@ export const VisualAnimationTimelineEventSchema = z.object({
 });
 export type VisualAnimationTimelineEvent = z.infer<typeof VisualAnimationTimelineEventSchema>;
 
+export const ParticleSystemTimelineEventSchema = z.object({
+  type: z.literal('particle_system'),
+  time: z.number().finite().nonnegative().default(0),
+  particle: z.string().min(1),
+  position: z.string().min(1).default('position'),
+});
+export type ParticleSystemTimelineEvent = z.infer<typeof ParticleSystemTimelineEventSchema>;
+
 export const ClientTimelineDefinitionSchema = z.object({
-  events: z.array(z.discriminatedUnion('type', [VisualAnimationTimelineEventSchema])),
+  events: z.array(z.discriminatedUnion('type', [
+    VisualAnimationTimelineEventSchema,
+    ParticleSystemTimelineEventSchema,
+  ])),
   metadata: metadataSchema,
 });
 export type ClientTimelineDefinition = z.infer<typeof ClientTimelineDefinitionSchema>;
@@ -130,6 +195,7 @@ export const clientRegistryEntrySchemas = {
   visuals: ClientVisualDefinitionSchema,
   sounds: ClientSoundDefinitionSchema,
   audio: ClientAudioDefinitionSchema,
+  particles: ClientParticleSystemDefinitionSchema,
   grids: ClientGridDefinitionSchema,
   timelines: ClientTimelineDefinitionSchema,
 } satisfies Record<string, z.ZodType>;
