@@ -13,8 +13,10 @@ import com.seleneworlds.client.particles.ParticleEffectRenderable
 import com.seleneworlds.client.particles.ParticleSystemLoader
 import com.seleneworlds.client.particles.ParticleSystemRegistry
 import com.seleneworlds.client.rendering.scene.Scene
+import com.seleneworlds.client.sounds.SoundManager
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.sounds.SoundRegistry
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.Disposable
 import kotlinx.serialization.json.JsonElement
@@ -35,6 +37,8 @@ class TimelinePlayer(
     private val scene: Scene,
     private val grid: ClientGrid,
     private val cameraManager: CameraManager,
+    private val sounds: SoundRegistry,
+    private val soundManager: SoundManager,
     private val logger: Logger
 ) : Disposable {
     private var overlayTexture: Texture? = null
@@ -159,6 +163,11 @@ class TimelinePlayer(
                 playback.instanceId,
                 event
             )
+            is SoundTimelineEvent -> {
+                val sound = sounds.get(Identifier.parse(event.sound))
+                if (sound == null) logger.warn("Unknown sound ${event.sound}")
+                else soundManager.playSound(sound, event.volume, event.pitch)
+            }
             is VisualAnimationTimelineEvent -> logger.warn("Visual animation timeline events are not supported by this client")
         }
     }

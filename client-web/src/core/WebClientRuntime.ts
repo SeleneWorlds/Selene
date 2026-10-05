@@ -132,6 +132,9 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     const visualsApi = new VisualsService(registriesApi);
     const schedulesService = new SchedulesService();
     const soundsService = new SoundsService(registriesApi, assetManifest, serverApiUrl, authToken);
+    gameClient.setTimelineSoundPlayer((sound, volume, pitch) => {
+      soundsService.playSound(sound, { volume, pitch });
+    });
     networkClient.addPacketListener(soundsService.handlePacket);
     const entityApis = { registries: registriesApi, visuals: visualsApi };
     const commonApis = {

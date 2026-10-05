@@ -52,6 +52,23 @@ data class ParticleSystemTimelineEvent(
     override val keys: Map<String, List<TimelineKeyframe>> = emptyMap()
 ) : TimelineEvent()
 
+/** Plays a client sound when the timeline reaches this event. */
+@Serializable
+@SerialName("sound")
+data class SoundTimelineEvent(
+    override val time: Float = 0f,
+    val sound: String,
+    val volume: Float = 1f,
+    val pitch: Float = 1f,
+    override val keys: Map<String, List<TimelineKeyframe>> = emptyMap()
+) : TimelineEvent() {
+    init {
+        require(sound.isNotBlank()) { "sound must not be blank" }
+        require(volume in 0f..1f) { "volume must be between 0 and 1" }
+        require(pitch > 0f && pitch.isFinite()) { "pitch must be a positive finite number" }
+    }
+}
+
 /** A solid color drawn over the game world for a configurable amount of time. */
 @Serializable
 @SerialName("screen_overlay")

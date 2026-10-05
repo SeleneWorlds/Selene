@@ -5,6 +5,7 @@ import type {
   ClientVisualDefinition,
   ParticleSystemTimelineEvent,
   ScreenOverlayTimelineEvent,
+  SoundTimelineEvent,
   VisualAnimationTimelineEvent,
 } from '@/data/ClientRegistrySchemas';
 import type { Coordinate, PlayTimelinePacket, StopTimelinePacket } from '@/networking/GameProtocol';
@@ -63,6 +64,7 @@ export class TimelinePlayer {
   private readonly instanceTags = new Map<string, ReadonlySet<string>>();
   private readonly pendingEffects = new Map<string, number>();
   private readonly stoppedInstances = new Set<string>();
+  private soundPlayer: ((sound: string, volume: number, pitch: number) => void) | null = null;
 
   constructor(
     private readonly registries: ClientRegistrySnapshots,
@@ -72,6 +74,10 @@ export class TimelinePlayer {
     private readonly getSurface: (coordinate: Coordinate) => TileSurface,
     private readonly getViewport: () => { x: number; y: number; width: number; height: number },
   ) {}
+
+  setSoundPlayer(player: (sound: string, volume: number, pitch: number) => void): void {
+    this.soundPlayer = player;
+  }
 
   play(packet: PlayTimelinePacket): void {
     const timeline = getRegistryEntry(this.registries, 'timelines', packet.timeline);
@@ -196,7 +202,18 @@ export class TimelinePlayer {
       case 'screen_overlay':
         this.playScreenOverlay(event, playback);
         break;
+      case 'sound':
+        this.playSound(event);
+        break;
     }
+  }
+
+  private playSound(event: SoundTimelineEvent): void {
+    if (!this.soundPlayer) {
+      console.warn(`[Timelines] No sound player is available for ${event.sound}.`);
+      return;
+    }
+    this.soundPlayer(event.sound, event.volume, event.pitch);
   }
 
   private playScreenOverlay(event: ScreenOverlayTimelineEvent, playback: Playback): void {

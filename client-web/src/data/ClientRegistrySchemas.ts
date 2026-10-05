@@ -182,6 +182,16 @@ export const ParticleSystemTimelineEventSchema = z.object({
 });
 export type ParticleSystemTimelineEvent = z.infer<typeof ParticleSystemTimelineEventSchema>;
 
+export const SoundTimelineEventSchema = z.object({
+  type: z.literal('sound'),
+  time: z.number().finite().nonnegative().default(0),
+  sound: z.string().min(1),
+  volume: z.number().finite().min(0).max(1).default(1),
+  pitch: z.number().finite().positive().default(1),
+  keys: timelineKeysSchema,
+});
+export type SoundTimelineEvent = z.infer<typeof SoundTimelineEventSchema>;
+
 export const ScreenOverlayTimelineEventSchema = z.object({
   type: z.literal('screen_overlay'),
   time: z.number().finite().nonnegative().default(0),
@@ -196,6 +206,7 @@ export const ClientTimelineDefinitionSchema = z.object({
   events: z.array(z.discriminatedUnion('type', [
     VisualAnimationTimelineEventSchema,
     ParticleSystemTimelineEventSchema,
+    SoundTimelineEventSchema,
     ScreenOverlayTimelineEventSchema,
   ])),
   metadata: metadataSchema,

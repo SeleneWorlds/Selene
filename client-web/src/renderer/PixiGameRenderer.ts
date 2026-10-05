@@ -117,6 +117,10 @@ export class PixiGameRenderer implements GameRenderer {
     this.debugState.update({ rendererStatus: 'ready' });
   }
 
+  setTimelineSoundPlayer(player: (sound: string, volume: number, pitch: number) => void): void {
+    this.timelinePlayer.setSoundPlayer(player);
+  }
+
   update(deltaMs: number): Record<string, number> {
     this.timelinePlayer.update(deltaMs, this.rendererOptions.particles);
     return this.pipeline.update(deltaMs, this.rendererOptions);

@@ -38,4 +38,5 @@ export interface GameRenderer {
   getAmbientLight(): LightColor;
   setTileLight(coordinate: Coordinate, light: TileLight | null): void;
   clearTileLights(): void;
+  setTimelineSoundPlayer(player: (sound: string, volume: number, pitch: number) => void): void;
 }

@@ -130,6 +130,10 @@ export class GameClient {
     };
   }
 
+  setTimelineSoundPlayer(player: (sound: string, volume: number, pitch: number) => void): void {
+    this.renderer.setTimelineSoundPlayer(player);
+  }
+
   getGridApi(): GridApi {
     return this.grid;
   }
