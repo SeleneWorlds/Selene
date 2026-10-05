@@ -30,6 +30,7 @@ export class RenderPipeline {
       if (options.entityUpdates) this.entityLayer.update(deltaMs);
     });
     this.measure(timings, 'Renderer: lighting', () => {
+      if (!options.lighting) return;
       const revision = this.lighting.getRevision();
       if (revision !== this.lastLightingRevision) {
         this.lastLightingRevision = revision;

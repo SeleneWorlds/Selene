@@ -103,11 +103,13 @@ export class TimelinePlayer {
     }
   }
 
-  update(deltaMs: number): void {
+  update(deltaMs: number, particlesEnabled = true): void {
     this.updatePlaybacks(deltaMs);
     const deltaSeconds = deltaMs / 1000;
     for (let index = this.particleEffects.length - 1; index >= 0; index -= 1) {
       const effect = this.particleEffects[index];
+      effect.system.container.visible = particlesEnabled;
+      if (!particlesEnabled) continue;
       if (effect.screenSpace) {
         const viewport = this.getViewport();
         effect.system.container.position.set(viewport.x + viewport.width / 2, viewport.y);

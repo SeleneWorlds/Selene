@@ -118,7 +118,7 @@ export class PixiGameRenderer implements GameRenderer {
   }
 
   update(deltaMs: number): Record<string, number> {
-    this.timelinePlayer.update(deltaMs);
+    this.timelinePlayer.update(deltaMs, this.rendererOptions.particles);
     return this.pipeline.update(deltaMs, this.rendererOptions);
   }
 
@@ -126,6 +126,9 @@ export class PixiGameRenderer implements GameRenderer {
     this.rendererOptions = { ...this.rendererOptions, [option]: enabled };
     if (option === 'culling') {
       this.tilemapLayer.setCullingEnabled(enabled);
+    }
+    if (option === 'lighting') {
+      this.entityLayer.setLightingEnabled(enabled);
     }
     this.debugState.update({ rendererOptions: this.rendererOptions });
   }

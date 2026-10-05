@@ -179,6 +179,9 @@ export class GameClient {
   }
 
   setRendererDebugOption(option: keyof RendererDebugOptions, enabled: boolean): void {
+    if (option === 'cameraEvents') {
+      this.camera.setCoordinateEventsEnabled(enabled);
+    }
     this.renderer.setDebugOption(option, enabled);
   }
 

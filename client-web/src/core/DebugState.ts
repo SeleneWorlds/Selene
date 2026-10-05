@@ -19,8 +19,11 @@ export interface DebugSnapshot {
 }
 
 export interface RendererDebugOptions {
+  cameraEvents: boolean;
   culling: boolean;
   entityUpdates: boolean;
+  lighting: boolean;
+  particles: boolean;
   tileAnimations: boolean;
   tileOcclusion: boolean;
   interiorFade: boolean;
@@ -71,8 +74,11 @@ const initialSnapshot: DebugSnapshot = {
     breakdown: {},
   },
   rendererOptions: {
+    cameraEvents: true,
     culling: true,
     entityUpdates: true,
+    lighting: true,
+    particles: true,
     tileAnimations: true,
     tileOcclusion: true,
     interiorFade: true,

@@ -5,6 +5,7 @@ export type CameraCoordinateChangedListener = (coordinate: Coordinate) => void;
 
 export class ClientCamera {
   private readonly coordinateChangedListeners = new Set<CameraCoordinateChangedListener>();
+  private coordinateEventsEnabled = true;
   private viewportWidth = 1;
   private viewportHeight = 1;
   private viewportX = 0;
@@ -69,7 +70,9 @@ export class ClientCamera {
     this.coordinateChangedListeners.add(listener);
     return () => this.coordinateChangedListeners.delete(listener);
   }
+  setCoordinateEventsEnabled(enabled: boolean): void { this.coordinateEventsEnabled = enabled; }
   private emitCoordinateChanged(): void {
+    if (!this.coordinateEventsEnabled) return;
     const coordinate = this.getCoordinate();
     for (const listener of [...this.coordinateChangedListeners]) listener(coordinate);
   }

@@ -12,8 +12,11 @@ const emit = defineEmits<{
 }>();
 
 const rendererOptionLabels: Record<keyof RendererDebugOptions, string> = {
+  cameraEvents: 'Camera events',
   culling: 'Tile culling',
   entityUpdates: 'Entity updates',
+  lighting: 'Lighting',
+  particles: 'Particles',
   tileAnimations: 'Tile animations',
   tileOcclusion: 'Tile occlusion',
   interiorFade: 'Interior fade',

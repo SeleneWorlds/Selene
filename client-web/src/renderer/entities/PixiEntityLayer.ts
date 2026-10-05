@@ -44,6 +44,7 @@ interface TileSurface {
 
 export class PixiEntityLayer {
   private readonly renderedEntities = new Map<number, RenderedEntity>();
+  private lightingEnabled = true;
   private upperLayerFocusZ: number | null = null;
   private upperLayerAlpha: number | null = null;
 
@@ -80,6 +81,10 @@ export class PixiEntityLayer {
 
   updateLighting(): void {
     for (const rendered of this.renderedEntities.values()) this.applyLighting(rendered);
+  }
+
+  setLightingEnabled(enabled: boolean): void {
+    this.lightingEnabled = enabled;
   }
 
   upsertServerEntity(packet: EntityPacket): void {
@@ -306,7 +311,7 @@ export class PixiEntityLayer {
   }
 
   private applyLighting(entity: RenderedEntity): void {
-    if (!this.lighting || !entity.sprite || !entity.visual) return;
+    if (!this.lightingEnabled || !this.lighting || !entity.sprite || !entity.visual) return;
     const light = this.lighting.getColor(entity.coordinate);
     entity.sprite.tint = (Math.round(light.red * entity.visual.red * 255) << 16)
       | (Math.round(light.green * entity.visual.green * 255) << 8)
@@ -314,6 +319,7 @@ export class PixiEntityLayer {
   }
 
   private updateEntityLight(id: number, entity: RenderedEntity): void {
+    if (!this.lightingEnabled) return;
     this.lighting?.setEntityLight(id, entity.coordinate, entity.visual?.light ?? null);
   }
 
