@@ -45,8 +45,12 @@ export class ClientCamera {
     const coordinate = resolveEntityCoordinate(this.followedEntityId);
     if (!coordinate) return false;
     const changed = !isSameCoordinate(this.coordinate, coordinate);
+    const previousGridCoordinate = toGridCoordinate(this.coordinate);
+    const nextGridCoordinate = toGridCoordinate(coordinate);
     this.coordinate = coordinate;
-    if (changed) this.emitCoordinateChanged();
+    if (!isSameCoordinate(previousGridCoordinate, nextGridCoordinate)) {
+      this.emitCoordinateChanged(nextGridCoordinate);
+    }
     return changed;
   }
 
@@ -71,11 +75,18 @@ export class ClientCamera {
     return () => this.coordinateChangedListeners.delete(listener);
   }
   setCoordinateEventsEnabled(enabled: boolean): void { this.coordinateEventsEnabled = enabled; }
-  private emitCoordinateChanged(): void {
+  private emitCoordinateChanged(coordinate = this.getCoordinate()): void {
     if (!this.coordinateEventsEnabled) return;
-    const coordinate = this.getCoordinate();
     for (const listener of [...this.coordinateChangedListeners]) listener(coordinate);
   }
+}
+
+function toGridCoordinate(coordinate: Coordinate): Coordinate {
+  return {
+    x: Math.round(coordinate.x),
+    y: Math.round(coordinate.y),
+    z: Math.round(coordinate.z),
+  };
 }
 
 function isSameCoordinate(left: Coordinate, right: Coordinate): boolean {
