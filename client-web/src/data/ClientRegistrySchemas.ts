@@ -127,7 +127,7 @@ export const ClientParticleSystemDefinitionSchema = z.object({
   texture: z.string().min(1),
   lifetime: rangeSchema,
   frequency: z.number().finite().positive(),
-  emitterLifetime: z.number().finite().positive(),
+  emitterLifetime: z.number().finite().positive().nullable().default(null),
   maxParticles: z.number().int().positive().default(100),
   speed: transitionSchema,
   speedMinimumMultiplier: z.number().finite().min(0).max(1).default(1),

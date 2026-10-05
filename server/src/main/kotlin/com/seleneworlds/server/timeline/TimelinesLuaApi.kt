@@ -5,6 +5,8 @@ import com.seleneworlds.common.lua.util.checkCoordinate
 import com.seleneworlds.common.lua.util.checkSerializedMap
 import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.register
+import com.seleneworlds.common.lua.util.checkUserdata
+import com.seleneworlds.server.players.PlayerApi
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 
@@ -12,14 +14,49 @@ class TimelinesLuaApi(private val api: TimelinesApi) : LuaModule {
     override val name = "selene.timelines"
 
     override fun register(table: LuaValue) {
+        table.register("play", ::play)
         table.register("playAt", ::playAt)
+        table.register("stop", ::stop)
+        table.register("stopAll", ::stopAll)
+        table.register("stopAt", ::stopAt)
+        table.register("stopAllAt", ::stopAllAt)
+    }
+
+    private fun play(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        val timeline = lua.checkString(2)
+        val parameters = if (lua.isNoneOrNil(3)) emptyMap() else lua.checkSerializedMap(3)
+        lua.push(api.play(player, timeline, parameters))
+        return 1
     }
 
     private fun playAt(lua: Lua): Int {
         val (coordinate, index) = lua.checkCoordinate(1)
         val timeline = lua.checkString(index + 1)
         val parameters = if (lua.isNoneOrNil(index + 2)) emptyMap() else lua.checkSerializedMap(index + 2)
-        api.playAt(coordinate, timeline, parameters = parameters)
+        lua.push(api.playAt(coordinate, timeline, parameters = parameters))
+        return 1
+    }
+
+    private fun stopAt(lua: Lua): Int {
+        val (coordinate, index) = lua.checkCoordinate(1)
+        api.stopAt(coordinate, lua.checkString(index + 1))
+        return 0
+    }
+
+    private fun stop(lua: Lua): Int {
+        api.stop(lua.checkUserdata<PlayerApi>(1), lua.checkString(2))
+        return 0
+    }
+
+    private fun stopAll(lua: Lua): Int {
+        api.stopAll(lua.checkUserdata<PlayerApi>(1), lua.checkString(2))
+        return 0
+    }
+
+    private fun stopAllAt(lua: Lua): Int {
+        val (coordinate, index) = lua.checkCoordinate(1)
+        api.stopAllAt(coordinate, lua.checkString(index + 1))
         return 0
     }
 }

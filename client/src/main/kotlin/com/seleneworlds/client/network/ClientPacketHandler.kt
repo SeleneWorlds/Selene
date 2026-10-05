@@ -189,7 +189,11 @@ class ClientPacketHandler(
             }
 
             is PlayTimelinePacket -> {
-                context.enqueueWork { timelinePlayer.play(packet.timeline, packet.parameters) }
+                context.enqueueWork { timelinePlayer.play(packet.instanceId, packet.timeline, packet.parameters) }
+            }
+
+            is StopTimelinePacket -> {
+                context.enqueueWork { timelinePlayer.stop(packet.instanceId, packet.timeline) }
             }
 
             is DisconnectPacket -> {

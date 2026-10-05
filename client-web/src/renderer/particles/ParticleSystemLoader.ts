@@ -18,6 +18,7 @@ export class PixiParticleSystem {
   private elapsed = 0;
   private spawnTimer = 0;
   private screenSpawnWidth: number | null = null;
+  private emitting = true;
 
   constructor(
     private readonly definition: ClientParticleSystemDefinition,
@@ -37,7 +38,9 @@ export class PixiParticleSystem {
   update(deltaSeconds: number): void {
     this.elapsed += deltaSeconds;
     this.spawnTimer += deltaSeconds;
-    while (this.elapsed <= this.definition.emitterLifetime && this.spawnTimer >= this.definition.frequency) {
+    const withinLifetime = this.definition.emitterLifetime === null
+      || this.elapsed <= this.definition.emitterLifetime;
+    while (this.emitting && withinLifetime && this.spawnTimer >= this.definition.frequency) {
       this.spawnTimer -= this.definition.frequency;
       this.spawnWave();
     }
@@ -62,7 +65,13 @@ export class PixiParticleSystem {
   }
 
   get complete(): boolean {
-    return this.elapsed >= this.definition.emitterLifetime && this.particles.length === 0;
+    const emissionComplete = !this.emitting
+      || (this.definition.emitterLifetime !== null && this.elapsed >= this.definition.emitterLifetime);
+    return emissionComplete && this.particles.length === 0;
+  }
+
+  stop(): void {
+    this.emitting = false;
   }
 
   setScreenSpawnWidth(width: number): void {

@@ -3,11 +3,13 @@ package com.seleneworlds.server.timeline
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.network.packet.PlayTimelinePacket
+import com.seleneworlds.common.network.packet.StopTimelinePacket
 import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.common.serialization.toJsonElement
 import com.seleneworlds.server.dimensions.Dimension
 import com.seleneworlds.server.players.PlayerApi
 import com.seleneworlds.server.world.World
+import java.util.UUID
 
 /** Starts client-defined timelines for one player or observers of a world position. */
 class TimelinesApi(private val world: World) {
@@ -15,10 +17,12 @@ class TimelinesApi(private val world: World) {
         player: PlayerApi,
         timeline: String,
         parameters: SerializedMap = emptyMap(),
-    ) {
+    ): String {
+        val instanceId = UUID.randomUUID().toString()
         player.delegate.client.send(
-            packet(timeline, parameters)
+            packet(instanceId, timeline, parameters)
         )
+        return instanceId
     }
 
     fun playAt(
@@ -26,14 +30,44 @@ class TimelinesApi(private val world: World) {
         timeline: String,
         dimension: Dimension = world.dimensionManager.getOrCreateDimension(0),
         parameters: SerializedMap = emptyMap(),
+    ): String {
+        val instanceId = UUID.randomUUID().toString()
+        dimension.syncManager.sendToAllWatching(
+            position,
+            packet(instanceId, timeline, parameters + ("position" to mapOf("x" to position.x, "y" to position.y, "z" to position.z)))
+        )
+        return instanceId
+    }
+
+    fun stop(player: PlayerApi, instanceId: String) {
+        player.delegate.client.send(StopTimelinePacket(instanceId = instanceId))
+    }
+
+    fun stopAll(player: PlayerApi, timeline: String) {
+        player.delegate.client.send(StopTimelinePacket(timeline = Identifier.parse(timeline).toString()))
+    }
+
+    fun stopAt(
+        position: Coordinate,
+        instanceId: String,
+        dimension: Dimension = world.dimensionManager.getOrCreateDimension(0),
+    ) {
+        dimension.syncManager.sendToAllWatching(position, StopTimelinePacket(instanceId = instanceId))
+    }
+
+    fun stopAllAt(
+        position: Coordinate,
+        timeline: String,
+        dimension: Dimension = world.dimensionManager.getOrCreateDimension(0),
     ) {
         dimension.syncManager.sendToAllWatching(
             position,
-            packet(timeline, parameters + ("position" to mapOf("x" to position.x, "y" to position.y, "z" to position.z)))
+            StopTimelinePacket(timeline = Identifier.parse(timeline).toString())
         )
     }
 
-    private fun packet(timeline: String, parameters: SerializedMap) = PlayTimelinePacket(
+    private fun packet(instanceId: String, timeline: String, parameters: SerializedMap) = PlayTimelinePacket(
+        instanceId,
         Identifier.parse(timeline).toString(),
         parameters.toJsonElement()
     )

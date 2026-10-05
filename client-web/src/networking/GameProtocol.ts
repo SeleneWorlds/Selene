@@ -23,6 +23,7 @@ const PacketId = {
   SetActiveGrid: 21,
   SetEnvironmentLight: 22,
   PlayTimeline: 23,
+  StopTimeline: 24,
   CustomPayload: 254,
   Disconnect: 255,
 } as const;
@@ -44,6 +45,7 @@ export type GamePacket =
   | SetActiveGridPacket
   | SetEnvironmentLightPacket
   | PlayTimelinePacket
+  | StopTimelinePacket
   | CustomPayloadPacket
   | DisconnectPacket
   | UnknownGamePacket;
@@ -168,8 +170,15 @@ export interface SetEnvironmentLightPacket {
 
 export interface PlayTimelinePacket {
   type: 'playTimeline';
+  instanceId: string;
   timeline: string;
   parameters: Readonly<Record<string, unknown>>;
+}
+
+export interface StopTimelinePacket {
+  type: 'stopTimeline';
+  instanceId: string | null;
+  timeline: string | null;
 }
 
 export interface CustomPayloadPacket {
@@ -247,6 +256,8 @@ export function decodeGamePacket(data: ArrayBuffer): GamePacket {
       return decodeSetEnvironmentLightPacket(reader);
     case PacketId.PlayTimeline:
       return decodePlayTimelinePacket(reader);
+    case PacketId.StopTimeline:
+      return decodeStopTimelinePacket(reader);
     case PacketId.CustomPayload:
       return decodeCustomPayloadPacket(reader);
     case PacketId.Disconnect:
@@ -263,10 +274,21 @@ function decodeSetEnvironmentLightPacket(reader: PacketReader): SetEnvironmentLi
 }
 
 function decodePlayTimelinePacket(reader: PacketReader): PlayTimelinePacket {
+  const instanceId = reader.readString();
   const timeline = reader.readString();
   const parameters = parseTimelineParameters(timeline, reader.readString());
   reader.assertFullyRead();
-  return { type: 'playTimeline', timeline, parameters };
+  return { type: 'playTimeline', instanceId, timeline, parameters };
+}
+
+function decodeStopTimelinePacket(reader: PacketReader): StopTimelinePacket {
+  const instanceId = reader.readString() || null;
+  const timeline = reader.readString() || null;
+  if ((instanceId === null) === (timeline === null)) {
+    throw new Error('Stop timeline packet must contain exactly one target.');
+  }
+  reader.assertFullyRead();
+  return { type: 'stopTimeline', instanceId, timeline };
 }
 
 function parseTimelineParameters(timeline: string, encoded: string): Record<string, unknown> {

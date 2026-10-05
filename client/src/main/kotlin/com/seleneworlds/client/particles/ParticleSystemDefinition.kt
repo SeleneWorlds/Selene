@@ -28,7 +28,7 @@ data class ParticleSystemDefinition(
     val texture: String,
     val lifetime: ParticleRange,
     val frequency: Float,
-    val emitterLifetime: Float,
+    val emitterLifetime: Float? = null,
     val maxParticles: Int = 100,
     val speed: ParticleTransition = ParticleTransition(),
     val speedMinimumMultiplier: Float = 1f,
@@ -45,7 +45,7 @@ data class ParticleSystemDefinition(
 ) : MetadataHolder, RegistryAdoptedObject<ParticleSystemDefinition>() {
     init {
         require(lifetime.min > 0f && lifetime.max >= lifetime.min)
-        require(frequency > 0f && emitterLifetime > 0f && maxParticles > 0)
+        require(frequency > 0f && (emitterLifetime == null || emitterLifetime > 0f) && maxParticles > 0)
         require(speed.start >= 0f && speed.end >= 0f && speedMinimumMultiplier in 0f..1f)
         require(scale.start >= 0f && scale.end >= 0f && scaleMinimumMultiplier in 0f..1f)
         require(alpha.start in 0f..1f && alpha.end in 0f..1f)

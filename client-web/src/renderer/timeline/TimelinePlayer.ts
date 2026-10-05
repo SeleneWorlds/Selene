@@ -6,12 +6,14 @@ import type {
   ParticleSystemTimelineEvent,
   VisualAnimationTimelineEvent,
 } from '@/data/ClientRegistrySchemas';
-import type { Coordinate, PlayTimelinePacket } from '@/networking/GameProtocol';
+import type { Coordinate, PlayTimelinePacket, StopTimelinePacket } from '@/networking/GameProtocol';
 import { ENTITY_LOCAL_SORT_LAYER, getRenderOrder, projectCoordinate } from '@/renderer/IsoProjection';
 import type { ContentTextureLoader } from '@/renderer/entities/ContentTextureLoader';
 import { loadPixiParticleSystem, type PixiParticleSystem } from '@/renderer/particles/ParticleSystemLoader';
 
 interface Playback {
+  instanceId: string;
+  timeline: string;
   elapsedMs: number;
   nextEvent: number;
   events: ClientTimelineDefinition['events'];
@@ -23,6 +25,7 @@ interface TimelineParameters {
 }
 
 interface VisualEffect {
+  instanceId: string;
   sprite: Sprite;
   textures: string[];
   elapsedMs: number;
@@ -37,6 +40,7 @@ interface TileSurface {
 }
 
 interface ParticleEffect {
+  instanceId: string;
   system: PixiParticleSystem;
   screenSpace: boolean;
 }
@@ -46,6 +50,9 @@ export class TimelinePlayer {
   private readonly playbacks: Playback[] = [];
   private readonly effects: VisualEffect[] = [];
   private readonly particleEffects: ParticleEffect[] = [];
+  private readonly instanceTimelines = new Map<string, string>();
+  private readonly pendingEffects = new Map<string, number>();
+  private readonly stoppedInstances = new Set<string>();
 
   constructor(
     private readonly registries: ClientRegistrySnapshots,
@@ -62,13 +69,38 @@ export class TimelinePlayer {
       console.warn(`[Timelines] Unknown timeline ${packet.timeline}.`);
       return;
     }
+    this.stoppedInstances.delete(packet.instanceId);
+    this.instanceTimelines.set(packet.instanceId, packet.timeline);
     this.playbacks.push({
+      instanceId: packet.instanceId,
+      timeline: packet.timeline,
       elapsedMs: 0,
       nextEvent: 0,
       events: [...timeline.events].sort((left, right) => left.time - right.time),
       parameters: { values: packet.parameters },
     });
     this.updatePlaybacks(0);
+  }
+
+  stop(packet: StopTimelinePacket): void {
+    const targets = packet.instanceId === null
+      ? [...this.instanceTimelines].filter(([, timeline]) => timeline === packet.timeline).map(([id]) => id)
+      : [packet.instanceId];
+    for (const instanceId of targets) {
+      this.stoppedInstances.add(instanceId);
+      for (let index = this.playbacks.length - 1; index >= 0; index -= 1) {
+        if (this.playbacks[index].instanceId === instanceId) this.playbacks.splice(index, 1);
+      }
+      for (let index = this.effects.length - 1; index >= 0; index -= 1) {
+        if (this.effects[index].instanceId !== instanceId) continue;
+        this.effects[index].sprite.destroy();
+        this.effects.splice(index, 1);
+      }
+      for (const effect of this.particleEffects) {
+        if (effect.instanceId === instanceId) effect.system.stop();
+      }
+      this.cleanupInstance(instanceId);
+    }
   }
 
   update(deltaMs: number): void {
@@ -85,6 +117,7 @@ export class TimelinePlayer {
       if (effect.system.complete) {
         effect.system.destroy();
         this.particleEffects.splice(index, 1);
+        this.cleanupInstance(effect.instanceId);
       }
     }
     for (let index = this.effects.length - 1; index >= 0; index -= 1) {
@@ -94,6 +127,7 @@ export class TimelinePlayer {
         effect.sprite.removeFromParent();
         effect.sprite.destroy();
         this.effects.splice(index, 1);
+        this.cleanupInstance(effect.instanceId);
         continue;
       }
       const nextFrame = Math.min(
@@ -110,40 +144,47 @@ export class TimelinePlayer {
       playback.elapsedMs += deltaMs;
       while (playback.nextEvent < playback.events.length
         && playback.events[playback.nextEvent].time * 1000 <= playback.elapsedMs) {
-        this.execute(playback.events[playback.nextEvent], playback.parameters);
+        this.execute(playback.events[playback.nextEvent], playback);
         playback.nextEvent += 1;
       }
-      if (playback.nextEvent === playback.events.length) this.playbacks.splice(index, 1);
+      if (playback.nextEvent === playback.events.length) {
+        this.playbacks.splice(index, 1);
+        this.cleanupInstance(playback.instanceId);
+      }
     }
   }
 
-  private execute(event: ClientTimelineDefinition['events'][number], parameters: TimelineParameters): void {
+  private execute(event: ClientTimelineDefinition['events'][number], playback: Playback): void {
     switch (event.type) {
       case 'visual_animation':
-        void this.playVisualAnimation(event, parameters);
+        void this.playVisualAnimation(event, playback);
         break;
       case 'particle_system':
-        void this.playParticleSystem(event, parameters);
+        void this.playParticleSystem(event, playback);
         break;
     }
   }
 
   private async playParticleSystem(
     event: ParticleSystemTimelineEvent,
-    parameters: TimelineParameters,
+    playback: Playback,
   ): Promise<void> {
-    const position = event.space === 'world' ? readCoordinate(parameters.values[event.position]) : null;
+    this.markPending(playback.instanceId, 1);
+    const position = event.space === 'world' ? readCoordinate(playback.parameters.values[event.position]) : null;
     if (event.space === 'world' && !position) {
       console.warn(`[Timelines] Particle event ${event.particle} requires coordinate parameter ${event.position}.`);
+      this.markPending(playback.instanceId, -1);
       return;
     }
     const definition = getRegistryEntry(this.registries, 'particles', event.particle);
     if (!definition) {
       console.warn(`[Timelines] Particle event references unknown system ${event.particle}.`);
+      this.markPending(playback.instanceId, -1);
       return;
     }
     try {
       const texture = await this.textureLoader.load(definition.texture);
+      if (this.stoppedInstances.has(playback.instanceId)) return;
       const initialViewport = event.space === 'screen' ? this.getViewport() : null;
       const system = loadPixiParticleSystem(definition, texture, initialViewport?.width ?? null);
       const container = system.container;
@@ -163,17 +204,23 @@ export class TimelinePlayer {
           : Math.max(particleOrder, surface.renderOrder + ENTITY_LOCAL_SORT_LAYER);
         this.scene.addChild(container);
       }
-      this.particleEffects.push({ system, screenSpace: event.space === 'screen' });
+      this.particleEffects.push({
+        instanceId: playback.instanceId,
+        system,
+        screenSpace: event.space === 'screen',
+      });
     } catch (error) {
       console.warn(`[Timelines] Failed to start particle system ${event.particle}.`, error);
+    } finally {
+      this.markPending(playback.instanceId, -1);
     }
   }
 
   private async playVisualAnimation(
     event: VisualAnimationTimelineEvent,
-    parameters: TimelineParameters,
+    playback: Playback,
   ): Promise<void> {
-    const position = readCoordinate(parameters.values[event.position]);
+    const position = readCoordinate(playback.parameters.values[event.position]);
     if (!position) {
       console.warn(`[Timelines] Visual event ${event.visual} requires coordinate parameter ${event.position}.`);
       return;
@@ -198,7 +245,9 @@ export class TimelinePlayer {
     sprite.zIndex = surface.renderOrder === null
       ? visualOrder
       : Math.max(visualOrder, surface.renderOrder + ENTITY_LOCAL_SORT_LAYER);
-    const effect: VisualEffect = { sprite, textures, elapsedMs: 0, durationMs, frame: 0, revision: 0 };
+    const effect: VisualEffect = {
+      instanceId: playback.instanceId, sprite, textures, elapsedMs: 0, durationMs, frame: 0, revision: 0,
+    };
     this.effects.push(effect);
     this.scene.addChild(sprite);
     await this.setFrame(effect, 0);
@@ -213,6 +262,22 @@ export class TimelinePlayer {
     } catch (error) {
       console.warn(`[Timelines] Failed to load visual frame ${effect.textures[frame]}.`, error);
     }
+  }
+
+  private markPending(instanceId: string, delta: number): void {
+    const count = (this.pendingEffects.get(instanceId) ?? 0) + delta;
+    if (count > 0) this.pendingEffects.set(instanceId, count);
+    else this.pendingEffects.delete(instanceId);
+    this.cleanupInstance(instanceId);
+  }
+
+  private cleanupInstance(instanceId: string): void {
+    if (this.playbacks.some(playback => playback.instanceId === instanceId)) return;
+    if (this.effects.some(effect => effect.instanceId === instanceId)) return;
+    if (this.particleEffects.some(effect => effect.instanceId === instanceId)) return;
+    if (this.pendingEffects.has(instanceId)) return;
+    this.instanceTimelines.delete(instanceId);
+    this.stoppedInstances.delete(instanceId);
   }
 }
 

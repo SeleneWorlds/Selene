@@ -171,6 +171,9 @@ export class PixiGameRenderer implements GameRenderer {
       case 'playTimeline':
         this.timelinePlayer.play(packet);
         break;
+      case 'stopTimeline':
+        this.timelinePlayer.stop(packet);
+        break;
       default:
         break;
     }

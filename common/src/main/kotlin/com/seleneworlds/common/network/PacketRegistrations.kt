@@ -166,6 +166,13 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             PlayTimelinePacket::decode
         )
         packetFactory.registerPacket(
+            24,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
+            StopTimelinePacket::class,
+            StopTimelinePacket::encode,
+            StopTimelinePacket::decode
+        )
+        packetFactory.registerPacket(
             254,
             setOf(PacketDirection.CLIENT_TO_SERVER, PacketDirection.SERVER_TO_CLIENT),
             CustomPayloadPacket::class,

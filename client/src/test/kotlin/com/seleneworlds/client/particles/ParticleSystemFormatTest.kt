@@ -7,6 +7,7 @@ import com.seleneworlds.common.serialization.seleneJson
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNull
 
 class ParticleSystemFormatTest {
     @Test
@@ -55,5 +56,18 @@ class ParticleSystemFormatTest {
 
         val event = assertIs<ParticleSystemTimelineEvent>(timeline.events.single())
         assertEquals(ParticleSystemSpace.SCREEN, event.space)
+    }
+
+    @Test
+    fun `omitted emitter lifetime creates an indefinite system`() {
+        val definition = seleneJson.decodeFromString<ParticleSystemDefinition>(
+            """{
+              "texture": "example:rain.png",
+              "lifetime": { "min": 1, "max": 2 },
+              "frequency": 0.1
+            }"""
+        )
+
+        assertNull(definition.emitterLifetime)
     }
 }

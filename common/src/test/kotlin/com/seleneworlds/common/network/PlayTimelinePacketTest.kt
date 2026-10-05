@@ -11,6 +11,7 @@ class PlayTimelinePacketTest {
     @Test
     fun `round trips all playback parameters`() {
         val expected = PlayTimelinePacket(
+            instanceId = "timeline-123",
             timeline = "example:impact",
             parameters = Json.parseToJsonElement(
                 """{"position":{"x":12,"y":-4,"z":2},"strength":0.75,"variants":["blue",2]}"""
@@ -30,7 +31,7 @@ class PlayTimelinePacketTest {
 
     @Test
     fun `round trips absent optional parameters`() {
-        val expected = PlayTimelinePacket("example:ui_flash")
+        val expected = PlayTimelinePacket("timeline-456", "example:ui_flash")
         val buf = Unpooled.buffer()
         try {
             PlayTimelinePacket.encode(buf, expected)
