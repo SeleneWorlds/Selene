@@ -16,7 +16,13 @@ open class GridLuaApi(private val api: GridApi) : LuaModule {
 
     override fun register(table: LuaValue) {
         table.register("defineDirection", this::defineDirection)
+        table.register("getDirections", this::getDirections)
         table.register("getDirectionByName", this::getDirectionByName)
+    }
+
+    private fun getDirections(lua: Lua): Int {
+        lua.push(api.getDirections(), Lua.Conversion.FULL)
+        return 1
     }
 
     private fun getDirectionByName(lua: Lua): Int {
