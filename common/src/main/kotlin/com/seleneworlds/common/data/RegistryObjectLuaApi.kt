@@ -47,6 +47,13 @@ object RegistryObjectLuaApi {
         return 1
     }
 
+    /** Bundle resource path of the file that defined this registry object. */
+    private fun getSourcePath(lua: Lua): Int {
+        val registryObject = lua.checkUserdata<RegistryObject<*>>(1)
+        registryObject.registry.getSourcePath(registryObject.identifier)?.let(lua::push) ?: lua.pushNil()
+        return 1
+    }
+
     /**
      * Checks if this registry object has the specified tag.
      *
@@ -65,6 +72,7 @@ object RegistryObjectLuaApi {
         callable(::getId)
         callable(::getName)
         callable(::getMetadata)
+        callable(::getSourcePath)
         callable(::hasTag)
     }
 }

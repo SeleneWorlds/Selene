@@ -21,6 +21,7 @@ interface Registry<TData : Any> {
     }
     fun getId(identifier: Identifier): Int
     fun getAll(): Map<Identifier, TData>
+    fun getSourcePath(identifier: Identifier): String? = null
     fun findByMetadata(key: String, value: Any): Pair<Identifier, TData>?
     fun registryPopulated(mappings: NameIdRegistry, throwOnMissingId: Boolean = true) = Unit
     fun subscribe(reference: RegistryReference<TData>, handler: (TData?) -> Unit)

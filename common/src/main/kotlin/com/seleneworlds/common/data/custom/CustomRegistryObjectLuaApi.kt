@@ -51,6 +51,13 @@ object CustomRegistryObjectLuaApi {
         return 1
     }
 
+    /** Bundle resource path of the file that defined this registry object. */
+    private fun getSourcePath(lua: Lua): Int {
+        val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
+        registryObject.registry.getSourcePath(registryObject.identifier)?.let(lua::push) ?: lua.pushNil()
+        return 1
+    }
+
     /**
      * Gets a field value from this custom registry object's JSON element.
      *
@@ -74,6 +81,7 @@ object CustomRegistryObjectLuaApi {
         callable(::getIdentifier)
         callable(::getName)
         callable(::getMetadata)
+        callable(::getSourcePath)
         callable(::getField)
     }
 }

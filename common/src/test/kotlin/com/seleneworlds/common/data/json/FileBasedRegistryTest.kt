@@ -45,6 +45,10 @@ class FileBasedRegistryTest {
 
             assertEquals("merged", registry.get(Identifier("test", "entry"))?.value)
             assertEquals("nested", registry.get(Identifier("test", "nested/item"))?.value)
+            assertEquals(
+                "${bundleRoot.fileName}/common/data/test/widgets.json",
+                registry.getSourcePath(Identifier("test", "entry"))
+            )
         }
     }
 
@@ -83,6 +87,10 @@ class FileBasedRegistryTest {
             registry.load(bundleDatabase)
 
             assertEquals("second", registry.get(Identifier("test", "entry"))?.value)
+            assertEquals(
+                "second/common/data/test/widgets.json",
+                registry.getSourcePath(Identifier("test", "entry"))
+            )
         } finally {
             firstRoot.deleteRecursively()
             secondRoot.deleteRecursively()

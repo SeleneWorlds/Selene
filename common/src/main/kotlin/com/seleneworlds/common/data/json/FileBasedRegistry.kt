@@ -27,6 +27,7 @@ abstract class FileBasedRegistry<TData : Any>(
 ) : Registry<TData>, BundleDrivenRegistry, ReferenceResolver<Identifier, TData>, CacheableRegistry {
     protected val logger: Logger = LoggerFactory.getLogger("selene")
     protected val entries: MutableMap<Identifier, TData> = mutableMapOf()
+    private val sourcePaths: MutableMap<Identifier, String> = mutableMapOf()
     protected val idByIdentifier: MutableMap<Identifier, Int> = mutableMapOf()
     protected val entriesById: MutableMap<Int, TData> = mutableMapOf()
     private val metadataLookupTable: Table<String, Any, MutableList<Identifier>> = HashBasedTable.create()
@@ -42,6 +43,7 @@ abstract class FileBasedRegistry<TData : Any>(
     override fun get(id: Int): TData? = entriesById[id]
     override fun getId(identifier: Identifier): Int = idByIdentifier[identifier] ?: -1
     override fun get(identifier: Identifier): TData? = entries[identifier]
+    override fun getSourcePath(identifier: Identifier): String? = sourcePaths[identifier]
     override fun getIdentifier(id: Int): Identifier? {
         return (entriesById[id] as? RegistryOwnedObject<*>)?.identifier
     }
@@ -58,6 +60,7 @@ abstract class FileBasedRegistry<TData : Any>(
     override fun load(bundleDatabase: BundleDatabase) {
         val previousEntries = entries.toMap()
         entries.clear()
+        sourcePaths.clear()
         entriesById.clear()
         idByIdentifier.clear()
         metadataLookupTable.clear()
@@ -88,7 +91,7 @@ abstract class FileBasedRegistry<TData : Any>(
         val registryBundleFile = File(namespaceDir, "$name.json")
         if (registryBundleFile.isFile) {
             try {
-                loadEntriesFromBundleFile(registryBundleFile.toPath(), namespace)
+                loadEntriesFromBundleFile(bundle, registryBundleFile.toPath(), namespace)
             } catch (e: Exception) {
                 logger.error("Failed to load $registryBundleFile from bundle ${bundle.manifest.name}", e)
             }
@@ -112,7 +115,9 @@ abstract class FileBasedRegistry<TData : Any>(
                                 .replace(File.separatorChar, '/')
                         val identifier = Identifier(namespace, entryName)
 
-                        loadEntryFromFile(path, identifier)?.let { storeLoadedEntry(identifier, it) }
+                        loadEntryFromFile(path, identifier)?.let {
+                            storeLoadedEntry(identifier, it, sourcePath(bundle, path))
+                        }
                     } catch (e: Exception) {
                         logger.error("Failed to load $path from bundle ${bundle.manifest.name}", e)
                     }
@@ -120,11 +125,11 @@ abstract class FileBasedRegistry<TData : Any>(
         }
     }
 
-    private fun loadEntriesFromBundleFile(path: Path, namespace: String) {
+    private fun loadEntriesFromBundleFile(bundle: Bundle, path: Path, namespace: String) {
         val registryFile = json.decodeFromFile(RegistryFile.serializer(JsonElement.serializer()), path)
         for ((entryName, element) in registryFile.entries) {
             val identifier = Identifier(namespace, entryName)
-            storeLoadedEntry(identifier, loadEntryFromElement(element, identifier))
+            storeLoadedEntry(identifier, loadEntryFromElement(element, identifier), sourcePath(bundle, path))
         }
     }
 
@@ -150,6 +155,7 @@ abstract class FileBasedRegistry<TData : Any>(
     fun upsertEntry(identifier: Identifier, element: JsonElement, id: Int? = null) {
         val data = loadEntryFromElement(element, identifier)
         val oldEntry = entries.put(identifier, data)
+        sourcePaths.remove(identifier)
 
         val existingId = (oldEntry as? IdMappedObject)?.id?.takeIf { it != -1 } ?: idByIdentifier[identifier]
         val targetId = id ?: existingId
@@ -171,9 +177,15 @@ abstract class FileBasedRegistry<TData : Any>(
         }
     }
 
-    private fun storeLoadedEntry(identifier: Identifier, data: TData) {
+    private fun storeLoadedEntry(identifier: Identifier, data: TData, sourcePath: String) {
         entries[identifier] = data
+        sourcePaths[identifier] = sourcePath
         (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
+    }
+
+    private fun sourcePath(bundle: Bundle, path: Path): String {
+        val relative = bundle.dir.toPath().relativize(path).toString().replace(File.separatorChar, '/')
+        return "${bundle.manifest.name}/$relative"
     }
 
     override fun registryPopulated(mappings: NameIdRegistry, throwOnMissingId: Boolean) {
@@ -234,6 +246,7 @@ abstract class FileBasedRegistry<TData : Any>(
         }
         if (data != null) {
             val oldEntry = entries.put(identifier, data)
+            sourcePaths[identifier] = "${bundle.manifest.name}/${path.replace('\\', '/')}"
             if (oldEntry is RegistryObject<*> && data is RegistryObject<*>) {
                 val id = oldEntry.id
                 if (id != -1) {
@@ -277,6 +290,7 @@ abstract class FileBasedRegistry<TData : Any>(
             return
         }
         val removedEntry = entries.remove(identifier)
+        sourcePaths.remove(identifier)
         (removedEntry as? RegistryObject<*>)?.let {
             entriesById.remove(it.id)
             idByIdentifier.remove(identifier)
