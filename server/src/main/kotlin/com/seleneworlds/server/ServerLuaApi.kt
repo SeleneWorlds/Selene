@@ -77,6 +77,11 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
         return 0
     }
 
+    private fun getName(lua: Lua): Int {
+        lua.push(api.getName())
+        return 1
+    }
+
     val serverStarted = LuaEventSink(ServerEvents.ServerStarted.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         ServerEvents.ServerStarted {
             val lua = callback.state()
@@ -109,6 +114,7 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
         table.register("overwriteRuntimeData", this::overwriteRuntimeData)
         table.register("hasRuntimeData", this::hasRuntimeData)
         table.register("removeRuntimeData", this::removeRuntimeData)
+        table.register("getName", this::getName)
         table.set("serverStarted", serverStarted)
         table.set("serverReloaded", serverReloaded)
         table.set("bundleUnloading", bundleUnloading)

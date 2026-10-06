@@ -2,9 +2,11 @@ package com.seleneworlds.server
 
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.observable.ObservableMap
+import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.data.ServerCustomData
 
 class ServerApi(
+    private val serverConfig: ServerConfig,
     serverCustomData: ServerCustomData
 ) {
     val customData: ObservableMap = serverCustomData.customData
@@ -21,5 +23,9 @@ class ServerApi(
 
     fun setCustomData(identifier: Identifier, value: Any?) {
         customData[identifier.toString()] = value
+    }
+
+    fun getName(): String {
+        return serverConfig.name
     }
 }
