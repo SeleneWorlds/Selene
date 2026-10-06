@@ -68,6 +68,7 @@ class CameraManager(
     }
 
     fun focusCamera(coordinate: Coordinate) {
+        focusedEntityNetworkId = -1
         focusCoordinate = coordinate
         setCameraPosition(grid.getScreenX(coordinate), grid.getScreenY(coordinate))
         camera.update()
