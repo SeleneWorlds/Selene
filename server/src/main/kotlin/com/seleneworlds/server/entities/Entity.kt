@@ -15,6 +15,7 @@ import com.seleneworlds.common.util.IdResolvable
 import com.seleneworlds.common.util.ResolvableReference
 import com.seleneworlds.server.entities.component.EntityComponent
 import com.seleneworlds.server.entities.component.EntityComponentFactory
+import com.seleneworlds.server.entities.component.GravityComponent
 import com.seleneworlds.server.entities.component.TickableComponent
 import com.seleneworlds.server.attributes.Attribute
 import com.seleneworlds.server.cameras.viewer.Viewer
@@ -146,7 +147,12 @@ class Entity(
         EntityEvents.BeforeEntityMove.EVENT.invoker().beforeEntityMove(api, coordinate)
         this.facing = world.grid.getDirection(this.coordinate, coordinate)
         val dimension = dimension ?: return false
-        if (!collisionTags.isEmpty() && world.collisionResolver.collidesAt(dimension, collisionViewer, coordinate)) {
+        val gravity = components.values.any { it is GravityComponent }
+        val supportedEmptyTile = gravity &&
+            !world.collisionResolver.hasTileAt(dimension, collisionViewer, coordinate) &&
+            world.collisionResolver.hasTileAt(dimension, collisionViewer, Coordinate(coordinate.x, coordinate.y, coordinate.z - 1))
+        if (!collisionTags.isEmpty() &&
+            world.collisionResolver.collidesAt(dimension, collisionViewer, coordinate, supportedEmptyTile)) {
             return false
         }
         val prevCoordinate = this.coordinate
@@ -154,6 +160,18 @@ class Entity(
         dimension.syncManager.entityMoved(this, prevCoordinate, coordinate, duration)
         EntityEvents.EntitySteppedOffTile.EVENT.invoker().entitySteppedOffTile(api, prevCoordinate)
         EntityEvents.EntitySteppedOnTile.EVENT.invoker().entitySteppedOnTile(api, coordinate)
+        return true
+    }
+
+    /** Moves vertically as part of gravity, bypassing the normal empty-tile collision rule. */
+    fun fallOneTile(): Boolean {
+        val dimension = dimension ?: return false
+        val previous = coordinate
+        val destination = Coordinate(previous.x, previous.y, previous.z - 1)
+        coordinate = destination
+        dimension.syncManager.entityMoved(this, previous, destination, getMovementDuration(destination))
+        EntityEvents.EntitySteppedOffTile.EVENT.invoker().entitySteppedOffTile(api, previous)
+        EntityEvents.EntitySteppedOnTile.EVENT.invoker().entitySteppedOnTile(api, destination)
         return true
     }
 

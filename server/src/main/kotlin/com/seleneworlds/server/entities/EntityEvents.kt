@@ -6,6 +6,20 @@ import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.grid.Direction
 
 class EntityEvents {
+    fun interface EntityFell {
+        fun entityFell(entity: EntityApi, height: Int)
+
+        companion object {
+            val EVENT = arrayBackedEvent<EntityFell> { listeners ->
+                EntityFell { entity, height ->
+                    listeners.forEach {
+                        catchLog { it.entityFell(entity, height) }
+                    }
+                }
+            }
+        }
+    }
+
     fun interface BeforeEntityMove {
         fun beforeEntityMove(entity: EntityApi, coordinate: Coordinate)
 

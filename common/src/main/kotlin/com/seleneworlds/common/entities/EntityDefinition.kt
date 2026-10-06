@@ -43,6 +43,10 @@ data class DraggableComponentConfiguration(
 class IgnoresElevationComponentConfiguration : ComponentConfiguration
 
 @Serializable
+@SerialName("gravity")
+class GravityComponentConfiguration : ComponentConfiguration
+
+@Serializable
 @SerialName("light")
 data class LightComponentConfiguration(
     val radius: Float,

@@ -3,11 +3,19 @@ package com.seleneworlds.common.serialization
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.entities.DraggableComponentConfiguration
 import com.seleneworlds.common.entities.IgnoresElevationComponentConfiguration
+import com.seleneworlds.common.entities.GravityComponentConfiguration
 import com.seleneworlds.common.entities.PassableAboveComponentConfiguration
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class SeleneJsonDefaultsTest {
+    @Test
+    fun `gravity component serializes with its type`() {
+        val component: ComponentConfiguration = GravityComponentConfiguration()
+
+        assertEquals("{\"type\":\"gravity\"}", seleneJson.encodeToString(component))
+    }
+
     @Test
     fun `serialized values include properties equal to their defaults`() {
         val component: ComponentConfiguration = DraggableComponentConfiguration()

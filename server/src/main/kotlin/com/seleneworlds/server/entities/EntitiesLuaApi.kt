@@ -32,6 +32,15 @@ class EntitiesLuaApi(
             lua.xpCall(2, 0, trace)
         }
     }
+    private val entityFell = LuaEventSink(EntityEvents.EntityFell.EVENT) { callback: LuaValue, trace: ScriptTrace ->
+        EntityEvents.EntityFell { entity, height ->
+            val lua = callback.state()
+            lua.push(callback)
+            lua.push(entity, Lua.Conversion.NONE)
+            lua.push(height)
+            lua.xpCall(2, 0, trace)
+        }
+    }
     private val beforeEntityTurn = LuaEventSink(EntityEvents.BeforeEntityTurn.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         EntityEvents.BeforeEntityTurn { entity, direction ->
             val lua = callback.state()
@@ -72,6 +81,7 @@ class EntitiesLuaApi(
         table.register("getByNetworkId", this::getByNetworkId)
         table.register("findByRuntimeData", this::findByRuntimeData)
         table.set("beforeMove", beforeEntityMove)
+        table.set("fell", entityFell)
         table.set("beforeTurn", beforeEntityTurn)
         table.set("steppedOnTile", entitySteppedOnTile)
         table.set("steppedOffTile", entitySteppedOffTile)
