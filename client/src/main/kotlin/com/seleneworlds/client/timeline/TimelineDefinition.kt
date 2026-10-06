@@ -38,6 +38,7 @@ data class VisualAnimationTimelineEvent(
     val visual: String,
     val duration: Float? = null,
     val position: String = "position",
+    val ignoresElevation: Boolean = false,
     override val keys: Map<String, List<TimelineKeyframe>> = emptyMap()
 ) : TimelineEvent()
 

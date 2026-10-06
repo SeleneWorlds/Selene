@@ -13,6 +13,11 @@ import com.seleneworlds.client.particles.ParticleEffectRenderable
 import com.seleneworlds.client.particles.ParticleSystemLoader
 import com.seleneworlds.client.particles.ParticleSystemRegistry
 import com.seleneworlds.client.rendering.scene.Scene
+import com.seleneworlds.client.rendering.visual.VisualCreationContext
+import com.seleneworlds.client.rendering.visual.VisualFactory
+import com.seleneworlds.client.rendering.visual.VisualRegistry
+import com.seleneworlds.client.rendering.visual.AnimatedVisualDefinition
+import com.seleneworlds.client.rendering.visual2d.iso.IsoVisual
 import com.seleneworlds.client.sounds.SoundManager
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.grid.Coordinate
@@ -36,6 +41,8 @@ class TimelinePlayer(
     private val mainThread: MainThreadDispatcher,
     private val scene: Scene,
     private val grid: ClientGrid,
+    private val visuals: VisualRegistry,
+    private val visualFactory: VisualFactory,
     private val cameraManager: CameraManager,
     private val sounds: SoundRegistry,
     private val soundManager: SoundManager,
@@ -64,6 +71,12 @@ class TimelinePlayer(
         val screenSpace: Boolean,
     )
 
+    private data class OwnedVisual(
+        val instanceId: String,
+        val timeline: String,
+        val effect: TimelineVisualRenderable
+    )
+
     private data class OwnedOverlay(
         val instanceId: String,
         val event: ScreenOverlayTimelineEvent,
@@ -72,6 +85,7 @@ class TimelinePlayer(
 
     private val playbacks = mutableListOf<Playback>()
     private val effects = mutableListOf<OwnedEffect>()
+    private val visualEffects = mutableListOf<OwnedVisual>()
     private val overlays = mutableListOf<OwnedOverlay>()
     private val instanceTimelines = mutableMapOf<String, String>()
     private val pendingEffects = mutableMapOf<String, Int>()
@@ -96,6 +110,8 @@ class TimelinePlayer(
             stoppedInstances += target
             playbacks.removeAll { it.instanceId == target }
             effects.filter { it.instanceId == target }.forEach { it.effect.allowCompletion() }
+            visualEffects.filter { it.instanceId == target }.forEach { scene.remove(it.effect) }
+            visualEffects.removeAll { it.instanceId == target }
             overlays.removeAll { it.instanceId == target }
             cleanupInstance(target)
         }
@@ -125,6 +141,16 @@ class TimelinePlayer(
             }
             if (owned.effect.isComplete) {
                 effectIterator.remove()
+                cleanupInstance(owned.instanceId)
+            }
+        }
+
+        val visualIterator = visualEffects.iterator()
+        while (visualIterator.hasNext()) {
+            val owned = visualIterator.next()
+            if (owned.effect.complete) {
+                scene.remove(owned.effect)
+                visualIterator.remove()
                 cleanupInstance(owned.instanceId)
             }
         }
@@ -168,8 +194,27 @@ class TimelinePlayer(
                 if (sound == null) logger.warn("Unknown sound ${event.sound}")
                 else soundManager.playSound(sound, event.volume, event.pitch)
             }
-            is VisualAnimationTimelineEvent -> logger.warn("Visual animation timeline events are not supported by this client")
+            is VisualAnimationTimelineEvent -> playVisualAnimation(event, playback)
         }
+    }
+
+    private fun playVisualAnimation(event: VisualAnimationTimelineEvent, playback: Playback) {
+        val coordinate = playback.parameters[event.position]?.toCoordinate()
+        if (coordinate == null) {
+            logger.warn("Visual event ${event.visual} requires coordinate parameter ${event.position}")
+            return
+        }
+        val definition = visuals.get(Identifier.parse(event.visual))
+        val visual = definition?.let { visualFactory.createVisual(it, VisualCreationContext(coordinate)) } as? IsoVisual
+        if (visual == null) {
+            logger.warn("Visual event references unsupported visual ${event.visual}")
+            return
+        }
+        val duration = event.duration ?: (definition as? AnimatedVisualDefinition)?.duration ?: 1f
+        visual.initialize()
+        val effect = TimelineVisualRenderable(coordinate, visual, event, duration, grid)
+        visualEffects += OwnedVisual(playback.instanceId, playback.timeline, effect)
+        scene.add(effect)
     }
 
     private fun playParticleSystem(event: ParticleSystemTimelineEvent, playback: Playback) {
@@ -238,6 +283,7 @@ class TimelinePlayer(
     private fun cleanupInstance(instanceId: String) {
         if (playbacks.any { it.instanceId == instanceId }) return
         if (effects.any { it.instanceId == instanceId }) return
+        if (visualEffects.any { it.instanceId == instanceId }) return
         if (overlays.any { it.instanceId == instanceId }) return
         if (pendingEffects.containsKey(instanceId)) return
         instanceTimelines.remove(instanceId)
