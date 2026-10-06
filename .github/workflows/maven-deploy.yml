@@ -27,7 +27,9 @@ jobs:
 
     - name: Set up pnpm
       uses: pnpm/setup@v3
-        
+      with:
+        version: 11.5.2
+
     - name: Cache Gradle packages
       uses: actions/cache@v4
       with:
