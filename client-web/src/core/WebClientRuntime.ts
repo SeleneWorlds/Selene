@@ -29,6 +29,7 @@ import { loadAndRunClientLua } from '@/scripting/ClientLuaLoader';
 import { LuaRuntime } from '@/scripting/LuaRuntime';
 import { registerMovementGridLuaModule } from '@/scripting/MovementGridLuaBindings';
 import { registerNetworkLuaModule } from '@/scripting/NetworkLuaBindings';
+import { registerTimelinesLuaModule } from '@/scripting/TimelinesLuaBindings';
 import { BundleUiManager } from '@/ui/BundleUiManager';
 
 export interface BootstrapClientOptions {
@@ -165,6 +166,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       await registerInputLuaModule(luaRuntime, gameClient.getInputApi());
       await registerMovementGridLuaModule(luaRuntime, gameClient.getMovementGridApi());
       await registerNetworkLuaModule(luaRuntime, gameClient.getNetworkApi());
+      await registerTimelinesLuaModule(luaRuntime, gameClient.getTimelinesApi());
       await registerCommonLuaModules(luaRuntime, commonApis);
       await registerClientFeatureLuaModules(luaRuntime, featureApis);
     });

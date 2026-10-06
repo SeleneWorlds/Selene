@@ -73,6 +73,7 @@ import com.seleneworlds.client.particles.ParticleSystemLoader
 import com.seleneworlds.client.particles.ParticleSystemRegistry
 import com.seleneworlds.client.timeline.TimelinePlayer
 import com.seleneworlds.client.timeline.TimelineRegistry
+import com.seleneworlds.client.timeline.TimelinesLuaApi
 import com.seleneworlds.client.sounds.SoundsApi
 import com.seleneworlds.client.sounds.SoundsLuaApi
 import com.seleneworlds.client.tiles.Tile
@@ -184,6 +185,7 @@ class SeleneApplication(
             singleOf(::SchedulesLuaApi) { bind<LuaModule>(); bind<Disposable>() }
             singleOf(::HttpLuaApi) { bind<LuaModule>(); bind<Disposable>() }
             singleOf(::I18nLuaApi) { bind<LuaModule>() }
+            singleOf(::TimelinesLuaApi) { bind<LuaModule>() }
         }
         val bundleModule = module {
             single<BundleStateCleaner> {

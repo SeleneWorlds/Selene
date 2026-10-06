@@ -21,6 +21,7 @@ import type { ClientMapTile } from '@/core/ClientMap';
 import { ClientPacketDispatcher } from '@/core/ClientPacketDispatcher';
 import { ClientTickPipeline } from '@/core/ClientTickPipeline';
 import type { EnvironmentApi } from '@/api/EnvironmentApi';
+import type { TimelinesApi } from '@/api/TimelinesApi';
 
 export interface GameClientOptions {
   canvasHost: HTMLElement;
@@ -138,6 +139,14 @@ export class GameClient {
 
   setTimelineSoundPlayer(player: (sound: string, volume: number, pitch: number) => void): void {
     this.renderer.setTimelineSoundPlayer(player);
+  }
+
+  getTimelinesApi(): TimelinesApi {
+    return {
+      playAt: (coordinate, timeline, parameters) => {
+        this.renderer.playTimelineAt(coordinate, timeline, parameters);
+      },
+    };
   }
 
   getGridApi(): GridApi {
