@@ -4,6 +4,8 @@ import java.io.File
 
 class ResourcesApi(private val bundleDatabase: BundleDatabase) {
 
+    fun listBundles(): List<String> = bundleDatabase.enabledBundles.map { it.manifest.name }
+
     fun listFiles(bundle: String, filter: String): List<String> {
         val baseDir = bundleDatabase.getBundle(bundle)?.dir ?: return emptyList()
         return baseDir.walkTopDown().filter {
@@ -14,27 +16,39 @@ class ResourcesApi(private val bundleDatabase: BundleDatabase) {
     }
 
     fun loadAsString(path: String): String {
-        val bundleName = path.substringBefore("/")
-        val remainingPath = path.substringAfter("/")
-        val baseDir = bundleDatabase.getBundle(bundleName)?.dir
-            ?: throw IllegalArgumentException("Failed to find bundle: $bundleName")
-
-        val file = baseDir.resolve(remainingPath)
+        val (_, file) = resolveFile(path)
         if (!file.exists() || !file.isFile) {
             throw IllegalArgumentException("File not found: $path")
-        }
-        if (!file.path.startsWith(baseDir.path)) {
-            throw IllegalArgumentException("Invalid file path: $path")
         }
         return file.readText()
     }
 
+    fun saveAsString(path: String, contents: String) {
+        val (_, file) = resolveFile(path)
+        if (!file.exists() || !file.isFile) {
+            throw IllegalArgumentException("File not found: $path")
+        }
+        file.writeText(contents)
+    }
+
     fun fileExists(path: String): Boolean {
+        return runCatching {
+            val (_, file) = resolveFile(path)
+            file.exists() && file.isFile
+        }.getOrDefault(false)
+    }
+
+    private fun resolveFile(path: String): Pair<File, File> {
         val bundleName = path.substringBefore("/")
-        val remainingPath = path.substringAfter("/")
-        val baseDir = bundleDatabase.getBundle(bundleName)?.dir ?: return false
-        val file = baseDir.resolve(remainingPath)
-        return file.exists() && file.isFile && file.path.startsWith(baseDir.path)
+        val remainingPath = path.substringAfter("/", "")
+        require(bundleName.isNotEmpty() && remainingPath.isNotEmpty()) { "Invalid resource path: $path" }
+        val baseDir = bundleDatabase.getBundle(bundleName)?.dir?.canonicalFile
+            ?: throw IllegalArgumentException("Failed to find bundle: $bundleName")
+        val file = baseDir.resolve(remainingPath).canonicalFile
+        if (!file.toPath().startsWith(baseDir.toPath())) {
+            throw IllegalArgumentException("Invalid file path: $path")
+        }
+        return baseDir to file
     }
 
     private fun globToRegex(glob: String): Regex {
