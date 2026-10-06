@@ -5,6 +5,7 @@ import com.seleneworlds.common.entities.DraggableComponentConfiguration
 import com.seleneworlds.common.entities.IgnoresElevationComponentConfiguration
 import com.seleneworlds.common.entities.GravityComponentConfiguration
 import com.seleneworlds.common.entities.PassableAboveComponentConfiguration
+import com.seleneworlds.common.entities.VisualComponentConfiguration
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -44,5 +45,17 @@ class SeleneJsonDefaultsTest {
             "{\"type\":\"passable_above\",\"enabled\":true}",
             seleneJson.encodeToString(component)
         )
+    }
+
+    @Test
+    fun `visual component deserializes tint values`() {
+        val component = seleneJson.decodeFromString<ComponentConfiguration>(
+            """{"type":"visual","visual":"test:character","red":0.8,"green":0.7,"blue":0.6,"alpha":0.5}"""
+        ) as VisualComponentConfiguration
+
+        assertEquals(0.8f, component.red)
+        assertEquals(0.7f, component.green)
+        assertEquals(0.6f, component.blue)
+        assertEquals(0.5f, component.alpha)
     }
 }

@@ -68,6 +68,10 @@ data class VisualComponentPosition(val origin: String = "none", val offsetX: Flo
 data class VisualComponentConfiguration(
     val visual: Identifier,
     val position: VisualComponentPosition = VisualComponentPosition.Default,
+    val red: Float = 1f,
+    val green: Float = 1f,
+    val blue: Float = 1f,
+    val alpha: Float = 1f,
     @Serializable(with = SerializedMapSerializer::class)
     val overrides: SerializedMap = emptyMap()
 ) : ComponentConfiguration

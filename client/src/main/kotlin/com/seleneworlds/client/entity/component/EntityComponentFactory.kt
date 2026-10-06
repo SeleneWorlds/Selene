@@ -45,7 +45,12 @@ class EntityComponentFactory(
                     ).also { visual ->
                         visual.initialize()
                     }, positioner
-                )
+                ).also { component ->
+                    component.red = configuration.red
+                    component.green = configuration.green
+                    component.blue = configuration.blue
+                    component.alpha = configuration.alpha
+                }
             }
 
             is ClientScriptComponentConfiguration -> ClientScriptComponent(scriptProvider.loadEntityScript(configuration.script))
