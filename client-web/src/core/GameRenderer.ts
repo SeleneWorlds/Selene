@@ -39,4 +39,5 @@ export interface GameRenderer {
   setTileLight(coordinate: Coordinate, light: TileLight | null): void;
   clearTileLights(): void;
   setTimelineSoundPlayer(player: (sound: string, volume: number, pitch: number) => void): void;
+  playTimelineAt(coordinate: Coordinate, timeline: string, parameters?: Readonly<Record<string, unknown>>): void;
 }

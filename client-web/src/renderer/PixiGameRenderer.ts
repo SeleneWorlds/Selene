@@ -121,6 +121,20 @@ export class PixiGameRenderer implements GameRenderer {
     this.timelinePlayer.setSoundPlayer(player);
   }
 
+  playTimelineAt(
+    coordinate: Coordinate,
+    timeline: string,
+    parameters: Readonly<Record<string, unknown>> = {},
+  ): void {
+    this.timelinePlayer.play({
+      type: 'playTimeline',
+      instanceId: crypto.randomUUID(),
+      timeline,
+      parameters: { ...parameters, position: coordinate },
+      tags: [],
+    });
+  }
+
   update(deltaMs: number): Record<string, number> {
     this.timelinePlayer.update(deltaMs, this.rendererOptions.particles);
     return this.pipeline.update(deltaMs, this.rendererOptions);
