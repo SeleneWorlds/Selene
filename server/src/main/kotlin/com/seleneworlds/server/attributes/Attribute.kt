@@ -17,14 +17,14 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : O
 
     var value: T = initialValue
         set(value) {
-            val prev = field
-            if (prev != value) {
-                field = value
+            if (field != value) {
+                var newValue = value
                 constraints.forEach {
                     if (it.enabled) {
-                        field = it.apply(this, field)
+                        newValue = it.apply(this, newValue)
                     }
                 }
+                field = newValue
                 notifyObservers(api)
             }
         }
