@@ -11,6 +11,27 @@ import kotlin.test.assertEquals
 class SchedulesApiTest {
 
     @Test
+    fun `interval coalesces ticks while its callback is pending`() {
+        val dispatcher = MainThreadDispatcher().apply { bindToCurrentThread() }
+        val schedulesApi = SchedulesApi(dispatcher)
+        var calls = 0
+
+        try {
+            schedulesApi.setInterval(10) { calls++ }
+
+            Thread.sleep(100)
+            dispatcher.process()
+            assertEquals(1, calls)
+
+            Thread.sleep(30)
+            dispatcher.process()
+            assertEquals(2, calls)
+        } finally {
+            schedulesApi.dispose()
+        }
+    }
+
+    @Test
     fun `clearBundleState cancels only matching bundle schedules`() {
         val dispatcher = MainThreadDispatcher().apply { bindToCurrentThread() }
         val schedulesApi = SchedulesApi(dispatcher)

@@ -105,7 +105,15 @@ class SchedulesApi(
         )
 
         val task = executor.scheduleAtFixedRate({
-            mainThreadDispatcher.runOnMainThread(callback)
+            if (handler.callbackPending.compareAndSet(false, true)) {
+                mainThreadDispatcher.runOnMainThread {
+                    try {
+                        callback()
+                    } finally {
+                        handler.callbackPending.set(false)
+                    }
+                }
+            }
         }, intervalMs.toLong(), intervalMs.toLong(), TimeUnit.MILLISECONDS)
 
         handler.task = task
