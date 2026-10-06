@@ -22,7 +22,9 @@ export class InteriorFadeController {
   update(deltaMs: number, focus: Coordinate): void {
     // Moving entities use interpolated coordinates, while tiles occupy integral coordinates.
     const focusTile = { x: Math.round(focus.x), y: Math.round(focus.y), z: Math.round(focus.z) };
-    const isInside = focusTile.z < 0 || this.tiles.hasTileAt({ ...focusTile, z: focusTile.z + 1 });
+    const isInside = focusTile.z < 0
+      || this.tiles.hasTileAt({ ...focusTile, z: focusTile.z + 1 })
+      || this.tiles.hasTileAt({ ...focusTile, z: focusTile.z + 2 });
     const targetAlpha = isInside ? HIDDEN_LAYER_ALPHA : 1;
     const blend = Math.min(1, (deltaMs / 1000) * INTERIOR_FADE_SPEED);
     this.upperLayerAlpha += (targetAlpha - this.upperLayerAlpha) * blend;

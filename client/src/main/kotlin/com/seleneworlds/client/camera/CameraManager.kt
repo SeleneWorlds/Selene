@@ -180,7 +180,8 @@ class CameraManager(
     }
 
     fun isInsideInterior(): Boolean {
-        return focusCoordinate.z < 0 || map.hasTileAt(focusCoordinate.up())
+        val layerAbove = focusCoordinate.up()
+        return focusCoordinate.z < 0 || map.hasTileAt(layerAbove) || map.hasTileAt(layerAbove.up())
     }
 
 }
