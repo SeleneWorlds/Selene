@@ -30,6 +30,7 @@
     const capturedKeys = new Map();
     const passthroughKeys = new Map();
     const pointerDownCallbacks = new Set();
+    const pointerMoveCallbacks = new Set();
     const pointerUpCallbacks = new Set();
     let textCaptureCount = 0;
     let interactionReportingEnabled = false;
@@ -153,7 +154,7 @@
             return release;
         };
         return Object.freeze({
-            apiVersion: 8,
+            apiVersion: 9,
             resolveAsset(path) {
                 if (typeof path !== 'string' || path.length === 0) throw new Error('Asset path must be a non-empty string');
                 return new URL(path, entry.url).href;
@@ -205,6 +206,7 @@
                 isPassthroughKey: key => passthroughKeys.has(key),
                 hasEditableFocus: () => mounted.some(ui => isEditable(ui.root.activeElement)),
                 onPointerDown: callback => registerPointerCallback(pointerDownCallbacks, callback),
+                onPointerMove: callback => registerPointerCallback(pointerMoveCallbacks, callback),
                 onPointerUp: callback => registerPointerCallback(pointerUpCallbacks, callback)
             }),
             network,
@@ -380,6 +382,9 @@
     window.__seleneBridge = Object.freeze({
         gamePointerDown(x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ) {
             dispatchPointerCallbacks(pointerDownCallbacks, x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ);
+        },
+        gamePointerMove(x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ) {
+            dispatchPointerCallbacks(pointerMoveCallbacks, x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ);
         },
         gamePointerUp(x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ) {
             dispatchPointerCallbacks(pointerUpCallbacks, x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ);

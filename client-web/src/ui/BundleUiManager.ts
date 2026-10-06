@@ -19,7 +19,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 8;
+const API_VERSION = 9;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -62,6 +62,7 @@ interface BundleUiApi {
     isPassthroughKey: (key: string) => boolean;
     hasEditableFocus: () => boolean;
     onPointerDown: (callback: (event: BundleUiPointerEvent) => void) => () => void;
+    onPointerMove: (callback: (event: BundleUiPointerEvent) => void) => () => void;
     onPointerUp: (callback: (event: BundleUiPointerEvent) => void) => () => void;
   };
   readonly network: {
@@ -181,6 +182,8 @@ export class BundleUiManager {
         hasEditableFocus: () => this.options.input.hasEditableFocus(),
         onPointerDown: (callback: (event: BundleUiPointerEvent) => void) =>
           this.registerPointerListener('pointerdown', callback),
+        onPointerMove: (callback: (event: BundleUiPointerEvent) => void) =>
+          this.registerPointerListener('pointermove', callback),
         onPointerUp: (callback: (event: BundleUiPointerEvent) => void) =>
           this.registerPointerListener('pointerup', callback),
       }),
@@ -258,7 +261,7 @@ export class BundleUiManager {
   }
 
   private registerPointerListener(
-    type: 'pointerdown' | 'pointerup',
+    type: 'pointerdown' | 'pointermove' | 'pointerup',
     callback: (event: BundleUiPointerEvent) => void,
   ): () => void {
     if (typeof callback !== 'function') throw new Error('Pointer callback must be a function.');

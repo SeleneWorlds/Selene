@@ -56,6 +56,7 @@ class CefInputProcessor(
         if (!cef.enabled || pointer != 0) return false
         val (x, y) = browserCoordinatesClamped(screenX, screenY)
         dispatchMouse("mousemove", x, y, pressedButtons.firstOrNull() ?: -1)
+        dispatchGamePointerMove(x, y, screenX, screenY, pressedButtons.firstOrNull() ?: -1)
         return capturedButtons.isNotEmpty()
     }
 
@@ -134,6 +135,12 @@ class CefInputProcessor(
 
     private fun dispatchGamePointerUp(x: Int, y: Int, screenX: Int, screenY: Int, button: Int) {
         cef.dispatchGamePointerUp(
+            x, y, browserButton(button), hasShift(), gamePointerCoordinate(screenX, screenY)
+        )
+    }
+
+    private fun dispatchGamePointerMove(x: Int, y: Int, screenX: Int, screenY: Int, button: Int) {
+        cef.dispatchGamePointerMove(
             x, y, browserButton(button), hasShift(), gamePointerCoordinate(screenX, screenY)
         )
     }

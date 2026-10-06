@@ -400,6 +400,14 @@ class CefBrowserUi(
         }
     }
 
+    fun dispatchGamePointerMove(x: Int, y: Int, button: Int, shift: Boolean, coordinate: Coordinate) {
+        if (!initialized) return
+        browser?.executeJavaScript(
+            "window.__seleneBridge?.gamePointerMove($x,$y,$button,$shift," +
+                    "${coordinate.x},${coordinate.y},${coordinate.z})", "", 0
+        )
+    }
+
     fun insertText(character: Char) {
         if (!initialized) return
         val encoded = Json.encodeToString(String.serializer(), character.toString())
