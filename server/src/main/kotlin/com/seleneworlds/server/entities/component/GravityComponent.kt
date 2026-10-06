@@ -6,8 +6,19 @@ import com.seleneworlds.server.entities.EntityEvents
 /** Makes an entity fall one level per server update until it occupies a map tile. */
 class GravityComponent : EntityComponent, TickableComponent {
     private var fallHeight = 0
+    var enabled = true
+        private set
+
+    fun setActive(enabled: Boolean) {
+        this.enabled = enabled
+        if (!enabled) {
+            fallHeight = 0
+        }
+    }
 
     override fun update(entity: Entity, delta: Float) {
+        if (!enabled) return
+
         val dimension = entity.dimension ?: return
         val resolver = entity.world.collisionResolver
         val coordinate = entity.coordinate
@@ -23,6 +34,9 @@ class GravityComponent : EntityComponent, TickableComponent {
             val destination = entity.coordinate
             if (resolver.hasTileAt(dimension, entity.collisionViewer, destination)) {
                 finishFall(entity)
+            } else if (fallHeight >= MAX_FALL_HEIGHT) {
+                finishFall(entity)
+                setActive(false)
             }
         }
     }
@@ -31,5 +45,9 @@ class GravityComponent : EntityComponent, TickableComponent {
         if (fallHeight == 0) return
         EntityEvents.EntityFell.EVENT.invoker().entityFell(entity.api, fallHeight)
         fallHeight = 0
+    }
+
+    companion object {
+        const val MAX_FALL_HEIGHT = 100
     }
 }

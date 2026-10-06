@@ -14,6 +14,7 @@ import com.seleneworlds.server.attributes.AttributeApi
 import com.seleneworlds.server.cameras.viewer.Viewer
 import com.seleneworlds.server.dimensions.Dimension
 import com.seleneworlds.server.dimensions.DimensionApi
+import com.seleneworlds.server.entities.component.GravityComponent
 import com.seleneworlds.server.maps.tree.MapTreeApi
 import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.players.PlayerApi
@@ -176,6 +177,12 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
 
     fun disableCollisions(tagName: String = "default") {
         delegate.collisionTags.remove(tagName)
+    }
+
+    fun setGravityEnabled(enabled: Boolean) {
+        delegate.components.values.filterIsInstance<GravityComponent>().forEach {
+            it.setActive(enabled)
+        }
     }
 
     fun hasInteractions(tagName: String = "default"): Boolean {

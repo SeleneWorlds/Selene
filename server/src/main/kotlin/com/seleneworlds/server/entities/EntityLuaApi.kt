@@ -279,6 +279,12 @@ object EntityLuaApi {
         return 0
     }
 
+    private fun setGravityEnabled(lua: Lua): Int {
+        val entity = lua.checkUserdata<EntityApi>(1)
+        entity.setGravityEnabled(lua.checkBoolean(2))
+        return 0
+    }
+
     private fun hasInteractions(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         val tagName = if (lua.isString(2)) lua.checkString(2) else "default"
@@ -406,6 +412,7 @@ object EntityLuaApi {
         callable(::setCollisions)
         callable(::enableCollisions)
         callable(::disableCollisions)
+        callable(::setGravityEnabled)
         callable(::hasInteractions)
         callable(::setInteractions)
         callable(::enableInteractions)
