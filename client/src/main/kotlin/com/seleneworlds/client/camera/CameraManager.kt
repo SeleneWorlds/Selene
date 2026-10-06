@@ -3,6 +3,7 @@ package com.seleneworlds.client.camera
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.math.Rectangle
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.seleneworlds.client.grid.ClientGrid
 import com.seleneworlds.client.game.ClientEvents
@@ -52,6 +53,8 @@ class CameraManager(
     )
 
     private var focusedEntityNetworkId: Int = -1
+    private var cameraOffsetX = 0f
+    private var cameraOffsetY = 0f
     val focusedEntity get() = map.getEntityByNetworkId(focusedEntityNetworkId)
 
     fun update() {
@@ -69,8 +72,25 @@ class CameraManager(
 
     fun focusCamera(coordinate: Coordinate) {
         focusedEntityNetworkId = -1
+        val preserveVisualPosition = cameraOffsetX != 0f || cameraOffsetY != 0f
+        val previousX = camera.position.x
+        val previousY = camera.position.y
         focusCoordinate = coordinate
+        if (preserveVisualPosition) {
+            cameraOffsetX = previousX - grid.getScreenX(coordinate)
+            cameraOffsetY = previousY - grid.getScreenY(coordinate)
+        }
         setCameraPosition(grid.getScreenX(coordinate), grid.getScreenY(coordinate))
+        camera.update()
+    }
+
+    fun getCameraPosition() = Vector2(camera.position.x, -camera.position.y)
+
+    fun setCameraPosition(position: Vector2) {
+        focusedEntityNetworkId = -1
+        cameraOffsetX = position.x - grid.getScreenX(focusCoordinate)
+        cameraOffsetY = -position.y - grid.getScreenY(focusCoordinate)
+        setCameraPosition(grid.getScreenX(focusCoordinate), grid.getScreenY(focusCoordinate))
         camera.update()
     }
 
@@ -133,8 +153,8 @@ class CameraManager(
     }
 
     private fun setCameraPosition(x: Float, y: Float) {
-        camera.position.x = snapToPixelGrid(x, logicalViewportWidth)
-        camera.position.y = snapToPixelGrid(y, logicalViewportHeight)
+        camera.position.x = snapToPixelGrid(x + cameraOffsetX, logicalViewportWidth)
+        camera.position.y = snapToPixelGrid(y + cameraOffsetY, logicalViewportHeight)
     }
 
     private fun snapToPixelGrid(value: Float, viewportSize: Int): Float {
@@ -166,6 +186,8 @@ class CameraManager(
 
     fun focusEntity(networkId: Int) {
         focusedEntityNetworkId = networkId
+        cameraOffsetX = 0f
+        cameraOffsetY = 0f
     }
 
     fun isRegionVisible(rectangle: Rectangle): Boolean {

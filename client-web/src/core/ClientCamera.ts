@@ -13,6 +13,8 @@ export class ClientCamera {
   private hasCustomViewport = false;
   private coordinate: Coordinate = { x: 0, y: 0, z: 0 };
   private followedEntityId: number | null = null;
+  private offsetX = 0;
+  private offsetY = 0;
 
   setViewport(width: number, height: number): void {
     if (this.hasCustomViewport) return;
@@ -32,12 +34,22 @@ export class ClientCamera {
 
   setCoordinate(coordinate: Coordinate): void {
     const changed = !isSameCoordinate(this.coordinate, coordinate);
+    if (this.offsetX !== 0 || this.offsetY !== 0) {
+      const previous = projectCoordinate(this.coordinate);
+      const next = projectCoordinate(coordinate);
+      this.offsetX += previous.x - next.x;
+      this.offsetY += previous.y - next.y;
+    }
     this.coordinate = coordinate;
     this.followedEntityId = null;
     if (changed) this.emitCoordinateChanged();
   }
 
-  followEntity(networkId: number): void { this.followedEntityId = networkId === -1 ? null : networkId; }
+  followEntity(networkId: number): void {
+    this.followedEntityId = networkId === -1 ? null : networkId;
+    this.offsetX = 0;
+    this.offsetY = 0;
+  }
   clearFollowedEntity(): void { this.followedEntityId = null; }
 
   updateFollowedCoordinate(resolveEntityCoordinate: (networkId: number) => Coordinate | null): boolean {
@@ -55,6 +67,16 @@ export class ClientCamera {
   }
 
   getCoordinate(): Coordinate { return { ...this.coordinate }; }
+  getPosition(): { x: number; y: number } {
+    const projected = projectCoordinate(this.coordinate);
+    return { x: projected.x + this.offsetX, y: projected.y + this.offsetY };
+  }
+  setPosition(position: { x: number; y: number }): void {
+    this.followedEntityId = null;
+    const projected = projectCoordinate(this.coordinate);
+    this.offsetX = position.x - projected.x;
+    this.offsetY = position.y - projected.y;
+  }
   getFollowedEntityId(): number | null { return this.followedEntityId; }
   getViewportRect(): { x: number; y: number; width: number; height: number } {
     return { x: this.viewportX, y: this.viewportY, width: this.viewportWidth, height: this.viewportHeight };
@@ -62,8 +84,8 @@ export class ClientCamera {
   getWorldPosition(): { x: number; y: number } {
     const projected = projectCoordinate(this.coordinate);
     return {
-      x: this.viewportX + this.viewportWidth / 2 - projected.x,
-      y: this.viewportY + this.viewportHeight / 2 - projected.y,
+      x: this.viewportX + this.viewportWidth / 2 - projected.x - this.offsetX,
+      y: this.viewportY + this.viewportHeight / 2 - projected.y - this.offsetY,
     };
   }
   screenToWorld(screenX: number, screenY: number): { x: number; y: number } {

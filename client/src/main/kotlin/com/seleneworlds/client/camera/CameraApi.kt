@@ -1,5 +1,6 @@
 package com.seleneworlds.client.camera
 
+import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.math.Vector3
 import com.seleneworlds.common.grid.Coordinate
 
@@ -11,6 +12,14 @@ class CameraApi(
 ) {
     fun getCoordinate(): Coordinate {
         return cameraManager.focusCoordinate
+    }
+
+    fun getPosition(): Vector2 {
+        return cameraManager.getCameraPosition()
+    }
+
+    fun setPosition(position: Vector2) {
+        cameraManager.setCameraPosition(position)
     }
 
     fun setViewport(x: Int, y: Int, width: Int, height: Int) {

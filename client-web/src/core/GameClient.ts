@@ -95,6 +95,11 @@ export class GameClient {
   getCameraApi(): CameraApi {
     return {
       getCoordinate: () => this.camera.getCoordinate(),
+      getPosition: () => this.camera.getPosition(),
+      setPosition: (position) => {
+        this.camera.setPosition(position);
+        this.renderer.drawCameraScene();
+      },
       setViewport: (x, y, width, height) => {
         this.camera.setViewportRect(x, y, width, height);
         this.renderer.drawCameraScene();

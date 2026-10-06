@@ -1,5 +1,6 @@
 package com.seleneworlds.client.ui.cef
 
+import com.badlogic.gdx.math.Vector2
 import com.seleneworlds.client.network.NetworkApi
 import com.seleneworlds.client.camera.CameraManager
 import com.seleneworlds.client.entity.component.DraggableComponent
@@ -63,6 +64,8 @@ class CefUiBridge(
                         browser, frame, queryId, persistent, message, callback)
                     "updateInteractionState" -> updateInteractionState(message, callback)
                     "getInitialWorldState" -> getInitialWorldState(callback)
+                    "getCameraPosition" -> getCameraPosition(callback)
+                    "setCameraPosition" -> setCameraPosition(message, callback)
                     "subscribeToWorldUpdates" -> subscribeToWorldUpdates(
                         browser, frame, queryId, persistent, callback)
                     "loadBundleStorageValue" -> loadBundleStorageValue(message, callback)
@@ -173,6 +176,23 @@ class CefUiBridge(
                 }
             })
         }.toString())
+    }
+
+    private fun getCameraPosition(callback: CefQueryCallback) {
+        mainThreadDispatcher.runOnMainThread {
+            val position = cameraManager.getCameraPosition()
+            callback.success(buildJsonObject { put("x", position.x); put("y", position.y) }.toString())
+        }
+    }
+
+    private fun setCameraPosition(message: JsonObject, callback: CefQueryCallback) {
+        val x = message.requiredFloat("x")
+        val y = message.requiredFloat("y")
+        require(x.isFinite() && y.isFinite()) { "Camera position must be finite" }
+        mainThreadDispatcher.runOnMainThread {
+            cameraManager.setCameraPosition(Vector2(x, y))
+            callback.success("")
+        }
     }
 
     private fun loadBundleStorageValue(message: JsonObject, callback: CefQueryCallback) {
@@ -297,6 +317,9 @@ class CefUiBridge(
 
     private fun JsonObject.requiredInt(name: String): Int =
         this[name]?.jsonPrimitive?.content?.toIntOrNull() ?: throw IllegalArgumentException("Invalid $name")
+
+    private fun JsonObject.requiredFloat(name: String): Float =
+        this[name]?.jsonPrimitive?.content?.toFloatOrNull() ?: throw IllegalArgumentException("Invalid $name")
 
     private fun JsonObject.stringSet(name: String): Set<String> = this[name]?.jsonArray.orEmpty().map { element ->
         element.jsonPrimitive.content.also { require(it.isNotEmpty() && it.length <= MAX_KEY_NAME_LENGTH) }
