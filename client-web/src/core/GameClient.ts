@@ -97,8 +97,9 @@ export class GameClient {
       getCoordinate: () => this.camera.getCoordinate(),
       getPosition: () => this.camera.getPosition(),
       setPosition: (position) => {
-        this.camera.setPosition(position);
+        const coordinate = this.camera.setPosition(position);
         this.renderer.drawCameraScene();
+        return coordinate;
       },
       setViewport: (x, y, width, height) => {
         this.camera.setViewportRect(x, y, width, height);

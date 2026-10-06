@@ -1,4 +1,4 @@
-import { projectCoordinate } from '@/core/WorldProjection';
+import { projectCoordinate, TILE_STEP_X, TILE_STEP_Y, TILE_STEP_Z } from '@/core/WorldProjection';
 import type { Coordinate } from '@/networking/GameProtocol';
 
 export type CameraCoordinateChangedListener = (coordinate: Coordinate) => void;
@@ -71,11 +71,16 @@ export class ClientCamera {
     const projected = projectCoordinate(this.coordinate);
     return { x: projected.x + this.offsetX, y: projected.y + this.offsetY };
   }
-  setPosition(position: { x: number; y: number }): void {
+  setPosition(position: { x: number; y: number }): Coordinate {
     this.followedEntityId = null;
-    const projected = projectCoordinate(this.coordinate);
+    const nextCoordinate = positionToCoordinate(position, this.coordinate.z);
+    const changed = !isSameCoordinate(this.coordinate, nextCoordinate);
+    this.coordinate = nextCoordinate;
+    const projected = projectCoordinate(nextCoordinate);
     this.offsetX = position.x - projected.x;
     this.offsetY = position.y - projected.y;
+    if (changed) this.emitCoordinateChanged();
+    return this.getCoordinate();
   }
   getFollowedEntityId(): number | null { return this.followedEntityId; }
   getViewportRect(): { x: number; y: number; width: number; height: number } {
@@ -108,6 +113,15 @@ function toGridCoordinate(coordinate: Coordinate): Coordinate {
     x: Math.round(coordinate.x),
     y: Math.round(coordinate.y),
     z: Math.round(coordinate.z),
+  };
+}
+
+function positionToCoordinate(position: { x: number; y: number }, z: number): Coordinate {
+  const adjustedY = -position.y - z * TILE_STEP_Z;
+  return {
+    x: Math.round((position.x / TILE_STEP_X + adjustedY / TILE_STEP_Y) / 2),
+    y: Math.round((position.x / TILE_STEP_X - adjustedY / TILE_STEP_Y) / 2),
+    z,
   };
 }
 

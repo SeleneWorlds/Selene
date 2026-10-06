@@ -5,7 +5,7 @@ export type ClientCameraCoordinateChangedListener = (coordinate: Coordinate) => 
 export interface CameraApi {
   getCoordinate: () => Coordinate;
   getPosition: () => { x: number; y: number };
-  setPosition: (position: { x: number; y: number }) => void;
+  setPosition: (position: { x: number; y: number }) => Coordinate;
   setViewport: (x: number, y: number, width: number, height: number) => void;
   screenToWorld: (screenX: number, screenY: number) => { x: number; y: number };
   addCoordinateChangedListener: (listener: ClientCameraCoordinateChangedListener) => () => void;

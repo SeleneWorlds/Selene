@@ -18,8 +18,8 @@ class CameraApi(
         return cameraManager.getCameraPosition()
     }
 
-    fun setPosition(position: Vector2) {
-        cameraManager.setCameraPosition(position)
+    fun setPosition(position: Vector2): Coordinate {
+        return cameraManager.setCameraPosition(position)
     }
 
     fun setViewport(x: Int, y: Int, width: Int, height: Int) {

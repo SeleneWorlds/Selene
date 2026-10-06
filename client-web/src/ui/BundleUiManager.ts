@@ -73,7 +73,7 @@ interface BundleUiApi {
   readonly world: {
     getCameraCoordinate: CameraApi['getCoordinate'];
     getCameraPosition: () => Promise<ReturnType<CameraApi['getPosition']>>;
-    setCameraPosition: CameraApi['setPosition'];
+    setCameraPosition: (position: { x: number; y: number }) => Promise<Coordinate>;
     getControlledEntity: () => BundleUiWorldEntity | null;
     getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
     projectCoordinate: (coordinate: Coordinate) => { x: number; y: number };
@@ -218,11 +218,11 @@ export class BundleUiManager {
       world: Object.freeze({
         getCameraCoordinate: () => this.options.camera.getCoordinate(),
         getCameraPosition: async () => this.options.camera.getPosition(),
-        setCameraPosition: (position: { x: number; y: number }) => {
+        setCameraPosition: async (position: { x: number; y: number }) => {
           if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) {
             throw new Error('Camera position must contain finite x and y values.');
           }
-          this.options.camera.setPosition({ x: position.x, y: position.y });
+          return this.options.camera.setPosition({ x: position.x, y: position.y });
         },
         getControlledEntity: () => {
           const entity = this.options.getControlledEntity();

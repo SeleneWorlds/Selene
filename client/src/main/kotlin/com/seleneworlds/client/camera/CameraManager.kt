@@ -86,12 +86,14 @@ class CameraManager(
 
     fun getCameraPosition() = Vector2(camera.position.x, -camera.position.y)
 
-    fun setCameraPosition(position: Vector2) {
+    fun setCameraPosition(position: Vector2): Coordinate {
         focusedEntityNetworkId = -1
+        focusCoordinate = grid.screenToCoordinate(position.x, -position.y, focusCoordinate.z)
         cameraOffsetX = position.x - grid.getScreenX(focusCoordinate)
         cameraOffsetY = -position.y - grid.getScreenY(focusCoordinate)
         setCameraPosition(grid.getScreenX(focusCoordinate), grid.getScreenY(focusCoordinate))
         camera.update()
+        return focusCoordinate
     }
 
     fun setViewport(x: Int, y: Int, width: Int, height: Int) {

@@ -217,8 +217,8 @@
                     if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) {
                         throw new Error('Camera position must contain finite x and y values');
                     }
-                    executeBridgeRequest({type: 'setCameraPosition', x: position.x, y: position.y})
-                        .catch(error => console.error('setCameraPosition failed', error));
+                    return executeBridgeRequest({type: 'setCameraPosition', x: position.x, y: position.y})
+                        .then(JSON.parse);
                 },
                 getMapTiles: () => [...worldTiles.values()].map(tile => ({...tile})),
                 getEntitiesAt: coordinate => executeBridgeRequest({

@@ -190,8 +190,7 @@ class CefUiBridge(
         val y = message.requiredFloat("y")
         require(x.isFinite() && y.isFinite()) { "Camera position must be finite" }
         mainThreadDispatcher.runOnMainThread {
-            cameraManager.setCameraPosition(Vector2(x, y))
-            callback.success("")
+            callback.success(coordinateJson(cameraManager.setCameraPosition(Vector2(x, y))).toString())
         }
     }
 
