@@ -12,6 +12,7 @@ import type { Coordinate } from '@/networking/GameProtocol';
 import type { ClientMapTile } from '@/core/ClientMap';
 import type { ClientVisualDefinition } from '@/data/ClientRegistrySchemas';
 import type { ClientAssetManifest } from '@/core/services/ClientAssetManifest';
+import type { I18nApi } from '@/api/I18nApi';
 import {
   ClientUiIndexResponseSchema,
   parseServerResponse,
@@ -19,7 +20,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 10;
+const API_VERSION = 11;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -41,6 +42,7 @@ interface BundleUiManagerOptions {
   getControlledEntity: () => ReturnType<EntitiesApi['getEntityByNetworkId']>;
   onMapChanged: (listener: (coordinate: Coordinate, width: number, height: number) => void) => () => void;
   registries: ClientRegistrySnapshots;
+  i18n: I18nApi;
 }
 interface BundleUiModule {
   mount: (root: ShadowRoot, selene: BundleUiApi) => void | Promise<void>;
@@ -48,6 +50,7 @@ interface BundleUiModule {
 interface BundleUiApi {
   readonly apiVersion: number;
   readonly resolveAsset: (path: string) => Promise<string>;
+  readonly i18n: I18nApi;
   readonly visuals: {
     getDefinition: (identifier: string) => Promise<ClientVisualDefinition>;
   };
@@ -161,6 +164,12 @@ export class BundleUiManager {
     return Object.freeze({
       apiVersion: API_VERSION,
       resolveAsset: (path: string) => this.resolveAsset(path),
+      i18n: Object.freeze({
+        get: (key: string, locale?: string) => this.options.i18n.get(key, locale),
+        format: (key: string, parameters?: Record<string, unknown>, locale?: string) =>
+          this.options.i18n.format(key, parameters, locale),
+        hasKey: (key: string, locale?: string) => this.options.i18n.hasKey(key, locale),
+      }),
       visuals: Object.freeze({
         getDefinition: async (identifier: string) => {
           requireVisualIdentifier(identifier);

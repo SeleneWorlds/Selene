@@ -10,11 +10,14 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
+import java.util.Properties
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
@@ -71,6 +74,8 @@ class ClientRegistrySnapshots(
             }
         }
 
+        loadMessages(bundles, entriesByRegistry)
+
         val registries = entriesByRegistry
             .mapKeys { it.key.toString() }
             .mapValues { (registry, entries) ->
@@ -89,6 +94,37 @@ class ClientRegistrySnapshots(
             hash = hashText(registries.values.joinToString("|") { "${it.registry}:${it.hash}" }),
             registries = registries
         )
+    }
+
+    private fun loadMessages(
+        bundles: List<Bundle>,
+        entriesByRegistry: MutableMap<Identifier, MutableMap<Identifier, JsonElement>>
+    ) {
+        val messagesByKey = mutableMapOf<String, MutableMap<String, String>>()
+        for (bundle in bundles) {
+            for (platform in CLIENT_PLATFORMS) {
+                val i18nDir = bundle.dir.resolve("$platform/i18n")
+                val files = i18nDir.listFiles { file ->
+                    file.isFile && MESSAGE_FILE.matches(file.name)
+                }?.sortedBy(File::getName).orEmpty()
+                for (file in files) {
+                    val locale = MESSAGE_FILE.matchEntire(file.name)!!
+                        .groupValues[1]
+                        .replace('_', '-')
+                    val properties = Properties().apply { file.inputStream().use(::load) }
+                    for ((key, value) in properties) {
+                        messagesByKey.getOrPut(key.toString()) { mutableMapOf() }[locale] = value.toString()
+                    }
+                }
+            }
+        }
+        if (messagesByKey.isEmpty()) return
+
+        val messages = JsonObject(messagesByKey.toSortedMap().mapValues { (_, localized) ->
+            JsonObject(localized.toSortedMap().mapValues { JsonPrimitive(it.value) })
+        })
+        entriesByRegistry
+            .getOrPut(MESSAGES_REGISTRY) { mutableMapOf() }[MESSAGES_ENTRY] = messages
     }
 
     private fun collectCustomRegistryIdentifiers(bundles: List<Bundle>): Map<CustomRegistryKey, Identifier> {
@@ -219,6 +255,9 @@ class ClientRegistrySnapshots(
 
     private companion object {
         val CLIENT_PLATFORMS = listOf("common", "client")
+        val MESSAGE_FILE = Regex(".*_([a-z]{2,3}(?:[_-](?:[A-Z]{2}|\\d{3}))?(?:[_-][A-Za-z0-9]+)?)\\.properties")
+        val MESSAGES_REGISTRY = Identifier.withDefaultNamespace("messages")
+        val MESSAGES_ENTRY = Identifier.withDefaultNamespace("messages")
         val BUILTIN_REGISTRY_IDENTIFIERS = setOf(
             "audio",
             "components",

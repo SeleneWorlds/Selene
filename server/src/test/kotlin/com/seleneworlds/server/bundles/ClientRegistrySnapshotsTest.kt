@@ -76,6 +76,26 @@ class ClientRegistrySnapshotsTest {
         assertEquals("widget", widgets.entries.getValue("test:widget_1").jsonObject.getValue("value").jsonPrimitive.content)
     }
 
+    @Test
+    fun `snapshots expose client and common messages but not server messages`() {
+        val bundleDatabase = BundleDatabase()
+        val bundle = createBundle("bundle") {
+            writeText("common/i18n/messages_en.properties", "greeting=Hello\nshared=Common")
+            writeText("client/i18n/ui_de_DE.properties", "greeting=Hallo\nshared=Client")
+            writeText("server/i18n/messages_en.properties", "secret=hidden")
+        }
+        bundleDatabase.addBundle(bundle)
+
+        val messages = assertNotNull(
+            createSnapshots(bundleDatabase).getRegistry(Identifier.withDefaultNamespace("messages"))
+        ).entries.getValue("selene:messages").jsonObject
+
+        assertEquals("Hello", messages.getValue("greeting").jsonObject.getValue("en").jsonPrimitive.content)
+        assertEquals("Hallo", messages.getValue("greeting").jsonObject.getValue("de-DE").jsonPrimitive.content)
+        assertEquals("Client", messages.getValue("shared").jsonObject.getValue("de-DE").jsonPrimitive.content)
+        assertTrue("secret" !in messages)
+    }
+
     private fun createSnapshots(bundleDatabase: BundleDatabase): ClientRegistrySnapshots {
         return ClientRegistrySnapshots(
             bundleDatabase,
@@ -95,6 +115,11 @@ class ClientRegistrySnapshotsTest {
             val path = root.resolve(relativePath)
             path.parent.createDirectories()
             path.writeText(json)
+        }
+        fun writeText(relativePath: String, text: String) {
+            val path = root.resolve(relativePath)
+            path.parent.createDirectories()
+            path.writeText(text)
         }
     }
 }

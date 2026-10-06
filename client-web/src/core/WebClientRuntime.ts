@@ -131,6 +131,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     const registriesApi = new RegistriesService(registries, gameClient.getNameIdMappings());
     const visualsApi = new VisualsService(registriesApi);
     const schedulesService = new SchedulesService();
+    const i18nService = new I18nService(registries);
     const soundsService = new SoundsService(registriesApi, assetManifest, serverApiUrl, authToken);
     gameClient.setTimelineSoundPlayer((sound, volume, pitch) => {
       soundsService.playSound(sound, { volume, pitch });
@@ -143,7 +144,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       schedules: schedulesService,
       http: new HttpService(),
       registries: registriesApi,
-      i18n: new I18nService(registries),
+      i18n: i18nService,
     };
     const featureApis = {
       map: new MapService(mapApiOptions, registriesApi, visualsApi),
@@ -194,6 +195,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       grid: gameClient.getGridApi(),
       entities: gameClient.getEntitiesApi(),
       registries,
+      i18n: i18nService,
       getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) =>
         gameClient.getMapTiles(coordinate, width, height),
       projectCoordinate: (coordinate) => gameClient.projectCoordinate(coordinate),
