@@ -167,6 +167,7 @@ export const VisualAnimationTimelineEventSchema = z.object({
   visual: z.string().min(1),
   duration: z.number().finite().positive().optional(),
   position: z.string().min(1).default('position'),
+  ignoresElevation: z.boolean().default(false),
   keys: timelineKeysSchema,
 });
 export type VisualAnimationTimelineEvent = z.infer<typeof VisualAnimationTimelineEventSchema>;

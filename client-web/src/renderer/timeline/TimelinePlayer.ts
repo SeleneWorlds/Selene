@@ -34,6 +34,7 @@ interface VisualEffect {
   durationMs: number;
   frame: number;
   revision: number;
+  event: VisualAnimationTimelineEvent;
 }
 
 interface TileSurface {
@@ -156,6 +157,9 @@ export class TimelinePlayer {
         this.cleanupInstance(effect.instanceId);
         continue;
       }
+      effect.sprite.alpha = Math.min(1, Math.max(0,
+        keyedValue(effect.event, 'alpha', 1, effect.elapsedMs / 1000) as number,
+      ));
       const nextFrame = Math.min(
         effect.textures.length - 1,
         Math.floor(effect.elapsedMs / effect.durationMs * effect.textures.length),
@@ -316,7 +320,7 @@ export class TimelinePlayer {
     sprite.anchor.set(0.5, 1);
     sprite.position.set(
       projected.x + (visual.offsetX ?? 0),
-      projected.y - surface.height - (visual.offsetY ?? 0),
+      projected.y - (event.ignoresElevation ? 0 : surface.height) - (visual.offsetY ?? 0),
     );
     sprite.scale.set(visual.flipX ? -1 : 1, visual.flipY ? -1 : 1);
     const visualOrder = getRenderOrder(position, visual.sortLayerOffset ?? 0, ENTITY_LOCAL_SORT_LAYER);
@@ -324,8 +328,9 @@ export class TimelinePlayer {
       ? visualOrder
       : Math.max(visualOrder, surface.renderOrder + ENTITY_LOCAL_SORT_LAYER);
     const effect: VisualEffect = {
-      instanceId: playback.instanceId, sprite, textures, elapsedMs: 0, durationMs, frame: 0, revision: 0,
+      instanceId: playback.instanceId, sprite, textures, elapsedMs: 0, durationMs, frame: 0, revision: 0, event,
     };
+    sprite.alpha = Math.min(1, Math.max(0, keyedValue(event, 'alpha', 1, 0) as number));
     this.effects.push(effect);
     this.scene.addChild(sprite);
     await this.setFrame(effect, 0);
@@ -362,7 +367,7 @@ export class TimelinePlayer {
 }
 
 function keyedValue(
-  event: ScreenOverlayTimelineEvent,
+  event: ScreenOverlayTimelineEvent | VisualAnimationTimelineEvent,
   property: string,
   base: string | number,
   elapsed: number,
