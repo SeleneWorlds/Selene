@@ -128,10 +128,13 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
     }
 
     fun setVisibility(enabled: Boolean, tagName: String = "default") {
-        if (enabled) {
+        val changed = if (enabled) {
             delegate.visibilityTags.add(tagName)
         } else {
             delegate.visibilityTags.remove(tagName)
+        }
+        if (changed) {
+            delegate.updateVisibility()
         }
     }
 
@@ -144,11 +147,15 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
     }
 
     fun makeVisible(tagName: String = "default") {
-        delegate.visibilityTags.add(tagName)
+        if (delegate.visibilityTags.add(tagName)) {
+            delegate.updateVisibility()
+        }
     }
 
     fun makeInvisible(tagName: String = "default") {
-        delegate.visibilityTags.remove(tagName)
+        if (delegate.visibilityTags.remove(tagName)) {
+            delegate.updateVisibility()
+        }
     }
 
     fun hasCollisions(tagName: String = "default"): Boolean {

@@ -187,4 +187,8 @@ class Entity(
         dimension?.syncManager?.entityUpdated(this)
     }
 
+    fun updateVisibility() {
+        dimension?.syncManager?.updateEntityWatches(this)
+    }
+
 }

@@ -133,7 +133,7 @@ class PlayerSyncManager(
     }
 
     private fun shouldSync(entity: Entity): Boolean {
-        if (entity.dimension != player.camera.dimension || !player.camera.canView(entity)) {
+        if (entity.dimension != player.camera.dimension) {
             return false
         }
 
@@ -141,7 +141,7 @@ class PlayerSyncManager(
             return false
         }
 
-        return true
+        return player.controlledEntity == entity || player.camera.canView(entity)
     }
 
     private fun syncEntity(entity: Entity) {
