@@ -7,7 +7,12 @@ import java.util.PriorityQueue
 import kotlin.math.abs
 
 class Pathfinder {
-    fun findPath(entity: Entity, goal: Coordinate, searchRadius: Int = DEFAULT_SEARCH_RADIUS): List<Direction>? {
+    fun findPath(
+        entity: Entity,
+        goal: Coordinate,
+        searchRadius: Int = DEFAULT_SEARCH_RADIUS,
+        maxExpandedNodes: Int = DEFAULT_MAX_EXPANDED_NODES,
+    ): List<Direction>? {
         val start = entity.coordinate
         if (start == goal) {
             return emptyList()
@@ -29,6 +34,7 @@ class Pathfinder {
         val gScore = mutableMapOf(start to 0)
         val open = PriorityQueue<SearchNode>(compareBy<SearchNode>({ it.fScore }, { it.sequence }))
         var sequence = 0L
+        var expandedNodes = 0
         open += SearchNode(start, heuristic(start, goal), 0, sequence++)
 
         while (open.isNotEmpty()) {
@@ -39,6 +45,9 @@ class Pathfinder {
 
             if (current.coordinate == goal) {
                 return reconstructPath(cameFrom, current.coordinate)
+            }
+            if (expandedNodes++ >= maxExpandedNodes) {
+                return null
             }
 
             for (direction in directions) {
@@ -93,5 +102,6 @@ class Pathfinder {
 
     companion object {
         const val DEFAULT_SEARCH_RADIUS = 32
+        const val DEFAULT_MAX_EXPANDED_NODES = 4096
     }
 }
