@@ -30,8 +30,8 @@ class TransitionResolver(private val registries: Registries) {
                 }
 
                 val centerTileId = view.getBaseTileAtRelative(x, y)
-                val centerTile = registries.tiles.get(centerTileId)
-                val centerTransition = centerTile?.let { registries.transitions.get(it.identifier) }
+                val centerTile = registries.tiles.get(centerTileId) ?: continue
+                val centerTransition = registries.transitions.get(centerTile.identifier)
                 val sortedTileCounts = Multisets.copyHighestCountFirst(tileCounts)
                 val transition = sortedTileCounts.entrySet().mapNotNull { entry ->
                     val tileId = entry.element
