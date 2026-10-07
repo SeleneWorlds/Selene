@@ -20,7 +20,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 11;
+const API_VERSION = 12;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -57,6 +57,9 @@ interface BundleUiApi {
   readonly storage: {
     load: (key: string) => Promise<string | null>;
     save: (key: string, value: string) => Promise<void>;
+  };
+  readonly ui: {
+    setBundleVisible: (bundle: string, visible: boolean) => void;
   };
   readonly input: {
     captureKeys: (...keys: string[]) => () => void;
@@ -103,6 +106,7 @@ interface BundleUiWorldEntity {
 }
 export class BundleUiManager {
   private readonly clientAssetUrls = new Map<string, Promise<string>>();
+  private readonly bundleVisibility = new Map<string, boolean>();
 
   constructor(private readonly options: BundleUiManagerOptions) {}
 
@@ -127,6 +131,7 @@ export class BundleUiManager {
     host.className = 'bundle-ui-host';
     host.dataset.bundle = entrypoint.bundle;
     host.dataset.entrypoint = entrypoint.id;
+    host.hidden = this.bundleVisibility.get(entrypoint.bundle) === false;
     const root = host.attachShadow({ mode: 'closed' });
     this.options.input.registerRoot(root);
     this.options.host.append(host);
@@ -184,6 +189,9 @@ export class BundleUiManager {
           if (typeof value !== 'string') throw new Error('Storage value must be a string.');
           window.localStorage.setItem(`${storagePrefix}${requireStorageKey(key)}`, value);
         },
+      }),
+      ui: Object.freeze({
+        setBundleVisible: (bundle: string, visible: boolean) => this.setBundleVisible(bundle, visible),
       }),
       input: Object.freeze({
         captureKeys: (...keys: string[]) => this.options.input.captureKeys(...keys),
@@ -256,6 +264,19 @@ export class BundleUiManager {
         },
       }),
     });
+  }
+
+  private setBundleVisible(bundle: string, visible: boolean): void {
+    if (typeof bundle !== 'string' || bundle.length === 0) {
+      throw new Error('Bundle name must be a non-empty string.');
+    }
+    if (typeof visible !== 'boolean') {
+      throw new Error('Bundle visibility must be a boolean.');
+    }
+    this.bundleVisibility.set(bundle, visible);
+    for (const host of this.options.host.querySelectorAll<HTMLElement>('.bundle-ui-host')) {
+      if (host.dataset.bundle === bundle) host.hidden = !visible;
+    }
   }
 
   private toWorldEntity(entity: NonNullable<ReturnType<EntitiesApi['getEntityByNetworkId']>>): BundleUiWorldEntity {

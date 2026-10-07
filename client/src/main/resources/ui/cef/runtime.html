@@ -26,6 +26,7 @@
     const entries = __SELENE_UI_ENTRIES__;
     const developmentSupport = __SELENE_DEVELOPMENT_SUPPORT__;
     const mounted = [];
+    const bundleVisibility = new Map();
     const payloadCallbacks = new Map();
     const capturedKeys = new Map();
     const passthroughKeys = new Map();
@@ -154,7 +155,7 @@
             return release;
         };
         return Object.freeze({
-            apiVersion: 10,
+            apiVersion: 12,
             resolveAsset(path) {
                 if (typeof path !== 'string' || path.length === 0) throw new Error('Asset path must be a non-empty string');
                 return new URL(path, entry.url).href;
@@ -170,6 +171,20 @@
                     await executeBridgeRequest({
                         type: 'saveBundleStorageValue', bundle: entry.bundle, entrypoint: entry.id, key, value
                     });
+                }
+            }),
+            ui: Object.freeze({
+                setBundleVisible(bundle, visible) {
+                    if (typeof bundle !== 'string' || bundle.length === 0) {
+                        throw new Error('Bundle name must be a non-empty string');
+                    }
+                    if (typeof visible !== 'boolean') {
+                        throw new Error('Bundle visibility must be a boolean');
+                    }
+                    bundleVisibility.set(bundle, visible);
+                    for (const host of document.querySelectorAll('.bundle-ui-host')) {
+                        if (host.dataset.bundle === bundle) host.hidden = !visible;
+                    }
                 }
             }),
             visuals: Object.freeze({
@@ -250,6 +265,7 @@
         host.className = 'bundle-ui-host';
         host.dataset.bundle = entry.bundle;
         host.dataset.entrypoint = entry.id;
+        host.hidden = bundleVisibility.get(entry.bundle) === false;
         const root = host.attachShadow({mode: 'closed'});
         document.querySelector('#bundle-ui').append(host);
         for (const style of parsed.querySelectorAll('style')) root.append(style.cloneNode(true));
