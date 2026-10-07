@@ -11,6 +11,10 @@ data class TransientTileApi(val tile: TransientTile) {
         return tile.definition
     }
 
+    fun getVisual(): String {
+        return tile.definition.get()!!.visual.toString()
+    }
+
     fun getName(): String {
         return tile.identifier.toString()
     }

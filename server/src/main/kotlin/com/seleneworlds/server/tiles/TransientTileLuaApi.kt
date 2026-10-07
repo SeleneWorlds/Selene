@@ -9,6 +9,13 @@ import com.seleneworlds.common.lua.util.throwError
 
 object TransientTileLuaApi {
 
+    /** Visual identifier from this tile's definition. */
+    private fun getVisual(lua: Lua): Int {
+        val tile = lua.checkUserdata<TransientTileApi>(1)
+        lua.push(tile.getVisual())
+        return 1
+    }
+
     /**
      * Registry definition of this tile.
      *
@@ -150,6 +157,7 @@ object TransientTileLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(TransientTileApi::class) {
+        callable(::getVisual)
         callable(::getDefinition)
         callable(::getName)
         callable(::getDimension)
