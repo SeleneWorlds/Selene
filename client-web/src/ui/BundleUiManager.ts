@@ -20,7 +20,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 12;
+const API_VERSION = 13;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -80,6 +80,7 @@ interface BundleUiApi {
     getCameraCoordinate: CameraApi['getCoordinate'];
     getCameraPosition: () => Promise<ReturnType<CameraApi['getPosition']>>;
     setCameraPosition: (position: { x: number; y: number }) => Promise<Coordinate>;
+    setViewport: (x: number, y: number, width: number, height: number) => void;
     getControlledEntity: () => BundleUiWorldEntity | null;
     getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
     projectCoordinate: (coordinate: Coordinate) => { x: number; y: number };
@@ -240,6 +241,12 @@ export class BundleUiManager {
             throw new Error('Camera position must contain finite x and y values.');
           }
           return this.options.camera.setPosition({ x: position.x, y: position.y });
+        },
+        setViewport: (x: number, y: number, width: number, height: number) => {
+          if (![x, y, width, height].every(Number.isSafeInteger) || width <= 0 || height <= 0) {
+            throw new Error('Viewport must contain integer x and y coordinates and positive integer dimensions.');
+          }
+          this.options.camera.setViewport(x, y, width, height);
         },
         getControlledEntity: () => {
           const entity = this.options.getControlledEntity();
