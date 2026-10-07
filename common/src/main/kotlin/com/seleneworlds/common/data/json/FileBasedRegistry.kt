@@ -287,7 +287,11 @@ abstract class FileBasedRegistry<TData : Any>(
             logger.debug("Ignoring per-entry removal {} because {}.json is authoritative", path, this.name)
             return
         }
-        val removedEntry = entries.remove(identifier)
+        removeEntry(identifier)
+    }
+
+    fun removeEntry(identifier: Identifier) {
+        val removedEntry = entries.remove(identifier) ?: return
         sourcePaths.remove(identifier)
         (removedEntry as? RegistryObject<*>)?.let {
             entriesById.remove(it.id)

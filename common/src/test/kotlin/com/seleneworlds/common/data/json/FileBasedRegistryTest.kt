@@ -40,6 +40,11 @@ class FileBasedRegistryTest {
             val runtimeIdentifier = Identifier("test", "runtime")
             registry.upsertEntry(runtimeIdentifier, seleneJson.parseToJsonElement(original))
             assertNull(registry.getSourcePath(runtimeIdentifier))
+
+            registry.removeEntry(runtimeIdentifier)
+            assertNull(registry.get(runtimeIdentifier))
+            assertEquals("updated", registry.get(identifier)?.value)
+            assertEquals(original, path.readText())
         }
     }
 

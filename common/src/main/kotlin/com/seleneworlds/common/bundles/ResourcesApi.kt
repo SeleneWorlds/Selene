@@ -1,6 +1,8 @@
 package com.seleneworlds.common.bundles
 
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
 
 class ResourcesApi(private val bundleDatabase: BundleDatabase) {
 
@@ -36,6 +38,12 @@ class ResourcesApi(private val bundleDatabase: BundleDatabase) {
             val (_, file) = resolveFile(path)
             file.exists() && file.isFile
         }.getOrDefault(false)
+    }
+
+    fun createAsString(path: String, contents: String) {
+        val (_, file) = resolveFile(path)
+        require(file.parentFile.isDirectory) { "Resource directory not found: $path" }
+        Files.writeString(file.toPath(), contents, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
     }
 
     private fun resolveFile(path: String): Pair<File, File> {

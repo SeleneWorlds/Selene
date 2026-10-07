@@ -17,6 +17,7 @@ class ResourcesLuaApi(private val api: ResourcesApi) : LuaModule {
         table.register("listFiles", this::listFiles)
         table.register("loadAsString", this::loadAsString)
         table.register("saveAsString", this::saveAsString)
+        table.register("createAsString", this::createAsString)
         table.register("fileExists", this::fileExists)
     }
 
@@ -43,5 +44,10 @@ class ResourcesLuaApi(private val api: ResourcesApi) : LuaModule {
     private fun fileExists(lua: Lua): Int {
         lua.push(api.fileExists(lua.checkString(1)))
         return 1
+    }
+
+    private fun createAsString(lua: Lua): Int {
+        api.createAsString(lua.checkString(1), lua.checkString(2))
+        return 0
     }
 }

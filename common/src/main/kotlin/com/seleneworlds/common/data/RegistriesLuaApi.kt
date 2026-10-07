@@ -20,6 +20,7 @@ class RegistriesLuaApi(private val api: RegistriesApi) : LuaModule {
 
     override fun register(table: LuaValue) {
         table.register("add", this::add)
+        table.register("remove", this::remove)
         table.register("findAll", this::findAll)
         table.register("findByMetadata", this::findByMetadata)
         table.register("findByName", this::findByName)
@@ -53,6 +54,11 @@ class RegistriesLuaApi(private val api: RegistriesApi) : LuaModule {
             lua.pushNil()
         }
         return 1
+    }
+
+    private fun remove(lua: Lua): Int {
+        api.remove(lua.checkString(1), lua.checkString(2))
+        return 0
     }
 
     private fun add(lua: Lua): Int {

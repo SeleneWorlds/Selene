@@ -12,6 +12,30 @@ import kotlin.test.assertFalse
 
 class ResourcesApiTest {
     @Test
+    fun `creates resources without overwriting existing files`() {
+        val root = Files.createTempDirectory("resources-api-create")
+        try {
+            Files.createDirectories(root.resolve("server/data/example/items"))
+            val resources = ResourcesApi(BundleDatabase().apply {
+                addBundle(Bundle(BundleManifest("active"), root.toFile()))
+            })
+            val path = "active/server/data/example/items/new_entry.json"
+
+            resources.createAsString(path, "{}\n")
+            assertEquals("{}\n", resources.loadAsString(path))
+            assertFailsWith<java.nio.file.FileAlreadyExistsException> {
+                resources.createAsString(path, "overwritten")
+            }
+            assertEquals("{}\n", resources.loadAsString(path))
+            assertFailsWith<IllegalArgumentException> {
+                resources.createAsString("active/missing/entry.json", "{}")
+            }
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun `lists enabled bundles and reads and writes existing files`() {
         val root = Files.createTempDirectory("resources-api")
         try {
@@ -46,6 +70,7 @@ class ResourcesApiTest {
             assertFalse(resources.fileExists(path))
             assertFailsWith<IllegalArgumentException> { resources.loadAsString(path) }
             assertFailsWith<IllegalArgumentException> { resources.saveAsString(path, "changed") }
+            assertFailsWith<IllegalArgumentException> { resources.createAsString(path, "changed") }
         } finally {
             root.toFile().deleteRecursively()
             outside.toFile().delete()

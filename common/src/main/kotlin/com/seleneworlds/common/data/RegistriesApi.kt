@@ -27,6 +27,13 @@ class RegistriesApi(
         return registry.get(Identifier.parse(name))
     }
 
+    fun remove(registryName: String, name: String) {
+        val registry = findRegistry(registryName)
+        val fileBasedRegistry = registry as? FileBasedRegistry<*>
+            ?: throw IllegalArgumentException("Registry ${registry.name} does not support Lua mutation")
+        fileBasedRegistry.removeEntry(Identifier.parse(name))
+    }
+
     fun add(registryName: String, name: String, data: Any?): Any? {
         val registry = findRegistry(registryName)
         val fileBasedRegistry = registry as? FileBasedRegistry<*>
