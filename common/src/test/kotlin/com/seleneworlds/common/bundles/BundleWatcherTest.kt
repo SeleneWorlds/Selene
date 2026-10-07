@@ -134,6 +134,16 @@ class BundleWatcherTest {
         assertSame(registry, mergedRegistry)
     }
 
+    @Test
+    fun resolvesRegistryFilesFromConfiguredServerRoot() {
+        val registry = TestRegistry()
+        val watcher = object : RecordingBundleWatcher(BundleDatabase(), setOf("common", "client", "server")) {
+            override fun getRegistry(name: String): Registry<*>? = if (name == "npcs") registry else null
+        }
+
+        assertSame(registry, watcher.findRegistryForFile("server/data/illarion/npcs/npc_42.json"))
+    }
+
     private fun withWatcherBundle(block: (Bundle, RecordingBundleWatcher) -> Unit) {
         val rootDir = createTempDirectory("bundle-watcher-test")
         val bundle = Bundle(BundleManifest(name = rootDir.name), rootDir.toFile())
@@ -164,8 +174,10 @@ class BundleWatcherTest {
         method.invoke(watcher, filePath, bundle)
     }
 
-    private open class RecordingBundleWatcher(bundleDatabase: BundleDatabase) :
-        BundleWatcher(NOPLogger.NOP_LOGGER, bundleDatabase) {
+    private open class RecordingBundleWatcher(
+        bundleDatabase: BundleDatabase,
+        syncedBundleRoots: Set<String> = setOf("common", "client")
+    ) : BundleWatcher(NOPLogger.NOP_LOGGER, bundleDatabase, syncedBundleRoots) {
 
         val processedUpdates = mutableListOf<ProcessedUpdate>()
 

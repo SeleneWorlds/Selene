@@ -20,7 +20,7 @@ class ClientBundleWatcher(
     private val scriptHotReload: ScriptHotReload,
     private val config: ClientConfig,
     private val browserUi: CefBrowserUi
-) : BundleWatcher(logger, bundleDatabase) {
+) : BundleWatcher(logger, bundleDatabase, setOf("common", "client")) {
 
     override fun getRegistry(name: String): Registry<*>? {
         val builtinRegistry = registries.getRegistry(Identifier.withDefaultNamespace(name))
