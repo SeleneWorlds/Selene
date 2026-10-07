@@ -12,12 +12,36 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.writeText
+import kotlin.io.path.readText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 @OptIn(ExperimentalPathApi::class)
 class FileBasedRegistryTest {
+
+    @Test
+    fun runtimeUpdatesPreserveSourcePathWithoutWritingFile() {
+        withBundleDatabase { bundleDatabase, bundleRoot ->
+            val identifier = Identifier("test", "entry")
+            val original = """{ "value": "original" }"""
+            val path = writeFile(bundleRoot.resolve("common/data/test/widgets/entry.json"), original)
+            val registry = TestRegistry()
+            registry.load(bundleDatabase)
+            val sourcePath = assertNotNull(registry.getSourcePath(identifier))
+
+            registry.upsertEntry(identifier, seleneJson.parseToJsonElement("""{ "value": "updated" }"""))
+
+            assertEquals("updated", registry.get(identifier)?.value)
+            assertEquals(sourcePath, registry.getSourcePath(identifier))
+            assertEquals(original, path.readText())
+
+            val runtimeIdentifier = Identifier("test", "runtime")
+            registry.upsertEntry(runtimeIdentifier, seleneJson.parseToJsonElement(original))
+            assertNull(registry.getSourcePath(runtimeIdentifier))
+        }
+    }
 
     @Test
     fun prefersMergedRegistryFileOverDirectoryWalk() {
