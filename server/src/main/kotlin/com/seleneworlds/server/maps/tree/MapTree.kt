@@ -5,10 +5,12 @@ import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.server.data.Registries
+import com.seleneworlds.server.cameras.viewer.Viewer
 import com.seleneworlds.server.maps.layers.BaseMapLayer
 import com.seleneworlds.server.maps.layers.DenseMapLayer
 import com.seleneworlds.server.maps.layers.EmptyMapLayer
 import com.seleneworlds.server.maps.layers.MapLayer
+import com.seleneworlds.server.maps.layers.MapTreeLayer
 import com.seleneworlds.server.maps.layers.SparseMapLayer
 import com.seleneworlds.server.maps.layers.SparseOperation
 import com.seleneworlds.server.maps.layers.SparseTileAnnotation
@@ -19,6 +21,55 @@ import com.seleneworlds.server.maps.layers.SparseTilesReplacement
 
 class MapTree(val registries: Registries) : ExposedApi<MapTreeApi> {
     override val api = MapTreeApi(this)
+
+    /** Returns annotations in an inclusive square range on the center's floor, without scanning tiles. */
+    fun getAnnotationsInRange(
+        center: Coordinate,
+        range: Int,
+        viewer: Viewer
+    ): Map<Coordinate, Map<String, SerializedMap>> {
+        require(range >= 0) { "Range must be non-negative" }
+        val result = mutableMapOf<Coordinate, MutableMap<String, SerializedMap>>()
+        fun contains(coordinate: Coordinate): Boolean = coordinate.z == center.z &&
+            kotlin.math.abs(coordinate.x.toLong() - center.x) <= range &&
+            kotlin.math.abs(coordinate.y.toLong() - center.y) <= range
+        fun intersects(start: Coordinate, size: Int): Boolean = start.z == center.z &&
+            start.x.toLong() <= center.x.toLong() + range &&
+            start.x.toLong() + size - 1 >= center.x.toLong() - range &&
+            start.y.toLong() <= center.y.toLong() + range &&
+            start.y.toLong() + size - 1 >= center.y.toLong() - range
+        layers.filter { viewer.canView(it) }.forEach { layer ->
+            when (layer) {
+                is DenseMapLayer -> layer.chunks.forEach { (start, chunk) ->
+                    if (intersects(start, chunk.size)) {
+                        chunk.annotations.rowMap().forEach { (coordinate, annotations) ->
+                            if (contains(coordinate)) result.getOrPut(coordinate) { mutableMapOf() }.putAll(annotations)
+                        }
+                    }
+                }
+                is MapTreeLayer -> {
+                    layer.getAnnotationsInRange(center, range).forEach { (coordinate, annotations) ->
+                        result.getOrPut(coordinate) { mutableMapOf() }.putAll(annotations)
+                    }
+                }
+                is SparseMapLayer -> layer.chunks.forEach { (start, chunk) ->
+                    if (intersects(start, SparseMapLayer.CHUNK_SIZE)) {
+                        chunk.operations.forEach { (coordinate, operations) ->
+                            if (contains(coordinate)) operations.filterIsInstance<SparseTileAnnotation>().forEach { operation ->
+                                if (operation.data == null) {
+                                    result[coordinate]?.remove(operation.key)
+                                } else {
+                                    result.getOrPut(coordinate) { mutableMapOf() }[operation.key] = operation.data
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return result.filterValues { it.isNotEmpty() }
+    }
+
     private val listeners = mutableSetOf<MapTreeListener>()
     val layers = mutableListOf<MapLayer>()
     var baseLayer: BaseMapLayer = EmptyMapLayer

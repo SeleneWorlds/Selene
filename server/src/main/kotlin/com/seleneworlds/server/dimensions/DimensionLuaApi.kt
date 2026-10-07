@@ -62,6 +62,22 @@ object DimensionLuaApi {
         return 1
     }
 
+    /** Returns a list of {coordinate = {x, y, z}, annotations = {key = data}} records. */
+    private fun getAnnotationsInRange(lua: Lua): Int {
+        val dimension = lua.checkUserdata<DimensionApi>(1)
+        val (coordinate, index) = lua.checkCoordinate(2)
+        val range = lua.checkInt(index + 1)
+        val viewer = if (lua.isUserdata(index + 2)) lua.checkUserdata<Viewer>(index + 2) else DefaultViewer
+        val entries = dimension.getAnnotationsInRange(coordinate, range, viewer).map { (position, annotations) ->
+            mapOf(
+                "coordinate" to mapOf("x" to position.x, "y" to position.y, "z" to position.z),
+                "annotations" to annotations
+            )
+        }
+        lua.push(entries, Lua.Conversion.FULL)
+        return 1
+    }
+
     private fun getAnnotationsAt(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
@@ -109,6 +125,7 @@ object DimensionLuaApi {
         callable(::placeTile)
         callable(::annotateTile)
         callable(::getTilesAt)
+        callable(::getAnnotationsInRange)
         callable(::getAnnotationsAt)
         callable(::getAnnotationAt)
         callable(::hasCollisionAt)

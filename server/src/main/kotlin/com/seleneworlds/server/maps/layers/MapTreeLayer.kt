@@ -75,6 +75,10 @@ class MapTreeLayer(override val name: String, private val mapTree: MapTree) : Ma
         collisionTags.remove(tagName)
     }
 
+    fun getAnnotationsInRange(center: Coordinate, range: Int): Map<Coordinate, Map<String, SerializedMap>> {
+        return mapTree.getAnnotationsInRange(center, range, DefaultViewer)
+    }
+
     fun getAnnotations(coordinate: Coordinate): Map<String, SerializedMap> {
         val view = ScopedChunkView.create(mapTree, DefaultViewer, ChunkWindow.at(coordinate, 1))
         return view.getAnnotationsAt(coordinate)

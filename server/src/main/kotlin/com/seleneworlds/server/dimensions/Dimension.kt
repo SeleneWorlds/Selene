@@ -54,6 +54,13 @@ class Dimension(val registries: Registries, val world: World) : MapTreeListener,
         return chunkView.getAnnotationAt(coordinate, key)
     }
 
+    /** Returns annotations within an inclusive square range on the same floor. */
+    fun getAnnotationsInRange(
+        coordinate: Coordinate, range: Int, viewer: Viewer = DefaultViewer
+    ): Map<Coordinate, Map<String, SerializedMap>> {
+        return mapTree.getAnnotationsInRange(coordinate, range, viewer)
+    }
+
     fun getAnnotationsAt(coordinate: Coordinate, viewer: Viewer = DefaultViewer): Map<String, SerializedMap> {
         val chunkView = world.chunkViewManager.atCoordinate(this, viewer, coordinate)
         return chunkView.getAnnotationsAt(coordinate)

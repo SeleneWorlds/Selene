@@ -53,6 +53,13 @@ class DimensionApi(val dimension: Dimension) {
         return tiles
     }
 
+    /** Returns annotations within an inclusive square range on the same floor. */
+    fun getAnnotationsInRange(
+        coordinate: Coordinate, range: Int, viewer: Viewer = DefaultViewer
+    ): Map<Coordinate, Map<String, SerializedMap>> {
+        return dimension.getAnnotationsInRange(coordinate, range, viewer)
+    }
+
     fun getAnnotationsAt(coordinate: Coordinate, viewer: Viewer = DefaultViewer): Map<String, Map<*, *>> {
         return dimension.getAnnotationsAt(coordinate, viewer)
     }

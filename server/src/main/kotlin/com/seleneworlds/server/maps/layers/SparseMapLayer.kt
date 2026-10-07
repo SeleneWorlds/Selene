@@ -7,7 +7,7 @@ import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.server.maps.MapChunk
 
 class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
-    private val chunkSize = 64
+    private val chunkSize = CHUNK_SIZE
     override val chunks = mutableMapOf<Coordinate, SparseChunk>()
     override val visibilityTags = mutableSetOf("default")
     override val collisionTags = mutableSetOf("default")
@@ -75,6 +75,10 @@ class SparseMapLayer(override val name: String) : MapLayer, ChunkedMapLayer {
         return chunks.getOrPut(coordinate) {
             SparseChunk()
         }
+    }
+
+    companion object {
+        const val CHUNK_SIZE = 64
     }
 
     class SparseChunk : MapChunk {
