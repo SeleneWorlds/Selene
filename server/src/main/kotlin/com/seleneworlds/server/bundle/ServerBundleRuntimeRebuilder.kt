@@ -40,9 +40,6 @@ class ServerBundleRuntimeRebuilder(
         entityRegistry.load(bundleDatabase)
         gridRegistry.load(bundleDatabase)
         activeGrid.applyGrid(config.grid)
-        customRegistries.load(bundleDatabase)
-        customRegistries.loadCustomRegistries(bundleDatabase, "common")
-        customRegistries.loadCustomRegistries(bundleDatabase, "server")
 
         nameIdRegistry.watch(tileRegistry)
         nameIdRegistry.watch(componentRegistry)
@@ -54,5 +51,9 @@ class ServerBundleRuntimeRebuilder(
         nameIdRegistry.populate(entityRegistry)
         nameIdRegistry.populate(soundRegistry)
         nameIdRegistry.save()
+
+        customRegistries.load(bundleDatabase)
+        customRegistries.loadCustomRegistries(bundleDatabase, "common")
+        customRegistries.loadCustomRegistries(bundleDatabase, "server")
     }
 }
