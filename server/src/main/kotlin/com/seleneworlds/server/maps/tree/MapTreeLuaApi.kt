@@ -122,7 +122,7 @@ object MapTreeLuaApi {
         val mapTree = lua.checkUserdata<MapTreeApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
         val key = lua.checkString(index + 1)
-        val data = lua.checkSerializedMap(index + 2)
+        val data = if (lua.isNil(index + 2)) null else lua.checkSerializedMap(index + 2)
         val layerName = lua.toString(index + 3)
         mapTree.annotateTile(coordinate, key, data, layerName)
         return 0
