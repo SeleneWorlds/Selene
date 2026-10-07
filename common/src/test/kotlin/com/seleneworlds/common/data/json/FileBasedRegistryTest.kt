@@ -5,6 +5,10 @@ import com.seleneworlds.common.bundles.Bundle
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.BundleManifest
 import com.seleneworlds.common.data.Identifier
+import com.seleneworlds.common.data.RegistriesApi
+import com.seleneworlds.common.data.Registry
+import com.seleneworlds.common.data.RegistryProvider
+import com.seleneworlds.common.data.RegistryReloadListener
 import com.seleneworlds.common.serialization.seleneJson
 import java.nio.file.Path
 import kotlin.io.path.ExperimentalPathApi
@@ -13,13 +17,48 @@ import kotlin.io.path.createTempDirectory
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.writeText
 import kotlin.io.path.readText
+import kotlin.io.path.exists
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalPathApi::class)
 class FileBasedRegistryTest {
+
+    @Test
+    fun runtimeEntriesCanHaveSourcePathsBeforePersistence() {
+        withBundleDatabase { _, bundleRoot ->
+            val registry = TestRegistry()
+            val api = RegistriesApi(object : RegistryProvider {
+                override fun getRegistry(identifier: Identifier): Registry<*> = registry
+            })
+            val identifier = Identifier("test", "new_entry")
+            val relativePath = "common/data/test/widgets/new_entry.json"
+            val sourcePath = "${bundleRoot.fileName}/$relativePath"
+            var notifiedPath: String? = null
+            registry.addReloadListener(object : RegistryReloadListener<TestEntry> {
+                override fun onEntryAdded(registry: Registry<TestEntry>, identifier: Identifier, newData: TestEntry) {
+                    notifiedPath = registry.getSourcePath(identifier)
+                }
+            })
+
+            api.add("widgets", identifier.toString(), mapOf("value" to "created"), sourcePath)
+
+            assertEquals(sourcePath, registry.getSourcePath(identifier))
+            assertEquals(sourcePath, notifiedPath)
+            assertFalse(bundleRoot.resolve(relativePath).exists())
+
+            api.add("widgets", identifier.toString(), mapOf("value" to "updated"))
+            assertEquals(sourcePath, registry.getSourcePath(identifier))
+            assertFalse(bundleRoot.resolve(relativePath).exists())
+
+            api.remove("widgets", identifier.toString())
+            assertNull(registry.getSourcePath(identifier))
+            assertNull(registry.get(identifier))
+        }
+    }
 
     @Test
     fun runtimeUpdatesPreserveSourcePathWithoutWritingFile() {

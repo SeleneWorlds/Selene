@@ -152,9 +152,12 @@ abstract class FileBasedRegistry<TData : Any>(
         }
     }
 
-    fun upsertEntry(identifier: Identifier, element: JsonElement, id: Int? = null) {
+    fun upsertEntry(identifier: Identifier, element: JsonElement, id: Int? = null, sourcePath: String? = null) {
         val data = loadEntryFromElement(element, identifier)
         val oldEntry = entries.put(identifier, data)
+        if (sourcePath != null) {
+            sourcePaths[identifier] = sourcePath
+        }
         val existingId = (oldEntry as? IdMappedObject)?.id?.takeIf { it != -1 } ?: idByIdentifier[identifier]
         val targetId = id ?: existingId
         if (targetId != null && targetId != -1) {

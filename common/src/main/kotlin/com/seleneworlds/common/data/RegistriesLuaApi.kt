@@ -63,7 +63,8 @@ class RegistriesLuaApi(private val api: RegistriesApi) : LuaModule {
 
     private fun add(lua: Lua): Int {
         val data = lua.toAny(3) ?: return lua.error(IllegalArgumentException("Data must not be nil"))
-        val element = api.add(lua.checkString(1), lua.checkString(2), data)
+        val sourcePath = if (lua.top >= 4 && lua.type(4) != Lua.LuaType.NIL) lua.checkString(4) else null
+        val element = api.add(lua.checkString(1), lua.checkString(2), data, sourcePath)
         if (element != null) {
             lua.push(element, Lua.Conversion.NONE)
         } else {

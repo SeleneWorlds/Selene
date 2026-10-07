@@ -34,12 +34,12 @@ class RegistriesApi(
         fileBasedRegistry.removeEntry(Identifier.parse(name))
     }
 
-    fun add(registryName: String, name: String, data: Any?): Any? {
+    fun add(registryName: String, name: String, data: Any?, sourcePath: String? = null): Any? {
         val registry = findRegistry(registryName)
         val fileBasedRegistry = registry as? FileBasedRegistry<*>
             ?: throw IllegalArgumentException("Registry ${registry.name} does not support Lua mutation")
         val identifier = Identifier.parse(name)
-        fileBasedRegistry.upsertEntry(identifier, data.toJsonElement())
+        fileBasedRegistry.upsertEntry(identifier, data.toJsonElement(), sourcePath = sourcePath)
         return fileBasedRegistry.get(identifier)
     }
 }
