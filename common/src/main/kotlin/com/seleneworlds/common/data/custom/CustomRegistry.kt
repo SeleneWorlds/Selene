@@ -7,7 +7,7 @@ import com.seleneworlds.common.data.json.FileBasedRegistry
 
 class CustomRegistry(
     json: Json,
-    definition: CustomRegistryDefinition
+    val definition: CustomRegistryDefinition
 ) : FileBasedRegistry<CustomRegistryObject>(
     json,
     definition.platform,

@@ -161,8 +161,8 @@ class RegistriesLuaApi(private val api: RegistriesApi) : LuaModule {
         val reloaded: LuaEventSink<RegistryReloaded>
     )
 
-    private fun interface EntryAdded { fun invoke(identifier: Identifier, data: Any) }
-    private fun interface EntryChanged { fun invoke(identifier: Identifier, oldData: Any, newData: Any) }
-    private fun interface EntryRemoved { fun invoke(identifier: Identifier, data: Any) }
-    private fun interface RegistryReloaded { fun invoke() }
+    fun interface EntryAdded { fun invoke(identifier: Identifier, data: Any) }
+    fun interface EntryChanged { fun invoke(identifier: Identifier, oldData: Any, newData: Any) }
+    fun interface EntryRemoved { fun invoke(identifier: Identifier, data: Any) }
+    fun interface RegistryReloaded { fun invoke() }
 }

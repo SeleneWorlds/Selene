@@ -20,11 +20,13 @@ class CustomRegistries(
     private val customRegistries: MutableMap<Identifier, CustomRegistry> = mutableMapOf()
 
     fun loadCustomRegistries(bundleDatabase: BundleDatabase, platform: String) {
-        customRegistries.clear()
-
         val definitions = entries.filterValues { it.platform == platform }
+        customRegistries.entries.removeIf { (identifier, registry) ->
+            registry.definition.platform == platform && definitions[identifier] != registry.definition
+        }
+
         for ((identifier, definition) in definitions) {
-            val dynamicRegistry = CustomRegistry(json, definition)
+            val dynamicRegistry = customRegistries[identifier] ?: CustomRegistry(json, definition)
             dynamicRegistry.load(bundleDatabase)
             customRegistries[identifier] = dynamicRegistry
         }
