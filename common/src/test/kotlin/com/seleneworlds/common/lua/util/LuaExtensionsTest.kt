@@ -12,6 +12,32 @@ import kotlin.test.assertTrue
 class LuaExtensionsTest {
 
     @Test
+    fun `table numbers use the same conversion as scalar numbers`() {
+        val luaManager = LuaManager(LuaPackageModule())
+        try {
+            val lua = luaManager.lua
+            lua.load(
+                LuaManager.loadBuffer(
+                    "return {metadata = {id = 292}, values = {292, 1.5, 2147483648}}, 292, 1.5, 2147483648"
+                ),
+                "table_number_conversion_test"
+            )
+            lua.pCall(0, 4)
+            val originalTop = lua.top
+            assertEquals(
+                mapOf("metadata" to mapOf("id" to 292), "values" to listOf(292, 1.5, 2147483648.0)),
+                lua.toAny(-4)
+            )
+            assertEquals(292, lua.toAny(-3))
+            assertEquals(1.5, lua.toAny(-2))
+            assertEquals(2147483648.0, lua.toAny(-1))
+            assertEquals(originalTop, lua.top)
+        } finally {
+            luaManager.lua.close()
+        }
+    }
+
+    @Test
     fun `locale conversion accepts underscore and hyphen separators`() {
         val luaManager = LuaManager(LuaPackageModule())
         try {

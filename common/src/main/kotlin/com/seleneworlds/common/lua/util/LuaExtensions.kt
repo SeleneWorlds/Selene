@@ -306,7 +306,7 @@ fun <T : Any> Lua.checkRegistry(index: Int, registry: Registry<T>): T {
 fun Lua.toAny(index: Int): Any? {
     return when (type(index)) {
         LuaType.STRING -> toString(index)!!
-        LuaType.NUMBER -> toNumber(index).let { if (it % 1.0 == 0.0) it.toInt() else it }
+        LuaType.NUMBER -> normalizeLuaNumber(toNumber(index))
         LuaType.BOOLEAN -> toBoolean(index)
         LuaType.TABLE -> toListOrMap(index)
         LuaType.FUNCTION -> toFunction(index)
@@ -335,11 +335,15 @@ private fun Lua.toListOrMap(index: Int): Any? {
 private fun normalizeLuaValue(value: Any?): Any? {
     return when (value) {
         is LuaValue -> value
+        is Number -> normalizeLuaNumber(value.toDouble())
         is Map<*, *> -> normalizeLuaMap(value)
         is Collection<*> -> value.map(::normalizeLuaValue)
         else -> value
     }
 }
+
+private fun normalizeLuaNumber(value: Double): Number =
+    if (value % 1.0 == 0.0 && value >= Int.MIN_VALUE && value <= Int.MAX_VALUE) value.toInt() else value
 
 private fun normalizeLuaMap(value: Map<*, *>): Any {
     val entries = value.entries.associate { it.key to normalizeLuaValue(it.value) }
