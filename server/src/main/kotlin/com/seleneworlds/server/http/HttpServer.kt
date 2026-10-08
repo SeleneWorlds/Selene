@@ -25,6 +25,7 @@ import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.BundleManifest
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.serialization.seleneJson
+import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.Disposable
 import com.seleneworlds.server.bundles.ClientBundleCache
 import com.seleneworlds.server.bundles.ClientLuaModules
@@ -37,6 +38,7 @@ import com.seleneworlds.server.login.LoginQueue
 import com.seleneworlds.server.login.LoginQueueStatus
 import com.seleneworlds.server.login.ClientAuthorization
 import com.seleneworlds.server.login.SessionAuthentication
+import com.seleneworlds.server.permissions.PermissionsApi
 import com.seleneworlds.server.players.PlayerManager
 import com.seleneworlds.server.startupTime
 import io.ktor.server.plugins.origin
@@ -57,7 +59,10 @@ class HttpServer(
     private val systemConfig: SystemConfig,
     private val httpClient: HttpClient,
     private val clientAuthorization: ClientAuthorization,
-    private val logger: Logger
+    private val logger: Logger,
+    private val permissions: PermissionsApi,
+    private val editorResources: EditorResources,
+    private val mainThreadDispatcher: MainThreadDispatcher
 ) : Disposable {
     private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
     private val clientLuaModules = ClientLuaModules(bundleDatabase, clientBundleCache)
@@ -411,6 +416,9 @@ class HttpServer(
 
                         call.respond(HttpStatusCode.NotFound, "Asset not found")
                     }
+                    registerEditorResourceRoutes(
+                        editorResources, permissions, playerManager, mainThreadDispatcher, logger
+                    ) { it.authenticatedUser() }
                     get("/client/registries") {
                         call.respond(clientRegistrySnapshots.getIndex())
                     }

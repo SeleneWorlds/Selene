@@ -70,6 +70,9 @@ import com.seleneworlds.server.entities.component.EntityComponentFactory
 import com.seleneworlds.server.entities.EntityManager
 import com.seleneworlds.server.heartbeat.ServerHeartbeat
 import com.seleneworlds.server.http.ClientAssetIndexProvider
+import com.seleneworlds.server.permissions.PermissionsApi
+import com.seleneworlds.server.permissions.PermissionsLuaApi
+import com.seleneworlds.server.http.EditorResources
 import com.seleneworlds.server.http.HttpServer
 import com.seleneworlds.server.login.LoginQueue
 import com.seleneworlds.server.login.ClientAuthorization
@@ -107,6 +110,7 @@ fun main(args: Array<String>) {
         single { LoggerFactory.getLogger("Selene") }
     }
     val httpModule = module {
+        singleOf(::EditorResources)
         singleOf(::HttpServer) { bind<Disposable>() }
         singleOf(::SessionAuthentication)
         singleOf(::ClientAuthorization)
@@ -160,6 +164,8 @@ fun main(args: Array<String>) {
         singleOf(::ServerLuaApi) { bind<LuaModule>() }
         singleOf(::PlayersLuaApi) { bind<LuaModule>() }
         singleOf(::NetworkLuaApi) { bind<LuaModule>() }
+        singleOf(::PermissionsApi)
+        singleOf(::PermissionsLuaApi) { bind<LuaModule>() }
         singleOf(::SoundsLuaApi) { bind<LuaModule>() }
         singleOf(::EnvironmentLuaApi) { bind<LuaModule>() }
         singleOf(::GridLuaApi) { bind<LuaModule>() }
