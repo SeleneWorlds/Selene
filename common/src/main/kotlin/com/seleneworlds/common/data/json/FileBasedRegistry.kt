@@ -5,6 +5,10 @@ import com.google.common.collect.Table
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonArray
+import java.security.MessageDigest
+import java.util.HexFormat
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import com.seleneworlds.common.bundles.Bundle
@@ -27,6 +31,8 @@ abstract class FileBasedRegistry<TData : Any>(
 ) : Registry<TData>, BundleDrivenRegistry, ReferenceResolver<Identifier, TData>, CacheableRegistry {
     protected val logger: Logger = LoggerFactory.getLogger("selene")
     protected val entries: MutableMap<Identifier, TData> = mutableMapOf()
+    private data class PersistedEntry(val sourcePath: String, val fingerprint: String)
+    private val persistedEntries = mutableMapOf<Identifier, PersistedEntry>()
     private val sourcePaths: MutableMap<Identifier, String> = mutableMapOf()
     protected val idByIdentifier: MutableMap<Identifier, Int> = mutableMapOf()
     protected val entriesById: MutableMap<Int, TData> = mutableMapOf()
@@ -44,6 +50,25 @@ abstract class FileBasedRegistry<TData : Any>(
     override fun getId(identifier: Identifier): Int = idByIdentifier[identifier] ?: -1
     override fun get(identifier: Identifier): TData? = entries[identifier]
     override fun getSourcePath(identifier: Identifier): String? = sourcePaths[identifier]
+
+    fun getResourcePath(bundle: String, identifier: Identifier): String {
+        require(!bundle.contains('/') && !bundle.contains('\\') && !bundle.contains("..")) { "Invalid bundle name" }
+        require(!identifier.namespace.contains('/') && !identifier.namespace.contains('\\') &&
+            !identifier.namespace.contains("..") && !identifier.path.contains('\\') &&
+            !identifier.path.contains("..") && !identifier.path.startsWith('/')) { "Invalid resource identifier" }
+        val source = (sourcePaths[identifier] ?: persistedEntries[identifier]?.sourcePath)
+            ?.takeIf { it.startsWith("$bundle/") }
+        if (source != null) {
+            require(getResourceIdentifier(bundle, source) == identifier) { "Only individual registry entry files can be edited." }
+            return source
+        }
+        return "$bundle/$platform/data/${identifier.namespace}/$name/${identifier.path}.json"
+    }
+
+    fun getResourceIdentifier(bundle: String, path: String): Identifier? {
+        if (!path.startsWith("$bundle/") || path.contains("..") || path.contains('\\')) return null
+        return filePathToIdentifier(path.removePrefix("$bundle/"))
+    }
     override fun getIdentifier(id: Int): Identifier? {
         return (entriesById[id] as? RegistryOwnedObject<*>)?.identifier
     }
@@ -61,6 +86,7 @@ abstract class FileBasedRegistry<TData : Any>(
         val previousEntries = entries.toMap()
         entries.clear()
         sourcePaths.clear()
+        persistedEntries.clear()
         entriesById.clear()
         idByIdentifier.clear()
         metadataLookupTable.clear()
@@ -144,6 +170,51 @@ abstract class FileBasedRegistry<TData : Any>(
         return adoptLoadedEntry(identifier, data)
     }
 
+    /** Serialize the current runtime entry, including changes made after it was loaded. */
+    fun getEntryElement(identifier: Identifier): JsonElement? = get(identifier)?.let(::saveEntryToElement)
+
+    protected open fun saveEntryToElement(data: TData): JsonElement {
+        val serializer = serializer ?: error("No serializer configured for registry $name")
+        return json.encodeToJsonElement(serializer, data)
+    }
+
+    /** Compare serialized runtime values with their last successfully loaded or persisted values. */
+    fun isDirty(identifier: Identifier): Boolean {
+        val persisted = persistedEntries[identifier]
+        val current = getEntryElement(identifier)
+        if (current == null) return persisted != null
+        return persisted == null || persisted.sourcePath != sourcePaths[identifier] ||
+            persisted.fingerprint != fingerprint(current)
+    }
+
+    /** Includes deleted file-backed entries; runtime-only entries without a resource path are omitted. */
+    fun getDirtyEntries(): Map<Identifier, String> = (entries.keys + persistedEntries.keys).mapNotNull { identifier ->
+        val path = sourcePaths[identifier] ?: persistedEntries[identifier]?.sourcePath
+        if (path != null && isDirty(identifier)) identifier to path else null
+    }.toMap()
+
+    /** Call only after a successful disk write or an explicit reload from disk. */
+    fun markPersisted(identifier: Identifier) {
+        val element = getEntryElement(identifier)
+        val sourcePath = sourcePaths[identifier]
+        if (element == null) persistedEntries.remove(identifier)
+        else {
+            requireNotNull(sourcePath) { "Entry $identifier has no source path" }
+            persistedEntries[identifier] = PersistedEntry(sourcePath, fingerprint(element))
+        }
+    }
+
+    private fun fingerprint(element: JsonElement): String {
+        val bytes = canonical(element).toString().toByteArray(Charsets.UTF_8)
+        return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(bytes))
+    }
+
+    private fun canonical(element: JsonElement): JsonElement = when (element) {
+        is JsonObject -> JsonObject(element.toSortedMap().mapValues { canonical(it.value) })
+        is JsonArray -> JsonArray(element.map(::canonical))
+        else -> element
+    }
+
     protected fun adoptLoadedEntry(identifier: Identifier, data: TData): TData {
         @Suppress("UNCHECKED_CAST")
         return data.also {
@@ -181,6 +252,7 @@ abstract class FileBasedRegistry<TData : Any>(
     private fun storeLoadedEntry(identifier: Identifier, data: TData, sourcePath: String) {
         entries[identifier] = data
         sourcePaths[identifier] = sourcePath
+        markPersisted(identifier)
         (data as? MetadataHolder)?.let { addToMetadataLookup(identifier, it) }
     }
 
@@ -248,6 +320,7 @@ abstract class FileBasedRegistry<TData : Any>(
         if (data != null) {
             val oldEntry = entries.put(identifier, data)
             sourcePaths[identifier] = "${bundle.manifest.name}/${path.replace('\\', '/')}"
+            markPersisted(identifier)
             if (oldEntry is RegistryObject<*> && data is RegistryObject<*>) {
                 val id = oldEntry.id
                 if (id != -1) {
@@ -290,6 +363,7 @@ abstract class FileBasedRegistry<TData : Any>(
             logger.debug("Ignoring per-entry removal {} because {}.json is authoritative", path, this.name)
             return
         }
+        persistedEntries.remove(identifier)
         removeEntry(identifier)
     }
 

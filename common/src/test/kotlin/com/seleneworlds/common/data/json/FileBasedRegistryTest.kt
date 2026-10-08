@@ -28,10 +28,98 @@ import kotlin.test.assertNull
 class FileBasedRegistryTest {
 
     @Test
+    fun dirtyStateFollowsRuntimeDivergenceAndReverts() {
+        withBundleDatabase { database, root ->
+            val identifier = Identifier("test", "entry")
+            val path = "${root.fileName}/common/data/test/widgets/entry.json"
+            writeFile(root.resolve("common/data/test/widgets/entry.json"), """{"value":"original"}""")
+            val registry = TestRegistry()
+            registry.load(database)
+            assertFalse(registry.isDirty(identifier))
+            assertEquals(emptyMap(), registry.getDirtyEntries())
+
+            assertNotNull(registry.get(identifier)).value = "changed in place"
+            assertEquals(mapOf(identifier to path), registry.getDirtyEntries())
+            assertNotNull(registry.get(identifier)).value = "original"
+            assertFalse(registry.isDirty(identifier))
+
+            registry.upsertEntry(identifier, seleneJson.parseToJsonElement("""{"value":"replacement"}"""))
+            assertEquals(mapOf(identifier to path), registry.getDirtyEntries())
+            registry.upsertEntry(identifier, seleneJson.parseToJsonElement("""{"value":"original"}"""))
+            assertEquals(emptyMap(), registry.getDirtyEntries())
+        }
+    }
+
+    @Test
+    fun loadedPersistedAndHotReloadedEntriesAreClean() {
+        withBundleDatabase { database, root ->
+            val identifier = Identifier("test", "entry")
+            val relative = "common/data/test/widgets/entry.json"
+            val file = writeFile(root.resolve(relative), """{"value":"original"}""")
+            val registry = TestRegistry()
+            registry.load(database)
+            registry.upsertEntry(identifier, seleneJson.parseToJsonElement("""{"value":"runtime"}"""))
+            file.writeText("""{"value":"runtime"}""")
+            registry.markPersisted(identifier)
+            assertFalse(registry.isDirty(identifier))
+
+            assertNotNull(registry.get(identifier)).value = "dirty"
+            file.writeText("""{"value":"hot reload"}""")
+            registry.bundleFileUpdated(database, assertNotNull(database.getBundle(root.fileName.toString())), relative)
+            assertFalse(registry.isDirty(identifier))
+            assertEquals("hot reload", registry.get(identifier)?.value)
+
+            assertNotNull(registry.get(identifier)).value = "dirty again"
+            registry.load(database)
+            assertEquals(emptyMap(), registry.getDirtyEntries())
+        }
+    }
+
+    @Test
+    fun newEntriesAndRuntimeRemovalsTrackDivergence() {
+        withBundleDatabase { database, root ->
+            val existing = Identifier("test", "existing")
+            val relative = "common/data/test/widgets/existing.json"
+            val file = writeFile(root.resolve(relative), """{"value":"existing"}""")
+            val registry = TestRegistry()
+            registry.load(database)
+            registry.removeEntry(existing)
+            assertEquals(mapOf(existing to "${root.fileName}/$relative"), registry.getDirtyEntries())
+            registry.markPersisted(existing)
+            assertEquals(emptyMap(), registry.getDirtyEntries())
+
+            registry.load(database)
+            file.toFile().delete()
+            registry.bundleFileRemoved(database, assertNotNull(database.getBundle(root.fileName.toString())), relative)
+            assertEquals(emptyMap(), registry.getDirtyEntries())
+
+            val created = Identifier("test", "new")
+            val path = "${root.fileName}/common/data/test/widgets/new.json"
+            registry.upsertEntry(created, seleneJson.parseToJsonElement("""{"value":"new"}"""), sourcePath = path)
+            assertEquals(mapOf(created to path), registry.getDirtyEntries())
+            registry.removeEntry(created)
+            assertEquals(emptyMap(), registry.getDirtyEntries())
+        }
+    }
+
+    @Test
+    fun serializationReadsCurrentRuntimeEntry() {
+        val registry = TestRegistry()
+        val identifier = Identifier("test", "entry")
+        registry.upsertEntry(identifier, seleneJson.parseToJsonElement("""{"value":"applied"}"""))
+        assertNotNull(registry.get(identifier)).value = "mutated"
+
+        assertEquals(seleneJson.parseToJsonElement("""{"value":"mutated"}"""), registry.getEntryElement(identifier))
+        registry.removeEntry(identifier)
+        assertNull(registry.getEntryElement(identifier))
+    }
+
+    @Test
     fun runtimeEntriesCanHaveSourcePathsBeforePersistence() {
         withBundleDatabase { _, bundleRoot ->
             val registry = TestRegistry()
             val api = RegistriesApi(object : RegistryProvider {
+                override fun getRegistries(): Map<Identifier, Registry<*>> = mapOf(Identifier("selene", "widgets") to registry)
                 override fun getRegistry(identifier: Identifier): Registry<*> = registry
             })
             val identifier = Identifier("test", "new_entry")
@@ -254,5 +342,5 @@ class FileBasedRegistryTest {
     )
 
     @Serializable
-    private data class TestEntry(val value: String)
+    private data class TestEntry(var value: String)
 }

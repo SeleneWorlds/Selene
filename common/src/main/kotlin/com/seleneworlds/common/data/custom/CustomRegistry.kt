@@ -17,4 +17,6 @@ class CustomRegistry(
     override fun loadEntryFromElement(element: JsonElement, identifier: Identifier): CustomRegistryObject {
         return CustomRegistryObject(this, identifier, element)
     }
+    override fun saveEntryToElement(data: CustomRegistryObject): JsonElement = data.element
+
 }
