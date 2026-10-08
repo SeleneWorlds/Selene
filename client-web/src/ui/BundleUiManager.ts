@@ -1,5 +1,6 @@
 import type { NetworkApi, ClientNetworkPayload } from '@/api/NetworkApi';
 import {
+  getRegistry,
   getRegistryEntry,
   resolveServerUrl,
   type ClientRegistrySnapshots,
@@ -20,7 +21,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 15;
+const API_VERSION = 16;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -52,6 +53,12 @@ interface BundleUiModule {
 interface BundleUiApi {
   readonly apiVersion: number;
   readonly http: { request(path: string, payload?: ClientNetworkPayload, method?: 'GET' | 'POST' | 'PUT'): Promise<unknown> };
+  readonly registries: {
+    search(registry: string, query: string, lookup?: boolean): Promise<{
+      registry: string; query: string; lookup: boolean;
+      options: Array<{ value: string; label: string; visual: string | null }>;
+    } | null>;
+  };
   readonly resolveAsset: (path: string) => Promise<string>;
   readonly i18n: I18nApi;
   readonly visuals: {
@@ -205,6 +212,24 @@ export class BundleUiManager {
           });
           if (!response.ok) throw new Error(`HTTP operation failed: ${response.status} ${await response.text()}`);
           return response.json();
+        },
+      }),
+      registries: Object.freeze({
+        search: async (registry: string, query: string, lookup = false) => {
+          const snapshot = getRegistry(this.options.registries, registry);
+          if (!snapshot) return null;
+          const options = Object.entries(snapshot.entries).flatMap(([value, entry]) => {
+            const fields = entry as Record<string, unknown>;
+            const metadata = (fields.metadata as Record<string, unknown> | undefined) ?? {};
+            const label = String(metadata.name ?? fields.name ?? value);
+            const matches = lookup ? value.toLowerCase() === query.toLowerCase()
+              : label.toLowerCase().includes(query.toLowerCase()) || value.toLowerCase().includes(query.toLowerCase());
+            const visual = typeof metadata.visual === 'string' ? metadata.visual
+              : typeof fields.visual === 'string' ? fields.visual
+              : registry === 'entities' || registry === 'selene:entities' ? value : null;
+            return matches ? [{ value, label, visual }] : [];
+          }).sort((a, b) => a.label < b.label ? -1 : a.label > b.label ? 1 : 0).slice(0, 50);
+          return { registry, query, lookup, options };
         },
       }),
       resolveAsset: (path: string) => this.resolveAsset(path),

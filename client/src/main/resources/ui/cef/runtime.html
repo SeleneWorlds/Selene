@@ -156,11 +156,18 @@
             return release;
         };
         return Object.freeze({
-            apiVersion: 15,
+            apiVersion: 16,
             http: Object.freeze({
                 async request(path, payload = {}, method = 'GET') {
                     return JSON.parse(await executeBridgeRequest({
                         type: 'bundleHttpRequest', path, payload, method
+                    }));
+                }
+            }),
+            registries: Object.freeze({
+                async search(registry, query, lookup = false) {
+                    return JSON.parse(await executeBridgeRequest({
+                        type: 'searchRegistry', registry, query, lookup
                     }));
                 }
             }),

@@ -3,12 +3,15 @@ package com.seleneworlds.client.ui.cef
 import com.badlogic.gdx.math.Vector2
 import com.seleneworlds.client.network.NetworkApi
 import com.seleneworlds.client.camera.CameraManager
+import com.seleneworlds.client.config.ClientRuntimeConfig
 import com.seleneworlds.client.entity.component.DraggableComponent
 import com.seleneworlds.client.game.ClientEvents
 import com.seleneworlds.client.maps.ClientMap
+import com.seleneworlds.client.rendering.SceneRenderer
 import com.seleneworlds.client.rendering.visual.VisualDefinition
 import com.seleneworlds.client.rendering.visual.VisualRegistry
 import com.seleneworlds.common.data.Identifier
+import com.seleneworlds.common.data.RegistryProvider
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.entities.VisualComponentConfiguration
 import com.seleneworlds.common.serialization.SerializedMapSerializer
@@ -41,11 +44,12 @@ class CefUiBridge(
     private val logger: Logger,
     private val interactionState: CefInteractionState,
     private val cameraManager: CameraManager,
-    private val sceneRenderer: com.seleneworlds.client.rendering.SceneRenderer,
+    private val sceneRenderer: SceneRenderer,
     private val clientMap: ClientMap,
     private val bundleUiStorage: BundleUiStorage,
     private val visualRegistry: VisualRegistry,
-    private val runtimeConfig: com.seleneworlds.client.config.ClientRuntimeConfig
+    private val registries: RegistryProvider,
+    private val runtimeConfig: ClientRuntimeConfig
 ) {
     private data class Subscription(val remove: () -> Unit, val callback: CefQueryCallback)
 
@@ -95,6 +99,7 @@ class CefUiBridge(
                         browser, frame, queryId, persistent, callback)
                     "loadBundleStorageValue" -> loadBundleStorageValue(message, callback)
                     "saveBundleStorageValue" -> saveBundleStorageValue(message, callback)
+                    "searchRegistry" -> searchRegistry(message, callback)
                     "getVisualDefinition" -> getVisualDefinition(message, callback)
                     "getEntitiesAt" -> getEntitiesAt(message, callback)
                     else -> return false
@@ -281,6 +286,41 @@ class CefUiBridge(
             message.requiredString("value")
         )
         callback.success("")
+    }
+
+    private fun searchRegistry(message: JsonObject, callback: CefQueryCallback) {
+        val registryName = message.requiredString("registry")
+        val query = message.requiredString("query")
+        val lookup = message["lookup"]?.jsonPrimitive?.booleanOrNull ?: false
+        mainThreadDispatcher.runOnMainThread {
+            val registry = registries.getRegistry(Identifier.parse(registryName))
+            if (registry == null) {
+                callback.success("null")
+                return@runOnMainThread
+            }
+            val options = registry.getAll().mapNotNull { (identifier, entry) ->
+                val value = identifier.toString()
+                val metadata = (entry as? com.seleneworlds.common.data.MetadataHolder)?.metadata.orEmpty()
+                val fields = (entry as? com.seleneworlds.common.data.custom.CustomRegistryObject)?.element as? JsonObject
+                val label = (metadata["name"] ?: (fields?.get("name") as? JsonPrimitive)?.content ?: value).toString()
+                val matches = if (lookup) value.equals(query, ignoreCase = true)
+                    else label.contains(query, ignoreCase = true) || value.contains(query, ignoreCase = true)
+                if (!matches) return@mapNotNull null
+                val visual = metadata["visual"] as? String ?: (fields?.get("visual") as? JsonPrimitive)?.content
+                    ?: value.takeIf { Identifier.parse(registryName).path == "entities" }
+                buildJsonObject {
+                    put("value", value)
+                    put("label", label)
+                    put("visual", visual?.let(::JsonPrimitive) ?: kotlinx.serialization.json.JsonNull)
+                }
+            }.sortedBy { it["label"]!!.jsonPrimitive.content }.take(50)
+            callback.success(buildJsonObject {
+                put("registry", registryName)
+                put("query", query)
+                put("lookup", lookup)
+                put("options", kotlinx.serialization.json.JsonArray(options))
+            }.toString())
+        }
     }
 
     private fun getVisualDefinition(message: JsonObject, callback: CefQueryCallback) {
