@@ -12,7 +12,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import com.seleneworlds.common.serialization.seleneJson
-import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.server.permissions.PermissionsApi
@@ -298,96 +297,123 @@ internal fun Route.registerEditorResourceRoutes(
     logger: Logger,
     authenticatedUser: (ApplicationCall) -> SeleneUser
 ) {
-    val execute: suspend (ApplicationCall, String, SerializedMap, () -> String) -> Unit =
-        { call, operation, context, handler ->
-            val user = authenticatedUser(call)
-            val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                mainThreadDispatcher.callOnMainThread {
-                    val player = playerManager.dereferencePersisted(user.userId)
-                    val allowed = player != null && permissions.hasPermission(
-                        player.api, "selene:resource-api", mapOf("operation" to operation, "request" to context)
+    suspend fun execute(
+        call: ApplicationCall,
+        operation: String,
+        receiveRequest: suspend () -> JsonObject,
+        handler: (JsonObject) -> String
+    ) {
+        call.response.header(HttpHeaders.CacheControl, "no-store")
+        val request = try {
+            receiveRequest()
+        } catch (_: IllegalArgumentException) {
+            call.respond(HttpStatusCode.BadRequest, "Invalid resource request")
+            return
+        }
+        val context = seleneJson.decodeFromJsonElement(SerializedMapSerializer, request)
+        val user = authenticatedUser(call)
+        val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            mainThreadDispatcher.callOnMainThread {
+                val player = playerManager.dereferencePersisted(user.userId)
+                val allowed = player != null && permissions.hasPermission(
+                    player.api, "selene:resource-api", mapOf("operation" to operation, "request" to context)
+                )
+                if (!allowed) {
+                    403 to "{\"message\":\"Resource access denied\"}"
+                } else try {
+                    200 to handler(request)
+                } catch (error: IllegalArgumentException) {
+                    400 to seleneJson.encodeToString(
+                        mapOf("message" to (error.message ?: "Invalid resource request"))
                     )
-                    if (!allowed) {
-                        403 to "{\"message\":\"Resource access denied\"}"
-                    } else try {
-                        200 to handler()
-                    } catch (error: IllegalArgumentException) {
-                        400 to seleneJson.encodeToString(
-                            mapOf("message" to (error.message ?: "Invalid resource request"))
-                        )
-                    } catch (error: Exception) {
-                        logger.error("Resource HTTP operation failed: $operation", error)
-                        500 to "{\"message\":\"Resource operation failed\"}"
-                    }
+                } catch (error: Exception) {
+                    logger.error("Resource HTTP operation failed: $operation", error)
+                    500 to "{\"message\":\"Resource operation failed\"}"
                 }
             }
-            call.response.header(HttpHeaders.CacheControl, "no-store")
-            call.respondText(result.second, ContentType.Application.Json, HttpStatusCode.fromValue(result.first))
         }
+        call.respondText(result.second, ContentType.Application.Json, HttpStatusCode.fromValue(result.first))
+    }
 
-    resourcePost<RegistrySearchRequest, RegistrySearchResult>(execute, "/registries/search", "search-registry") {
-        editorResources.searchRegistry(it)
+    get("/registries/search") {
+        execute(call, "search-registry", { call.resourceQuery() }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<RegistrySearchRequest>(payload)
+            seleneJson.encodeToString(editorResources.searchRegistry(request))
+        }
     }
-    resourcePost<ScriptSearchRequest, ScriptSearchResult>(execute, "/scripts/search", "search-scripts") {
-        editorResources.searchScripts(it)
+    get("/scripts/search") {
+        execute(call, "search-scripts", { call.resourceQuery() }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<ScriptSearchRequest>(payload)
+            seleneJson.encodeToString(editorResources.searchScripts(request))
+        }
     }
-    resourcePost<EmptyResourceRequest, ProjectOptions>(execute, "/resources/projects", "request-project-options") {
-        ProjectOptions(editorResources.projects().map { (bundle, registry) ->
-            ProjectSelection(bundle, registry.toString())
-        })
+    get("/resources/projects") {
+        execute(call, "request-project-options", { buildJsonObject {} }) {
+            seleneJson.encodeToString(ProjectOptions(editorResources.projects().map { (bundle, registry) ->
+                ProjectSelection(bundle, registry.toString())
+            }))
+        }
     }
-    resourcePost<ProjectSelection, ResourceProject>(execute, "/resources/project", "request-project") {
-        editorResources.project(it.bundle, Identifier.parse(it.registry))
+    get("/resources/project") {
+        execute(call, "request-project", { call.resourceQuery() }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<ProjectSelection>(payload)
+            seleneJson.encodeToString(editorResources.project(request.bundle, Identifier.parse(request.registry)))
+        }
     }
-    resourcePost<ResourcePathRequest, ResourceFile>(execute, "/resources/read", "open-file") {
-        editorResources.withResource(it.path, editorResources::read)
+    get("/resources/read") {
+        execute(call, "open-file", { call.resourceQuery() }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<ResourcePathRequest>(payload)
+            seleneJson.encodeToString(editorResources.withResource(request.path, editorResources::read))
+        }
     }
-    resourcePost<CreateResourceRequest, ResourceCreated>(execute, "/resources/create", "create-file") {
-        val registry = Identifier.parse(it.registry)
-        require(it.name.trim().matches(Regex("[A-Za-z0-9_-]+"))) { "Invalid entry name" }
-        val identifier = Identifier(it.namespace ?: registry.namespace, it.name.trim())
-        if (it.sourcePath != null) {
-            editorResources.withResource(it.sourcePath) { sourceBundle, sourceRegistry, _ ->
-                require(sourceBundle == it.bundle && sourceRegistry == registry) { "Source entry belongs to another selection." }
+    post("/resources/create") {
+        execute(call, "create-file", { seleneJson.parseToJsonElement(call.receiveText()).jsonObject }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<CreateResourceRequest>(payload)
+            val registry = Identifier.parse(request.registry)
+            require(request.name.trim().matches(Regex("[A-Za-z0-9_-]+"))) { "Invalid entry name" }
+            val identifier = Identifier(request.namespace ?: registry.namespace, request.name.trim())
+            if (request.sourcePath != null) {
+                editorResources.withResource(request.sourcePath) { sourceBundle, sourceRegistry, _ ->
+                    require(sourceBundle == request.bundle && sourceRegistry == registry) { "Source entry belongs to another selection." }
+                }
             }
-        }
-        editorResources.create(it.bundle, registry, identifier, it.contents ?: "{}\n")
-    }
-    resourcePost<UpdateResourceRequest, ResourceUpdated>(execute, "/resources/update", "save-file") {
-        editorResources.withResource(it.path) { bundle, registry, identifier ->
-            editorResources.update(bundle, registry, identifier, it.contents)
+            seleneJson.encodeToString(editorResources.create(request.bundle, registry, identifier, request.contents ?: "{}\n"))
         }
     }
-    resourcePost<ChangeRequest, ChangesResult>(execute, "/resources/persist", "persist-changes") {
-        if (it.path == null) editorResources.persist() else editorResources.withResource(it.path, editorResources::persist)
+    put("/resources/update") {
+        execute(call, "save-file", { seleneJson.parseToJsonElement(call.receiveText()).jsonObject }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<UpdateResourceRequest>(payload)
+            seleneJson.encodeToString(editorResources.withResource(request.path) { bundle, registry, identifier ->
+                editorResources.update(bundle, registry, identifier, request.contents)
+            })
+        }
     }
-    resourcePost<ChangeRequest, ChangesResult>(execute, "/resources/discard", "discard-changes") {
-        if (it.path == null) editorResources.discard() else editorResources.withResource(it.path, editorResources::discard)
+    post("/resources/persist") {
+        execute(call, "persist-changes", { seleneJson.parseToJsonElement(call.receiveText()).jsonObject }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<ChangeRequest>(payload)
+            seleneJson.encodeToString(if (request.path == null) editorResources.persist() else editorResources.withResource(request.path, editorResources::persist))
+        }
     }
-    resourcePost<EmptyResourceRequest, PendingChanges>(execute, "/resources/changes", "pending-changes") {
-        editorResources.pendingChanges()
+    post("/resources/discard") {
+        execute(call, "discard-changes", { seleneJson.parseToJsonElement(call.receiveText()).jsonObject }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<ChangeRequest>(payload)
+            seleneJson.encodeToString(if (request.path == null) editorResources.discard() else editorResources.withResource(request.path, editorResources::discard))
+        }
+    }
+    get("/resources/changes") {
+        execute(call, "pending-changes", { buildJsonObject {} }) {
+            seleneJson.encodeToString(editorResources.pendingChanges())
+        }
     }
 }
 
-private inline fun <reified Request : Any, reified Response : Any> Route.resourcePost(
-    crossinline execute: suspend (ApplicationCall, String, SerializedMap, () -> String) -> Unit,
-    path: String,
-    operation: String,
-    crossinline handler: (Request) -> Response
-) {
-    post(path) {
-        val request = try {
-            seleneJson.decodeFromString<Request>(call.receiveText())
-        } catch (_: IllegalArgumentException) {
-            call.respond(HttpStatusCode.BadRequest, "Invalid resource request")
-            return@post
-        }
-        val context = seleneJson.decodeFromString(
-            SerializedMapSerializer,
-            seleneJson.encodeToString(request)
-        )
-        execute(call, operation, context) {
-            seleneJson.encodeToString(handler(request))
+private fun ApplicationCall.resourceQuery(): JsonObject = buildJsonObject {
+    for (name in request.queryParameters.names()) {
+        val value = request.queryParameters[name] ?: continue
+        if (name == "lookup") {
+            put(name, JsonPrimitive(requireNotNull(value.toBooleanStrictOrNull()) { "Invalid lookup value" }))
+        } else {
+            put(name, JsonPrimitive(value))
         }
     }
 }
@@ -397,9 +423,6 @@ data class ResourcePathRequest(val path: String)
 
 @Serializable
 data class ChangeRequest(val path: String? = null)
-
-@Serializable
-class EmptyResourceRequest
 
 @Serializable
 data class ProjectSelection(val bundle: String, val registry: String)
