@@ -45,6 +45,24 @@ class EditorResourcesTest {
     }
 
     @Test
+    fun `built-in schemas are available without the editor bundle`() = fixture(Identifier("selene", "tiles")) { api, _, _ ->
+        val schema = assertNotNull(api.project("active", Identifier("selene", "tiles")).schema)
+        assertEquals("selene:visuals", schema["visual"]!!.jsonObject["registry"]!!.jsonPrimitive.content)
+    }
+
+    @Test
+    fun `custom registry schemas override built-in schemas`() = fixture { api, resources, _ ->
+        resources.createAsString("active/common/data/test/registries.json", """{"entries":{"items":{"schema":{"custom":"string"}}}}""")
+        assertEquals(buildJsonObject { put("custom", "string") }, api.project("active", registryName).schema)
+    }
+
+    @Test
+    fun `custom registry definitions without schemas suppress the built-in fallback`() = fixture { api, resources, _ ->
+        resources.createAsString("active/common/data/test/registries.json", """{"entries":{"items":{}}}""")
+        assertNull(api.project("active", registryName).schema)
+    }
+
+    @Test
     fun `apply changes the registry and persist changes the file`() = fixture { api, resources, registry ->
         val contents = "{\"name\":\"Updated\",\"text\":\"${"x".repeat(70 * 1024)}\"}"
         api.update("active", registryName, entry, contents)

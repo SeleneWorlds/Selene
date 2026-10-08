@@ -32,6 +32,12 @@ class EditorResources(
 ) {
     private val resourceJson = Json(json) { prettyPrint = true }
     private val registries = RegistriesApi(registryProvider)
+    private val builtinSchemas: JsonObject by lazy {
+        val contents = requireNotNull(javaClass.getResourceAsStream("/schemas/registries.json")) {
+            "Missing built-in registry schemas"
+        }.bufferedReader(Charsets.UTF_8).use { it.readText() }
+        json.parseToJsonElement(contents).jsonObject
+    }
 
     fun searchRegistry(request: RegistrySearchRequest): RegistrySearchResult {
         val options = registries.findAll(request.registry).mapNotNull { (identifier, entry) ->
@@ -237,7 +243,7 @@ class EditorResources(
             }
         }
         return schema ?: if (customDefinition) null else
-            readObject("moonlight-editor/server/schemas/registries.json")?.get(registry.path) as? JsonObject
+            builtinSchemas[registry.path] as? JsonObject
     }
 
     private fun readObject(path: String): JsonObject? {

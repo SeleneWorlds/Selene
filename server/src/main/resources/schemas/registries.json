@@ -1,0 +1,263 @@
+{
+  "tiles": {
+    "visual": {
+      "type": "registry",
+      "registry": "selene:visuals"
+    },
+    "impassable": {
+      "type": "boolean",
+      "optional": true
+    },
+    "passableAbove": {
+      "type": "boolean",
+      "optional": true
+    },
+    "movementDuration": {
+      "type": "number",
+      "optional": true,
+      "min": 0
+    },
+    "light": {
+      "type": "object",
+      "properties": {
+        "radius": "number",
+        "intensity": {
+          "type": "number",
+          "optional": true
+        },
+        "red": {
+          "type": "number",
+          "optional": true
+        },
+        "green": {
+          "type": "number",
+          "optional": true
+        },
+        "blue": {
+          "type": "number",
+          "optional": true
+        }
+      },
+      "optional": true
+    },
+    "metadata": {
+      "type": "map",
+      "optional": true,
+      "keyType": "string",
+      "valueType": "any"
+    },
+    "tags": {
+      "type": "array",
+      "valueType": "string",
+      "optional": true
+    }
+  },
+  "entities": {
+    "components": {
+      "type": "map",
+      "optional": true,
+      "keyType": {
+        "type": "registry",
+        "registry": "selene:components"
+      },
+      "valueType": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "enum",
+            "values": [
+              {
+                "value": "impassable",
+                "label": "Impassable"
+              },
+              {
+                "value": "passable_above",
+                "label": "Passable Above"
+              },
+              {
+                "value": "draggable",
+                "label": "Draggable"
+              },
+              {
+                "value": "ignores_elevation",
+                "label": "Ignores Elevation"
+              },
+              {
+                "value": "gravity",
+                "label": "Gravity"
+              },
+              {
+                "value": "light",
+                "label": "Light"
+              },
+              {
+                "value": "visual",
+                "label": "Visual"
+              },
+              {
+                "value": "client_script",
+                "label": "Client Script"
+              },
+              {
+                "value": "server_script",
+                "label": "Server Script"
+              }
+            ]
+          },
+          "enabled": {
+            "type": "boolean",
+            "optional": true
+          },
+          "visual": {
+            "type": "registry",
+            "optional": true,
+            "registry": "selene:visuals"
+          },
+          "position": {
+            "type": "object",
+            "properties": {
+              "origin": {
+                "type": "string",
+                "optional": true
+              },
+              "offsetX": {
+                "type": "number",
+                "optional": true
+              },
+              "offsetY": {
+                "type": "number",
+                "optional": true
+              }
+            },
+            "optional": true
+          },
+          "radius": {
+            "type": "number",
+            "optional": true
+          },
+          "intensity": {
+            "type": "number",
+            "optional": true
+          },
+          "red": {
+            "type": "number",
+            "optional": true
+          },
+          "green": {
+            "type": "number",
+            "optional": true
+          },
+          "blue": {
+            "type": "number",
+            "optional": true
+          },
+          "alpha": {
+            "type": "number",
+            "optional": true
+          },
+          "overrides": {
+            "type": "map",
+            "optional": true,
+            "keyType": "string",
+            "valueType": "any"
+          },
+          "script": {
+            "type": "script",
+            "optional": true
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "map",
+      "optional": true,
+      "keyType": "string",
+      "valueType": "any"
+    },
+    "tags": {
+      "type": "array",
+      "valueType": "string",
+      "optional": true
+    }
+  },
+  "components": {},
+  "grids": {
+    "layout": {
+      "type": "enum",
+      "values": [
+        {
+          "value": "diamond",
+          "label": "Diamond"
+        }
+      ],
+      "optional": true
+    },
+    "directions": {
+      "type": "array",
+      "valueType": {
+        "type": "object",
+        "properties": {
+          "name": "string",
+          "x": "integer",
+          "y": "integer",
+          "z": "integer",
+          "angle": "number"
+        }
+      }
+    }
+  },
+  "transitions": {
+    "priority": "integer",
+    "transitions": {
+      "type": "array",
+      "valueType": {
+        "type": "object",
+        "properties": {
+          "tile": {
+            "type": "registry",
+            "registry": "selene:tiles"
+          },
+          "neighbours": {
+            "type": "array",
+            "valueType": "string"
+          }
+        }
+      },
+      "optional": true
+    }
+  },
+  "sounds": {
+    "audio": "string",
+    "metadata": {
+      "type": "map",
+      "optional": true,
+      "keyType": "string",
+      "valueType": "any"
+    },
+    "tags": {
+      "type": "array",
+      "valueType": "string",
+      "optional": true
+    }
+  },
+  "registries": {
+    "name": "string",
+    "platform": {
+      "type": "enum",
+      "values": [
+        {
+          "value": "server",
+          "label": "Server"
+        },
+        {
+          "value": "client",
+          "label": "Client"
+        }
+      ]
+    },
+    "schema": {
+      "type": "any",
+      "optional": true
+    }
+  }
+}
