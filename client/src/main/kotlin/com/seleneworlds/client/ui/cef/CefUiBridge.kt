@@ -139,7 +139,7 @@ class CefUiBridge(
             "GET" -> listOf("/resources/bundles", "/resources/bundles/$segment/registries",
                 bundleRegistry, "/resources/files/$segment(?:/$segment)*",
                 "/registries/$segment/entries", "/scripts", "/resources/changes")
-            "POST" -> listOf("$bundleRegistry/files", "/resources/changes/(?:persist|discard)(?:/$segment)*")
+            "POST" -> listOf("/resources/permissions", "$bundleRegistry/files", "/resources/changes/(?:persist|discard)(?:/$segment)*")
             "PUT" -> listOf("/resources/files/$segment(?:/$segment)*")
             else -> emptyList()
         }
