@@ -75,10 +75,12 @@ class CameraManager(
         val preserveVisualPosition = cameraOffsetX != 0f || cameraOffsetY != 0f
         val previousX = camera.position.x
         val previousY = camera.position.y
+        val previousLayerCoordinate = focusCoordinate.copy(z = coordinate.z)
+        val layerHeight = grid.getScreenY(previousLayerCoordinate) - grid.getScreenY(focusCoordinate)
         focusCoordinate = coordinate
         if (preserveVisualPosition) {
             cameraOffsetX = previousX - grid.getScreenX(coordinate)
-            cameraOffsetY = previousY - grid.getScreenY(coordinate)
+            cameraOffsetY = previousY + layerHeight - grid.getScreenY(coordinate)
         }
         setCameraPosition(grid.getScreenX(coordinate), grid.getScreenY(coordinate))
         camera.update()

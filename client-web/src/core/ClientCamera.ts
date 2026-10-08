@@ -43,7 +43,8 @@ export class ClientCamera {
   setCoordinate(coordinate: Coordinate): void {
     const changed = !isSameCoordinate(this.coordinate, coordinate);
     if (this.offsetX !== 0 || this.offsetY !== 0) {
-      const previous = projectCoordinate(this.coordinate);
+      // Preserve panning within the layer, but let elevation move the camera.
+      const previous = projectCoordinate({ ...this.coordinate, z: coordinate.z });
       const next = projectCoordinate(coordinate);
       this.offsetX += previous.x - next.x;
       this.offsetY += previous.y - next.y;
