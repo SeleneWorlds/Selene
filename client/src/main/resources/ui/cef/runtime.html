@@ -157,9 +157,9 @@
         return Object.freeze({
             apiVersion: 12,
             http: Object.freeze({
-                async request(path, payload = {}) {
+                async request(path, payload = {}, method = 'GET') {
                     return JSON.parse(await executeBridgeRequest({
-                        type: 'bundleHttpRequest', path, payload
+                        type: 'bundleHttpRequest', path, payload, method
                     }));
                 }
             }),

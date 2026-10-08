@@ -49,7 +49,7 @@ interface BundleUiModule {
 }
 interface BundleUiApi {
   readonly apiVersion: number;
-  readonly http: { request(path: string, payload?: ClientNetworkPayload): Promise<unknown> };
+  readonly http: { request(path: string, payload?: ClientNetworkPayload, method?: 'GET' | 'POST' | 'PUT'): Promise<unknown> };
   readonly resolveAsset: (path: string) => Promise<string>;
   readonly i18n: I18nApi;
   readonly visuals: {
@@ -171,15 +171,21 @@ export class BundleUiManager {
     return Object.freeze({
       apiVersion: API_VERSION,
       http: Object.freeze({
-        request: async (path: string, payload: ClientNetworkPayload = {}) => {
-          const allowedPaths = new Set([
-            '/registries/search', '/scripts/search', '/resources/projects', '/resources/project',
-            '/resources/read', '/resources/create', '/resources/update', '/resources/persist',
-            '/resources/discard', '/resources/changes',
-          ]);
-          if (!allowedPaths.has(path)) throw new Error('Invalid resource HTTP path');
-          const method = path === '/resources/update' ? 'PUT'
-            : ['/resources/create', '/resources/persist', '/resources/discard'].includes(path) ? 'POST' : 'GET';
+        request: async (path: string, payload: ClientNetworkPayload = {}, method: 'GET' | 'POST' | 'PUT' = 'GET') => {
+          const segment = '[^/?#]+';
+          const bundleRegistry = `/resources/bundles/${segment}/registries/${segment}`;
+          const allowed = method === 'GET' ? [
+            '^/resources/bundles$', `^/resources/bundles/${segment}/registries$`,
+            `^${bundleRegistry}$`, `^/resources/files/${segment}(?:/${segment})*$`,
+            `^/registries/${segment}/entries$`, '^/scripts$', '^/resources/changes$',
+          ] : method === 'POST' ? [
+            `^${bundleRegistry}/files$`, `^/resources/changes/(?:persist|discard)(?:/${segment})*$`,
+          ] : method === 'PUT' ? [`^/resources/files/${segment}(?:/${segment})*$`] : [];
+          if (!allowed.some((pattern) => new RegExp(pattern).test(path)) ||
+            path.split('/').slice(1).some((part) => {
+              const decoded = decodeURIComponent(part);
+              return decoded === '.' || decoded === '..' || /[\\/\u0000-\u001f]/.test(decoded);
+            })) throw new Error('Invalid resource HTTP path or method');
           const url = new URL(resolveServerUrl(this.options.serverApiUrl, path));
           if (method === 'GET') {
             for (const [key, value] of Object.entries(payload)) {

@@ -15,6 +15,7 @@ class EditorResourcesTest {
 
     private fun fixture(
         registryIdentifier: Identifier = registryName,
+        includeEmptyBundle: Boolean = false,
         test: (EditorResources, ResourcesApi, CustomRegistry) -> Unit
     ) {
         val root = Files.createTempDirectory("http-resources")
@@ -25,6 +26,9 @@ class EditorResourcesTest {
             val database = BundleDatabase().apply {
                 addBundle(Bundle(BundleManifest("active"), root.toFile()))
                 addBundle(Bundle(BundleManifest("disabled"), root.toFile()), false)
+                if (includeEmptyBundle) {
+                    addBundle(Bundle(BundleManifest("empty"), root.resolve("empty").toFile()))
+                }
             }
             val registry = CustomRegistry(seleneJson, CustomRegistryDefinition("items", "common"))
             registry.load(database)
@@ -56,11 +60,22 @@ class EditorResourcesTest {
 
     @Test
     fun `project listings use the actual registry identifier`() = fixture { api, _, _ ->
-        assertEquals(listOf("active" to registryName), api.projects())
+        assertEquals(listOf("active"), api.bundles())
+        assertEquals(listOf(registryName), api.registries("active"))
+        assertFailsWith<IllegalArgumentException> { api.registries("disabled") }
         val project = api.project("active", registryName)
         assertEquals(registryName.toString(), project.registry)
         assertEquals(listOf(ProjectFile(path, "Example")), project.files)
     }
+
+    @Test
+    fun `bundle discovery includes empty enabled bundles and registry discovery is scoped`() =
+        fixture(includeEmptyBundle = true) { api, _, _ ->
+            assertEquals(listOf("active", "empty"), api.bundles())
+            assertEquals(listOf(registryName), api.registries("active"))
+            assertEquals(emptyList(), api.registries("empty"))
+            assertFailsWith<IllegalArgumentException> { api.registries("unknown") }
+        }
 
     @Test
     fun `registry and entry namespaces are independent`() {

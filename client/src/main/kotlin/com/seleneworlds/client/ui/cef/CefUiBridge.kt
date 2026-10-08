@@ -104,17 +104,36 @@ class CefUiBridge(
 
     private fun bundleHttpRequest(message: JsonObject, callback: CefQueryCallback) {
         val path = message.requiredString("path")
-        require(path in setOf("/registries/search", "/scripts/search", "/resources/projects",
-            "/resources/project", "/resources/read", "/resources/create", "/resources/update",
-            "/resources/persist", "/resources/discard", "/resources/changes")) { "Invalid resource HTTP path" }
+        val method = (message["method"] as? JsonPrimitive)?.content ?: "GET"
+        val segment = "[^/?#]+"
+        val bundleRegistry = "/resources/bundles/$segment/registries/$segment"
+        val allowed = when (method) {
+            "GET" -> listOf("/resources/bundles", "/resources/bundles/$segment/registries",
+                bundleRegistry, "/resources/files/$segment(?:/$segment)*",
+                "/registries/$segment/entries", "/scripts", "/resources/changes")
+            "POST" -> listOf("$bundleRegistry/files", "/resources/changes/(?:persist|discard)(?:/$segment)*")
+            "PUT" -> listOf("/resources/files/$segment(?:/$segment)*")
+            else -> emptyList()
+        }
+        require(allowed.any { Regex(it).matches(path) } && path.split('/').drop(1).none {
+            val decoded = java.net.URLDecoder.decode(it.replace("+", "%2B"), Charsets.UTF_8)
+            decoded == "." || decoded == ".." || decoded.any { character ->
+                character == '/' || character == '\\' || character.code < 32
+            }
+        }) { "Invalid resource HTTP path or method" }
         require(runtimeConfig.contentServerUrl.isNotBlank()) { "Server HTTP URL is unavailable" }
-        val body = (message["payload"] ?: JsonObject(emptyMap())).toString()
+        val payload = message["payload"] as? JsonObject ?: JsonObject(emptyMap())
+        val query = if (method == "GET" && payload.isNotEmpty()) payload.entries.joinToString("&", "?") { (key, value) ->
+            val content = (value as? JsonPrimitive)?.content ?: error("Invalid query value")
+            java.net.URLEncoder.encode(key, Charsets.UTF_8) + "=" + java.net.URLEncoder.encode(content, Charsets.UTF_8)
+        } else ""
         val request = java.net.http.HttpRequest.newBuilder(java.net.URI(
-            "${runtimeConfig.contentServerUrl.trimEnd('/')}${path}"))
+            "${runtimeConfig.contentServerUrl.trimEnd('/')}$path$query"))
             .timeout(java.time.Duration.ofSeconds(30))
             .header("Content-Type", "application/json")
             .header("Authorization", "Bearer ${runtimeConfig.token}")
-            .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body)).build()
+            .method(method, if (method == "GET") java.net.http.HttpRequest.BodyPublishers.noBody()
+                else java.net.http.HttpRequest.BodyPublishers.ofString(payload.toString())).build()
         bundleHttpClient.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString())
             .whenComplete { response, error ->
                 when {
