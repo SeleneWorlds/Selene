@@ -21,8 +21,15 @@ class Registries(
     val customRegistries: CustomRegistries
 ) : RegistryProvider {
 
-    override fun getRegistries(): Collection<Registry<*>> =
-        listOf(tiles, transitions, entities, components, grids, sounds, customRegistries) + customRegistries.getAllCustomRegistries()
+    override fun getRegistries(): Map<Identifier, Registry<*>> = mapOf(
+        TileRegistry.IDENTIFIER to tiles,
+        TransitionRegistry.IDENTIFIER to transitions,
+        EntityRegistry.IDENTIFIER to entities,
+        ComponentRegistry.IDENTIFIER to components,
+        GridRegistry.IDENTIFIER to grids,
+        SoundRegistry.IDENTIFIER to sounds,
+        CustomRegistries.IDENTIFIER to customRegistries
+    ) + customRegistries.getCustomRegistryEntries()
 
     override fun getRegistry(identifier: Identifier): Registry<*>? {
         return when (identifier) {

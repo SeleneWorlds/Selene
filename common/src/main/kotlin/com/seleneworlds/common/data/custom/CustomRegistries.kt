@@ -40,6 +40,8 @@ class CustomRegistries(
         return customRegistries.values
     }
 
+    fun getCustomRegistryEntries(): Map<Identifier, CustomRegistry> = customRegistries.toMap()
+
     fun findByRegistryName(name: String): CustomRegistry? {
         return customRegistries.values.find { it.name == name }
     }
