@@ -1,5 +1,6 @@
 package com.seleneworlds.common.bundles
 
+import com.seleneworlds.common.data.json.FileBasedRegistry
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
@@ -8,10 +9,31 @@ class ResourcesApi(private val bundleDatabase: BundleDatabase) {
 
     fun listBundles(): List<String> = bundleDatabase.enabledBundles.map { it.manifest.name }
 
+    /** List individual JSON entry files across namespaces for this registry in a bundle. */
+    fun listRegistryFiles(bundle: String, registry: FileBasedRegistry<*>): List<String> {
+        val baseDir = bundleDatabase.getBundle(bundle)?.dir ?: return emptyList()
+        val dataDir = baseDir.resolve("${registry.platform}/data")
+        return dataDir.listFiles().orEmpty().asSequence()
+            .filter { it.isDirectory }
+            .flatMap { namespace -> namespace.resolve(registry.name).walkTopDown().asSequence() }
+            .filter { it.isFile && it.name.endsWith(".json") }
+            .map { "$bundle/${it.relativeTo(baseDir).invariantSeparatorsPath}" }
+            .filter { registry.getResourceIdentifier(bundle, it) != null }
+            .toList()
+    }
+
+    /** List files matching a glob relative to the bundle root; wildcards also match nested paths. */
     fun listFiles(bundle: String, filter: String): List<String> {
         val baseDir = bundleDatabase.getBundle(bundle)?.dir ?: return emptyList()
-        return baseDir.walkTopDown().filter {
-            it.isFile && it.relativeTo(baseDir).path.matches(globToRegex(filter))
+        val matcher = globToRegex(filter)
+        val literalPrefix = filter.takeWhile { it !in "\\.*?[](){}+^$|" }
+        val directoryPrefix = literalPrefix.substringBeforeLast('/', "")
+        val scanDir = if (directoryPrefix.isNotEmpty() &&
+            directoryPrefix.split('/').none { it == ".." } && !directoryPrefix.startsWith('/')) {
+            baseDir.resolve(directoryPrefix)
+        } else baseDir
+        return scanDir.walkTopDown().filter {
+            it.isFile && matcher.matches(it.relativeTo(baseDir).path)
         }.map {
             bundle + File.separator + it.relativeTo(baseDir).path
         }.toList()
