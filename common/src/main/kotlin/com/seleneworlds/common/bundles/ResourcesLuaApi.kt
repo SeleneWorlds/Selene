@@ -19,6 +19,7 @@ class ResourcesLuaApi(private val api: ResourcesApi) : LuaModule {
         table.register("saveAsString", this::saveAsString)
         table.register("createAsString", this::createAsString)
         table.register("fileExists", this::fileExists)
+        table.register("removeFile", this::removeFile)
     }
 
     private fun listBundles(lua: Lua): Int {
@@ -38,6 +39,11 @@ class ResourcesLuaApi(private val api: ResourcesApi) : LuaModule {
 
     private fun saveAsString(lua: Lua): Int {
         api.saveAsString(lua.checkString(1), lua.checkString(2))
+        return 0
+    }
+
+    private fun removeFile(lua: Lua): Int {
+        api.removeFile(lua.checkString(1))
         return 0
     }
 

@@ -46,6 +46,12 @@ class ResourcesApi(private val bundleDatabase: BundleDatabase) {
         Files.writeString(file.toPath(), contents, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
     }
 
+    fun removeFile(path: String) {
+        val (_, file) = resolveFile(path)
+        require(file.isFile) { "File not found: $path" }
+        Files.delete(file.toPath())
+    }
+
     private fun resolveFile(path: String): Pair<File, File> {
         val bundleName = path.substringBefore("/")
         val remainingPath = path.substringAfter("/", "")
