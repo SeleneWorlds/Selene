@@ -34,9 +34,11 @@ export class ClientCamera {
 
   setCoordinate(coordinate: Coordinate): void {
     const changed = !isSameCoordinate(this.coordinate, coordinate);
-    if (changed) {
-      this.offsetX = 0;
-      this.offsetY = 0;
+    if (this.offsetX !== 0 || this.offsetY !== 0) {
+      const previous = projectCoordinate(this.coordinate);
+      const next = projectCoordinate(coordinate);
+      this.offsetX += previous.x - next.x;
+      this.offsetY += previous.y - next.y;
     }
     this.coordinate = coordinate;
     this.followedEntityId = null;

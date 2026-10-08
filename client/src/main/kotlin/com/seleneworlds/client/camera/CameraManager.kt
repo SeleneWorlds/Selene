@@ -72,11 +72,14 @@ class CameraManager(
 
     fun focusCamera(coordinate: Coordinate) {
         focusedEntityNetworkId = -1
-        if (focusCoordinate != coordinate) {
-            cameraOffsetX = 0f
-            cameraOffsetY = 0f
-        }
+        val preserveVisualPosition = cameraOffsetX != 0f || cameraOffsetY != 0f
+        val previousX = camera.position.x
+        val previousY = camera.position.y
         focusCoordinate = coordinate
+        if (preserveVisualPosition) {
+            cameraOffsetX = previousX - grid.getScreenX(coordinate)
+            cameraOffsetY = previousY - grid.getScreenY(coordinate)
+        }
         setCameraPosition(grid.getScreenX(coordinate), grid.getScreenY(coordinate))
         camera.update()
     }
