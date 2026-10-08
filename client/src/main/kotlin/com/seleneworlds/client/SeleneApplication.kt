@@ -294,7 +294,7 @@ class SeleneApplication(
             singleOf(::TimelinePlayer) { bind<Disposable>() }
             singleOf(::VisualFactory)
             singleOf(::CameraManager)
-            singleOf(::SceneRenderer)
+            singleOf(::SceneRenderer) { bind<Disposable>() }
             singleOf(::Environment)
             singleOf(::DebugRenderer)
         }

@@ -6,6 +6,7 @@ import type { ClientRegistrySnapshots } from '@/data/ClientRegistryLoader';
 import type { ClientCamera } from '@/core/ClientCamera';
 import type { GameRenderer } from '@/core/GameRenderer';
 import { InteriorFadeController } from '@/renderer/InteriorFadeController';
+import { PixiTileGrid } from '@/renderer/PixiTileGrid';
 import { PixiScene } from '@/renderer/PixiScene';
 import { RenderPipeline } from '@/renderer/RenderPipeline';
 import { PixiViewport, RENDER_RESOLUTION } from '@/renderer/PixiViewport';
@@ -45,6 +46,7 @@ export class PixiGameRenderer implements GameRenderer {
   private readonly tilemapLayer: PixiTilemapLayer;
   private readonly entityLayer: PixiEntityLayer;
   private readonly scene: PixiScene;
+  private readonly tileGrid: PixiTileGrid;
   private readonly viewport: PixiViewport;
   private readonly pipeline: RenderPipeline;
   private readonly lighting = new LightingEnvironment();
@@ -70,6 +72,9 @@ export class PixiGameRenderer implements GameRenderer {
       this.scene.depthSortedContainer,
       this.lighting,
     );
+    this.tileGrid = new PixiTileGrid(
+      this.scene.depthSortedContainer, coordinate => this.tilemapLayer.getGroundRenderOrder(coordinate),
+    );
     this.timelinePlayer = new TimelinePlayer(
       options.registries,
       this.textureLoader,
@@ -93,6 +98,7 @@ export class PixiGameRenderer implements GameRenderer {
       this.app, this.debugState, this.scene, this.viewport, this.entityLayer, this.tilemapLayer,
       new InteriorFadeController(this.tilemapLayer, this.entityLayer),
       this.lighting,
+      this.tileGrid,
     );
   }
 
@@ -198,6 +204,10 @@ export class PixiGameRenderer implements GameRenderer {
       default:
         break;
     }
+  }
+
+  setTileGridVisible(visible: boolean): void {
+    this.tileGrid.setVisible(visible);
   }
 
   drawCameraScene(): void {

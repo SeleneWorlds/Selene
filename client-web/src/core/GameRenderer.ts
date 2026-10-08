@@ -30,6 +30,7 @@ export interface GameRenderer {
   setFitToScreen(enabled: boolean): void;
   setDebugOption(option: keyof RendererDebugOptions, enabled: boolean): void;
   screenToLogical(screenX: number, screenY: number): { x: number; y: number };
+  setTileGridVisible(visible: boolean): void;
   projectCoordinate(coordinate: Coordinate): { x: number; y: number };
   projectEntity(networkId: number): { x: number; y: number } | null;
   getMapTiles(coordinate?: Coordinate, width?: number, height?: number): ClientMapTile[];

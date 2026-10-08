@@ -15,6 +15,7 @@ import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.jsonArray
@@ -40,6 +41,7 @@ class CefUiBridge(
     private val logger: Logger,
     private val interactionState: CefInteractionState,
     private val cameraManager: CameraManager,
+    private val sceneRenderer: com.seleneworlds.client.rendering.SceneRenderer,
     private val clientMap: ClientMap,
     private val bundleUiStorage: BundleUiStorage,
     private val visualRegistry: VisualRegistry,
@@ -66,6 +68,14 @@ class CefUiBridge(
                         browser, frame, queryId, persistent, message, callback)
                     "updateInteractionState" -> updateInteractionState(message, callback)
                     "getInitialWorldState" -> getInitialWorldState(callback)
+                    "setTileGridVisible" -> {
+                        val visible = message["visible"]?.jsonPrimitive?.booleanOrNull
+                            ?: error("Grid visibility must be a boolean")
+                        mainThreadDispatcher.runOnMainThread {
+                            sceneRenderer.setTileGridVisible(visible)
+                            callback.success("null")
+                        }
+                    }
                     "setCameraZoom" -> {
                         val zoom = message.requiredFloat("zoom")
                         require(zoom.isFinite() && zoom > 0f) { "Camera zoom must be positive and finite" }

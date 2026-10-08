@@ -20,7 +20,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 13;
+const API_VERSION = 14;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -37,6 +37,7 @@ interface BundleUiManagerOptions {
   grid: GridApi;
   entities: EntitiesApi;
   getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
+  setTileGridVisible: (visible: boolean) => void;
   projectCoordinate: (coordinate: Coordinate) => { x: number; y: number };
   projectEntity: (networkId: number) => { x: number; y: number } | null;
   getControlledEntity: () => ReturnType<EntitiesApi['getEntityByNetworkId']>;
@@ -80,6 +81,7 @@ interface BundleUiApi {
   };
   readonly world: {
     getCameraCoordinate: CameraApi['getCoordinate'];
+    setTileGridVisible: (visible: boolean) => Promise<void>;
     setCameraZoom: (zoom: number) => Promise<number>;
     getCameraPosition: () => Promise<ReturnType<CameraApi['getPosition']>>;
     setCameraPosition: (position: { x: number; y: number }) => Promise<Coordinate>;
@@ -279,6 +281,10 @@ export class BundleUiManager {
       }),
       world: Object.freeze({
         getCameraCoordinate: () => this.options.camera.getCoordinate(),
+        setTileGridVisible: async (visible: boolean) => {
+          if (typeof visible !== 'boolean') throw new Error('Grid visibility must be a boolean.');
+          this.options.setTileGridVisible(visible);
+        },
         setCameraZoom: async (zoom: number) => this.options.camera.setZoom(zoom),
         getCameraPosition: async () => this.options.camera.getPosition(),
         setCameraPosition: async (position: { x: number; y: number }) => {

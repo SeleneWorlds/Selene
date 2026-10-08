@@ -1,4 +1,5 @@
 import type { Container } from 'pixi.js';
+import { getRenderOrder } from '../IsoProjection';
 import type { ClientMapTile } from '@/core/ClientMap';
 import type { Coordinate, MapChunkPacket, RemoveMapChunkPacket, UpdateMapTilesPacket } from '@/networking/GameProtocol';
 import type { WorldBounds } from '../entities/PixiEntityLayer';
@@ -145,6 +146,14 @@ export class PixiTilemapLayer {
 
   hasTileAt(coordinate: Coordinate): boolean { return this.renderedStacks.has(coordinateKey(coordinate)); }
 
+  getGroundRenderOrder(coordinate: Coordinate): number {
+    const stack = this.renderedStacks.get(coordinateKey(coordinate));
+    return stack?.surfaces.reduce((order, surface, index) =>
+      !stack.occlusionFade[index] && surface.height === 0
+        ? Math.max(order, surface.renderOrder) : order,
+    getRenderOrder(coordinate)) ?? getRenderOrder(coordinate);
+  }
+
   getSurface(coordinate: Coordinate): { height: number; renderOrder: number | null } {
     return this.renderedStacks.get(coordinateKey(coordinate))?.surfaces.reduce(
       (surfaceLevel, surface) => ({
@@ -153,7 +162,7 @@ export class PixiTilemapLayer {
           ? Math.max(surfaceLevel.renderOrder ?? Number.NEGATIVE_INFINITY, surface.renderOrder)
           : surfaceLevel.renderOrder,
       }),
-      { height: 0, renderOrder: null } as { height: number; renderOrder: number | null },
+      { height: 0, renderOrder: this.getGroundRenderOrder(coordinate) } as { height: number; renderOrder: number | null },
     ) ?? { height: 0, renderOrder: null };
   }
 

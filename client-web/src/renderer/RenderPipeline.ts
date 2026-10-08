@@ -1,3 +1,4 @@
+import type { PixiTileGrid } from '@/renderer/PixiTileGrid';
 import type { Application } from 'pixi.js';
 import type { DebugState, RendererDebugOptions } from '@/core/DebugState';
 import type { PixiEntityLayer } from '@/renderer/entities/PixiEntityLayer';
@@ -21,6 +22,7 @@ export class RenderPipeline {
     private readonly tilemapLayer: PixiTilemapLayer,
     private readonly interiorFade: InteriorFadeController,
     private readonly lighting: LightingEnvironment,
+    private readonly tileGrid: PixiTileGrid,
   ) {}
 
   update(deltaMs: number, options: RendererDebugOptions): Record<string, number> {
@@ -57,6 +59,9 @@ export class RenderPipeline {
         ));
       }
     });
+    this.tileGrid.update(this.scene.getViewBounds(
+      this.app.renderer.screen.width, this.app.renderer.screen.height,
+    ), focus.coordinate.z);
     this.measure(timings, 'Renderer: Pixi draw', () => {
       if (options.pixiRender) this.app.renderer.render({ container: this.app.stage });
     });
