@@ -79,6 +79,21 @@ class EditorResourcesTest {
         }
 
     @Test
+    fun `permission queries separate edit from persist and require every bulk scope`() =
+        fixture(includeEmptyBundle = true) { api, _, _ ->
+            val resource = buildJsonObject { put("path", path) }
+            val editOnly: (String) -> Boolean = { it == "active.items.edit" }
+            assertTrue(api.isAllowed("save-file", resource, editOnly))
+            assertFalse(api.isAllowed("persist-changes", resource, editOnly))
+            assertTrue(api.isAllowed("persist-changes", resource) { it == "active.items.persist" })
+            api.update("active", registryName, entry, "{}")
+            api.update("empty", registryName, Identifier("test", "new"), "{}")
+            assertFalse(api.isAllowed("persist-changes", buildJsonObject {}) { it == "active.items.persist" })
+            assertTrue(api.isAllowed("persist-changes", buildJsonObject {}) { it.endsWith(".persist") })
+            assertEquals(2, api.pendingChanges().count)
+        }
+
+    @Test
     fun `discovery and search have separate read permissions`() = fixture { api, _, _ ->
         assertEquals(listOf("selene.resources.read"), api.permissionKeys("request-bundles", buildJsonObject {}))
         assertEquals(listOf("active.registries.read"), api.permissionKeys("request-bundle-registries",

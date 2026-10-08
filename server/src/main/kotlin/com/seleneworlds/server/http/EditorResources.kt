@@ -230,6 +230,9 @@ class EditorResources(
         return action(bundle, resource.first, resource.second)
     }
 
+    internal fun isAllowed(operation: String, request: JsonObject, check: (String) -> Boolean): Boolean =
+        permissionKeys(operation, request).all(check)
+
     /** Permission keys are derived from the target, never from a caller-supplied permission. */
     internal fun permissionKeys(operation: String, request: JsonObject): List<String> {
         fun resourceKey(path: String, action: String) = withResource(path) { bundle, registry, _ ->
@@ -363,8 +366,7 @@ internal fun Route.registerEditorResourceRoutes(
             mainThreadDispatcher.callOnMainThread {
                 val player = playerManager.dereferencePersisted(user.userId)
                 try {
-                    val keys = editorResources.permissionKeys(operation, request)
-                    val allowed = player != null && keys.all { key ->
+                    val allowed = player != null && editorResources.isAllowed(operation, request) { key ->
                         permissions.hasPermission(
                             player.api, key, mapOf("operation" to operation, "request" to context)
                         )
@@ -384,6 +386,37 @@ internal fun Route.registerEditorResourceRoutes(
             }
         }
         call.respondText(result.second, ContentType.Application.Json, HttpStatusCode.fromValue(result.first))
+    }
+
+    post("/resources/permissions") {
+        call.response.header(HttpHeaders.CacheControl, "no-store")
+        val requests = try {
+            seleneJson.decodeFromString<ResourcePermissionChecks>(call.receiveText()).checks.also { requests ->
+                require(requests.size <= 32) { "Too many permission checks" }
+                require(requests.all { it.operation in setOf(
+                    "create-file", "save-file", "persist-changes", "discard-changes"
+                ) }) { "Unsupported permission operation" }
+            }
+        } catch (_: IllegalArgumentException) {
+            call.respond(HttpStatusCode.BadRequest, "Invalid permission request")
+            return@post
+        }
+        val user = authenticatedUser(call)
+        val allowed = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            mainThreadDispatcher.callOnMainThread {
+                val player = playerManager.dereferencePersisted(user.userId)
+                requests.map { request ->
+                    player != null && runCatching {
+                        val context = seleneJson.decodeFromJsonElement(SerializedMapSerializer, request.request)
+                        editorResources.isAllowed(request.operation, request.request) { key ->
+                            permissions.hasPermission(player.api, key,
+                                mapOf("operation" to request.operation, "request" to context))
+                        }
+                    }.getOrDefault(false)
+                }
+            }
+        }
+        call.respondText(seleneJson.encodeToString(allowed), ContentType.Application.Json)
     }
 
     get("/registries/{registry}/entries") {
@@ -563,3 +596,9 @@ data class ChangesResult(
     val removedPaths: List<String> = emptyList(),
     val error: String? = null
 )
+
+@Serializable
+internal data class ResourcePermissionRequest(val operation: String, val request: JsonObject)
+
+@Serializable
+internal data class ResourcePermissionChecks(val checks: List<ResourcePermissionRequest>)
