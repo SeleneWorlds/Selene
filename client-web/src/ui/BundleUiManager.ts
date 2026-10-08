@@ -49,6 +49,7 @@ interface BundleUiModule {
 }
 interface BundleUiApi {
   readonly apiVersion: number;
+  readonly http: { request(path: string, payload?: ClientNetworkPayload): Promise<unknown> };
   readonly resolveAsset: (path: string) => Promise<string>;
   readonly i18n: I18nApi;
   readonly visuals: {
@@ -169,6 +170,23 @@ export class BundleUiManager {
     const storagePrefix = `selene.bundle.${entrypoint.bundle}.${entrypoint.id}.`;
     return Object.freeze({
       apiVersion: API_VERSION,
+      http: Object.freeze({
+        request: async (path: string, payload: ClientNetworkPayload = {}) => {
+          const allowedPaths = new Set([
+            '/registries/search', '/scripts/search', '/resources/projects', '/resources/project',
+            '/resources/read', '/resources/create', '/resources/update', '/resources/persist',
+            '/resources/discard', '/resources/changes',
+          ]);
+          if (!allowedPaths.has(path)) throw new Error('Invalid resource HTTP path');
+          const response = await fetch(resolveServerUrl(this.options.serverApiUrl, path), {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${this.options.authToken}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!response.ok) throw new Error(`HTTP operation failed: ${response.status} ${await response.text()}`);
+          return response.json();
+        },
+      }),
       resolveAsset: (path: string) => this.resolveAsset(path),
       i18n: Object.freeze({
         get: (key: string, locale?: string) => this.options.i18n.get(key, locale),

@@ -156,6 +156,13 @@
         };
         return Object.freeze({
             apiVersion: 12,
+            http: Object.freeze({
+                async request(path, payload = {}) {
+                    return JSON.parse(await executeBridgeRequest({
+                        type: 'bundleHttpRequest', path, payload
+                    }));
+                }
+            }),
             resolveAsset(path) {
                 if (typeof path !== 'string' || path.length === 0) throw new Error('Asset path must be a non-empty string');
                 return new URL(path, entry.url).href;

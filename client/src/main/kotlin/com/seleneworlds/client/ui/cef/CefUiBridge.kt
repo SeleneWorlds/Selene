@@ -42,7 +42,8 @@ class CefUiBridge(
     private val cameraManager: CameraManager,
     private val clientMap: ClientMap,
     private val bundleUiStorage: BundleUiStorage,
-    private val visualRegistry: VisualRegistry
+    private val visualRegistry: VisualRegistry,
+    private val runtimeConfig: com.seleneworlds.client.config.ClientRuntimeConfig
 ) {
     private data class Subscription(val remove: () -> Unit, val callback: CefQueryCallback)
 
@@ -58,6 +59,7 @@ class CefUiBridge(
                 }
                 val message = json.parseToJsonElement(request).jsonObject
                 when (message.requiredString("type")) {
+                    "bundleHttpRequest" -> bundleHttpRequest(message, callback)
                     "sendPayloadToServer" -> sendPayloadToServer(message, callback)
                     "subscribeToConnection" -> subscribeToConnection(queryId, persistent, callback)
                     "subscribeToServerPayload" -> subscribeToServerPayload(
@@ -95,6 +97,32 @@ class CefUiBridge(
             CefMessageRouter.CefMessageRouterConfig("seleneBridgeRequest", "cancelSeleneBridgeRequest"),
             handler
         ).also { router = it }
+    }
+
+    private val bundleHttpClient = java.net.http.HttpClient.newBuilder()
+        .connectTimeout(java.time.Duration.ofSeconds(15)).build()
+
+    private fun bundleHttpRequest(message: JsonObject, callback: CefQueryCallback) {
+        val path = message.requiredString("path")
+        require(path in setOf("/registries/search", "/scripts/search", "/resources/projects",
+            "/resources/project", "/resources/read", "/resources/create", "/resources/update",
+            "/resources/persist", "/resources/discard", "/resources/changes")) { "Invalid resource HTTP path" }
+        require(runtimeConfig.contentServerUrl.isNotBlank()) { "Server HTTP URL is unavailable" }
+        val body = (message["payload"] ?: JsonObject(emptyMap())).toString()
+        val request = java.net.http.HttpRequest.newBuilder(java.net.URI(
+            "${runtimeConfig.contentServerUrl.trimEnd('/')}${path}"))
+            .timeout(java.time.Duration.ofSeconds(30))
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer ${runtimeConfig.token}")
+            .POST(java.net.http.HttpRequest.BodyPublishers.ofString(body)).build()
+        bundleHttpClient.sendAsync(request, java.net.http.HttpResponse.BodyHandlers.ofString())
+            .whenComplete { response, error ->
+                when {
+                    error != null -> callback.failure(1, "Bundle HTTP request failed")
+                    response.statusCode() !in 200..299 -> callback.failure(response.statusCode(), response.body())
+                    else -> callback.success(response.body())
+                }
+            }
     }
 
     private fun sendPayloadToServer(message: JsonObject, callback: CefQueryCallback) {
