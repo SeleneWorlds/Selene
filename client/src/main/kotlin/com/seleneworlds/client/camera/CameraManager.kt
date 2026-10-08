@@ -84,6 +84,13 @@ class CameraManager(
         camera.update()
     }
 
+    fun setCameraZoom(zoom: Float): Float {
+        require(zoom.isFinite() && zoom > 0f) { "Camera zoom must be positive and finite" }
+        camera.zoom = 1f / zoom.coerceIn(0.25f, 1f)
+        camera.update()
+        return 1f / camera.zoom
+    }
+
     fun getCameraPosition() = Vector2(camera.position.x, -camera.position.y)
 
     fun setCameraPosition(position: Vector2): Coordinate {
@@ -197,10 +204,10 @@ class CameraManager(
     }
 
     fun isRegionVisible(left: Float, right: Float, bottom: Float, top: Float): Boolean {
-        val camLeft = camera.position.x - camera.viewportWidth / 2f
-        val camRight = camera.position.x + camera.viewportWidth / 2f
-        val camBottom = camera.position.y - camera.viewportHeight / 2f
-        val camTop = camera.position.y + camera.viewportHeight / 2f
+        val camLeft = camera.position.x - camera.viewportWidth * camera.zoom / 2f
+        val camRight = camera.position.x + camera.viewportWidth * camera.zoom / 2f
+        val camBottom = camera.position.y - camera.viewportHeight * camera.zoom / 2f
+        val camTop = camera.position.y + camera.viewportHeight * camera.zoom / 2f
         return !(right < camLeft || left > camRight || top < camBottom || bottom > camTop)
     }
 

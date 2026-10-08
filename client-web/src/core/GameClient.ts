@@ -95,6 +95,11 @@ export class GameClient {
 
   getCameraApi(): CameraApi {
     return {
+      setZoom: (zoom) => {
+        const result = this.camera.setZoom(zoom);
+        this.renderer.drawCameraScene();
+        return result;
+      },
       getCoordinate: () => this.camera.getCoordinate(),
       getPosition: () => this.camera.getPosition(),
       setPosition: (position) => {

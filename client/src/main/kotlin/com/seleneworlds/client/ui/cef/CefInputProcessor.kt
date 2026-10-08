@@ -78,7 +78,11 @@ class CefInputProcessor(
     }
 
     override fun scrolled(amountX: Float, amountY: Float): Boolean {
-        if (!cef.enabled || !interactionState.isInteractive(mouseX, mouseY)) return false
+        if (!cef.enabled) return false
+        if (!interactionState.isInteractive(mouseX, mouseY)) {
+            cef.dispatchGameScroll(amountY)
+            return false
+        }
         cef.dispatchWheel(
             mouseX, mouseY, amountX, amountY, buttonMask(),
             hasShift(), hasControl(), hasAlt(), hasMeta()

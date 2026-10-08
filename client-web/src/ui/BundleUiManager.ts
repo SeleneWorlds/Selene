@@ -68,6 +68,7 @@ interface BundleUiApi {
     passThroughKeys: (...keys: string[]) => () => void;
     isPassthroughKey: (key: string) => boolean;
     hasEditableFocus: () => boolean;
+    onScroll: (callback: (event: { amountY: number }) => void) => () => void;
     onPointerDown: (callback: (event: BundleUiPointerEvent) => void) => () => void;
     onPointerMove: (callback: (event: BundleUiPointerEvent) => void) => () => void;
     onPointerUp: (callback: (event: BundleUiPointerEvent) => void) => () => void;
@@ -79,6 +80,7 @@ interface BundleUiApi {
   };
   readonly world: {
     getCameraCoordinate: CameraApi['getCoordinate'];
+    setCameraZoom: (zoom: number) => Promise<number>;
     getCameraPosition: () => Promise<ReturnType<CameraApi['getPosition']>>;
     setCameraPosition: (position: { x: number; y: number }) => Promise<Coordinate>;
     setViewport: (x: number, y: number, width: number, height: number) => void;
@@ -232,6 +234,16 @@ export class BundleUiManager {
         passThroughKeys: (...keys: string[]) => this.options.input.passThroughKeys(...keys),
         isPassthroughKey: (key: string) => this.options.input.isPassthroughKey(key),
         hasEditableFocus: () => this.options.input.hasEditableFocus(),
+        onScroll: (callback: (event: { amountY: number }) => void) => {
+          if (typeof callback !== 'function') throw new Error('Scroll callback must be a function.');
+          const listener = (event: WheelEvent) => {
+            if (this.options.input.consumesPointer(event)) return;
+            const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1);
+            callback({ amountY: pixels / 100 });
+          };
+          window.addEventListener('wheel', listener, { passive: true });
+          return () => window.removeEventListener('wheel', listener);
+        },
         onPointerDown: (callback: (event: BundleUiPointerEvent) => void) =>
           this.registerPointerListener('pointerdown', callback),
         onPointerMove: (callback: (event: BundleUiPointerEvent) => void) =>
@@ -267,6 +279,7 @@ export class BundleUiManager {
       }),
       world: Object.freeze({
         getCameraCoordinate: () => this.options.camera.getCoordinate(),
+        setCameraZoom: async (zoom: number) => this.options.camera.setZoom(zoom),
         getCameraPosition: async () => this.options.camera.getPosition(),
         setCameraPosition: async (position: { x: number; y: number }) => {
           if (!position || !Number.isFinite(position.x) || !Number.isFinite(position.y)) {

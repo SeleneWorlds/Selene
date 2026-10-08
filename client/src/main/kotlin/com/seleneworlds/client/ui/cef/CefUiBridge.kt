@@ -66,6 +66,13 @@ class CefUiBridge(
                         browser, frame, queryId, persistent, message, callback)
                     "updateInteractionState" -> updateInteractionState(message, callback)
                     "getInitialWorldState" -> getInitialWorldState(callback)
+                    "setCameraZoom" -> {
+                        val zoom = message.requiredFloat("zoom")
+                        require(zoom.isFinite() && zoom > 0f) { "Camera zoom must be positive and finite" }
+                        mainThreadDispatcher.runOnMainThread {
+                            callback.success(cameraManager.setCameraZoom(zoom).toString())
+                        }
+                    }
                     "getCameraPosition" -> getCameraPosition(callback)
                     "setCameraPosition" -> setCameraPosition(message, callback)
                     "subscribeToWorldUpdates" -> subscribeToWorldUpdates(

@@ -246,8 +246,8 @@ export class PixiGameRenderer implements GameRenderer {
   projectCoordinate(coordinate: Coordinate): { x: number; y: number } {
     const projected = projectWorldCoordinate(coordinate);
     return {
-      x: this.scene.container.x + projected.x,
-      y: this.scene.container.y + projected.y,
+      x: this.scene.container.x + projected.x * this.camera.getZoom(),
+      y: this.scene.container.y + projected.y * this.camera.getZoom(),
     };
   }
 

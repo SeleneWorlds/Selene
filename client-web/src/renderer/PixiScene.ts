@@ -21,6 +21,7 @@ export class PixiScene {
 
   updateCamera(entityLayer: PixiEntityLayer): void {
     this.camera.updateFollowedCoordinate((id) => entityLayer.getEntityCoordinate(id));
+    this.container.scale.set(this.camera.getZoom());
     const position = this.camera.getWorldPosition();
     this.container.position.set(Math.round(position.x), Math.round(position.y));
   }
@@ -37,6 +38,7 @@ export class PixiScene {
   }
 
   getViewBounds(width: number, height: number): WorldBounds {
-    return { x: -this.container.x, y: -this.container.y, width, height };
+    const zoom = this.camera.getZoom();
+    return { x: -this.container.x / zoom, y: -this.container.y / zoom, width: width / zoom, height: height / zoom };
   }
 }

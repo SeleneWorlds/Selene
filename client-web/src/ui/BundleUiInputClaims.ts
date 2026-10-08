@@ -41,7 +41,7 @@ export class BundleUiInputClaims {
       (this.textCaptureCount > 0 && event.key.length === 1);
   }
 
-  consumesPointer(event: PointerEvent): boolean {
+  consumesPointer(event: MouseEvent): boolean {
     const path = event.composedPath();
     for (const root of this.roots) {
       if (path.includes(root.host)) return true;

@@ -13,8 +13,16 @@ export class ClientCamera {
   private hasCustomViewport = false;
   private coordinate: Coordinate = { x: 0, y: 0, z: 0 };
   private followedEntityId: number | null = null;
+  private zoom = 1;
   private offsetX = 0;
   private offsetY = 0;
+
+  getZoom(): number { return this.zoom; }
+  setZoom(zoom: number): number {
+    if (!Number.isFinite(zoom) || zoom <= 0) throw new Error('Camera zoom must be positive and finite.');
+    this.zoom = Math.min(1, Math.max(0.25, zoom));
+    return this.zoom;
+  }
 
   setViewport(width: number, height: number): void {
     if (this.hasCustomViewport) return;
@@ -89,13 +97,13 @@ export class ClientCamera {
   getWorldPosition(): { x: number; y: number } {
     const projected = projectCoordinate(this.coordinate);
     return {
-      x: this.viewportX + this.viewportWidth / 2 - projected.x - this.offsetX,
-      y: this.viewportY + this.viewportHeight / 2 - projected.y - this.offsetY,
+      x: this.viewportX + this.viewportWidth / 2 - (projected.x + this.offsetX) * this.zoom,
+      y: this.viewportY + this.viewportHeight / 2 - (projected.y + this.offsetY) * this.zoom,
     };
   }
   screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
     const world = this.getWorldPosition();
-    return { x: screenX - world.x, y: screenY - world.y };
+    return { x: (screenX - world.x) / this.zoom, y: (screenY - world.y) / this.zoom };
   }
   addCoordinateChangedListener(listener: CameraCoordinateChangedListener): () => void {
     this.coordinateChangedListeners.add(listener);
