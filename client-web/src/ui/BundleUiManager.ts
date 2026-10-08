@@ -178,10 +178,18 @@ export class BundleUiManager {
             '/resources/discard', '/resources/changes',
           ]);
           if (!allowedPaths.has(path)) throw new Error('Invalid resource HTTP path');
-          const response = await fetch(resolveServerUrl(this.options.serverApiUrl, path), {
-            method: 'POST',
+          const method = path === '/resources/update' ? 'PUT'
+            : ['/resources/create', '/resources/persist', '/resources/discard'].includes(path) ? 'POST' : 'GET';
+          const url = new URL(resolveServerUrl(this.options.serverApiUrl, path));
+          if (method === 'GET') {
+            for (const [key, value] of Object.entries(payload)) {
+              if (value !== undefined && value !== null) url.searchParams.set(key, String(value));
+            }
+          }
+          const response = await fetch(url, {
+            method,
             headers: { Authorization: `Bearer ${this.options.authToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+            ...(method === 'GET' ? {} : { body: JSON.stringify(payload) }),
           });
           if (!response.ok) throw new Error(`HTTP operation failed: ${response.status} ${await response.text()}`);
           return response.json();
