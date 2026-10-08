@@ -230,6 +230,44 @@ class EditorResources(
         return action(bundle, resource.first, resource.second)
     }
 
+    /** Permission keys are derived from the target, never from a caller-supplied permission. */
+    internal fun permissionKeys(operation: String, request: JsonObject): List<String> {
+        fun resourceKey(path: String, action: String) = withResource(path) { bundle, registry, _ ->
+            "$bundle.${registry.path}.$action"
+        }
+        fun selectionKey(action: String): String {
+            val bundle = requireNotNull(request.string("bundle")) { "Missing bundle" }
+            val registry = Identifier.parse(requireNotNull(request.string("registry")) { "Missing registry" })
+            return "$bundle.${registry.path}.$action"
+        }
+        return when (operation) {
+            "request-project" -> listOf(selectionKey("read"))
+            "create-file" -> listOf(selectionKey("edit"))
+            "open-file", "save-file" -> listOf(resourceKey(
+                requireNotNull(request.string("path")) { "Missing resource path" },
+                if (operation == "open-file") "read" else "edit"
+            ))
+            "persist-changes", "discard-changes", "pending-changes" -> {
+                val action = when (operation) {
+                    "pending-changes" -> "read"
+                    "persist-changes" -> "persist"
+                    else -> "edit"
+                }
+                val path = request.string("path")
+                if (path != null) listOf(resourceKey(path, action))
+                else pendingChanges().paths.map { resourceKey(it, action) }.distinct()
+            }
+            "request-bundles" -> listOf("selene.resources.read")
+            "request-bundle-registries" -> listOf("${requireNotNull(request.string("bundle"))}.registries.read")
+            "search-registry" -> {
+                val registry = Identifier.parse(requireNotNull(request.string("registry")))
+                listOf("${registry.namespace}.${registry.path}.read")
+            }
+            "search-scripts" -> listOf("selene.scripts.read")
+            else -> throw IllegalArgumentException("Unknown resource operation: $operation")
+        }
+    }
+
     private fun findSchema(registry: Identifier): JsonObject? {
         var schema: JsonObject? = null
         var customDefinition = false
@@ -324,12 +362,16 @@ internal fun Route.registerEditorResourceRoutes(
         val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             mainThreadDispatcher.callOnMainThread {
                 val player = playerManager.dereferencePersisted(user.userId)
-                val allowed = player != null && permissions.hasPermission(
-                    player.api, "selene:resource-api", mapOf("operation" to operation, "request" to context)
-                )
-                if (!allowed) {
-                    403 to "{\"message\":\"Resource access denied\"}"
-                } else try {
+                try {
+                    val keys = editorResources.permissionKeys(operation, request)
+                    val allowed = player != null && keys.all { key ->
+                        permissions.hasPermission(
+                            player.api, key, mapOf("operation" to operation, "request" to context)
+                        )
+                    }
+                    if (!allowed) {
+                        return@callOnMainThread 403 to "{\"message\":\"Resource access denied\"}"
+                    }
                     200 to handler(request)
                 } catch (error: IllegalArgumentException) {
                     400 to seleneJson.encodeToString(
