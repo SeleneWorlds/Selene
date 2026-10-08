@@ -128,6 +128,7 @@ class HttpServer(
                     }
                     allowMethod(HttpMethod.Get)
                     allowMethod(HttpMethod.Post)
+                    allowMethod(HttpMethod.Put)
                     allowMethod(HttpMethod.Options)
                     allowHeader(HttpHeaders.Authorization)
                     allowHeader(HttpHeaders.ContentType)
