@@ -6,4 +6,5 @@ import com.seleneworlds.server.dimensions.Dimension
 interface CameraListener {
     fun cameraDimensionChanged(camera: Camera, oldDimension: Dimension?, dimension: Dimension?)
     fun cameraCoordinateChanged(camera: Camera, prev: Coordinate, value: Coordinate)
+    fun cameraZoomChanged(camera: Camera, prev: Float, value: Float) {}
 }

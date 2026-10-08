@@ -1,6 +1,7 @@
 package com.seleneworlds.server.players
 
 import com.seleneworlds.common.lua.LuaMappedMetatable
+import com.seleneworlds.common.lua.util.checkFloat
 import com.seleneworlds.common.lua.util.checkCoordinate
 import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.checkType
@@ -190,6 +191,20 @@ object PlayerLuaApi {
     }
 
     /**
+     * Reports the client's camera zoom for chunk and entity synchronization.
+     * Zoom is clamped to 0.25 through 1. This does not change the client's rendering.
+     *
+     * ```signatures
+     * SetCameraZoom(zoom: number)
+     * ```
+     */
+    private fun setCameraZoom(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        player.setCameraZoom(lua.checkFloat(2))
+        return 0
+    }
+
+    /**
      * Sets the camera to follow the player's controlled entity.
      *
      * ```signatures
@@ -259,6 +274,7 @@ object PlayerLuaApi {
         callable(::setControlledEntity)
         callable(::getCameraEntity)
         callable(::setCameraEntity)
+        callable(::setCameraZoom)
         callable(::setCameraToFollowControlledEntity)
         callable(::setCameraToFollowTarget)
         callable(::setCameraToCoordinate)

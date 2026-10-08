@@ -25,6 +25,17 @@ class Camera : Viewer {
                 listeners.forEach { it.cameraCoordinateChanged(this, prev, value) }
             }
         }
+    var zoom = 1f
+        set(value) {
+            require(value.isFinite() && value > 0f) { "Camera zoom must be positive and finite" }
+            val next = value.coerceIn(0.25f, 1f)
+            val prev = field
+            field = next
+            if (prev != next) {
+                listeners.forEach { it.cameraZoomChanged(this, prev, next) }
+            }
+        }
+
     var visionEntity: Entity? = null; private set
     var followEntity: Entity? = null; private set
     val listeners = mutableListOf<CameraListener>()

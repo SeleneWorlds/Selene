@@ -1,5 +1,6 @@
 package com.seleneworlds.server.sync
 
+import kotlin.math.ceil
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import com.seleneworlds.common.network.Packet
@@ -22,9 +23,10 @@ class PlayerSyncManager(
     var initialSync = false
     val syncedChunks = mutableSetOf<ChunkWindow>()
     private val syncedEntities = mutableSetOf<Int>()
-    val chunkViewRange = 1
+    // Scale the full chunk window diameter, including the central chunk.
+    val chunkViewRange get() = ceil((3.0 / player.camera.zoom - 1.0) / 2.0).toInt()
     val verticalChunkViewRange = 2
-    val entitySyncRadius = 64
+    val entitySyncRadius get() = ceil(64.0 / player.camera.zoom).toInt()
 
     var dimensionDirty = false
     var coordinateDirty = false
@@ -94,6 +96,15 @@ class PlayerSyncManager(
     }
 
     private fun syncNearbyEntities() {
+        val iterator = syncedEntities.iterator()
+        while (iterator.hasNext()) {
+            val networkId = iterator.next()
+            val entity = entityManager.getEntityByNetworkId(networkId)
+            if (entity == null || !shouldSync(entity)) {
+                iterator.remove()
+                player.client.send(RemoveEntityPacket(networkId))
+            }
+        }
         player.camera.dimension?.let { dimension ->
             entityManager.getNearbyEntities(player.camera.coordinate, dimension, entitySyncRadius)
                 .asSequence()
@@ -184,6 +195,10 @@ class PlayerSyncManager(
         prev: Coordinate,
         value: Coordinate
     ) {
+        coordinateDirty = true
+    }
+
+    override fun cameraZoomChanged(camera: Camera, prev: Float, value: Float) {
         coordinateDirty = true
     }
 

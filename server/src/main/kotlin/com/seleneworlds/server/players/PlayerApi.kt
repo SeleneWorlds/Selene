@@ -62,6 +62,10 @@ class PlayerApi(val delegate: Player) : IdResolvable<String, Player> {
         delegate.cameraEntity = entity.delegate
     }
 
+    fun setCameraZoom(zoom: Float) {
+        delegate.camera.zoom = zoom
+    }
+
     fun setCameraToFollowControlledEntity() {
         delegate.setCameraToFollowControlledEntity()
     }
