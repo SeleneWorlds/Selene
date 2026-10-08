@@ -68,6 +68,12 @@ class CefUiBridge(
                         browser, frame, queryId, persistent, message, callback)
                     "updateInteractionState" -> updateInteractionState(message, callback)
                     "getInitialWorldState" -> getInitialWorldState(callback)
+                    "hasTileAt" -> {
+                        val coordinate = Coordinate(message.requiredInt("x"), message.requiredInt("y"), message.requiredInt("z"))
+                        mainThreadDispatcher.runOnMainThread {
+                            callback.success(clientMap.getTilesAt(coordinate).isNotEmpty().toString())
+                        }
+                    }
                     "setTileGridVisible" -> {
                         val visible = message["visible"]?.jsonPrimitive?.booleanOrNull
                             ?: error("Grid visibility must be a boolean")

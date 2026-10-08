@@ -156,7 +156,7 @@
             return release;
         };
         return Object.freeze({
-            apiVersion: 14,
+            apiVersion: 15,
             http: Object.freeze({
                 async request(path, payload = {}, method = 'GET') {
                     return JSON.parse(await executeBridgeRequest({
@@ -236,6 +236,7 @@
             network,
             world: Object.freeze({
                 getCameraCoordinate: () => ({...worldCoordinate}),
+                hasTileAt: coordinate => executeBridgeRequest({type: 'hasTileAt', ...coordinate}).then(JSON.parse),
                 setTileGridVisible: visible => executeBridgeRequest({type: 'setTileGridVisible', visible}).then(() => undefined),
                 setCameraZoom: zoom => executeBridgeRequest({type: 'setCameraZoom', zoom}).then(Number),
                 getCameraPosition: () => executeBridgeRequest({type: 'getCameraPosition'}).then(JSON.parse),

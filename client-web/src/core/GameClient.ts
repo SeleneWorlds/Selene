@@ -182,6 +182,10 @@ export class GameClient {
     return this.renderer.getMapTiles(coordinate, width, height);
   }
 
+  hasTileAt(coordinate: Coordinate): boolean {
+    return this.renderer.hasTileAt(coordinate);
+  }
+
   setTileGridVisible(visible: boolean): void {
     this.renderer.setTileGridVisible(visible);
   }

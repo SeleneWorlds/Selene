@@ -206,6 +206,10 @@ export class PixiGameRenderer implements GameRenderer {
     }
   }
 
+  hasTileAt(coordinate: Coordinate): boolean {
+    return this.tilemapLayer.hasTileAt(coordinate);
+  }
+
   setTileGridVisible(visible: boolean): void {
     this.tileGrid.setVisible(visible);
   }
