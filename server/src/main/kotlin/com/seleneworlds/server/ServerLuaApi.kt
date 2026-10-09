@@ -109,6 +109,18 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
         }
     }
 
+    /** Fired after the bundle watcher applies changes, including non-Lua authoring resources. */
+    val bundleFilesChanged = LuaEventSink(ServerEvents.BundleFilesChanged.EVENT) { callback: LuaValue, trace: ScriptTrace ->
+        ServerEvents.BundleFilesChanged { bundleId, updatedFiles, deletedFiles ->
+            val lua = callback.state()
+            lua.push(callback)
+            lua.push(bundleId)
+            lua.push(updatedFiles.sorted(), Lua.Conversion.FULL)
+            lua.push(deletedFiles.sorted(), Lua.Conversion.FULL)
+            lua.xpCall(3, 0, trace)
+        }
+    }
+
     override fun register(table: LuaValue) {
         table.register("getRuntimeData", this::getRuntimeData)
         table.register("overwriteRuntimeData", this::overwriteRuntimeData)
@@ -118,5 +130,6 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
         table.set("serverStarted", serverStarted)
         table.set("serverReloaded", serverReloaded)
         table.set("bundleUnloading", bundleUnloading)
+        table.set("bundleFilesChanged", bundleFilesChanged)
     }
 }

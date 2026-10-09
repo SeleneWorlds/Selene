@@ -10,6 +10,7 @@ import com.seleneworlds.common.network.packet.NotifyBundleUpdatePacket
 import com.seleneworlds.common.bundles.ScriptHotReload
 import com.seleneworlds.server.bundles.ClientBundleCache
 import com.seleneworlds.server.config.ServerConfig
+import com.seleneworlds.server.ServerEvents
 import com.seleneworlds.server.data.Registries
 import com.seleneworlds.server.http.ClientAssetIndexProvider
 import com.seleneworlds.server.network.NetworkServer
@@ -39,6 +40,7 @@ class ServerBundleWatcher(
                 scriptHotReload.reloadUpdatedScripts(bundle, updatedFiles)
                 scriptHotReload.unloadDeletedScripts(bundle, deletedFiles)
             }
+            ServerEvents.BundleFilesChanged.EVENT.invoker().bundleFilesChanged(bundleId, updatedFiles, deletedFiles)
         }
 
         val clientVisibleUpdatedFiles = updatedFiles.filterTo(mutableSetOf()) { isClientVisibleContentPath(it) }
