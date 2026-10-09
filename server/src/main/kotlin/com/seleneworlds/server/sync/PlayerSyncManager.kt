@@ -120,7 +120,7 @@ class PlayerSyncManager(
     }
 
     fun sendIfWatching(coordinate: Coordinate, packet: Packet) {
-        if (shouldSync(ChunkWindow.at(coordinate, chunkViewManager.chunkSize))) {
+        if (ChunkWindow.at(coordinate, chunkViewManager.chunkSize) in syncedChunks) {
             player.client.send(packet)
         }
     }
