@@ -205,6 +205,7 @@ class PlayerSyncManager(
     fun tileUpdated(coordinate: Coordinate) {
         val dimension = player.camera.dimension ?: return
         val window = ChunkWindow.at(coordinate, chunkViewManager.chunkSize)
+        if (window !in syncedChunks) return
         val chunk = chunkViewManager.atWindow(dimension, player.camera, window)
         player.client.send(
             UpdateMapTilesPacket(
