@@ -26,6 +26,7 @@ import kotlin.test.assertTrue
 
 class PlayerControlStateTest {
     private val client = object : NetworkClient {
+        override val writable = true
         override val address = InetSocketAddress("localhost", 0)
         override fun send(packet: Packet) {}
         override fun disconnect() {}

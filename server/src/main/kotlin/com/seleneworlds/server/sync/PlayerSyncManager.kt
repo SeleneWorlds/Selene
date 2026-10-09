@@ -1,6 +1,7 @@
 package com.seleneworlds.server.sync
 
 import kotlin.math.ceil
+import kotlin.math.abs
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import com.seleneworlds.common.network.Packet
@@ -18,7 +19,8 @@ class PlayerSyncManager(
     private val chunkViewManager: ChunkViewManager,
     private val json: Json,
     val player: Player,
-    private val entityManager: EntityManager
+    private val entityManager: EntityManager,
+    private val nanoTime: () -> Long = System::nanoTime
 ) : CameraListener {
     var initialSync = false
     val syncedChunks = mutableSetOf<ChunkWindow>()
@@ -28,12 +30,14 @@ class PlayerSyncManager(
     val verticalChunkViewRange = 2
     val entitySyncRadius get() = ceil(64.0 / player.camera.zoom).toInt()
 
+    private val pendingChunks = ArrayDeque<ChunkWindow>()
+
     var dimensionDirty = false
     var coordinateDirty = false
 
     fun update() {
         if (!initialSync) {
-            sendMissingChunks()
+            refreshPendingChunks()
             syncNearbyEntities()
             initialSync = true
             dimensionDirty = false
@@ -47,7 +51,7 @@ class PlayerSyncManager(
                 player.client.send(RemoveEntityPacket(it))
             }
             syncedEntities.clear()
-            sendMissingChunks()
+            refreshPendingChunks()
             syncNearbyEntities()
             dimensionDirty = false
             coordinateDirty = false
@@ -60,24 +64,58 @@ class PlayerSyncManager(
                     player.client.send(RemoveMapChunkPacket(window.x, window.y, window.z, window.width, window.height))
                 }
             }
-            sendMissingChunks()
+            refreshPendingChunks()
             syncNearbyEntities()
             coordinateDirty = false
         }
+        sendMissingChunks()
+    }
+
+    private fun refreshPendingChunks() {
+        pendingChunks.clear()
+        if (player.camera.dimension == null) return
+        val coordinate = player.camera.coordinate
+        val center = ChunkWindow.at(coordinate, chunkViewManager.chunkSize)
+        pendingChunks.addAll(ChunkWindow.around(
+            coordinate, chunkViewManager.chunkSize, chunkViewRange, verticalChunkViewRange
+        ).filter { it !in syncedChunks }.sortedWith(
+            // Complete nearby columns across floors before moving to distant ground.
+            compareBy<ChunkWindow> { maxOf(abs(it.x - center.x), abs(it.y - center.y)) }
+                .thenBy { it.x }
+                .thenBy { it.y }
+                .thenBy {
+                    val dz = it.z - center.z
+                    when {
+                        dz == 0 -> 0
+                        dz > 0 -> dz
+                        else -> verticalChunkViewRange - dz
+                    }
+                }
+        ))
     }
 
     fun sendMissingChunks() {
         val dimension = player.camera.dimension ?: return
-        val windows = ChunkWindow.around(
-            player.camera.coordinate,
-            chunkViewManager.chunkSize,
-            chunkViewRange,
-            verticalChunkViewRange
-        )
-        val missingWindows = windows.filter { it !in syncedChunks }
-        missingWindows.forEach { window ->
+        val startedAt = nanoTime()
+        var processed = 0
+        var sent = 0
+        var bytesSent = 0
+        // Empty windows count against CPU and scan limits, but not the packet limit.
+        // Otherwise sparse floors can consume many ticks without sending anything.
+        while (pendingChunks.isNotEmpty() && player.client.writable &&
+            processed < 64 && sent < 8 && bytesSent < 32 * 1024 &&
+            (processed == 0 || nanoTime() - startedAt < 4_000_000L)) {
+            val window = pendingChunks.removeFirst()
+            processed++
             val chunk = chunkViewManager.atWindow(dimension, player.camera, window)
             if (!chunk.isEmptyForTransfer()) {
+                // Include the packet id and the relative-coordinate tile entries.
+                val packetBytes = 23 + window.width * window.height * 4 + chunk.additionalTiles.size() * 10
+                // A single indivisible packet may exceed the byte or time budget.
+                if (bytesSent > 0 && bytesSent + packetBytes > 32 * 1024) {
+                    pendingChunks.addFirst(window)
+                    break
+                }
                 player.client.send(
                     MapChunkPacket(
                         window.x,
@@ -90,6 +128,8 @@ class PlayerSyncManager(
                         chunk.additionalTiles
                     )
                 )
+                sent++
+                bytesSent += packetBytes
             }
             syncedChunks.add(window)
         }
