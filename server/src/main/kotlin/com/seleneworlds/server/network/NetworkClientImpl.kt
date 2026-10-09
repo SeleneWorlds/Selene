@@ -30,6 +30,8 @@ class NetworkClientImpl(
         runnable.run()
     }
 
+    override val writable: Boolean get() = channel.isActive && channel.isWritable
+
     override fun send(packet: Packet) {
         channel.writeAndFlush(packet).addListener(this)
     }

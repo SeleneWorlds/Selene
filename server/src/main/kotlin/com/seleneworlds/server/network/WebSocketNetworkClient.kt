@@ -29,6 +29,8 @@ class WebSocketNetworkClient(
         runnable.run()
     }
 
+    override val writable: Boolean get() = channel.isActive && channel.isWritable
+
     override fun send(packet: Packet) {
         val payload = packetCodec.write(channel.alloc(), packet)
         channel.writeAndFlush(BinaryWebSocketFrame(payload)).addListener(this)
