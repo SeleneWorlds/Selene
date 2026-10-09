@@ -9,6 +9,7 @@ import com.seleneworlds.common.serialization.toJsonElement
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 import java.util.UUID
+import com.seleneworlds.common.timeline.TimelinePlaybackOptions
 
 class TimelinesLuaApi(private val player: TimelinePlayer) : LuaModule {
     override val name = "selene.timelines"
@@ -22,7 +23,10 @@ class TimelinesLuaApi(private val player: TimelinePlayer) : LuaModule {
         val timeline = lua.checkString(index + 1)
         val parameters = if (lua.isNoneOrNil(index + 2)) emptyMap() else lua.checkSerializedMap(index + 2)
         val values = parameters.toMutableMap().apply { put("position", coordinate) }
-        player.play(UUID.randomUUID().toString(), timeline, values.toJsonElement())
+        val options = TimelinePlaybackOptions.from(
+            if (lua.isNoneOrNil(index + 3)) emptyMap() else lua.checkSerializedMap(index + 3)
+        )
+        player.play(options.instanceId ?: UUID.randomUUID().toString(), timeline, values.toJsonElement(), options.transition)
         return 0
     }
 }

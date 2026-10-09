@@ -1,4 +1,5 @@
 import { Container, Sprite, Texture } from 'pixi.js';
+import { TimelineParameters } from './TimelineParameters';
 import { getRegistryEntry, type ClientRegistrySnapshots } from '@/data/ClientRegistryLoader';
 import type {
   ClientTimelineDefinition,
@@ -22,10 +23,6 @@ interface Playback {
   parameters: TimelineParameters;
 }
 
-interface TimelineParameters {
-  values: Readonly<Record<string, unknown>>;
-}
-
 interface VisualEffect {
   instanceId: string;
   sprite: Sprite;
@@ -46,12 +43,14 @@ interface ParticleEffect {
   instanceId: string;
   system: PixiParticleSystem;
   screenSpace: boolean;
+  event: ParticleSystemTimelineEvent;
+  parameters: TimelineParameters;
 }
 
 interface OverlayEffect {
   instanceId: string;
   event: ScreenOverlayTimelineEvent;
-  alphaMultiplier: number;
+  parameters: TimelineParameters;
   sprite: Sprite;
   elapsedMs: number;
 }
@@ -63,6 +62,7 @@ export class TimelinePlayer {
   private readonly particleEffects: ParticleEffect[] = [];
   private readonly overlayEffects: OverlayEffect[] = [];
   private readonly instanceTimelines = new Map<string, string>();
+  private readonly instanceParameters = new Map<string, TimelineParameters>();
   private readonly instanceTags = new Map<string, ReadonlySet<string>>();
   private readonly pendingEffects = new Map<string, number>();
   private readonly stoppedInstances = new Set<string>();
@@ -82,11 +82,24 @@ export class TimelinePlayer {
   }
 
   play(packet: PlayTimelinePacket): void {
+    if (!packet.instanceId.trim()) throw new Error('instanceId must not be blank');
+    if (!Number.isFinite(packet.transition) || packet.transition < 0) throw new Error('Invalid timeline transition');
+    if (this.instanceTimelines.get(packet.instanceId) === packet.timeline
+      && !this.stoppedInstances.has(packet.instanceId)) {
+      this.instanceParameters.get(packet.instanceId)!.retarget(packet.parameters, packet.transition);
+      this.instanceTags.set(packet.instanceId, new Set(packet.tags));
+      return;
+    }
     const timeline = getRegistryEntry(this.registries, 'timelines', packet.timeline);
     if (!timeline) {
       console.warn(`[Timelines] Unknown timeline ${packet.timeline}.`);
       return;
     }
+    if (this.instanceTimelines.has(packet.instanceId)) {
+      this.stop({ type: 'stopTimeline', instanceId: packet.instanceId, timeline: null, tag: null });
+    }
+    const parameters = new TimelineParameters(packet.parameters);
+    this.instanceParameters.set(packet.instanceId, parameters);
     this.stoppedInstances.delete(packet.instanceId);
     this.instanceTimelines.set(packet.instanceId, packet.timeline);
     this.instanceTags.set(packet.instanceId, new Set(packet.tags));
@@ -96,7 +109,7 @@ export class TimelinePlayer {
       elapsedMs: 0,
       nextEvent: 0,
       events: [...timeline.events].sort((left, right) => left.time - right.time),
-      parameters: { values: packet.parameters },
+      parameters,
     });
     this.updatePlaybacks(0);
   }
@@ -130,8 +143,9 @@ export class TimelinePlayer {
   }
 
   update(deltaMs: number, particlesEnabled = true): void {
-    this.updatePlaybacks(deltaMs);
     const deltaSeconds = deltaMs / 1000;
+    for (const parameters of this.instanceParameters.values()) parameters.update(deltaSeconds);
+    this.updatePlaybacks(deltaMs);
     for (let index = this.particleEffects.length - 1; index >= 0; index -= 1) {
       const effect = this.particleEffects[index];
       effect.system.container.visible = particlesEnabled;
@@ -140,6 +154,10 @@ export class TimelinePlayer {
         const viewport = this.getViewport();
         effect.system.container.position.set(viewport.x + viewport.width / 2, viewport.y);
         effect.system.setScreenSpawnWidth(viewport.width);
+      }
+      if (!this.stoppedInstances.has(effect.instanceId)) {
+        effect.system.setEmissionRateMultiplier(effect.event.emissionRateMultiplier === undefined ? 1
+          : readNonNegativeNumber(effect.parameters.values[effect.event.emissionRateMultiplier], 1));
       }
       effect.system.update(deltaSeconds);
       if (effect.system.complete) {
@@ -225,11 +243,9 @@ export class TimelinePlayer {
     this.markPending(playback.instanceId, 1);
     try {
       const texture = event.texture ? await this.textureLoader.load(event.texture) : Texture.WHITE;
-      if (this.stoppedInstances.has(playback.instanceId)) return;
+      if (!this.isActive(playback)) return;
       const sprite = new Sprite(texture);
-      const alphaMultiplier = event.alphaMultiplier === undefined ? 1 : Math.min(1,
-        readNonNegativeNumber(playback.parameters.values[event.alphaMultiplier], 1));
-      const effect = { instanceId: playback.instanceId, event, sprite, alphaMultiplier, elapsedMs: 0 };
+      const effect = { instanceId: playback.instanceId, event, sprite, parameters: playback.parameters, elapsedMs: 0 };
       this.overlayEffects.push(effect);
       this.screenScene.addChild(sprite);
       this.updateOverlay(effect);
@@ -246,8 +262,10 @@ export class TimelinePlayer {
     effect.sprite.width = viewport.width;
     effect.sprite.height = viewport.height;
     effect.sprite.tint = keyedValue(effect.event, 'color', effect.event.color, effect.elapsedMs / 1000) as string;
+    const multiplier = effect.event.alphaMultiplier === undefined ? 1 : Math.min(1,
+      readNonNegativeNumber(effect.parameters.values[effect.event.alphaMultiplier], 1));
     effect.sprite.alpha = Math.min(1, Math.max(0,
-      (keyedValue(effect.event, 'alpha', effect.event.alpha, effect.elapsedMs / 1000) as number) * effect.alphaMultiplier,
+      (keyedValue(effect.event, 'alpha', effect.event.alpha, effect.elapsedMs / 1000) as number) * multiplier,
     ));
   }
 
@@ -270,7 +288,7 @@ export class TimelinePlayer {
     }
     try {
       const texture = await this.textureLoader.load(definition.texture);
-      if (this.stoppedInstances.has(playback.instanceId)) return;
+      if (!this.isActive(playback)) return;
       const initialViewport = event.space === 'screen' ? this.getViewport() : null;
       const emissionRateMultiplier = event.emissionRateMultiplier === undefined
         ? 1
@@ -302,6 +320,8 @@ export class TimelinePlayer {
         instanceId: playback.instanceId,
         system,
         screenSpace: event.space === 'screen',
+        event,
+        parameters: playback.parameters,
       });
     } catch (error) {
       console.warn(`[Timelines] Failed to start particle system ${event.particle}.`, error);
@@ -359,6 +379,11 @@ export class TimelinePlayer {
     }
   }
 
+  private isActive(playback: Playback): boolean {
+    return !this.stoppedInstances.has(playback.instanceId)
+      && this.instanceParameters.get(playback.instanceId) === playback.parameters;
+  }
+
   private markPending(instanceId: string, delta: number): void {
     const count = (this.pendingEffects.get(instanceId) ?? 0) + delta;
     if (count > 0) this.pendingEffects.set(instanceId, count);
@@ -373,6 +398,7 @@ export class TimelinePlayer {
     if (this.overlayEffects.some(effect => effect.instanceId === instanceId)) return;
     if (this.pendingEffects.has(instanceId)) return;
     this.instanceTimelines.delete(instanceId);
+    this.instanceParameters.delete(instanceId);
     this.instanceTags.delete(instanceId);
     this.stoppedInstances.delete(instanceId);
   }

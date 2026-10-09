@@ -8,6 +8,7 @@ import com.seleneworlds.common.lua.util.register
 import com.seleneworlds.common.lua.util.checkUserdata
 import com.seleneworlds.common.lua.util.toAny
 import com.seleneworlds.server.players.PlayerApi
+import com.seleneworlds.common.timeline.TimelinePlaybackOptions
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 
@@ -30,7 +31,7 @@ class TimelinesLuaApi(private val api: TimelinesApi) : LuaModule {
         val timeline = lua.checkString(2)
         val parameters = if (lua.isNoneOrNil(3)) emptyMap() else lua.checkSerializedMap(3)
         val tags = readTags(lua, 4)
-        lua.push(api.play(player, timeline, parameters, tags))
+        lua.push(api.play(player, timeline, parameters, tags, readOptions(lua, 5)))
         return 1
     }
 
@@ -39,7 +40,7 @@ class TimelinesLuaApi(private val api: TimelinesApi) : LuaModule {
         val timeline = lua.checkString(index + 1)
         val parameters = if (lua.isNoneOrNil(index + 2)) emptyMap() else lua.checkSerializedMap(index + 2)
         val tags = readTags(lua, index + 3)
-        lua.push(api.playAt(coordinate, timeline, parameters = parameters, tags = tags))
+        lua.push(api.playAt(coordinate, timeline, parameters = parameters, tags = tags, options = readOptions(lua, index + 4)))
         return 1
     }
 
@@ -75,6 +76,9 @@ class TimelinesLuaApi(private val api: TimelinesApi) : LuaModule {
         api.stopTagAt(coordinate, lua.checkString(index + 1))
         return 0
     }
+
+    private fun readOptions(lua: Lua, index: Int): TimelinePlaybackOptions =
+        TimelinePlaybackOptions.from(if (lua.isNoneOrNil(index)) emptyMap() else lua.checkSerializedMap(index))
 
     private fun readTags(lua: Lua, index: Int): List<String> {
         if (lua.isNoneOrNil(index)) return emptyList()

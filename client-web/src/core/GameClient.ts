@@ -148,8 +148,8 @@ export class GameClient {
 
   getTimelinesApi(): TimelinesApi {
     return {
-      playAt: (coordinate, timeline, parameters) => {
-        this.renderer.playTimelineAt(coordinate, timeline, parameters);
+      playAt: (coordinate, timeline, parameters, options) => {
+        this.renderer.playTimelineAt(coordinate, timeline, parameters, options);
       },
     };
   }

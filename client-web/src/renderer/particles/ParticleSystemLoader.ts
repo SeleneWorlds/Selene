@@ -24,7 +24,7 @@ export class PixiParticleSystem {
     private readonly definition: ClientParticleSystemDefinition,
     private readonly texture: Texture,
     screenSpawnWidth: number | null = null,
-    private readonly emissionRateMultiplier = 1,
+    private emissionRateMultiplier = 1,
     private readonly random: () => number = Math.random,
   ) {
     this.screenSpawnWidth = screenSpawnWidth;
@@ -76,6 +76,11 @@ export class PixiParticleSystem {
 
   stop(): void {
     this.emitting = false;
+  }
+
+  setEmissionRateMultiplier(multiplier: number): void {
+    if (this.emissionRateMultiplier === 0 && multiplier > 0) this.spawnTimer = 0;
+    this.emissionRateMultiplier = multiplier;
   }
 
   setScreenSpawnWidth(width: number): void {

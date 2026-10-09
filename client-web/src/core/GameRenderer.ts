@@ -1,3 +1,4 @@
+import type { TimelinePlaybackOptions } from '@/api/TimelinesApi';
 import type { ClientEntitySnapshot } from '@/api/EntitiesApi';
 import type { ClientCamera } from '@/core/ClientCamera';
 import type { ClientGrid } from '@/core/ClientGrid';
@@ -41,5 +42,5 @@ export interface GameRenderer {
   setTileLight(coordinate: Coordinate, light: TileLight | null): void;
   clearTileLights(): void;
   setTimelineSoundPlayer(player: (sound: string, volume: number, pitch: number) => void): void;
-  playTimelineAt(coordinate: Coordinate, timeline: string, parameters?: Readonly<Record<string, unknown>>): void;
+  playTimelineAt(coordinate: Coordinate, timeline: string, parameters?: Readonly<Record<string, unknown>>, options?: TimelinePlaybackOptions): void;
 }

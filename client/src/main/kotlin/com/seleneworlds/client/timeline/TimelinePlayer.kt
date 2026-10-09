@@ -24,6 +24,7 @@ import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.sounds.SoundRegistry
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.Disposable
+import com.seleneworlds.common.timeline.TimelineParameters
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -61,7 +62,7 @@ class TimelinePlayer(
         var elapsed: Float,
         var nextEvent: Int,
         val events: List<TimelineEvent>,
-        val parameters: JsonObject
+        val parameters: TimelineParameters
     )
 
     private data class OwnedEffect(
@@ -69,6 +70,8 @@ class TimelinePlayer(
         val timeline: String,
         val effect: ParticleEffect,
         val screenSpace: Boolean,
+        val event: ParticleSystemTimelineEvent,
+        val parameters: TimelineParameters,
     )
 
     private data class OwnedVisual(
@@ -80,7 +83,7 @@ class TimelinePlayer(
     private data class OwnedOverlay(
         val instanceId: String,
         val event: ScreenOverlayTimelineEvent,
-        val alphaMultiplier: Float = 1f,
+        val parameters: TimelineParameters,
         var elapsed: Float = 0f
     )
 
@@ -89,24 +92,44 @@ class TimelinePlayer(
     private val visualEffects = mutableListOf<OwnedVisual>()
     private val overlays = mutableListOf<OwnedOverlay>()
     private val instanceTimelines = mutableMapOf<String, String>()
+    private val instanceParameters = mutableMapOf<String, TimelineParameters>()
+    private val instanceTags = mutableMapOf<String, Set<String>>()
     private val pendingEffects = mutableMapOf<String, Int>()
     private val stoppedInstances = mutableSetOf<String>()
 
-    fun play(instanceId: String, identifier: String, parameters: JsonObject) {
+    fun play(
+        instanceId: String,
+        identifier: String,
+        parameters: JsonObject,
+        transition: Float = 0f,
+        tags: List<String> = emptyList()
+    ) {
+        require(instanceId.isNotBlank()) { "instanceId must not be blank" }
+        require(transition.isFinite() && transition >= 0f) { "transition must be a non-negative finite number" }
+        if (instanceTimelines[instanceId] == identifier && !stoppedInstances.contains(instanceId)) {
+            instanceParameters.getValue(instanceId).retarget(parameters, transition)
+            instanceTags[instanceId] = tags.toSet()
+            return
+        }
         val definition = timelines.get(Identifier.parse(identifier))
         if (definition == null) {
             logger.warn("Unknown timeline $identifier")
             return
         }
+        if (instanceTimelines.containsKey(instanceId)) stop(instanceId, null)
+        val liveParameters = TimelineParameters(parameters)
         stoppedInstances.remove(instanceId)
         instanceTimelines[instanceId] = identifier
-        playbacks += Playback(instanceId, identifier, 0f, 0, definition.events.sortedBy { it.time }, parameters)
+        instanceParameters[instanceId] = liveParameters
+        instanceTags[instanceId] = tags.toSet()
+        playbacks += Playback(instanceId, identifier, 0f, 0, definition.events.sortedBy { it.time }, liveParameters)
         update(0f)
     }
 
-    fun stop(instanceId: String?, timeline: String?) {
+    fun stop(instanceId: String?, timeline: String?, tag: String? = null) {
         val targets = if (instanceId != null) listOf(instanceId)
-        else instanceTimelines.filterValues { it == timeline }.keys.toList()
+        else if (timeline != null) instanceTimelines.filterValues { it == timeline }.keys.toList()
+        else instanceTags.filterValues { tag in it }.keys.toList()
         for (target in targets) {
             stoppedInstances += target
             playbacks.removeAll { it.instanceId == target }
@@ -119,6 +142,7 @@ class TimelinePlayer(
     }
 
     fun update(delta: Float) {
+        instanceParameters.values.forEach { it.update(delta) }
         val playbackIterator = playbacks.iterator()
         while (playbackIterator.hasNext()) {
             val playback = playbackIterator.next()
@@ -136,6 +160,10 @@ class TimelinePlayer(
         val effectIterator = effects.iterator()
         while (effectIterator.hasNext()) {
             val owned = effectIterator.next()
+            if (!stoppedInstances.contains(owned.instanceId)) {
+                val multiplier = owned.parameters.multiplier(owned.event.emissionRateMultiplier)
+                owned.effect.emitters.forEach { it.emission.setScaling(floatArrayOf(multiplier)) }
+            }
             if (owned.screenSpace) {
                 configureScreenEffect(owned.effect, cameraManager.camera.viewportWidth, cameraManager.camera.viewportHeight)
                 owned.effect.update(delta)
@@ -175,7 +203,7 @@ class TimelinePlayer(
         }
         for (owned in overlays) {
             val color = Color.valueOf(owned.event.keyedString("color", owned.event.color, owned.elapsed).removePrefix("#"))
-            val alpha = owned.event.keyedFloat("alpha", owned.event.alpha, owned.elapsed).coerceIn(0f, 1f) * color.a * owned.alphaMultiplier
+            val alpha = owned.event.keyedFloat("alpha", owned.event.alpha, owned.elapsed).coerceIn(0f, 1f) * color.a * owned.parameters.multiplier(owned.event.alphaMultiplier).coerceAtMost(1f)
             if (alpha <= 0f) continue
             batch.setColor(color.r, color.g, color.b, alpha)
             val texture = owned.event.texture?.let { assets.getLoadedTexture(it) }
@@ -199,18 +227,15 @@ class TimelinePlayer(
     }
 
     private fun playScreenOverlay(event: ScreenOverlayTimelineEvent, playback: Playback) {
-        val multiplier = event.alphaMultiplier?.let {
-            playback.parameters[it]?.jsonPrimitive?.floatOrNull
-        }?.takeIf { it.isFinite() }?.coerceIn(0f, 1f) ?: 1f
         if (event.texture == null) {
-            overlays += OwnedOverlay(playback.instanceId, event, multiplier)
+            overlays += OwnedOverlay(playback.instanceId, event, playback.parameters)
             return
         }
         markPending(playback.instanceId, 1)
         assets.loadTextureAsync(event.texture).invokeOnCompletion { error ->
             mainThread.runOnMainThread {
-                if (error == null && !stoppedInstances.contains(playback.instanceId)) {
-                    overlays += OwnedOverlay(playback.instanceId, event, multiplier)
+                if (error == null && isActive(playback)) {
+                    overlays += OwnedOverlay(playback.instanceId, event, playback.parameters)
                 }
                 markPending(playback.instanceId, -1)
             }
@@ -258,7 +283,7 @@ class TimelinePlayer(
                 return@invokeOnCompletion
             }
             mainThread.runOnMainThread {
-                if (stoppedInstances.contains(playback.instanceId)) {
+                if (!isActive(playback)) {
                     markPending(playback.instanceId, -1)
                     return@runOnMainThread
                 }
@@ -267,17 +292,19 @@ class TimelinePlayer(
                     markPending(playback.instanceId, -1)
                     return@runOnMainThread
                 }
-                val emissionRateMultiplier = event.emissionRateMultiplier?.let { parameter ->
-                    playback.parameters[parameter]?.jsonPrimitive?.floatOrNull
-                }?.takeIf { it.isFinite() && it >= 0f } ?: 1f
-                val effect = particleLoader.load(definition, texture, emissionRateMultiplier)
+                val effect = particleLoader.load(definition, texture)
+                // Keep the emission range fixed; its scaling curve reads the live multiplier.
+                effect.emitters.forEach {
+                    it.emission.setLow(0f)
+                    it.emission.setScaling(floatArrayOf(playback.parameters.multiplier(event.emissionRateMultiplier)))
+                }
                 if (event.space == ParticleSystemSpace.SCREEN) {
                     configureScreenEffect(effect, cameraManager.camera.viewportWidth, cameraManager.camera.viewportHeight)
                     effect.start()
                 } else {
                     scene.add(ParticleEffectRenderable(coordinate!!, effect, grid))
                 }
-                effects += OwnedEffect(playback.instanceId, playback.timeline, effect, event.space == ParticleSystemSpace.SCREEN)
+                effects += OwnedEffect(playback.instanceId, playback.timeline, effect, event.space == ParticleSystemSpace.SCREEN, event, playback.parameters)
                 markPending(playback.instanceId, -1)
             }
         }
@@ -293,6 +320,9 @@ class TimelinePlayer(
         effect.setPosition(width / 2f, height)
     }
 
+    private fun isActive(playback: Playback): Boolean =
+        !stoppedInstances.contains(playback.instanceId) && instanceParameters[playback.instanceId] === playback.parameters
+
     private fun markPending(instanceId: String, delta: Int) {
         val count = (pendingEffects[instanceId] ?: 0) + delta
         if (count > 0) pendingEffects[instanceId] = count else pendingEffects.remove(instanceId)
@@ -306,6 +336,8 @@ class TimelinePlayer(
         if (overlays.any { it.instanceId == instanceId }) return
         if (pendingEffects.containsKey(instanceId)) return
         instanceTimelines.remove(instanceId)
+        instanceParameters.remove(instanceId)
+        instanceTags.remove(instanceId)
         stoppedInstances.remove(instanceId)
     }
 
@@ -339,6 +371,10 @@ private fun TimelineEvent.keyedValue(property: String, elapsed: Float, base: Jso
     val progress = ((elapsed - current.time) / (next.time - current.time)).coerceIn(0f, 1f)
     return JsonPrimitive(from + (to - from) * progress)
 }
+
+private fun TimelineParameters.multiplier(parameter: String?): Float =
+    parameter?.let { (this[it] as? JsonPrimitive)?.floatOrNull }
+        ?.takeIf { it.isFinite() && it >= 0f } ?: 1f
 
 private fun JsonElement.toCoordinate(): Coordinate? {
     val value = this as? JsonObject ?: return null

@@ -1,3 +1,4 @@
+import type { TimelinePlaybackOptions } from '@/api/TimelinesApi';
 import { Application, Container } from 'pixi.js';
 import type { ClientEntitySnapshot } from '@/api/EntitiesApi';
 import type { DebugState, RendererDebugOptions } from '@/core/DebugState';
@@ -131,13 +132,15 @@ export class PixiGameRenderer implements GameRenderer {
     coordinate: Coordinate,
     timeline: string,
     parameters: Readonly<Record<string, unknown>> = {},
+    options: TimelinePlaybackOptions = {},
   ): void {
     this.timelinePlayer.play({
       type: 'playTimeline',
-      instanceId: crypto.randomUUID(),
+      instanceId: options.instanceId ?? crypto.randomUUID(),
       timeline,
       parameters: { ...parameters, position: coordinate },
       tags: [],
+      transition: options.transition ?? 0,
     });
   }
 

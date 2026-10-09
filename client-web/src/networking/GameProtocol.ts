@@ -174,6 +174,7 @@ export interface PlayTimelinePacket {
   timeline: string;
   parameters: Readonly<Record<string, unknown>>;
   tags: readonly string[];
+  transition: number;
 }
 
 export interface StopTimelinePacket {
@@ -280,8 +281,10 @@ function decodePlayTimelinePacket(reader: PacketReader): PlayTimelinePacket {
   const timeline = reader.readString();
   const parameters = parseTimelineParameters(timeline, reader.readString());
   const tags = Array.from({ length: reader.readInt() }, () => reader.readString());
+  const transition = reader.readFloat();
+  if (!Number.isFinite(transition) || transition < 0) throw new Error('Invalid timeline transition');
   reader.assertFullyRead();
-  return { type: 'playTimeline', instanceId, timeline, parameters, tags };
+  return { type: 'playTimeline', instanceId, timeline, parameters, tags, transition };
 }
 
 function decodeStopTimelinePacket(reader: PacketReader): StopTimelinePacket {

@@ -10,6 +10,7 @@ import com.seleneworlds.server.dimensions.Dimension
 import com.seleneworlds.server.players.PlayerApi
 import com.seleneworlds.server.world.World
 import java.util.UUID
+import com.seleneworlds.common.timeline.TimelinePlaybackOptions
 
 /** Starts client-defined timelines for one player or observers of a world position. */
 class TimelinesApi(private val world: World) {
@@ -18,10 +19,11 @@ class TimelinesApi(private val world: World) {
         timeline: String,
         parameters: SerializedMap = emptyMap(),
         tags: List<String> = emptyList(),
+        options: TimelinePlaybackOptions = TimelinePlaybackOptions(),
     ): String {
-        val instanceId = UUID.randomUUID().toString()
+        val instanceId = options.instanceId ?: UUID.randomUUID().toString()
         player.delegate.client.send(
-            packet(instanceId, timeline, parameters, tags)
+            packet(instanceId, timeline, parameters, tags, options.transition)
         )
         return instanceId
     }
@@ -32,8 +34,9 @@ class TimelinesApi(private val world: World) {
         dimension: Dimension = world.dimensionManager.getOrCreateDimension(0),
         parameters: SerializedMap = emptyMap(),
         tags: List<String> = emptyList(),
+        options: TimelinePlaybackOptions = TimelinePlaybackOptions(),
     ): String {
-        val instanceId = UUID.randomUUID().toString()
+        val instanceId = options.instanceId ?: UUID.randomUUID().toString()
         dimension.syncManager.sendToAllWatching(
             position,
             packet(
@@ -41,6 +44,7 @@ class TimelinesApi(private val world: World) {
                 timeline,
                 parameters + ("position" to mapOf("x" to position.x, "y" to position.y, "z" to position.z)),
                 tags,
+                options.transition,
             )
         )
         return instanceId
@@ -93,10 +97,12 @@ class TimelinesApi(private val world: World) {
         timeline: String,
         parameters: SerializedMap,
         tags: List<String>,
+        transition: Float,
     ) = PlayTimelinePacket(
         instanceId,
         Identifier.parse(timeline).toString(),
         parameters.toJsonElement(),
         tags.map { Identifier.parse(it).toString() }.distinct(),
+        transition,
     )
 }
