@@ -24,6 +24,7 @@ import java.util.*
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.BundleManifest
 import com.seleneworlds.common.data.Identifier
+import com.seleneworlds.common.data.RegistryProvider
 import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.Disposable
@@ -62,12 +63,13 @@ class HttpServer(
     private val logger: Logger,
     private val permissions: PermissionsApi,
     private val editorResources: EditorResources,
-    private val mainThreadDispatcher: MainThreadDispatcher
+    private val mainThreadDispatcher: MainThreadDispatcher,
+    registryProvider: RegistryProvider
 ) : Disposable {
     private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
     private val clientLuaModules = ClientLuaModules(bundleDatabase, clientBundleCache)
     private val clientUiAssets = ClientUiAssets(bundleDatabase, clientBundleCache)
-    private val clientRegistrySnapshots = ClientRegistrySnapshots(bundleDatabase, clientBundleCache, seleneJson)
+    private val clientRegistrySnapshots = ClientRegistrySnapshots(bundleDatabase, clientBundleCache, seleneJson, registryProvider)
 
     private fun ApplicationCall.authenticatedUser(): SeleneUser {
         return principal<SeleneUser>()
@@ -421,11 +423,13 @@ class HttpServer(
                         editorResources, permissions, playerManager, mainThreadDispatcher, logger
                     ) { it.authenticatedUser() }
                     get("/client/registries") {
-                        call.respond(clientRegistrySnapshots.getIndex())
+                        call.respond(mainThreadDispatcher.callOnMainThread { clientRegistrySnapshots.getIndex() })
                     }
                     get("/client/registries/{registryName...}") {
                         val registryName = call.parameters.getAll("registryName")?.joinToString("/") ?: return@get
-                        val snapshot = clientRegistrySnapshots.getRegistry(Identifier.parse(registryName))
+                        val snapshot = mainThreadDispatcher.callOnMainThread {
+                            clientRegistrySnapshots.getRegistry(Identifier.parse(registryName))
+                        }
                         if (snapshot == null) {
                             call.respond(HttpStatusCode.NotFound, "Registry not found")
                             return@get

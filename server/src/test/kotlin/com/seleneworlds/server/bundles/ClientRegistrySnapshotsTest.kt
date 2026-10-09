@@ -4,6 +4,11 @@ import com.seleneworlds.common.bundles.Bundle
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.BundleManifest
 import com.seleneworlds.common.data.Identifier
+import com.seleneworlds.common.data.Registry
+import com.seleneworlds.common.data.RegistryProvider
+import com.seleneworlds.common.data.custom.CustomRegistry
+import com.seleneworlds.common.data.custom.CustomRegistryDefinition
+import com.seleneworlds.common.tiles.TileRegistry
 import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.server.config.ServerConfig
 import kotlinx.serialization.json.jsonObject
@@ -17,8 +22,51 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.assertNull
+import kotlin.test.assertNotEquals
 
 class ClientRegistrySnapshotsTest {
+    @Test
+    fun `snapshots include runtime additions and invalidate on edits and removals`() {
+        val database = BundleDatabase()
+        database.addBundle(createBundle("runtime") {
+            writeJson("common/data/test/tiles/static.json", """{"visual":"test:static"}""")
+            writeJson("common/data/test/tiles/client_override.json", """{"visual":"test:common"}""")
+            writeJson("client/data/test/tiles/client_override.json", """{"visual":"test:client"}""")
+            writeJson("common/data/test/registries/secrets.json", """{"name":"secrets","platform":"server"}""")
+            writeJson("server/data/test/secrets/secret.json", """{"password":"private"}""")
+        })
+        val tiles = TileRegistry(seleneJson).also { it.load(database) }
+        val secrets = CustomRegistry(seleneJson, CustomRegistryDefinition("secrets", "server"))
+            .also { it.load(database) }
+        val provider = object : RegistryProvider {
+            override fun getRegistries(): Map<Identifier, Registry<*>> = mapOf(
+                TileRegistry.IDENTIFIER to tiles,
+                Identifier("test", "secrets") to secrets
+            )
+            override fun getRegistry(identifier: Identifier): Registry<*>? = getRegistries()[identifier]
+        }
+        val snapshots = ClientRegistrySnapshots(database,
+            ClientBundleCache(ServerConfig(), LoggerFactory.getLogger(javaClass)), seleneJson, provider)
+        val generated = Identifier("test", "generated")
+        tiles.upsertEntry(generated, seleneJson.parseToJsonElement("""{"visual":"test:first"}"""))
+        assertNull(tiles.getSourcePath(generated))
+        val first = assertNotNull(snapshots.getRegistry(TileRegistry.IDENTIFIER))
+        assertEquals("test:first", first.entries.getValue("test:generated").jsonObject.getValue("visual").jsonPrimitive.content)
+        assertEquals("test:client", first.entries.getValue("test:client_override").jsonObject.getValue("visual").jsonPrimitive.content)
+        assertNull(snapshots.getRegistry(Identifier("test", "secrets")))
+        tiles.upsertEntry(generated, seleneJson.parseToJsonElement("""{"visual":"test:changed"}"""))
+        val changed = assertNotNull(snapshots.getRegistry(TileRegistry.IDENTIFIER))
+        assertNotEquals(first.hash, changed.hash)
+        assertEquals("test:changed", changed.entries.getValue("test:generated").jsonObject.getValue("visual").jsonPrimitive.content)
+        tiles.removeEntry(generated)
+        // Deleting a loaded entry must also win over its unchanged file on disk.
+        tiles.removeEntry(Identifier("test", "static"))
+        val removed = assertNotNull(snapshots.getRegistry(TileRegistry.IDENTIFIER))
+        assertEquals(setOf("test:client_override"), removed.entries.keys)
+        assertNotEquals(changed.hash, removed.hash)
+    }
+
     @Test
     fun `snapshots merge per-entry registry files in bundle order`() {
         val bundleDatabase = BundleDatabase()

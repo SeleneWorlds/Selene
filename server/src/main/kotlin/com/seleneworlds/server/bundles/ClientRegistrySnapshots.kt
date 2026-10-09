@@ -3,6 +3,8 @@ package com.seleneworlds.server.bundles
 import com.seleneworlds.common.bundles.Bundle
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.data.Identifier
+import com.seleneworlds.common.data.RegistryProvider
+import com.seleneworlds.common.data.json.FileBasedRegistry
 import com.seleneworlds.common.serialization.decodeFromFile
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.MapSerializer
@@ -18,16 +20,17 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
 import java.util.Properties
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.extension
 import kotlin.io.path.isRegularFile
 
 class ClientRegistrySnapshots(
     private val bundleDatabase: BundleDatabase,
     private val clientBundleCache: ClientBundleCache,
-    private val json: Json
+    private val json: Json,
+    private val registryProvider: RegistryProvider? = null
 ) {
-    private val snapshotsByCacheKey = ConcurrentHashMap<String, ClientRegistrySnapshotsData>()
+    private var cachedKey: String? = null
+    private var cachedSnapshots: ClientRegistrySnapshotsData? = null
 
     fun getIndex(): ClientRegistryIndexResponse {
         val snapshots = getSnapshots()
@@ -50,16 +53,25 @@ class ClientRegistrySnapshots(
         val enabledClientBundles = bundleDatabase.enabledBundles
             .filter { clientBundleCache.hasClientSide(it.dir) }
 
+        val runtimeRegistries = registryProvider?.getRegistries().orEmpty()
+            .mapNotNull { (identifier, registry) ->
+                (registry as? FileBasedRegistry<*>)?.takeIf { it.platform == "common" && it.name != "registries" }
+                    ?.let { identifier to it }
+            }.toMap()
         val cacheKey = enabledClientBundles.joinToString("|") { bundle ->
             "${bundle.manifest.name}:${clientBundleCache.getHash(bundle.dir).orEmpty()}"
+        } + "|runtime|" + runtimeRegistries.entries.sortedBy { it.key }.joinToString("|") { (identifier, registry) ->
+            "$identifier:${System.identityHashCode(registry)}:${registry.cacheKey}"
         }
 
-        return snapshotsByCacheKey.getOrPut(cacheKey) {
-            buildSnapshots(enabledClientBundles)
+        if (cachedKey == cacheKey) return requireNotNull(cachedSnapshots)
+        return buildSnapshots(enabledClientBundles, runtimeRegistries).also {
+            cachedKey = cacheKey
+            cachedSnapshots = it
         }
     }
 
-    private fun buildSnapshots(bundles: List<Bundle>): ClientRegistrySnapshotsData {
+    private fun buildSnapshots(bundles: List<Bundle>, runtimeRegistries: Map<Identifier, FileBasedRegistry<*>>): ClientRegistrySnapshotsData {
         val customRegistryIdentifiers = collectCustomRegistryIdentifiers(bundles)
         val entriesByRegistry = mutableMapOf<Identifier, MutableMap<Identifier, JsonElement>>()
 
@@ -75,6 +87,24 @@ class ClientRegistrySnapshots(
         }
 
         loadMessages(bundles, entriesByRegistry)
+
+        // Common runtime registries are authoritative, including Lua additions, edits, and removals.
+        // Server-only registries are deliberately excluded from client snapshots.
+        for ((identifier, registry) in runtimeRegistries) {
+            entriesByRegistry[identifier] = registry.getAll().keys.associateWith {
+                requireNotNull(registry.getEntryElement(it))
+            }.toMutableMap()
+        }
+
+        // Client-specific files retain their normal precedence over common definitions.
+        if (runtimeRegistries.isNotEmpty()) {
+            for (bundle in bundles) {
+                val clientData = bundle.dir.resolve("client/data")
+                if (clientData.isDirectory) {
+                    loadRegistryFiles(clientData.toPath(), "client", customRegistryIdentifiers, entriesByRegistry)
+                }
+            }
+        }
 
         val registries = entriesByRegistry
             .mapKeys { it.key.toString() }
