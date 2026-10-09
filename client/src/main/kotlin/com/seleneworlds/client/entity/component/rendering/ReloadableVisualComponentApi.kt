@@ -2,6 +2,12 @@ package com.seleneworlds.client.entity.component.rendering
 
 class ReloadableVisualComponentApi(val component: ReloadableVisualComponent) {
 
+    fun getScale(): Float = component.scale
+
+    fun setScale(value: Float) {
+        component.scale = value
+    }
+
     fun getVisual() = component.visual.api
 
     fun getRed(): Float = component.red

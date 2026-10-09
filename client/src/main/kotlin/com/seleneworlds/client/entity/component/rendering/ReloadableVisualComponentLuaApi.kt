@@ -116,7 +116,33 @@ object ReloadableVisualComponentLuaApi {
         return 0
     }
 
+    /**
+     * Uniform visual scale. Defaults to 1 and must be positive.
+     *
+     * ```property
+     * Scale: number
+     * ```
+     */
+    private fun getScale(lua: Lua): Int {
+        val component = lua.checkUserdata<ReloadableVisualComponentApi>(1)
+        lua.push(component.getScale())
+        return 1
+    }
+
+    /**
+     * ```property
+     * Scale: number
+     * ```
+     */
+    private fun setScale(lua: Lua): Int {
+        val component = lua.checkUserdata<ReloadableVisualComponentApi>(1)
+        component.setScale(lua.checkFloat(2))
+        return 0
+    }
+
     val luaMeta = LuaMappedMetatable(ReloadableVisualComponentApi::class) {
+        callable(::getScale)
+        callable(::setScale)
         callable(::getVisual)
         callable(::getRed)
         callable(::setRed)

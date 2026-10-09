@@ -11,6 +11,7 @@ export interface ResolvedEntityVisual {
   sortLayerOffset: number;
   offsetX: number;
   offsetY: number;
+  scale: number;
   alpha: number;
   red: number;
   green: number;
@@ -41,6 +42,7 @@ export interface ResolvedEntityAnimation {
 interface VisualComponentConfiguration {
   type?: string;
   visual?: string;
+  scale?: number;
   alpha?: number;
   red?: number;
   green?: number;
@@ -121,7 +123,9 @@ export class EntityVisualResolver {
     const texturePath = selectTexturePath(visualDefinition);
     const componentOffsetX = visualComponent.position?.offsetX ?? 0;
     const componentOffsetY = visualComponent.position?.offsetY ?? 0;
-    const animations = resolveAnimations(visualDefinition, componentOffsetX, componentOffsetY);
+    const scale = typeof visualComponent.scale === 'number' && Number.isFinite(visualComponent.scale) && visualComponent.scale > 0
+      ? visualComponent.scale : 1;
+    const animations = resolveAnimations(visualDefinition, componentOffsetX, componentOffsetY, scale);
     if (!texturePath && !animations) {
       this.warnOnce(`texture:${visualComponent.visual}`, `Visual ${visualComponent.visual} has no supported texture.`);
       return null;
@@ -131,8 +135,9 @@ export class EntityVisualResolver {
       texturePath: texturePath ?? undefined,
       animations,
       sortLayerOffset: visualDefinition.sortLayerOffset ?? 0,
-      offsetX: (visualDefinition?.offsetX ?? 0) + componentOffsetX,
-      offsetY: (visualDefinition?.offsetY ?? 0) + componentOffsetY,
+      offsetX: (visualDefinition?.offsetX ?? 0) * scale + componentOffsetX,
+      offsetY: (visualDefinition?.offsetY ?? 0) * scale + componentOffsetY,
+      scale,
       alpha: clampAlpha(visualComponent.alpha ?? 1),
       red: clampAlpha(visualComponent.red ?? 1),
       green: clampAlpha(visualComponent.green ?? 1),
@@ -222,6 +227,7 @@ function resolveAnimations(
   visual: ClientVisualDefinition,
   componentOffsetX: number,
   componentOffsetY: number,
+  scale: number,
 ): Record<string, ResolvedEntityAnimation> | undefined {
   if (visual.type === 'animated') {
     const textures = visual.textures?.filter((texture): texture is string => typeof texture === 'string') ?? [];
@@ -233,8 +239,8 @@ function resolveAnimations(
       default: {
         textures,
         frameDuration: duration / textures.length,
-        offsetX: (visual.offsetX ?? 0) + componentOffsetX,
-        offsetY: (visual.offsetY ?? 0) + componentOffsetY,
+        offsetX: (visual.offsetX ?? 0) * scale + componentOffsetX,
+        offsetY: (visual.offsetY ?? 0) * scale + componentOffsetY,
         flipX: visual.flipX ?? false,
         flipY: visual.flipY ?? false,
       },
@@ -255,8 +261,8 @@ function resolveAnimations(
     return [[name, {
       textures,
       frameDuration,
-      offsetX: (animation.offsetX ?? visual.offsetX ?? 0) + componentOffsetX,
-      offsetY: (animation.offsetY ?? visual.offsetY ?? 0) + componentOffsetY,
+      offsetX: (animation.offsetX ?? visual.offsetX ?? 0) * scale + componentOffsetX,
+      offsetY: (animation.offsetY ?? visual.offsetY ?? 0) * scale + componentOffsetY,
       flipX: animation.flipX ?? false,
       flipY: animation.flipY ?? false,
     }] as const];

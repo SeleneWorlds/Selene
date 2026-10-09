@@ -48,6 +48,17 @@ class SeleneJsonDefaultsTest {
     }
 
     @Test
+    fun `visual scale defaults to one and survives serialization`() {
+        val default = seleneJson.decodeFromString<ComponentConfiguration>(
+            """{"type":"visual","visual":"test:character"}"""
+        ) as VisualComponentConfiguration
+        assertEquals(1f, default.scale)
+        val scaled: ComponentConfiguration = default.copy(scale = 0.8f)
+        val restored = seleneJson.decodeFromString<ComponentConfiguration>(seleneJson.encodeToString(scaled))
+        assertEquals(scaled, restored)
+    }
+
+    @Test
     fun `visual component deserializes tint values`() {
         val component = seleneJson.decodeFromString<ComponentConfiguration>(
             """{"type":"visual","visual":"test:character","red":0.8,"green":0.7,"blue":0.6,"alpha":0.5}"""

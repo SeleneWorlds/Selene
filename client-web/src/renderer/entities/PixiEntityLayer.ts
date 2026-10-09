@@ -537,8 +537,8 @@ function applySpriteVisual(
     | Math.round(visual.blue * 255);
   sprite.anchor.set(0.5, 1);
   sprite.position.set(visual.offsetX, -visual.offsetY);
-  sprite.scale.x = visual.flipX ? -1 : 1;
-  sprite.scale.y = visual.flipY ? -1 : 1;
+  sprite.scale.x = visual.flipX ? -visual.scale : visual.scale;
+  sprite.scale.y = visual.flipY ? -visual.scale : visual.scale;
 }
 
 function createFallbackMarker(): Graphics {

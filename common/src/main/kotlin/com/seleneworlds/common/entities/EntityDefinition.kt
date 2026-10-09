@@ -72,6 +72,7 @@ data class VisualComponentConfiguration(
     val green: Float = 1f,
     val blue: Float = 1f,
     val alpha: Float = 1f,
+    val scale: Float = 1f,
     @Serializable(with = SerializedMapSerializer::class)
     val overrides: SerializedMap = emptyMap()
 ) : ComponentConfiguration

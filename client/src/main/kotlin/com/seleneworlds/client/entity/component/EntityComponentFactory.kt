@@ -50,6 +50,7 @@ class EntityComponentFactory(
                     component.green = configuration.green
                     component.blue = configuration.blue
                     component.alpha = configuration.alpha
+                    component.scale = configuration.scale
                 }
             }
 
