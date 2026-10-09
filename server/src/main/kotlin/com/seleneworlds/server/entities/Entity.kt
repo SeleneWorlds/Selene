@@ -36,7 +36,7 @@ class Entity(
     var passableAbove: Boolean = false
     var networkId: Int = -1
     var entityDefinition: RegistryReference<EntityDefinition> = RegistryReference.unbound()
-    var name = "John Selene"
+    var name = "Someone"
     var coordinate = Coordinate(0, 0, 0)
     var facing: Direction? = null
     var dimension: Dimension? = null
