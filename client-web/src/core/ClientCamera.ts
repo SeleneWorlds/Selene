@@ -20,7 +20,7 @@ export class ClientCamera {
   getZoom(): number { return this.zoom; }
   setZoom(zoom: number): number {
     if (!Number.isFinite(zoom) || zoom <= 0) throw new Error('Camera zoom must be positive and finite.');
-    this.zoom = Math.min(1, Math.max(0.25, zoom));
+    this.zoom = zoom;
     return this.zoom;
   }
 

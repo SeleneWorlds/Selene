@@ -193,7 +193,7 @@ object PlayerLuaApi {
 
     /**
      * Reports the client's camera zoom for chunk and entity synchronization.
-     * Zoom is clamped to 0.25 through 1. This does not change the client's rendering.
+     * Zoom must be positive and finite. This does not change the client's rendering.
      *
      * ```signatures
      * SetCameraZoom(zoom: number)

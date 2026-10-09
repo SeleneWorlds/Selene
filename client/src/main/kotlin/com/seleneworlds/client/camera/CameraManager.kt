@@ -88,7 +88,7 @@ class CameraManager(
 
     fun setCameraZoom(zoom: Float): Float {
         require(zoom.isFinite() && zoom > 0f) { "Camera zoom must be positive and finite" }
-        camera.zoom = 1f / zoom.coerceIn(0.25f, 1f)
+        camera.zoom = 1f / zoom
         camera.update()
         return 1f / camera.zoom
     }

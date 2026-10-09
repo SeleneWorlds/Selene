@@ -28,11 +28,10 @@ class Camera : Viewer {
     var zoom = 1f
         set(value) {
             require(value.isFinite() && value > 0f) { "Camera zoom must be positive and finite" }
-            val next = value.coerceIn(0.25f, 1f)
             val prev = field
-            field = next
-            if (prev != next) {
-                listeners.forEach { it.cameraZoomChanged(this, prev, next) }
+            field = value
+            if (prev != value) {
+                listeners.forEach { it.cameraZoomChanged(this, prev, value) }
             }
         }
 

@@ -221,21 +221,21 @@ class CameraZoomSyncTest {
     }
 
     @Test
-    fun `zoom is bounded and unchanged zoom does not resync`() {
+    fun `zoom is not clamped and unchanged zoom does not resync`() {
         val sync = player.syncManager
-        player.api.setCameraZoom(0.01f)
-        assertEquals(0.25f, player.camera.zoom)
-        assertEquals(6, sync.chunkViewRange)
-        assertEquals(256, sync.entitySyncRadius)
+        player.api.setCameraZoom(0.2f)
+        assertEquals(0.2f, player.camera.zoom)
+        assertEquals(7, sync.chunkViewRange)
+        assertEquals(320, sync.entitySyncRadius)
         sync.coordinateDirty = false
-        player.api.setCameraZoom(0.25f)
+        player.api.setCameraZoom(0.2f)
         assertFalse(sync.coordinateDirty)
 
         player.api.setCameraZoom(2f)
-        assertEquals(1f, player.camera.zoom)
+        assertEquals(2f, player.camera.zoom)
         for (invalid in listOf(0f, -1f, Float.NaN, Float.POSITIVE_INFINITY)) {
             assertFailsWith<IllegalArgumentException> { player.api.setCameraZoom(invalid) }
-            assertEquals(1f, player.camera.zoom)
+            assertEquals(2f, player.camera.zoom)
         }
     }
 }
