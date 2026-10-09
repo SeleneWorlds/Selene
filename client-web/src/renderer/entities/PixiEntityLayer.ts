@@ -471,7 +471,7 @@ function applyNameTag(rendered: RenderedEntity): void {
     rendered.nameTag = new Text({
       text: resolved.text,
       style: {
-        fill: 0xffffff,
+        fill: resolved.color,
         fontFamily: 'Arial, sans-serif',
         fontSize: 14,
         stroke: { color: 0x000000, width: 3 },
@@ -481,6 +481,7 @@ function applyNameTag(rendered: RenderedEntity): void {
     rendered.container.addChild(rendered.nameTag);
   } else {
     rendered.nameTag.text = resolved.text;
+    rendered.nameTag.style.fill = resolved.color;
   }
   positionNameTag(rendered);
 }
