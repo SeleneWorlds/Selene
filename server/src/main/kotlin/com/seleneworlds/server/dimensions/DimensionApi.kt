@@ -5,6 +5,8 @@ import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.server.cameras.viewer.DefaultViewer
 import com.seleneworlds.server.cameras.viewer.Viewer
 import com.seleneworlds.server.entities.EntityApi
+import com.seleneworlds.server.players.Player
+import com.seleneworlds.server.players.PlayerApi
 import com.seleneworlds.server.maps.tree.MapTreeApi
 import com.seleneworlds.server.tiles.TransientTile
 import com.seleneworlds.server.tiles.TransientTileApi
@@ -78,5 +80,18 @@ class DimensionApi(val dimension: Dimension) {
 
     fun getEntitiesInRange(coordinate: Coordinate, range: Int): List<EntityApi> {
         return dimension.getEntitiesInRange(coordinate, range).map { it.api }
+    }
+
+    fun getObserversInRange(coordinate: Coordinate, range: Int, zRange: Int = 0): List<PlayerApi> {
+        require(range >= 0 && zRange >= 0) { "Camera ranges must be non-negative" }
+        return dimension.world.playerManager.players.filter { player ->
+            val camera = player.camera
+            // Following entities may have moved since the camera's last update.
+            val cameraDimension = if (camera.followEntity != null) camera.followEntity?.dimension else camera.dimension
+            val position = camera.followEntity?.coordinate ?: camera.coordinate
+            player.connectionState == Player.ConnectionState.READY && cameraDimension === dimension &&
+                position.horizontalDistanceTo(coordinate) <= range &&
+                kotlin.math.abs(position.z.toLong() - coordinate.z) <= zRange
+        }.map { it.api }
     }
 }

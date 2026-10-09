@@ -118,6 +118,23 @@ object DimensionLuaApi {
         return 1
     }
 
+    /**
+     * Finds connected players by their camera position.
+     * Uses the same horizontal distance as entity queries and an optional floor range (default zero).
+     *
+     * ```signatures
+     * getObserversInRange(coordinate: Coordinate, range: number, zRange: number|nil) -> {Player}
+     * ```
+     */
+    private fun getObserversInRange(lua: Lua): Int {
+        val dimension = lua.checkUserdata<DimensionApi>(1)
+        val (coordinate, index) = lua.checkCoordinate(2)
+        val range = lua.checkInt(index + 1)
+        val zRange = if (lua.isNoneOrNil(index + 2)) 0 else lua.checkInt(index + 2)
+        lua.push(dimension.getObserversInRange(coordinate, range, zRange), Lua.Conversion.FULL)
+        return 1
+    }
+
     val luaMeta = LuaMappedMetatable(DimensionApi::class) {
         callable(::getMap)
         callable(::setMap)
@@ -131,6 +148,7 @@ object DimensionLuaApi {
         callable(::hasCollisionAt)
         callable(::getEntitiesAt)
         callable(::getEntitiesInRange)
+        callable(::getObserversInRange)
     }
 
 }

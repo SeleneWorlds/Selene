@@ -57,6 +57,24 @@ class CameraZoomSyncTest {
     private val player = players.createPlayer(client)
     private val world = World(Grid(), CollisionResolver(registries, chunks), dimensions, entities, chunks, players)
 
+    @Test
+    fun `camera range query includes ready spectators within horizontal and floor bounds only`() {
+        val dimension = Dimension(registries, world)
+        val origin = Coordinate.Zero
+        player.camera.focusCoordinate(dimension, Coordinate(2, 0, 1))
+        assertTrue(dimension.api.getObserversInRange(origin, 2, 1).isEmpty())
+        player.connectionState = com.seleneworlds.server.players.Player.ConnectionState.READY
+        assertEquals(listOf(player.api), dimension.api.getObserversInRange(origin, 2, 1))
+        assertTrue(dimension.api.getObserversInRange(origin, 2).isEmpty())
+        assertTrue(dimension.api.getObserversInRange(origin, 1, 1).isEmpty())
+        player.camera.focusCoordinate(dimension, Coordinate(2, 2, 0))
+        assertTrue(dimension.api.getObserversInRange(origin, 1).isEmpty())
+        player.camera.focusCoordinate(Dimension(registries, world), origin)
+        assertTrue(dimension.api.getObserversInRange(origin, 30, 2).isEmpty())
+        assertFailsWith<IllegalArgumentException> { dimension.api.getObserversInRange(origin, -1) }
+        assertFailsWith<IllegalArgumentException> { dimension.api.getObserversInRange(origin, 2, -1) }
+    }
+
     private fun drainChunks(expected: Int) {
         repeat(1000) {
             player.syncManager.update()
