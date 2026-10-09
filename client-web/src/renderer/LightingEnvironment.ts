@@ -8,6 +8,8 @@ interface LightSource extends TileLight {
   intensity: number;
 }
 
+const LIGHT_BUCKET_SIZE = 16;
+
 const WHITE: LightColor = { red: 1, green: 1, blue: 1 };
 
 export class LightingEnvironment {
@@ -15,6 +17,7 @@ export class LightingEnvironment {
   private readonly tileDefinitionLights = new Map<string, LightSource>();
   private readonly explicitLights = new Map<string, LightSource>();
   private readonly entityLights = new Map<number, LightSource>();
+  private readonly sourceBuckets = new Map<string, Set<LightSource>>();
   private revision = 0;
 
   getRevision(): number { return this.revision; }
@@ -29,45 +32,75 @@ export class LightingEnvironment {
   }
 
   setTileDefinitionLight(coordinate: Coordinate, value: TileLight | null): void {
-    const key = coordinateKey(coordinate);
-    const light = parseLight(value);
-    if (light) this.tileDefinitionLights.set(key, { coordinate: { ...coordinate }, ...light });
-    else this.tileDefinitionLights.delete(key);
-    this.revision += 1;
+    this.setSource(this.tileDefinitionLights, coordinateKey(coordinate), coordinate, value);
   }
 
   removeTileDefinitionLight(coordinate: Coordinate): void {
-    if (this.tileDefinitionLights.delete(coordinateKey(coordinate))) this.revision += 1;
+    this.removeSource(this.tileDefinitionLights, coordinateKey(coordinate));
   }
 
   setTileLight(coordinate: Coordinate, value: TileLight | null): void {
-    const key = coordinateKey(coordinate);
-    const light = parseLight(value);
-    if (light) this.explicitLights.set(key, { coordinate: { ...coordinate }, ...light });
-    else this.explicitLights.delete(key);
-    this.revision += 1;
+    this.setSource(this.explicitLights, coordinateKey(coordinate), coordinate, value);
   }
 
   clearTileLights(): void {
     if (this.explicitLights.size === 0) return;
+    for (const source of this.explicitLights.values()) this.indexSource(source, false);
     this.explicitLights.clear();
     this.revision += 1;
   }
 
   setEntityLight(id: number, coordinate: Coordinate, value: TileLight | null): void {
-    const light = parseLight(value);
-    const previous = this.entityLights.get(id);
-    if (!light) {
-      if (this.entityLights.delete(id)) this.revision += 1;
-      return;
-    }
-    if (previous && sameCoordinate(previous.coordinate, coordinate) && sameLight(previous, light)) return;
-    this.entityLights.set(id, { coordinate: { ...coordinate }, ...light });
-    this.revision += 1;
+    this.setSource(this.entityLights, id, coordinate, value);
   }
 
   removeEntityLight(id: number): void {
-    if (this.entityLights.delete(id)) this.revision += 1;
+    this.removeSource(this.entityLights, id);
+  }
+
+  private setSource<TKey>(sources: Map<TKey, LightSource>, key: TKey, coordinate: Coordinate, value: TileLight | null): void {
+    const light = parseLight(value);
+    const previous = sources.get(key);
+    if (!light) {
+      this.removeSource(sources, key);
+      return;
+    }
+    if (previous && sameCoordinate(previous.coordinate, coordinate) && sameLight(previous, light)) return;
+    if (previous) this.indexSource(previous, false);
+    const source = { coordinate: { ...coordinate }, ...light };
+    sources.set(key, source);
+    this.indexSource(source, true);
+    this.revision += 1;
+  }
+
+  private removeSource<TKey>(sources: Map<TKey, LightSource>, key: TKey): void {
+    const previous = sources.get(key);
+    if (!previous) return;
+    this.indexSource(previous, false);
+    sources.delete(key);
+    this.revision += 1;
+  }
+
+  private indexSource(source: LightSource, add: boolean): void {
+    const { coordinate, radius } = source;
+    const minX = Math.floor((coordinate.x - radius) / LIGHT_BUCKET_SIZE);
+    const maxX = Math.floor((coordinate.x + radius) / LIGHT_BUCKET_SIZE);
+    const minY = Math.floor((coordinate.y - radius) / LIGHT_BUCKET_SIZE);
+    const maxY = Math.floor((coordinate.y + radius) / LIGHT_BUCKET_SIZE);
+    for (let x = minX; x <= maxX; x += 1) {
+      for (let y = minY; y <= maxY; y += 1) {
+        const key = `${x}:${y}:${coordinate.z}`;
+        if (add) {
+          let bucket = this.sourceBuckets.get(key);
+          if (!bucket) this.sourceBuckets.set(key, bucket = new Set());
+          bucket.add(source);
+        } else {
+          const bucket = this.sourceBuckets.get(key);
+          bucket?.delete(source);
+          if (bucket?.size === 0) this.sourceBuckets.delete(key);
+        }
+      }
+    }
   }
 
   getColor(coordinate: Coordinate): ResolvedLightColor {
@@ -77,8 +110,11 @@ export class LightingEnvironment {
     const ambientLuminosity = (red + green + blue) / 3;
     const localScale = 1 - ambientLuminosity;
 
-    for (const source of this.sources()) {
-      if (source.coordinate.z !== Math.round(coordinate.z)) continue;
+    if (localScale === 0) return { red, green, blue };
+    const bucketKey = `${Math.floor(coordinate.x / LIGHT_BUCKET_SIZE)}:${Math.floor(coordinate.y / LIGHT_BUCKET_SIZE)}:${Math.round(coordinate.z)}`;
+    const sources = this.sourceBuckets.get(bucketKey);
+    if (!sources) return { red, green, blue };
+    for (const source of sources) {
       const distance = Math.hypot(coordinate.x - source.coordinate.x, coordinate.y - source.coordinate.y);
       if (distance > source.radius) continue;
       const falloff = Math.max(0, 1 - distance / (source.radius + 0.5));
@@ -88,12 +124,6 @@ export class LightingEnvironment {
       blue += source.blue * amount;
     }
     return { red: clamp(red), green: clamp(green), blue: clamp(blue) };
-  }
-
-  private *sources(): Iterable<LightSource> {
-    yield* this.tileDefinitionLights.values();
-    yield* this.explicitLights.values();
-    yield* this.entityLights.values();
   }
 }
 
