@@ -28,6 +28,7 @@ export class RenderPipeline {
   update(deltaMs: number, options: RendererDebugOptions): Record<string, number> {
     this.recordFrame(deltaMs);
     const timings: Record<string, number> = {};
+    this.measure(timings, 'Renderer: tile construction', () => this.tilemapLayer.processPendingWork());
     this.measure(timings, 'Renderer: entities', () => {
       if (options.entityUpdates) this.entityLayer.update(deltaMs);
     });

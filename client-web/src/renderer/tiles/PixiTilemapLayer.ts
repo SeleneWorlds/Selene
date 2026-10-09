@@ -11,6 +11,7 @@ import { TileCuller } from './TileCuller';
 import { TileOcclusionFader } from './TileOcclusionFader';
 import { TileSpatialIndex } from './TileSpatialIndex';
 import type { LightingEnvironment } from '../LightingEnvironment';
+import { FrameWorkQueue } from './FrameWorkQueue';
 import type { TileLight } from '@/api/EnvironmentApi';
 
 /** Coordinates map state and delegates tile rendering and visibility policy. */
@@ -22,6 +23,7 @@ export class PixiTilemapLayer {
   private readonly culler = new TileCuller(this.spatialIndex);
   private readonly occlusionFader = new TileOcclusionFader(this.spatialIndex);
   private readonly stackRenderer: PixiTileStackRenderer;
+  private readonly workQueue = new FrameWorkQueue();
   private generation = 0;
   private upperLayerFocusZ: number | null = null;
   private upperLayerAlpha: number | null = null;
@@ -37,6 +39,7 @@ export class PixiTilemapLayer {
       visualResolver,
       textureLoader,
       container,
+      (task, key) => this.workQueue.enqueue(key ?? Symbol(), task, true),
       (stack, index) => {
         this.spatialIndex.refreshBounds(stack, index);
         this.culler.boundsChanged(stack);
@@ -78,7 +81,7 @@ export class PixiTilemapLayer {
   removeMapChunk(packet: RemoveMapChunkPacket): void {
     for (let dy = 0; dy < packet.height; dy += 1) {
       for (let dx = 0; dx < packet.width; dx += 1) {
-        this.removeTileStack({ x: packet.x + dx, y: packet.y + dy, z: packet.z });
+        this.setTileStack({ x: packet.x + dx, y: packet.y + dy, z: packet.z }, []);
       }
     }
     this.notifyMapChanged({ x: packet.x, y: packet.y, z: packet.z }, packet.width, packet.height);
@@ -117,17 +120,24 @@ export class PixiTilemapLayer {
     return () => this.mapChangedListeners.delete(listener);
   }
 
+  processPendingWork() {
+    return this.workQueue.process();
+  }
+
   updateAnimations(deltaMs: number): void {
     this.stackRenderer.updateAnimations(deltaMs, stack => this.isCurrent(stack));
   }
 
   updateLighting(): void {
     if (!this.lighting) return;
-    for (const stack of this.renderedStacks.values()) {
-      const color = this.lighting.getColor(stack.coordinate);
-      const tint = toTint(color.red, color.green, color.blue);
-      for (const container of stack.containers) container.tint = tint;
-    }
+    for (const stack of this.renderedStacks.values()) this.tintStack(stack);
+  }
+
+  private tintStack(stack: RenderedTileStack): void {
+    if (!this.lighting) return;
+    const color = this.lighting.getColor(stack.coordinate);
+    const tint = toTint(color.red, color.green, color.blue);
+    for (const container of stack.containers) container.tint = tint;
   }
 
   updateOcclusion(deltaMs: number, focusCoordinate: Coordinate, focusBounds: WorldBounds): void {
@@ -142,9 +152,9 @@ export class PixiTilemapLayer {
     this.culler.update(view);
   }
 
-  hasTiles(): boolean { return this.renderedStacks.size > 0; }
+  hasTiles(): boolean { return this.mapTiles.size > 0; }
 
-  hasTileAt(coordinate: Coordinate): boolean { return this.renderedStacks.has(coordinateKey(coordinate)); }
+  hasTileAt(coordinate: Coordinate): boolean { return this.mapTiles.has(coordinateKey(coordinate)); }
 
   getGroundRenderOrder(coordinate: Coordinate): number {
     const stack = this.renderedStacks.get(coordinateKey(coordinate));
@@ -175,24 +185,37 @@ export class PixiTilemapLayer {
   }
 
   private appendTile(coordinate: Coordinate, tileId: number): void {
-    const existing = this.renderedStacks.get(coordinateKey(coordinate));
+    const existing = this.mapTiles.get(coordinateKey(coordinate));
     this.setTileStack(coordinate, [...(existing?.tileIds ?? []), tileId]);
   }
 
   private setTileStack(coordinate: Coordinate, tileIds: readonly number[]): void {
-    this.removeTileStack(coordinate);
     const key = coordinateKey(coordinate);
+    // Empty cells need work only when clearing existing or queued tiles.
+    if (tileIds.length === 0 && !this.mapTiles.has(key) && !this.renderedStacks.has(key)) return;
+    const ids = [...tileIds];
+    this.workQueue.enqueue(key, () => this.renderTileStack(coordinate, ids));
     const baseTileId = tileIds[0];
     if (baseTileId === undefined) {
       this.mapTiles.delete(key);
       return;
     }
     const visualMetadata = this.visualResolver.resolve(baseTileId, coordinate)?.metadata ?? {};
+    this.mapTiles.set(key, { ...coordinate, tileIds: [...tileIds], visualMetadata: { ...visualMetadata } });
+  }
+
+  private renderTileStack(coordinate: Coordinate, tileIds: readonly number[]): void {
+    this.removeTileStack(coordinate);
+    if (tileIds.length === 0) {
+      this.lighting?.removeTileDefinitionLight(coordinate);
+      return;
+    }
+    const key = coordinateKey(coordinate);
     const light = tileIds.reduce<TileLight | null>((result, id) =>
       this.visualResolver.resolve(id, coordinate)?.light ?? result, null);
     this.lighting?.setTileDefinitionLight(coordinate, light);
-    this.mapTiles.set(key, { ...coordinate, tileIds: [...tileIds], visualMetadata: { ...visualMetadata } });
     const stack = this.stackRenderer.createStack(coordinate, tileIds, ++this.generation);
+    this.tintStack(stack);
     this.renderedStacks.set(key, stack);
     this.culler.add(stack);
     this.upperLayerDirty = true;
@@ -202,11 +225,7 @@ export class PixiTilemapLayer {
   private removeTileStack(coordinate: Coordinate): void {
     const key = coordinateKey(coordinate);
     const stack = this.renderedStacks.get(key);
-    if (!stack) {
-      this.lighting?.removeTileDefinitionLight(coordinate);
-      return;
-    }
-    this.lighting?.removeTileDefinitionLight(coordinate);
+    if (!stack) return;
     stack.generation = -1;
     this.culler.remove(stack);
     this.occlusionFader.remove(stack);

@@ -13,6 +13,7 @@ export class PixiTileStackRenderer {
     private readonly visualResolver: TileVisualResolver,
     private readonly textureLoader: ContentTextureLoader,
     private readonly parent: Container,
+    private readonly schedule: (task: () => void, key?: object) => void,
     private readonly boundsChanged: (stack: RenderedTileStack, index: number) => void,
   ) {}
 
@@ -83,6 +84,7 @@ export class PixiTileStackRenderer {
   async renderStack(stack: RenderedTileStack, isCurrent: (stack: RenderedTileStack) => boolean): Promise<void> {
     const generation = stack.generation;
     for (const [localSortLayer, tileId] of stack.tileIds.entries()) {
+      if (stack.generation !== generation || !isCurrent(stack)) return;
       const container = stack.containers[localSortLayer];
       const visual = this.visualResolver.resolve(tileId, stack.coordinate);
       if (!visual) {
@@ -93,28 +95,38 @@ export class PixiTileStackRenderer {
 
       try {
         const texture = await this.textureLoader.load(visual.texturePath);
-        if (stack.generation !== generation || !isCurrent(stack)) return;
-        const sprite = container as Sprite;
-        sprite.texture = texture;
-        sprite.anchor.set(0.5, 1);
-        const position = projectCoordinate(stack.coordinate);
-        sprite.position.set(
-          position.x + visual.offsetX,
-          position.y - stack.surfaceOffsets[localSortLayer] - visual.offsetY,
-        );
-        sprite.scale.x = visual.flipX ? -1 : 1;
-        sprite.scale.y = visual.flipY ? -1 : 1;
-        this.boundsChanged(stack, localSortLayer);
-        if (visual.animation && visual.animation.textures.length > 1) {
-          stack.animatedTiles.push({ sprite, visual, elapsedMs: 0, frameIndex: 0, revision: 0 });
-          this.animatedStacks.add(stack);
-        }
+        await new Promise<void>((resolve, reject) => this.schedule(() => {
+          try {
+            if (stack.generation !== generation || !isCurrent(stack)) return;
+            const sprite = container as Sprite;
+            sprite.texture = texture;
+            sprite.anchor.set(0.5, 1);
+            const position = projectCoordinate(stack.coordinate);
+            sprite.position.set(
+              position.x + visual.offsetX,
+              position.y - stack.surfaceOffsets[localSortLayer] - visual.offsetY,
+            );
+            sprite.scale.x = visual.flipX ? -1 : 1;
+            sprite.scale.y = visual.flipY ? -1 : 1;
+            this.boundsChanged(stack, localSortLayer);
+            if (visual.animation && visual.animation.textures.length > 1) {
+              stack.animatedTiles.push({ sprite, visual, elapsedMs: 0, frameIndex: 0, revision: 0 });
+              this.animatedStacks.add(stack);
+            }
+          } catch (error) {
+            reject(error);
+          } finally {
+            resolve();
+          }
+        }));
       } catch (error) {
         console.warn(`Failed to load tile texture ${visual.texturePath}.`, error);
-        if (stack.generation === generation && isCurrent(stack)) {
-          container.addChild(createFallbackTile(tileId));
-          this.boundsChanged(stack, localSortLayer);
-        }
+        this.schedule(() => {
+          if (stack.generation === generation && isCurrent(stack)) {
+            container.addChild(createFallbackTile(tileId));
+            this.boundsChanged(stack, localSortLayer);
+          }
+        });
       }
     }
   }
@@ -128,11 +140,14 @@ export class PixiTileStackRenderer {
     const revision = ++tile.revision;
     try {
       const texture = await this.textureLoader.load(texturePath);
-      if (revision === tile.revision && isCurrent(stack)) {
-        tile.sprite.texture = texture;
-        const index = stack.containers.indexOf(tile.sprite);
-        if (index >= 0) this.boundsChanged(stack, index);
-      }
+      if (revision !== tile.revision || !isCurrent(stack)) return;
+      this.schedule(() => {
+        if (revision === tile.revision && isCurrent(stack)) {
+          tile.sprite.texture = texture;
+          const index = stack.containers.indexOf(tile.sprite);
+          if (index >= 0) this.boundsChanged(stack, index);
+        }
+      }, tile);
     } catch (error) {
       console.warn(`Failed to load tile animation texture ${texturePath}.`, error);
     }
