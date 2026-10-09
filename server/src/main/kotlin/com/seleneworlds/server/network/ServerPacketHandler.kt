@@ -70,7 +70,9 @@ class ServerPacketHandler(
 
     private fun handleGame(context: NetworkClient, packet: Packet) {
         val player = (context as NetworkPlayerClient).player
-        if (packet is RequestMovePacket) {
+        if (packet is PreferencesPacket) {
+            handlePreferences(context, packet)
+        } else if (packet is RequestMovePacket) {
             player.resetLastInputTime()
             val controlledEntity = player.controlledEntity ?: return
             val isAllowedStep = grid.isAllowedStep(controlledEntity.coordinate, packet.coordinate)
