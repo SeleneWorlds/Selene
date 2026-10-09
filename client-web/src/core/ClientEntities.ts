@@ -286,6 +286,10 @@ class ClientEntity implements EntityApi {
     return this.components[name] ?? null;
   }
 
+  getComponents(): Readonly<Record<string, unknown>> {
+    return { ...this.components };
+  }
+
   getDefinition(): ClientEntityDefinition {
     return this.definition;
   }

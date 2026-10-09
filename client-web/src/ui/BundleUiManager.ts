@@ -384,8 +384,7 @@ export class BundleUiManager {
       && typeof value === 'object'
       && (value as Record<string, unknown>).type === 'visual');
     const visual = (component as Record<string, unknown> | undefined)?.visual;
-    const draggable = Object.keys(definition.components ?? {}).some((name) => {
-      const value = entity.getComponent(name);
+    const draggable = Object.values(entity.getComponents()).some((value) => {
       return value !== null
         && typeof value === 'object'
         && (value as Record<string, unknown>).type === 'draggable'

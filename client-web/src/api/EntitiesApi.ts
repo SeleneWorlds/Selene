@@ -25,6 +25,7 @@ export interface EntityApi {
   setComponentAlpha: (name: string, alpha: number) => void;
   setComponentProperty: (name: string, property: string, value: unknown) => void;
   getComponent: (name: string) => unknown;
+  getComponents: () => Readonly<Record<string, unknown>>;
   getDefinition: () => ClientEntityDefinition;
 }
 
