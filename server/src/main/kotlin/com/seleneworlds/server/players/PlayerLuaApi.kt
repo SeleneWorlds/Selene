@@ -1,6 +1,7 @@
 package com.seleneworlds.server.players
 
 import com.seleneworlds.common.lua.LuaMappedMetatable
+import com.seleneworlds.common.lua.util.checkBoolean
 import com.seleneworlds.common.lua.util.checkFloat
 import com.seleneworlds.common.lua.util.checkCoordinate
 import com.seleneworlds.common.lua.util.checkString
@@ -260,7 +261,67 @@ object PlayerLuaApi {
         return 1
     }
 
+    /**
+     * Enables or disables this player's movement requests. Defaults to true.
+     * The state persists until changed, including changes of controlled entity.
+     * Scripted entity movement remains available. Scripts manage any timing.
+     *
+     * ```signatures
+     * setCanMove(canMove: boolean)
+     * ```
+     */
+    private fun setCanMove(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        player.setCanMove(lua.checkBoolean(2))
+        return 0
+    }
+
+    /**
+     * Whether this player's movement requests are enabled.
+     *
+     * ```signatures
+     * canMove() -> boolean
+     * ```
+     */
+    private fun canMove(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        lua.push(player.canMove())
+        return 1
+    }
+
+    /**
+     * Whether this player's turning requests are enabled.
+     *
+     * ```signatures
+     * canTurn() -> boolean
+     * ```
+     */
+    private fun canTurn(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        lua.push(player.canTurn())
+        return 1
+    }
+
+    /**
+     * Enables or disables this player's turning requests. Defaults to true.
+     * The state persists until changed, including changes of controlled entity.
+     * Scripted entity turning remains available. Scripts manage any timing.
+     *
+     * ```signatures
+     * setCanTurn(canTurn: boolean)
+     * ```
+     */
+    private fun setCanTurn(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        player.setCanTurn(lua.checkBoolean(2))
+        return 0
+    }
+
     val luaMeta = LuaMappedMetatable(PlayerApi::class) {
+        callable(::setCanMove)
+        callable(::canMove)
+        callable(::setCanTurn)
+        callable(::canTurn)
         callable(::getRuntimeData)
         callable(::overwriteRuntimeData)
         callable(::hasRuntimeData)

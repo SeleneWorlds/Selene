@@ -96,6 +96,15 @@ class ServerPacketHandler(
         } else if (packet is RequestFacingPacket) {
             player.resetLastInputTime()
             val controlledEntity = player.controlledEntity ?: return
+            if (!player.canTurn) {
+                context.send(
+                    TurnEntityPacket(
+                        controlledEntity.networkId,
+                        controlledEntity.facing?.angle ?: 0f
+                    )
+                )
+                return
+            }
             val facing = grid.getDirection(packet.angle)
             if (controlledEntity.facing != facing) {
                 controlledEntity.turnTo(facing)

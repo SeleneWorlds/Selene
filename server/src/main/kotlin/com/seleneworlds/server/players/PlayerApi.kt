@@ -29,6 +29,18 @@ class PlayerApi(val delegate: Player) : IdResolvable<String, Player> {
         return delegate.idleTime
     }
 
+    fun setCanMove(canMove: Boolean) {
+        delegate.canMove = canMove
+    }
+
+    fun canMove(): Boolean = delegate.canMove
+
+    fun setCanTurn(canTurn: Boolean) {
+        delegate.canTurn = canTurn
+    }
+
+    fun canTurn(): Boolean = delegate.canTurn
+
     fun getUserId(): String? {
         return delegate.userId
     }

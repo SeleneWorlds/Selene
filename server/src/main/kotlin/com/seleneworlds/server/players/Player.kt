@@ -58,13 +58,15 @@ class Player(
 
     var lastInputTime = System.currentTimeMillis()
     private var nextMoveRequestTimeNanos = Long.MIN_VALUE
+    var canMove: Boolean = true
+    var canTurn: Boolean = true
 
     fun resetLastInputTime() {
         lastInputTime = System.currentTimeMillis()
     }
 
     fun acquireMoveRequestCooldown(durationSeconds: Float, nowNanos: Long = System.nanoTime()): Boolean {
-        if (nowNanos < nextMoveRequestTimeNanos) {
+        if (!canMove || nowNanos < nextMoveRequestTimeNanos) {
             return false
         }
         nextMoveRequestTimeNanos = nowNanos + (durationSeconds * NANOS_PER_SECOND).toLong()
