@@ -47,6 +47,13 @@ class Entity(
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
     val components = mutableMapOf<String, EntityComponent>()
     val tickableComponents = mutableListOf<TickableComponent>()
+    private var movementEndsAt: Long? = null
+
+    fun isMoving(): Boolean = movementEndsAt?.let { System.nanoTime() - it < 0L } ?: false
+
+    private fun startMovement(duration: Float) {
+        movementEndsAt = System.nanoTime() + (duration * 1_000_000_000.0).toLong()
+    }
 
     val transient get() = networkId == -1
 
@@ -137,13 +144,25 @@ class Entity(
     }
 
     fun getMovementDuration(coordinate: Coordinate): Float {
-        val dimension = dimension ?: return TileDefinition.DEFAULT_MOVEMENT_DURATION
-        val chunkView = world.chunkViewManager.atCoordinate(dimension, collisionViewer, coordinate)
-        val tileId = chunkView.getBaseTileAt(coordinate)
-        return registries.tiles.get(tileId)?.movementDuration ?: TileDefinition.DEFAULT_MOVEMENT_DURATION
+        val dimension = dimension
+        val baseDuration = if (dimension == null) {
+            TileDefinition.DEFAULT_MOVEMENT_DURATION
+        } else {
+            val chunkView = world.chunkViewManager.atCoordinate(dimension, collisionViewer, coordinate)
+            val tileId = chunkView.getBaseTileAt(coordinate)
+            registries.tiles.get(tileId)?.movementDuration ?: TileDefinition.DEFAULT_MOVEMENT_DURATION
+        }
+        return baseDuration * getMovementDurationMultiplier()
+    }
+
+    fun getMovementDurationMultiplier(): Float {
+        val value = attributes["selene:movement_duration_multiplier"]?.effectiveValue ?: return 1f
+        val multiplier = (value as? Number)?.toFloat()
+        return multiplier?.takeIf { it.isFinite() && it > 0f } ?: 1f
     }
 
     fun moveTo(coordinate: Coordinate, duration: Float = getMovementDuration(coordinate)): Boolean {
+        if (isMoving()) return false
         EntityEvents.BeforeEntityMove.EVENT.invoker().beforeEntityMove(api, coordinate)
         this.facing = world.grid.getDirection(this.coordinate, coordinate)
         val dimension = dimension ?: return false
@@ -157,6 +176,7 @@ class Entity(
         }
         val prevCoordinate = this.coordinate
         this.coordinate = coordinate
+        startMovement(duration)
         dimension.syncManager.entityMoved(this, prevCoordinate, coordinate, duration)
         EntityEvents.EntitySteppedOffTile.EVENT.invoker().entitySteppedOffTile(api, prevCoordinate)
         EntityEvents.EntitySteppedOnTile.EVENT.invoker().entitySteppedOnTile(api, coordinate)
@@ -168,8 +188,10 @@ class Entity(
         val dimension = dimension ?: return false
         val previous = coordinate
         val destination = Coordinate(previous.x, previous.y, previous.z - 1)
+        val duration = getMovementDuration(destination)
         coordinate = destination
-        dimension.syncManager.entityMoved(this, previous, destination, getMovementDuration(destination))
+        startMovement(duration)
+        dimension.syncManager.entityMoved(this, previous, destination, duration)
         EntityEvents.EntitySteppedOffTile.EVENT.invoker().entitySteppedOffTile(api, previous)
         EntityEvents.EntitySteppedOnTile.EVENT.invoker().entitySteppedOnTile(api, destination)
         return true

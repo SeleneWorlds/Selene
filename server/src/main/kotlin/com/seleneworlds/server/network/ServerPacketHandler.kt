@@ -80,6 +80,7 @@ class ServerPacketHandler(
                 null
             }
             if (movementDuration == null ||
+                controlledEntity.isMoving() ||
                 !player.acquireMoveRequestCooldown(movementDuration) ||
                 !controlledEntity.moveTo(packet.coordinate, movementDuration)
             ) {

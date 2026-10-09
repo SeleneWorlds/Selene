@@ -11,6 +11,24 @@ import party.iroiro.luajava.Lua
 
 object EntityLuaApi {
 
+    private fun isMoving(lua: Lua): Int {
+        val entity = lua.checkUserdata<EntityApi>(1)
+        lua.push(entity.isMoving())
+        return 1
+    }
+
+    private fun getMovementDurationMultiplier(lua: Lua): Int {
+        val entity = lua.checkUserdata<EntityApi>(1)
+        lua.push(entity.getMovementDurationMultiplier())
+        return 1
+    }
+
+    private fun setMovementDurationMultiplier(lua: Lua): Int {
+        val entity = lua.checkUserdata<EntityApi>(1)
+        entity.setMovementDurationMultiplier(lua.checkFloat(2))
+        return 0
+    }
+
     private fun getNetworkId(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getNetworkId())
@@ -398,6 +416,9 @@ object EntityLuaApi {
         callable(::setCoordinate)
         callable(::setFacing)
         callable(::move)
+        callable(::isMoving)
+        callable(::getMovementDurationMultiplier)
+        callable(::setMovementDurationMultiplier)
         callable(::setVision)
         callable(::getDimension)
         callable(::hasVision)

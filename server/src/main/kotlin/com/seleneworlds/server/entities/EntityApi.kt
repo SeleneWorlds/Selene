@@ -108,6 +108,19 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
         return delegate.moveTo(coordinate)
     }
 
+    fun isMoving(): Boolean = delegate.isMoving()
+
+    fun getMovementDurationMultiplier(): Float {
+        return delegate.getMovementDurationMultiplier()
+    }
+
+    fun setMovementDurationMultiplier(multiplier: Float) {
+        require(multiplier.isFinite() && multiplier > 0f) { "Movement duration multiplier must be positive and finite" }
+        val attribute = getAttribute("selene:movement_duration_multiplier")
+            ?: createAttribute("selene:movement_duration_multiplier", 1f)
+        attribute.setValue(multiplier)
+    }
+
     fun setVision(enabled: Boolean, tagName: String = "default") {
         if (enabled) {
             delegate.visionTags.add(tagName)
