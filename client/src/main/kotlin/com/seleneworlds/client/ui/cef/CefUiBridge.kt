@@ -337,14 +337,15 @@ class CefUiBridge(
             callback.success(buildJsonArray {
                 clientMap.getEntitiesAt(coordinate).forEach { entity ->
                     val definition = entity.entityDefinition.get() ?: return@forEach
-                    val visual = (definition.components["illarion:visual"] as? VisualComponentConfiguration)?.visual
+                    val visual = definition.components.values
+                        .filterIsInstance<VisualComponentConfiguration>().firstOrNull()?.visual
                     add(buildJsonObject {
                         put("networkId", entity.networkId)
                         put("tags", buildJsonArray { definition.tags.forEach { add(JsonPrimitive(it)) } })
                         visual?.let { put("visual", it.toString()) }
                         put(
                             "draggable",
-                            (entity.components["illarion:draggable"] as? DraggableComponent)?.enabled == true
+                            entity.components.values.filterIsInstance<DraggableComponent>().any { it.enabled }
                         )
                     })
                 }

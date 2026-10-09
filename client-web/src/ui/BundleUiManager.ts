@@ -379,14 +379,18 @@ export class BundleUiManager {
 
   private toWorldEntity(entity: NonNullable<ReturnType<EntitiesApi['getEntityByNetworkId']>>): BundleUiWorldEntity {
     const definition = entity.getDefinition();
-    const component = definition.components?.['illarion:visual'];
-    const visual = component && typeof component === 'object'
-      ? (component as Record<string, unknown>).visual
-      : undefined;
-    const draggableComponent = entity.getComponent('illarion:draggable');
-    const draggable = draggableComponent !== null
-      && typeof draggableComponent === 'object'
-      && (draggableComponent as Record<string, unknown>).enabled === true;
+    const components = Object.values(definition.components ?? {});
+    const component = components.find((value) => value !== null
+      && typeof value === 'object'
+      && (value as Record<string, unknown>).type === 'visual');
+    const visual = (component as Record<string, unknown> | undefined)?.visual;
+    const draggable = Object.keys(definition.components ?? {}).some((name) => {
+      const value = entity.getComponent(name);
+      return value !== null
+        && typeof value === 'object'
+        && (value as Record<string, unknown>).type === 'draggable'
+        && (value as Record<string, unknown>).enabled !== false;
+    });
     return {
       networkId: entity.getNetworkId(),
       coordinate: entity.getCoordinate(),
