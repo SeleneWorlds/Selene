@@ -96,6 +96,28 @@ class ClientRegistrySnapshotsTest {
         assertTrue("secret" !in messages)
     }
 
+    @Test
+    fun `web message snapshots preserve UTF-8 umlauts and properties escapes`() {
+        val bundleDatabase = BundleDatabase()
+        bundleDatabase.addBundle(createBundle("utf8") {
+            writeText("client/i18n/messages_de.properties", "menu.title=Menü\ncharacters=ÄÖÜ äöü ß\nescaped=Men\\u00fc\n")
+            writeText("common/i18n/messages_de.properties", "common=Zurück\n")
+        })
+
+        val snapshot = assertNotNull(
+            createSnapshots(bundleDatabase).getRegistry(Identifier.withDefaultNamespace("messages"))
+        )
+        // Check the JSON payload consumed by the web client, including serialization.
+        val messages = seleneJson.parseToJsonElement(
+            snapshot.entries.getValue("selene:messages").toString()
+        ).jsonObject
+
+        assertEquals("Menü", messages.getValue("menu.title").jsonObject.getValue("de").jsonPrimitive.content)
+        assertEquals("ÄÖÜ äöü ß", messages.getValue("characters").jsonObject.getValue("de").jsonPrimitive.content)
+        assertEquals("Menü", messages.getValue("escaped").jsonObject.getValue("de").jsonPrimitive.content)
+        assertEquals("Zurück", messages.getValue("common").jsonObject.getValue("de").jsonPrimitive.content)
+    }
+
     private fun createSnapshots(bundleDatabase: BundleDatabase): ClientRegistrySnapshots {
         return ClientRegistrySnapshots(
             bundleDatabase,

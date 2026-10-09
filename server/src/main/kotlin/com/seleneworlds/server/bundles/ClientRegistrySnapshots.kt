@@ -111,7 +111,7 @@ class ClientRegistrySnapshots(
                     val locale = MESSAGE_FILE.matchEntire(file.name)!!
                         .groupValues[1]
                         .replace('_', '-')
-                    val properties = Properties().apply { file.inputStream().use(::load) }
+                    val properties = Properties().apply { file.bufferedReader(Charsets.UTF_8).use(::load) }
                     for ((key, value) in properties) {
                         messagesByKey.getOrPut(key.toString()) { mutableMapOf() }[locale] = value.toString()
                     }
