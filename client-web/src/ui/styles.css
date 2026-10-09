@@ -386,7 +386,7 @@ select {
 }
 
 .settings-toggle + .settings-toggle,
-.settings-toggle + .settings-menu-button {
+.settings-menu-button + .settings-menu-button {
   margin-top: 18px;
 }
 

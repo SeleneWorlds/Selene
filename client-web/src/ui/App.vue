@@ -4,7 +4,7 @@ import { createDebugState, type DebugSnapshot } from '@/core/DebugState';
 import { bootstrapClient, type WebClientRuntime } from '@/core/WebClientRuntime';
 import DebugOverlay from './components/DebugOverlay.vue';
 import ModDropInstaller from './components/ModDropInstaller.vue';
-import SettingsModal from './components/SettingsModal.vue';
+import ClientMenu from './components/ClientMenu.vue';
 import StartupScreen from './components/StartupScreen.vue';
 import { loadSettings, saveSettings } from './settings';
 
@@ -19,7 +19,7 @@ const startupProgress = ref(0);
 const settings = loadSettings();
 const isDebugOverlayVisible = ref(settings.debugOverlayVisible);
 const fitToScreen = ref(settings.fitToScreen);
-const isSettingsOpen = ref(false);
+const isMenuOpen = ref(false);
 const debugState = createDebugState();
 
 let clientRuntime: WebClientRuntime | null = null;
@@ -61,14 +61,14 @@ function handleGlobalKeydown(event: KeyboardEvent): void {
 
   if (event.ctrlKey && event.key === ',') {
     event.preventDefault();
-    isSettingsOpen.value = !isSettingsOpen.value;
+    isMenuOpen.value = !isMenuOpen.value;
     return;
   }
 
-  if (event.key === 'Escape' && isSettingsOpen.value) {
+  if (event.key === 'Escape' && isMenuOpen.value) {
     event.preventDefault();
-    isSettingsOpen.value = false;
-    return;
+    event.stopImmediatePropagation();
+    isMenuOpen.value = false;
   }
 
 }
@@ -150,11 +150,11 @@ onMounted(() => {
       @renderer-option-changed="(option, enabled) => clientRuntime?.setRendererDebugOption(option, enabled)"
     />
 
-    <SettingsModal
-      v-if="isSettingsOpen"
+    <ClientMenu
+      v-if="isMenuOpen"
       :debug-overlay-visible="isDebugOverlayVisible"
       :fit-to-screen="fitToScreen"
-      @close="isSettingsOpen = false"
+      @close="isMenuOpen = false"
       @debug-overlay-visible-changed="setDebugOverlayVisible"
       @fit-to-screen-changed="setFitToScreen"
     />
