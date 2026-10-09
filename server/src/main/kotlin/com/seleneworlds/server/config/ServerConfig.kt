@@ -9,6 +9,7 @@ data class ServerConfig(
     val webSocketPort: Int = 8148,
     val maxQueuedPacketsPerClient: Int = 256,
     val maxPacketsPerClientPerTick: Int = 64,
+    val packetRateLimits: Map<String, PacketRateLimit> = emptyMap(),
     val apiPort: Int = 8080,
     val savePath: String = "save",
     val bundlesPath: String = "bundles",
@@ -51,5 +52,15 @@ data class ServerConfig(
                 }
             }
         }
+    }
+}
+
+/** Per-client token bucket: sustained packets per second and maximum burst size. */
+data class PacketRateLimit(val packetsPerSecond: Double, val burst: Int) {
+    init {
+        require(packetsPerSecond.isFinite() && packetsPerSecond > 0) {
+            "packetsPerSecond must be finite and positive"
+        }
+        require(burst > 0) { "burst must be positive" }
     }
 }

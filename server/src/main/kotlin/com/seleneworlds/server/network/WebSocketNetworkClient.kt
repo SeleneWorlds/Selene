@@ -1,6 +1,8 @@
 package com.seleneworlds.server.network
 
 import com.seleneworlds.common.network.Packet
+import com.seleneworlds.server.config.PacketRateLimit
+import kotlin.reflect.KClass
 import com.seleneworlds.common.network.PacketCodec
 import com.seleneworlds.server.players.PlayerManager
 import io.netty.channel.Channel
@@ -15,11 +17,12 @@ class WebSocketNetworkClient(
     playerManager: PlayerManager,
     private val channel: Channel,
     private val packetCodec: PacketCodec,
-    maxQueuedPackets: Int
+    maxQueuedPackets: Int,
+    packetRateLimits: Map<KClass<out Packet>, PacketRateLimit> = emptyMap()
 ) : ChannelFutureListener, NetworkPlayerClient {
 
     override val player = playerManager.createPlayer(this)
-    private val incomingPackets = IncomingPacketQueue(maxQueuedPackets)
+    private val incomingPackets = IncomingPacketQueue(maxQueuedPackets, PacketRateLimiter(packetRateLimits))
     private val disconnecting = AtomicBoolean()
     private val queueOverflowReported = AtomicBoolean()
 

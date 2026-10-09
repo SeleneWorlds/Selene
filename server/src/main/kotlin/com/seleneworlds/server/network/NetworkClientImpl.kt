@@ -6,6 +6,8 @@ import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.socket.SocketChannel
 import com.seleneworlds.common.network.Packet
+import com.seleneworlds.server.config.PacketRateLimit
+import kotlin.reflect.KClass
 import com.seleneworlds.server.players.PlayerManager
 import java.net.InetSocketAddress
 import java.util.concurrent.atomic.AtomicBoolean
@@ -14,11 +16,12 @@ class NetworkClientImpl(
     private val server: NetworkServer,
     playerManager: PlayerManager,
     private val channel: SocketChannel,
-    maxQueuedPackets: Int
+    maxQueuedPackets: Int,
+    packetRateLimits: Map<KClass<out Packet>, PacketRateLimit> = emptyMap()
 ) : ChannelInboundHandlerAdapter(), ChannelFutureListener, NetworkPlayerClient {
 
     override val player = playerManager.createPlayer(this)
-    private val incomingPackets = IncomingPacketQueue(maxQueuedPackets)
+    private val incomingPackets = IncomingPacketQueue(maxQueuedPackets, PacketRateLimiter(packetRateLimits))
     private val disconnecting = AtomicBoolean()
     private val queueOverflowReported = AtomicBoolean()
 

@@ -18,6 +18,9 @@ import com.seleneworlds.common.network.PacketEncoder
 import com.seleneworlds.common.network.PacketFactory
 import com.seleneworlds.common.network.PacketHandler
 import com.seleneworlds.common.network.PacketDirection
+import com.seleneworlds.common.network.Packet
+import com.seleneworlds.server.config.PacketRateLimit
+import kotlin.reflect.KClass
 import com.seleneworlds.server.config.ServerConfig
 import com.seleneworlds.server.players.PlayerManager
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -53,8 +56,19 @@ class NetworkServerImpl(
     private var webSocketChannel: Channel? = null
 
     override val clients = ConcurrentLinkedQueue<NetworkClient>()
+    private var packetRateLimits: Map<KClass<out Packet>, PacketRateLimit> = emptyMap()
 
     override fun start(port: Int) {
+        val packetClasses = packetFactory.registeredPacketClasses(PacketDirection.CLIENT_TO_SERVER)
+        packetRateLimits = config.packetRateLimits.map { (name, rule) ->
+            val matches = packetClasses.filter { it.simpleName == name || it.qualifiedName == name }
+            require(matches.size == 1) { "Unknown or ambiguous client packet rate limit: $name" }
+            matches.single() to rule
+        }.also { rules ->
+            require(rules.map { it.first }.distinct().size == rules.size) {
+                "Multiple rate limits configured for the same packet class"
+            }
+        }.toMap()
         startTcp(port)
         if (config.webSocketPort > 0) {
             startWebSocket(config.webSocketPort)
@@ -71,7 +85,8 @@ class NetworkServerImpl(
                         this@NetworkServerImpl,
                         playerManager,
                         channel,
-                        config.maxQueuedPacketsPerClient
+                        config.maxQueuedPacketsPerClient,
+                        packetRateLimits
                     )
                     channel.attr(NetworkClientAttributes.CLIENT).set(client)
                     clients.add(client)
@@ -118,7 +133,8 @@ class NetworkServerImpl(
                         playerManager,
                         channel,
                         packetCodec,
-                        config.maxQueuedPacketsPerClient
+                        config.maxQueuedPacketsPerClient,
+                        packetRateLimits
                     )
                     channel.attr(NetworkClientAttributes.CLIENT).set(client)
                     clients.add(client)

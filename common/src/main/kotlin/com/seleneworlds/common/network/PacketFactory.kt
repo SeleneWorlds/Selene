@@ -14,6 +14,9 @@ class PacketFactory {
     private val registrationsById = mutableMapOf<Int, Registration>()
     private val packetToRegistration = mutableMapOf<KClass<out Packet>, Pair<Int, Registration>>()
 
+    fun registeredPacketClasses(direction: PacketDirection): Set<KClass<out Packet>> =
+        packetToRegistration.filterValues { direction in it.second.directions }.keys.toSet()
+
     fun <T : Packet> registerPacket(
         packetType: Int,
         directions: Set<PacketDirection>,
