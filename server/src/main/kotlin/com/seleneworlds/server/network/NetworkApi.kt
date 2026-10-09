@@ -7,6 +7,7 @@ import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.server.entities.EntityApi
 import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.players.PlayerApi
+import com.seleneworlds.server.config.PacketRateLimit
 import kotlinx.serialization.json.Json
 
 /**
@@ -14,8 +15,14 @@ import kotlinx.serialization.json.Json
  */
 class NetworkApi(
     private val payloadRegistry: PayloadHandlerRegistry<Player>,
-    private val json: Json
+    private val json: Json,
+    private val payloadRateLimits: PayloadRateLimitRegistry
 ) {
+    /** Used only when the administrator has not configured a limit for this payload ID. */
+    fun setDefaultPayloadRateLimit(payloadId: String, packetsPerSecond: Double, burst: Int) {
+        payloadRateLimits.setDefault(payloadId, PacketRateLimit(packetsPerSecond, burst))
+    }
+
     fun handlePayload(payloadId: String, callback: (Player, SerializedMap) -> Unit) {
         payloadRegistry.registerHandler(payloadId, callback)
     }

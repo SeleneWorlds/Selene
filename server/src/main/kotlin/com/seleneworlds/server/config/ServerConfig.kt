@@ -10,6 +10,7 @@ data class ServerConfig(
     val maxQueuedPacketsPerClient: Int = 256,
     val maxPacketsPerClientPerTick: Int = 64,
     val packetRateLimits: Map<String, PacketRateLimit> = emptyMap(),
+    val payloadRateLimits: Map<String, PacketRateLimit> = emptyMap(),
     val apiPort: Int = 8080,
     val savePath: String = "save",
     val bundlesPath: String = "bundles",

@@ -12,12 +12,12 @@ class ScreenOverlayTimelineEventTest {
     fun `textured fog overlay can persist until stopped`() {
         val timeline = seleneJson.decodeFromString<TimelineDefinition>(
             """{"events":[{"type":"screen_overlay",
-                "texture":"client/textures/illarion/ui/fog_overlay.png",
+                "texture":"client/textures/example/ui/fog_overlay.png",
                 "alphaMultiplier":"fogDensity"}]}"""
         )
         val event = assertIs<ScreenOverlayTimelineEvent>(timeline.events.single())
         assertEquals(null, event.duration)
-        assertEquals("client/textures/illarion/ui/fog_overlay.png", event.texture)
+        assertEquals("client/textures/example/ui/fog_overlay.png", event.texture)
         assertEquals("fogDensity", event.alphaMultiplier)
         assertEquals(1f, event.alpha)
     }

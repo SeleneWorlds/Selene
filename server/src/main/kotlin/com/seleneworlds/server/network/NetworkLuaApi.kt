@@ -21,10 +21,23 @@ class NetworkLuaApi(private val api: NetworkApi) : LuaModule {
 
     override fun register(table: LuaValue) {
         table.register("handlePayload", ::handlePayload)
+        table.register("setDefaultPayloadRateLimit", ::setDefaultPayloadRateLimit)
         table.register("sendToPlayer", ::sendToPlayer)
         table.register("sendToPlayers", ::sendToPlayers)
         table.register("sendToEntity", ::sendToEntity)
         table.register("sendToEntities", ::sendToEntities)
+    }
+
+    private fun setDefaultPayloadRateLimit(lua: Lua): Int {
+        val payloadId = lua.checkString(1)
+        lua.checkType(2, Lua.LuaType.NUMBER)
+        lua.checkType(3, Lua.LuaType.NUMBER)
+        val burst = lua.toNumber(3)
+        require(burst >= 1 && burst <= Int.MAX_VALUE && burst == burst.toInt().toDouble()) {
+            "Burst must be a positive integer within Int range"
+        }
+        api.setDefaultPayloadRateLimit(payloadId, lua.toNumber(2), burst.toInt())
+        return 0
     }
 
     private fun handlePayload(lua: Lua): Int {

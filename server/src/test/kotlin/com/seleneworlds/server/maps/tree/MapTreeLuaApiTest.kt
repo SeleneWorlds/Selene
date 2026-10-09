@@ -34,15 +34,15 @@ class MapTreeLuaApiTest {
             manager.lua.setGlobal("map")
             manager.lua.load(LuaManager.loadBuffer(
                 """
-                map:annotateTile(1, 2, 0, "illarion:warp", {x = 3})
-                map:annotateTile(1, 2, 0, "illarion:triggerfield", {script = "old"})
-                map:annotateTile(1, 2, 0, "illarion:triggerfield", nil)
+                map:annotateTile(1, 2, 0, "example:warp", {x = 3})
+                map:annotateTile(1, 2, 0, "example:triggerfield", {script = "old"})
+                map:annotateTile(1, 2, 0, "example:triggerfield", nil)
                 """.trimIndent()
             ), "remove_triggerfield")
             manager.lua.pCall(0, 0)
             val annotations = layer.getAnnotations(Coordinate(1, 2, 0))
-            assertTrue("illarion:triggerfield" !in annotations)
-            assertEquals(3, annotations["illarion:warp"]?.get("x"))
+            assertTrue("example:triggerfield" !in annotations)
+            assertEquals(3, annotations["example:warp"]?.get("x"))
         } finally {
             manager.lua.close()
         }

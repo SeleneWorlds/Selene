@@ -17,12 +17,22 @@ class ServerConfigTest {
                 packet_rate_limits.RequestMovePacket.burst=10
                 packet_rate_limits.PreferencesPacket.packets_per_second=0.5
                 packet_rate_limits.PreferencesPacket.burst=2
+                payload_rate_limits.example.chat.packets_per_second=1
+                payload_rate_limits.example.chat.burst=5
+                payload_rate_limits.example.shop.buy.packets_per_second=5
+                payload_rate_limits.example.shop.buy.burst=2
             """.trimIndent())
-            val config = ConfigLoaderBuilder.default().build().loadConfigOrThrow<ServerConfig>(file.absolutePath)
+            val config = ConfigLoaderBuilder.default()
+                .addNodeTransformer(PayloadRateLimitsTransformer)
+                .build().loadConfigOrThrow<ServerConfig>(file.absolutePath)
             assertEquals(mapOf(
                 "RequestMovePacket" to PacketRateLimit(20.0, 10),
                 "PreferencesPacket" to PacketRateLimit(0.5, 2)
             ), config.packetRateLimits)
+            assertEquals(mapOf(
+                "example:chat" to PacketRateLimit(1.0, 5),
+                "example:shop:buy" to PacketRateLimit(5.0, 2)
+            ), config.payloadRateLimits)
         } finally {
             file.delete()
         }

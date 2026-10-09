@@ -141,7 +141,7 @@ class BundleWatcherTest {
             override fun getRegistry(name: String): Registry<*>? = if (name == "npcs") registry else null
         }
 
-        assertSame(registry, watcher.findRegistryForFile("server/data/illarion/npcs/npc_42.json"))
+        assertSame(registry, watcher.findRegistryForFile("server/data/example/npcs/npc_42.json"))
     }
 
     private fun withWatcherBundle(block: (Bundle, RecordingBundleWatcher) -> Unit) {

@@ -11,7 +11,7 @@ class JsonStringAnyMapSerializerTest {
     fun `deserializes numeric sound metadata`() {
         val json = """
             {
-              "audio": "client/sounds/illarion/saw.ogg",
+              "audio": "client/sounds/example/saw.ogg",
               "metadata": {
                 "soundId": 11
               }

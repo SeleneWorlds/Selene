@@ -47,11 +47,11 @@ class EditorResourcesTest {
     @Test
     fun `resource permissions use the selected bundle registry and action`() = fixture { api, _, _ ->
         val selection = buildJsonObject {
-            put("bundle", "illarion-gobaith-data")
-            put("registry", "illarion:npcs")
+            put("bundle", "example-data")
+            put("registry", "example:npcs")
         }
-        assertEquals(listOf("illarion-gobaith-data.npcs.edit"), api.permissionKeys("create-file", selection))
-        assertEquals(listOf("illarion-gobaith-data.npcs.read"), api.permissionKeys("request-project", selection))
+        assertEquals(listOf("example-data.npcs.edit"), api.permissionKeys("create-file", selection))
+        assertEquals(listOf("example-data.npcs.read"), api.permissionKeys("request-project", selection))
         val resource = buildJsonObject { put("path", path) }
         assertEquals(listOf("active.items.read"), api.permissionKeys("open-file", resource))
         assertEquals(listOf("active.items.persist"), api.permissionKeys("persist-changes", resource))

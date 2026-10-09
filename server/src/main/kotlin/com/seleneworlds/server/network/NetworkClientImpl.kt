@@ -17,11 +17,15 @@ class NetworkClientImpl(
     playerManager: PlayerManager,
     private val channel: SocketChannel,
     maxQueuedPackets: Int,
-    packetRateLimits: Map<KClass<out Packet>, PacketRateLimit> = emptyMap()
+    packetRateLimits: Map<KClass<out Packet>, PacketRateLimit> = emptyMap(),
+    payloadRateLimits: Map<String, PacketRateLimit> = emptyMap(),
+    payloadDefault: (String) -> PacketRateLimit? = { null }
 ) : ChannelInboundHandlerAdapter(), ChannelFutureListener, NetworkPlayerClient {
 
     override val player = playerManager.createPlayer(this)
-    private val incomingPackets = IncomingPacketQueue(maxQueuedPackets, PacketRateLimiter(packetRateLimits))
+    private val incomingPackets = IncomingPacketQueue(
+        maxQueuedPackets, PacketRateLimiter(packetRateLimits, payloadRateLimits, payloadDefault)
+    )
     private val disconnecting = AtomicBoolean()
     private val queueOverflowReported = AtomicBoolean()
 

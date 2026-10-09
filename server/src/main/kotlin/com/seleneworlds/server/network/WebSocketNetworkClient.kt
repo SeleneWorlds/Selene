@@ -18,11 +18,15 @@ class WebSocketNetworkClient(
     private val channel: Channel,
     private val packetCodec: PacketCodec,
     maxQueuedPackets: Int,
-    packetRateLimits: Map<KClass<out Packet>, PacketRateLimit> = emptyMap()
+    packetRateLimits: Map<KClass<out Packet>, PacketRateLimit> = emptyMap(),
+    payloadRateLimits: Map<String, PacketRateLimit> = emptyMap(),
+    payloadDefault: (String) -> PacketRateLimit? = { null }
 ) : ChannelFutureListener, NetworkPlayerClient {
 
     override val player = playerManager.createPlayer(this)
-    private val incomingPackets = IncomingPacketQueue(maxQueuedPackets, PacketRateLimiter(packetRateLimits))
+    private val incomingPackets = IncomingPacketQueue(
+        maxQueuedPackets, PacketRateLimiter(packetRateLimits, payloadRateLimits, payloadDefault)
+    )
     private val disconnecting = AtomicBoolean()
     private val queueOverflowReported = AtomicBoolean()
 

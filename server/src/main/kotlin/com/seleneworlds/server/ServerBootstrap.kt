@@ -1,6 +1,7 @@
 package com.seleneworlds.server
 
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.seleneworlds.server.config.PayloadRateLimitsTransformer
 import com.sksamuel.hoplite.ExperimentalHoplite
 import com.sksamuel.hoplite.fp.getOrElse
 import io.ktor.client.*
@@ -128,6 +129,7 @@ fun main(args: Array<String>) {
         singleOf(::ServerApi)
         singleOf(::PlayersApi)
         singleOf(::NetworkApi)
+        singleOf(::PayloadRateLimitRegistry)
         singleOf(::SoundsApi)
         singleOf(::TimelinesApi)
         singleOf(::EnvironmentApi)
@@ -191,7 +193,8 @@ fun main(args: Array<String>) {
                 listOf(
                     BundleEventSubscriptions,
                     get<SchedulesApi>(),
-                    get<PayloadHandlerRegistry<Player>>()
+                    get<PayloadHandlerRegistry<Player>>(),
+                    get<PayloadRateLimitRegistry>()
                 )
             )
         }
@@ -255,6 +258,7 @@ fun main(args: Array<String>) {
     val serverModule = module {
         single {
             ConfigLoaderBuilder.default()
+                .addNodeTransformer(PayloadRateLimitsTransformer)
                 .withExplicitSealedTypes()
                 .build()
                 .loadConfigOrThrow<ServerConfig>("server.properties")

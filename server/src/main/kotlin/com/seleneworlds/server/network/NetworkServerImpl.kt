@@ -32,7 +32,8 @@ class NetworkServerImpl(
     private val packetHandler: PacketHandler<NetworkClient>,
     private val playerManager: PlayerManager,
     private val config: ServerConfig,
-    private val logger: Logger
+    private val logger: Logger,
+    private val payloadRateLimitRegistry: PayloadRateLimitRegistry
 ) : ChannelInboundHandlerAdapter(), NetworkServer {
 
     init {
@@ -86,7 +87,9 @@ class NetworkServerImpl(
                         playerManager,
                         channel,
                         config.maxQueuedPacketsPerClient,
-                        packetRateLimits
+                        packetRateLimits,
+                        config.payloadRateLimits,
+                        payloadRateLimitRegistry::getDefault
                     )
                     channel.attr(NetworkClientAttributes.CLIENT).set(client)
                     clients.add(client)
@@ -134,7 +137,9 @@ class NetworkServerImpl(
                         channel,
                         packetCodec,
                         config.maxQueuedPacketsPerClient,
-                        packetRateLimits
+                        packetRateLimits,
+                        config.payloadRateLimits,
+                        payloadRateLimitRegistry::getDefault
                     )
                     channel.attr(NetworkClientAttributes.CLIENT).set(client)
                     clients.add(client)
