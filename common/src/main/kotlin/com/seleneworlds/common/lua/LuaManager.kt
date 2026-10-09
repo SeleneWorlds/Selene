@@ -53,7 +53,7 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         lua.register("xpcall", ::xpCall)
 
         // Load standard libraries, but only those that are safe
-        val libraries = setOf("string", "math", "table", "coroutine")
+        val libraries = setOf("string", "math", "table", "coroutine", "utf8")
         lua.push(luaPackage.packageLoaded)
         libraries.forEach {
             lua.openLibrary(it)
