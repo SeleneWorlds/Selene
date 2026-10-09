@@ -104,6 +104,13 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
     this.sendPacket(encodeRequestMovePacket(coordinate));
   }
 
+  setLocale(locale: string): void {
+    this.options.locale = locale;
+    if (this.status === 'connected') {
+      this.sendPacket(encodePreferencesPacket(locale));
+    }
+  }
+
   sendFacingRequest(angle: number): void {
     this.sendPacket(encodeRequestFacingPacket(angle));
   }

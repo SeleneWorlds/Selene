@@ -1,5 +1,6 @@
 import { acquireSessionToken, restartAuthorization } from '@/auth/AuthorizationFlow';
 import { createDebugState, type DebugState, type RendererDebugOptions } from '@/core/DebugState';
+import { ClientPreferences } from '@/core/ClientPreferences';
 import { GameClient } from '@/core/GameClient';
 import { loadClientAssetManifest } from '@/core/services/ClientAssetManifest';
 import { applyModRegistryOverrides } from '@/core/services/ModAssetStore';
@@ -101,6 +102,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       authToken: () => Promise.resolve(authToken),
       onDisconnected: options.onDisconnected,
     });
+    const preferences = new ClientPreferences(networkClient);
     const gameClient = new GameClient({
       canvasHost: options.viewportHost,
       debugState: this.debugState,
@@ -132,7 +134,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     const registriesApi = new RegistriesService(registries, gameClient.getNameIdMappings());
     const visualsApi = new VisualsService(registriesApi);
     const schedulesService = new SchedulesService();
-    const i18nService = new I18nService(registries);
+    const i18nService = new I18nService(registries, () => preferences.getLocale());
     const soundsService = new SoundsService(registriesApi, assetManifest, serverApiUrl, authToken);
     gameClient.setTimelineSoundPlayer((sound, volume, pitch) => {
       soundsService.playSound(sound, { volume, pitch });
@@ -198,6 +200,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       entities: gameClient.getEntitiesApi(),
       registries,
       i18n: i18nService,
+      preferences,
       getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) =>
         gameClient.getMapTiles(coordinate, width, height),
       hasTileAt: (coordinate) => gameClient.hasTileAt(coordinate),

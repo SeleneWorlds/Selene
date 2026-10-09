@@ -1,12 +1,14 @@
 export interface ClientSettings {
   debugOverlayVisible: boolean;
   fitToScreen: boolean;
+  locale: string;
 }
 
 const SETTINGS_STORAGE_KEY = 'selene.client.settings';
 const defaultSettings: ClientSettings = {
   debugOverlayVisible: false,
   fitToScreen: true,
+  locale: navigator.language.replace(/-/g, '_'),
 };
 
 interface SettingsStore {
@@ -62,6 +64,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function sanitizeSettings(value: unknown): ClientSettings {
   return {
+    locale: isRecord(value) && typeof value.locale === 'string' && value.locale.trim()
+      ? value.locale.replace(/-/g, '_')
+      : defaultSettings.locale,
     debugOverlayVisible:
       isRecord(value) && typeof value.debugOverlayVisible === 'boolean'
         ? value.debugOverlayVisible

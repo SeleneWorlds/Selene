@@ -39,6 +39,7 @@ function setFitToScreen(enabled: boolean): void {
 
 function persistSettings(): void {
   saveSettings({
+    ...loadSettings(),
     debugOverlayVisible: isDebugOverlayVisible.value,
     fitToScreen: fitToScreen.value,
   });
