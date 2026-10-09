@@ -19,7 +19,9 @@ class HttpApi(
         try {
             val response = runBlocking {
                 httpClient.post(url) {
-                    contentType(ContentType.Application.Json)
+                    if (headers.keys.none { it.equals(HttpHeaders.ContentType, ignoreCase = true) }) {
+                        contentType(ContentType.Application.Json)
+                    }
                     setBody(body)
                     headers.forEach { (key, value) ->
                         if (value != null) {
