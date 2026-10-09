@@ -51,6 +51,7 @@ interface ParticleEffect {
 interface OverlayEffect {
   instanceId: string;
   event: ScreenOverlayTimelineEvent;
+  alphaMultiplier: number;
   sprite: Sprite;
   elapsedMs: number;
 }
@@ -169,7 +170,7 @@ export class TimelinePlayer {
     for (let index = this.overlayEffects.length - 1; index >= 0; index -= 1) {
       const effect = this.overlayEffects[index];
       effect.elapsedMs += deltaMs;
-      if (effect.elapsedMs >= effect.event.duration * 1000) {
+      if (effect.event.duration !== undefined && effect.elapsedMs >= effect.event.duration * 1000) {
         effect.sprite.destroy();
         this.overlayEffects.splice(index, 1);
         this.cleanupInstance(effect.instanceId);
@@ -204,7 +205,7 @@ export class TimelinePlayer {
         void this.playParticleSystem(event, playback);
         break;
       case 'screen_overlay':
-        this.playScreenOverlay(event, playback);
+        void this.playScreenOverlay(event, playback);
         break;
       case 'sound':
         this.playSound(event);
@@ -220,12 +221,23 @@ export class TimelinePlayer {
     this.soundPlayer(event.sound, event.volume, event.pitch);
   }
 
-  private playScreenOverlay(event: ScreenOverlayTimelineEvent, playback: Playback): void {
-    const sprite = new Sprite(Texture.WHITE);
-    const effect = { instanceId: playback.instanceId, event, sprite, elapsedMs: 0 };
-    this.overlayEffects.push(effect);
-    this.screenScene.addChild(sprite);
-    this.updateOverlay(effect);
+  private async playScreenOverlay(event: ScreenOverlayTimelineEvent, playback: Playback): Promise<void> {
+    this.markPending(playback.instanceId, 1);
+    try {
+      const texture = event.texture ? await this.textureLoader.load(event.texture) : Texture.WHITE;
+      if (this.stoppedInstances.has(playback.instanceId)) return;
+      const sprite = new Sprite(texture);
+      const alphaMultiplier = event.alphaMultiplier === undefined ? 1 : Math.min(1,
+        readNonNegativeNumber(playback.parameters.values[event.alphaMultiplier], 1));
+      const effect = { instanceId: playback.instanceId, event, sprite, alphaMultiplier, elapsedMs: 0 };
+      this.overlayEffects.push(effect);
+      this.screenScene.addChild(sprite);
+      this.updateOverlay(effect);
+    } catch (error) {
+      console.warn(`[Timelines] Failed to start screen overlay ${event.texture}.`, error);
+    } finally {
+      this.markPending(playback.instanceId, -1);
+    }
   }
 
   private updateOverlay(effect: OverlayEffect): void {
@@ -235,7 +247,7 @@ export class TimelinePlayer {
     effect.sprite.height = viewport.height;
     effect.sprite.tint = keyedValue(effect.event, 'color', effect.event.color, effect.elapsedMs / 1000) as string;
     effect.sprite.alpha = Math.min(1, Math.max(0,
-      keyedValue(effect.event, 'alpha', effect.event.alpha, effect.elapsedMs / 1000) as number,
+      (keyedValue(effect.event, 'alpha', effect.event.alpha, effect.elapsedMs / 1000) as number) * effect.alphaMultiplier,
     ));
   }
 

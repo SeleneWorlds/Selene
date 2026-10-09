@@ -70,23 +70,27 @@ data class SoundTimelineEvent(
     }
 }
 
-/** A solid color drawn over the game world for a configurable amount of time. */
+/** A color or stretched texture drawn over the world until its duration expires or it is stopped. */
 @Serializable
 @SerialName("screen_overlay")
 data class ScreenOverlayTimelineEvent(
     override val time: Float = 0f,
-    val duration: Float,
+    val duration: Float? = null,
+    val texture: String? = null,
+    val alphaMultiplier: String? = null,
     val color: String = "#ffffff",
     val alpha: Float = 1f,
     override val keys: Map<String, List<TimelineKeyframe>> = emptyMap()
 ) : TimelineEvent() {
     init {
-        require(duration > 0f && duration.isFinite()) { "duration must be a positive finite number" }
+        require(duration == null || (duration > 0f && duration.isFinite())) { "duration must be a positive finite number" }
         require(Regex("^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$").matches(color)) {
             "color must be #RRGGBB or #RRGGBBAA"
         }
         require(alpha in 0f..1f) { "alpha must be between 0 and 1" }
-        require(keys.values.flatten().all { it.time <= duration }) { "keys must fall within the event duration" }
+        require(texture == null || texture.isNotBlank()) { "texture must not be blank" }
+        require(alphaMultiplier == null || alphaMultiplier.isNotBlank()) { "alphaMultiplier must not be blank" }
+        require(duration == null || keys.values.flatten().all { it.time <= duration }) { "keys must fall within the event duration" }
     }
 }
 

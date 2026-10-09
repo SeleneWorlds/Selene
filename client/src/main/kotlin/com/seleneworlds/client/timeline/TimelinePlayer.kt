@@ -80,6 +80,7 @@ class TimelinePlayer(
     private data class OwnedOverlay(
         val instanceId: String,
         val event: ScreenOverlayTimelineEvent,
+        val alphaMultiplier: Float = 1f,
         var elapsed: Float = 0f
     )
 
@@ -159,7 +160,7 @@ class TimelinePlayer(
         while (overlayIterator.hasNext()) {
             val owned = overlayIterator.next()
             owned.elapsed += delta
-            if (owned.elapsed >= owned.event.duration) {
+            if (owned.event.duration?.let { owned.elapsed >= it } == true) {
                 overlayIterator.remove()
                 cleanupInstance(owned.instanceId)
             }
@@ -174,10 +175,12 @@ class TimelinePlayer(
         }
         for (owned in overlays) {
             val color = Color.valueOf(owned.event.keyedString("color", owned.event.color, owned.elapsed).removePrefix("#"))
-            val alpha = owned.event.keyedFloat("alpha", owned.event.alpha, owned.elapsed).coerceIn(0f, 1f) * color.a
+            val alpha = owned.event.keyedFloat("alpha", owned.event.alpha, owned.elapsed).coerceIn(0f, 1f) * color.a * owned.alphaMultiplier
             if (alpha <= 0f) continue
             batch.setColor(color.r, color.g, color.b, alpha)
-            batch.draw(whiteTexture(), 0f, 0f, width, height)
+            val texture = owned.event.texture?.let { assets.getLoadedTexture(it) }
+                ?: if (owned.event.texture == null) whiteTexture() else continue
+            batch.draw(texture, 0f, 0f, width, height)
         }
         batch.setColor(1f, 1f, 1f, 1f)
     }
@@ -185,16 +188,32 @@ class TimelinePlayer(
     private fun execute(event: TimelineEvent, playback: Playback) {
         when (event) {
             is ParticleSystemTimelineEvent -> playParticleSystem(event, playback)
-            is ScreenOverlayTimelineEvent -> overlays += OwnedOverlay(
-                playback.instanceId,
-                event
-            )
+            is ScreenOverlayTimelineEvent -> playScreenOverlay(event, playback)
             is SoundTimelineEvent -> {
                 val sound = sounds.get(Identifier.parse(event.sound))
                 if (sound == null) logger.warn("Unknown sound ${event.sound}")
                 else soundManager.playSound(sound, event.volume, event.pitch)
             }
             is VisualAnimationTimelineEvent -> playVisualAnimation(event, playback)
+        }
+    }
+
+    private fun playScreenOverlay(event: ScreenOverlayTimelineEvent, playback: Playback) {
+        val multiplier = event.alphaMultiplier?.let {
+            playback.parameters[it]?.jsonPrimitive?.floatOrNull
+        }?.takeIf { it.isFinite() }?.coerceIn(0f, 1f) ?: 1f
+        if (event.texture == null) {
+            overlays += OwnedOverlay(playback.instanceId, event, multiplier)
+            return
+        }
+        markPending(playback.instanceId, 1)
+        assets.loadTextureAsync(event.texture).invokeOnCompletion { error ->
+            mainThread.runOnMainThread {
+                if (error == null && !stoppedInstances.contains(playback.instanceId)) {
+                    overlays += OwnedOverlay(playback.instanceId, event, multiplier)
+                }
+                markPending(playback.instanceId, -1)
+            }
         }
     }
 

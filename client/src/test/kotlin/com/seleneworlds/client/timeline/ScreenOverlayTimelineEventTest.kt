@@ -9,6 +9,20 @@ import kotlinx.serialization.json.JsonPrimitive
 
 class ScreenOverlayTimelineEventTest {
     @Test
+    fun `textured fog overlay can persist until stopped`() {
+        val timeline = seleneJson.decodeFromString<TimelineDefinition>(
+            """{"events":[{"type":"screen_overlay",
+                "texture":"client/textures/illarion/ui/fog_overlay.png",
+                "alphaMultiplier":"fogDensity"}]}"""
+        )
+        val event = assertIs<ScreenOverlayTimelineEvent>(timeline.events.single())
+        assertEquals(null, event.duration)
+        assertEquals("client/textures/illarion/ui/fog_overlay.png", event.texture)
+        assertEquals("fogDensity", event.alphaMultiplier)
+        assertEquals(1f, event.alpha)
+    }
+
+    @Test
     fun `decodes a screen overlay event`() {
         val timeline = seleneJson.decodeFromString<TimelineDefinition>(
             """{
@@ -78,6 +92,8 @@ class ScreenOverlayTimelineEventTest {
 
     @Test
     fun `rejects invalid overlay definitions`() {
+        assertFailsWith<IllegalArgumentException> { ScreenOverlayTimelineEvent(texture = "") }
+        assertFailsWith<IllegalArgumentException> { ScreenOverlayTimelineEvent(alphaMultiplier = "") }
         assertFailsWith<IllegalArgumentException> { ScreenOverlayTimelineEvent(duration = 0f) }
         assertFailsWith<IllegalArgumentException> { ScreenOverlayTimelineEvent(duration = 1f, color = "green") }
         assertFailsWith<IllegalArgumentException> { ScreenOverlayTimelineEvent(duration = 1f, alpha = 1.1f) }

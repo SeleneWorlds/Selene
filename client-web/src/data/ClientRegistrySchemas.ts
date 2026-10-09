@@ -196,7 +196,9 @@ export type SoundTimelineEvent = z.infer<typeof SoundTimelineEventSchema>;
 export const ScreenOverlayTimelineEventSchema = z.object({
   type: z.literal('screen_overlay'),
   time: z.number().finite().nonnegative().default(0),
-  duration: z.number().finite().positive(),
+  duration: z.number().finite().positive().optional(),
+  texture: z.string().min(1).optional(),
+  alphaMultiplier: z.string().min(1).optional(),
   color: z.string().regex(/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/).default('#ffffff'),
   alpha: z.number().min(0).max(1).default(1),
   keys: timelineKeysSchema,
