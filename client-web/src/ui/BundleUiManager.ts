@@ -22,7 +22,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 17;
+const API_VERSION = 18;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -54,6 +54,7 @@ interface BundleUiModule {
 }
 interface BundleUiApi {
   readonly apiVersion: number;
+  readonly launch: { getParameters(): Readonly<Record<string, string>> };
   readonly http: { request(path: string, payload?: ClientNetworkPayload, method?: 'GET' | 'POST' | 'PUT'): Promise<unknown> };
   readonly registries: {
     search(registry: string, query: string, lookup?: boolean): Promise<{
@@ -186,6 +187,9 @@ export class BundleUiManager {
     const storagePrefix = `selene.bundle.${entrypoint.bundle}.${entrypoint.id}.`;
     return Object.freeze({
       apiVersion: API_VERSION,
+      launch: Object.freeze({
+        getParameters: () => Object.freeze(Object.fromEntries(new URL(window.location.href).searchParams)),
+      }),
       http: Object.freeze({
         request: async (path: string, payload: ClientNetworkPayload = {}, method: 'GET' | 'POST' | 'PUT' = 'GET') => {
           const segment = '[^/?#]+';
