@@ -62,9 +62,10 @@ class Messages(
             val localeFiles = findLocaleFiles(i18nDir, locale)
             localeFiles.forEach { file ->
                 try {
-                    val content = file.readText()
                     val props = Properties()
-                    props.load(content.byteInputStream())
+                    file.bufferedReader(Charsets.UTF_8).use { reader ->
+                        props.load(reader)
+                    }
                     messages.putAll(props)
                 } catch (e: Exception) {
                     logger.error(
