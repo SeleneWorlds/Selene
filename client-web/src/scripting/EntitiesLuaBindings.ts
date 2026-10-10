@@ -47,6 +47,7 @@ export async function registerEntitiesLuaModule(runtime: LuaRuntime, entities: E
 }
 
 export function toLuaEntity(entity: EntityApi, apis: EntityLuaApis): {
+  attachTo: (networkId: unknown) => void;
   getNetworkId: () => number;
   getCoordinate: () => ReturnType<typeof toLuaCoordinate>;
   getFacing: () => number;
@@ -66,6 +67,7 @@ export function toLuaEntity(entity: EntityApi, apis: EntityLuaApis): {
 }
 
 function createLuaEntity(entity: EntityApi, apis: EntityLuaApis): {
+  attachTo: (networkId: unknown) => void;
   getNetworkId: () => number;
   getCoordinate: () => ReturnType<typeof toLuaCoordinate>;
   getFacing: () => number;
@@ -78,6 +80,10 @@ function createLuaEntity(entity: EntityApi, apis: EntityLuaApis): {
 } {
   return {
     getNetworkId: () => entity.getNetworkId(),
+    attachTo: (networkId: unknown) => {
+      const args = new LuaArguments('Entity.attachTo');
+      entity.attachTo(networkId == null ? null : args.integer(networkId, 'networkId'));
+    },
     getCoordinate: () => toLuaCoordinate(entity.getCoordinate()),
     getFacing: () => entity.getFacing(),
     spawn: () => entity.spawn(),

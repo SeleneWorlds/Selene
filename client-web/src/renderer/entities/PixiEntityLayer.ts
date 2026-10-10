@@ -28,6 +28,7 @@ interface RenderedEntity {
   frameIndex: number;
   frameElapsedMs: number;
   visualRevision: number;
+  attachmentTarget: number | null;
 }
 
 export interface WorldBounds {
@@ -58,7 +59,7 @@ export class PixiEntityLayer {
   ) {}
 
   update(deltaMs: number): void {
-    for (const [id, rendered] of this.renderedEntities) {
+    for (const rendered of this.renderedEntities.values()) {
       if (rendered.motion) {
         rendered.motion.elapsedMs += deltaMs;
         const progress = Math.min(1, rendered.motion.elapsedMs / rendered.motion.durationMs);
@@ -70,6 +71,12 @@ export class PixiEntityLayer {
         }
       } else {
         rendered.motionGraceRemainingMs = Math.max(0, rendered.motionGraceRemainingMs - deltaMs);
+      }
+    }
+    for (const [id, rendered] of this.renderedEntities) {
+      if (rendered.attachmentTarget !== null) {
+        const target = this.renderedEntities.get(rendered.attachmentTarget);
+        if (target) rendered.coordinate = { ...target.coordinate };
       }
       // Surface heights can change independently when a map stack is updated.
       this.positionEntity(rendered);
@@ -178,6 +185,23 @@ export class PixiEntityLayer {
     void this.applyVisual(snapshot.id, rendered, visual);
   }
 
+  setClientEntityTransform(id: number, coordinate: Coordinate, facing: number): void {
+    const rendered = this.renderedEntities.get(id);
+    if (!rendered) return;
+    rendered.coordinate = { ...coordinate };
+    rendered.facing = facing;
+    rendered.motion = null;
+    rendered.motionGraceRemainingMs = 0;
+    this.positionEntity(rendered);
+    this.updateEntityLight(id, rendered);
+    this.applyLighting(rendered);
+  }
+
+  attachClientEntityTo(id: number, networkId: number | null): void {
+    const rendered = this.renderedEntities.get(id);
+    if (rendered) rendered.attachmentTarget = networkId;
+  }
+
   setClientEntityAlpha(id: number, alpha: number): void {
     const rendered = this.renderedEntities.get(id);
     if (!rendered?.visual) {
@@ -273,6 +297,7 @@ export class PixiEntityLayer {
       frameIndex: 0,
       frameElapsedMs: 0,
       visualRevision: 0,
+      attachmentTarget: null,
     };
     this.renderedEntities.set(networkId, rendered);
     return rendered;

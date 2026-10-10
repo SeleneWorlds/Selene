@@ -21,6 +21,7 @@ export interface EntityApi {
   spawn: () => void;
   despawn: () => void;
   setCoordinate: (coordinate: Coordinate) => void;
+  attachTo: (networkId: number | null) => void;
   addComponent: (name: string, componentData: unknown) => void;
   setComponentAlpha: (name: string, alpha: number) => void;
   setComponentProperty: (name: string, property: string, value: unknown) => void;
@@ -45,6 +46,8 @@ export interface EntitiesApi {
 
 export interface ClientEntitiesListener {
   entityChanged: (snapshot: ClientEntitySnapshot) => void;
+  entityTransformChanged: (id: number, coordinate: Coordinate, facing: number) => void;
+  entityAttachmentChanged: (id: number, networkId: number | null) => void;
   entityRemoved: (id: number) => void;
   entityVisualAlphaChanged: (id: number, alpha: number) => void;
 }

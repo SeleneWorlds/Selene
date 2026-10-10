@@ -29,6 +29,8 @@ export class ClientEntities implements EntitiesApi {
       entityName,
       definition,
       (snapshot) => this.emitEntityChanged(snapshot),
+      (id, coordinate, facing) => this.emitEntityTransformChanged(id, coordinate, facing),
+      (id, target) => this.emitEntityAttachmentChanged(id, target),
       (id) => this.emitEntityRemoved(id),
       (id, alpha) => this.emitEntityVisualAlphaChanged(id, alpha),
       (scriptedEntity, isScripted) => this.updateScriptedEntity(scriptedEntity, isScripted),
@@ -121,6 +123,8 @@ export class ClientEntities implements EntitiesApi {
       entityName,
       definition,
       (snapshot) => this.emitEntityChanged(snapshot),
+      (id, coordinate, facing) => this.emitEntityTransformChanged(id, coordinate, facing),
+      (id, target) => this.emitEntityAttachmentChanged(id, target),
       (id) => this.emitEntityRemoved(id),
       (id, alpha) => this.emitEntityVisualAlphaChanged(id, alpha),
       (scriptedEntity, isScripted) => this.updateScriptedEntity(scriptedEntity, isScripted),
@@ -175,6 +179,16 @@ export class ClientEntities implements EntitiesApi {
     }
   }
 
+  private emitEntityTransformChanged(id: number, coordinate: Coordinate, facing: number): void {
+    for (const listener of this.listeners) {
+      listener.entityTransformChanged(id, coordinate, facing);
+    }
+  }
+
+  private emitEntityAttachmentChanged(id: number, target: number | null): void {
+    for (const listener of this.listeners) listener.entityAttachmentChanged(id, target);
+  }
+
   private emitEntityVisualAlphaChanged(id: number, alpha: number): void {
     for (const listener of this.listeners) {
       listener.entityVisualAlphaChanged(id, alpha);
@@ -196,12 +210,15 @@ class ClientEntity implements EntityApi {
   spawned = false;
   private readonly components: Record<string, unknown>;
   private clientScriptModule: string | null;
+  private attachmentTarget: number | null = null;
 
   constructor(
     readonly id: number,
     private readonly entityName: string,
     private readonly definition: ClientEntityDefinition,
     private readonly onChanged: (snapshot: ClientEntitySnapshot) => void,
+    private readonly onTransformChanged: (id: number, coordinate: Coordinate, facing: number) => void,
+    private readonly onAttachmentChanged: (id: number, target: number | null) => void,
     private readonly onRemoved: (id: number) => void,
     private readonly onVisualAlphaChanged: (id: number, alpha: number) => void,
     private readonly onScriptedChanged: (entity: ClientEntity, isScripted: boolean) => void,
@@ -231,6 +248,7 @@ class ClientEntity implements EntityApi {
     this.spawned = true;
     this.updateScriptedState();
     this.notifyChanged();
+    this.onAttachmentChanged(this.id, this.attachmentTarget);
   }
 
   despawn(): void {
@@ -242,14 +260,20 @@ class ClientEntity implements EntityApi {
   setCoordinate(coordinate: Coordinate): void {
     this.coordinate = { ...coordinate };
     if (this.spawned) {
-      this.notifyChanged();
+      this.onTransformChanged(this.id, this.getCoordinate(), this.facing);
     }
+  }
+
+  attachTo(networkId: number | null): void {
+    if (this.attachmentTarget === networkId) return;
+    this.attachmentTarget = networkId;
+    if (this.spawned) this.onAttachmentChanged(this.id, networkId);
   }
 
   setFacing(facing: number): void {
     this.facing = facing;
     if (this.spawned) {
-      this.notifyChanged();
+      this.onTransformChanged(this.id, this.getCoordinate(), this.facing);
     }
   }
 

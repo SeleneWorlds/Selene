@@ -22,6 +22,8 @@ export interface GameRenderer {
   handlePacket(packet: GamePacket): void;
   drawCameraScene(): void;
   upsertClientEntity(snapshot: ClientEntitySnapshot): void;
+  setClientEntityTransform(id: number, coordinate: Coordinate, facing: number): void;
+  attachClientEntityTo(id: number, networkId: number | null): void;
   setClientEntityAlpha(id: number, alpha: number): void;
   removeClientEntity(id: number): void;
   setWindowAspectRatio(width: number, height: number): void;

@@ -76,6 +76,8 @@ export class GameClient {
     );
     this.entities.addListener({
       entityChanged: (snapshot) => this.renderer.upsertClientEntity(snapshot),
+      entityTransformChanged: (id, coordinate, facing) => this.renderer.setClientEntityTransform(id, coordinate, facing),
+      entityAttachmentChanged: (id, target) => this.renderer.attachClientEntityTo(id, target),
       entityRemoved: (id) => {
         this.clientEntityScriptRemover?.(id);
         this.renderer.removeClientEntity(id);

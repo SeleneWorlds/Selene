@@ -232,6 +232,15 @@ export class PixiGameRenderer implements GameRenderer {
     this.entityLayer.setClientEntityAlpha(id, alpha);
   }
 
+  setClientEntityTransform(id: number, coordinate: Coordinate, facing: number): void {
+    this.entityLayer.setClientEntityTransform(id, coordinate, facing);
+    this.drawCameraScene();
+  }
+
+  attachClientEntityTo(id: number, networkId: number | null): void {
+    this.entityLayer.attachClientEntityTo(id, networkId);
+  }
+
   removeClientEntity(id: number): void {
     this.entityLayer.removeClientEntity(id);
     this.drawCameraScene();
