@@ -52,6 +52,7 @@ export class PixiTileStackRenderer {
       occlusionFade: visuals.map(visual => visual?.occlusionFade ?? true),
       occlusionAlphas: containers.map(() => 1),
       targetOcclusionAlphas: containers.map(() => 1),
+      occlusionInitialized: containers.map(() => false),
       upperLayerAlpha: 1,
       cullingBounds: null,
       cullingBucketKeys: [],

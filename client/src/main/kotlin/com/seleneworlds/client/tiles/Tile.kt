@@ -52,6 +52,7 @@ class Tile(
 
     private var currentOcclusionAlpha: Float = 1f
     private var targetOcclusionAlpha: Float = 1f
+    private var occlusionInitialized = false
     private val fadeSpeed: Float = 1.65f
 
     override fun update(delta: Float) {
@@ -75,6 +76,10 @@ class Tile(
         if (environment.shouldRender(coordinate, bounds)) {
             val occluding = visual.occlusionFade && environment.occludesFocus(coordinate, bounds)
             targetOcclusionAlpha = if (occluding) 0.4f else 1f
+            if (!occlusionInitialized) {
+                currentOcclusionAlpha = targetOcclusionAlpha
+                occlusionInitialized = true
+            }
             batch.color.set(environment.getColor(coordinate))
             batch.color = batch.color.mul(1f, 1f, 1f, currentOcclusionAlpha)
             visual.render(batch, displayX, displayY)
@@ -93,6 +98,7 @@ class Tile(
         visual = ReloadableVisual.None
         currentOcclusionAlpha = 1f
         targetOcclusionAlpha = 1f
+        occlusionInitialized = false
     }
 
     fun updateVisual() {

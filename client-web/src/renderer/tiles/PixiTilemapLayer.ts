@@ -44,6 +44,7 @@ export class PixiTilemapLayer {
       (stack, index) => {
         if (this.renderedStacks.get(coordinateKey(stack.coordinate)) !== stack) return;
         this.spatialIndex.refreshBounds(stack, index);
+        this.occlusionFader.initialize(stack);
         this.culler.boundsChanged(stack);
       },
     );

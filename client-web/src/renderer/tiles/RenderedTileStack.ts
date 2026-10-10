@@ -23,6 +23,7 @@ export interface RenderedTileStack {
   occlusionFade: boolean[];
   occlusionAlphas: number[];
   targetOcclusionAlphas: number[];
+  occlusionInitialized: boolean[];
   upperLayerAlpha: number;
   cullingBounds: WorldBounds | null;
   cullingBucketKeys: string[];

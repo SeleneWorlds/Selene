@@ -16,6 +16,12 @@ export class TileOcclusionFader {
 
   constructor(private readonly spatialIndex: TileSpatialIndex) {}
 
+  initialize(stack: RenderedTileStack): void {
+    if (!this.lastFocus || !this.lastBounds) return;
+    fadeStack(stack, this.lastFocus, this.lastBounds, 0);
+    if (stack.occlusionAlphas.some(alpha => alpha !== 1)) this.fadingStacks.add(stack);
+  }
+
   remove(stack: RenderedTileStack): void {
     this.fadingStacks.delete(stack);
     this.indexRevision = -1;
@@ -52,9 +58,13 @@ function fadeStack(stack: RenderedTileStack, focus: Coordinate, focusBounds: Wor
   for (let index = 0; index < stack.containers.length; index += 1) {
     const container = stack.containers[index];
     const bounds = stack.localBounds[index];
+    // Textures arrive asynchronously; wait for bounds before deciding the initial alpha.
+    if (bounds === null) continue;
     const current = stack.occlusionAlphas[index];
-    if (!stack.occlusionFade[index] && current === 1) continue;
-    if (!inFront && current === 1) continue;
+    if (stack.occlusionInitialized[index]) {
+      if (!stack.occlusionFade[index] && current === 1) continue;
+      if (!inFront && current === 1) continue;
+    }
     const overlapsFocus = bounds !== null && overlapsTranslated(bounds, container.x, container.y, focusBounds);
     const canOcclude = bounds !== null && (bounds.height >= focusBounds.height || stack.coordinate.z > focus.z);
     stack.targetOcclusionAlphas[index] = stack.occlusionFade[index] && inFront && overlapsFocus && canOcclude
@@ -62,7 +72,9 @@ function fadeStack(stack: RenderedTileStack, focus: Coordinate, focusBounds: Wor
       : 1;
     const target = stack.targetOcclusionAlphas[index];
     const step = FADE_SPEED * (deltaMs / 1000);
-    const next = Math.abs(target - current) <= step ? target : current + Math.sign(target - current) * step;
+    const next = !stack.occlusionInitialized[index] || Math.abs(target - current) <= step
+      ? target : current + Math.sign(target - current) * step;
+    stack.occlusionInitialized[index] = true;
     if (next !== current) {
       stack.occlusionAlphas[index] = next;
       container.alpha = stack.upperLayerAlpha * next;
