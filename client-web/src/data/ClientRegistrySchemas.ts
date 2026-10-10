@@ -18,6 +18,7 @@ export const ClientTileDefinitionSchema = z.object({
   visual: z.string(),
   impassable: z.boolean().optional(),
   passableAbove: z.boolean().optional(),
+  mapColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default('#ffffff'),
   light: tileLightSchema.nullish(),
   metadata: metadataSchema,
   tags: tagsSchema,

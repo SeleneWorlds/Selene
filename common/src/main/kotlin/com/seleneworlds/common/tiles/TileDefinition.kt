@@ -17,9 +17,11 @@ data class TileDefinition(
     val light: TileLight? = null,
     @Serializable(with = SerializedMapSerializer::class)
     override val metadata: SerializedMap = emptyMap(),
-    override val tags: Set<String> = emptySet()
+    override val tags: Set<String> = emptySet(),
+    val mapColor: String = "#ffffff"
 ) : MetadataHolder, TagHolder, RegistryAdoptedObject<TileDefinition>() {
     init {
+        require(Regex("#[0-9a-fA-F]{6}").matches(mapColor)) { "mapColor must be a #RRGGBB color" }
         require(movementDuration.isFinite() && movementDuration >= 0f) {
             "movementDuration must be a finite, non-negative number"
         }
