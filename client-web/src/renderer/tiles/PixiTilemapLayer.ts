@@ -17,6 +17,7 @@ import type { TileLight } from '@/api/EnvironmentApi';
 /** Coordinates map state and delegates tile rendering and visibility policy. */
 export class PixiTilemapLayer {
   private readonly renderedStacks = new Map<string, RenderedTileStack>();
+  private readonly pendingStacks = new Map<string, RenderedTileStack>();
   private readonly mapTiles = new Map<string, ClientMapTile>();
   private readonly mapChangedListeners = new Set<(coordinate: Coordinate, width: number, height: number) => void>();
   private readonly spatialIndex = new TileSpatialIndex();
@@ -41,6 +42,7 @@ export class PixiTilemapLayer {
       container,
       (task, key) => this.workQueue.enqueue(key ?? Symbol(), task, true),
       (stack, index) => {
+        if (this.renderedStacks.get(coordinateKey(stack.coordinate)) !== stack) return;
         this.spatialIndex.refreshBounds(stack, index);
         this.culler.boundsChanged(stack);
       },
@@ -205,21 +207,40 @@ export class PixiTilemapLayer {
   }
 
   private renderTileStack(coordinate: Coordinate, tileIds: readonly number[]): void {
-    this.removeTileStack(coordinate);
+    const key = coordinateKey(coordinate);
+    const pending = this.pendingStacks.get(key);
+    if (pending) {
+      pending.generation = -1;
+      this.stackRenderer.removeStack(pending);
+      this.pendingStacks.delete(key);
+    }
     if (tileIds.length === 0) {
+      this.removeTileStack(coordinate);
       this.lighting?.removeTileDefinitionLight(coordinate);
       return;
     }
-    const key = coordinateKey(coordinate);
     const light = tileIds.reduce<TileLight | null>((result, id) =>
       this.visualResolver.resolve(id, coordinate)?.light ?? result, null);
-    this.lighting?.setTileDefinitionLight(coordinate, light);
     const stack = this.stackRenderer.createStack(coordinate, tileIds, ++this.generation);
-    this.tintStack(stack);
-    this.renderedStacks.set(key, stack);
-    this.culler.add(stack);
-    this.upperLayerDirty = true;
-    void this.stackRenderer.renderStack(stack, candidate => this.isCurrent(candidate));
+    this.pendingStacks.set(key, stack);
+    // Keep the displayed stack until every replacement texture (or fallback) is ready.
+    void this.stackRenderer.renderStack(stack, candidate => this.isCurrent(candidate)).then(() => {
+      this.workQueue.enqueue(stack, () => {
+        if (this.pendingStacks.get(key) !== stack) return;
+        this.removeTileStack(coordinate);
+        this.pendingStacks.delete(key);
+        this.renderedStacks.set(key, stack);
+        this.lighting?.setTileDefinitionLight(coordinate, light);
+        this.tintStack(stack);
+        this.stackRenderer.attachStack(stack);
+        this.culler.add(stack);
+        for (let index = 0; index < stack.containers.length; index += 1) {
+          this.spatialIndex.refreshBounds(stack, index);
+        }
+        this.culler.boundsChanged(stack);
+        this.upperLayerDirty = true;
+      }, true);
+    });
   }
 
   private removeTileStack(coordinate: Coordinate): void {
@@ -235,7 +256,8 @@ export class PixiTilemapLayer {
   }
 
   private isCurrent(stack: RenderedTileStack): boolean {
-    return this.renderedStacks.get(coordinateKey(stack.coordinate)) === stack;
+    const key = coordinateKey(stack.coordinate);
+    return this.renderedStacks.get(key) === stack || this.pendingStacks.get(key) === stack;
   }
 
   private notifyMapChanged(coordinate: Coordinate, width: number, height: number): void {

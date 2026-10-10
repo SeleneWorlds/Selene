@@ -37,7 +37,6 @@ export class PixiTileStackRenderer {
       const container = visual ? new Sprite() : new Container();
       container.position.set(position.x, position.y - surfaceOffsets[localSortLayer]);
       container.zIndex = renderOrders[localSortLayer];
-      this.parent.addChild(container);
       return container;
     });
 
@@ -57,6 +56,10 @@ export class PixiTileStackRenderer {
       cullingBounds: null,
       cullingBucketKeys: [],
     };
+  }
+
+  attachStack(stack: RenderedTileStack): void {
+    for (const container of stack.containers) this.parent.addChild(container);
   }
 
   removeStack(stack: RenderedTileStack): void {
@@ -121,12 +124,16 @@ export class PixiTileStackRenderer {
         }));
       } catch (error) {
         console.warn(`Failed to load tile texture ${visual.texturePath}.`, error);
-        this.schedule(() => {
-          if (stack.generation === generation && isCurrent(stack)) {
-            container.addChild(createFallbackTile(tileId));
-            this.boundsChanged(stack, localSortLayer);
+        await new Promise<void>(resolve => this.schedule(() => {
+          try {
+            if (stack.generation === generation && isCurrent(stack)) {
+              container.addChild(createFallbackTile(tileId));
+              this.boundsChanged(stack, localSortLayer);
+            }
+          } finally {
+            resolve();
           }
-        });
+        }));
       }
     }
   }
