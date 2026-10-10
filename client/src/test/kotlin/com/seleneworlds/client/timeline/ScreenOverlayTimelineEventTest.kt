@@ -9,6 +9,26 @@ import kotlinx.serialization.json.JsonPrimitive
 
 class ScreenOverlayTimelineEventTest {
     @Test
+    fun `weather events opt in to outdoor visibility`() {
+        val timeline = seleneJson.decodeFromString<TimelineDefinition>(
+            """{"events":[
+                {"type":"particle_system","particle":"example:rain","space":"screen","outdoorsOnly":true},
+                {"type":"screen_overlay","outdoorsOnly":true},
+                {"type":"particle_system","particle":"example:sparks"},
+                {"type":"screen_overlay"}
+            ]}"""
+        )
+        assertEquals(true, assertIs<ParticleSystemTimelineEvent>(timeline.events[0]).outdoorsOnly)
+        assertEquals(true, assertIs<ScreenOverlayTimelineEvent>(timeline.events[1]).outdoorsOnly)
+        assertEquals(false, assertIs<ParticleSystemTimelineEvent>(timeline.events[2]).outdoorsOnly)
+        assertEquals(false, assertIs<ScreenOverlayTimelineEvent>(timeline.events[3]).outdoorsOnly)
+        val roundTrip = seleneJson.decodeFromString<TimelineDefinition>(
+            seleneJson.encodeToString(TimelineDefinition.serializer(), timeline)
+        )
+        assertEquals(timeline, roundTrip)
+    }
+
+    @Test
     fun `textured fog overlay can persist until stopped`() {
         val timeline = seleneJson.decodeFromString<TimelineDefinition>(
             """{"events":[{"type":"screen_overlay",

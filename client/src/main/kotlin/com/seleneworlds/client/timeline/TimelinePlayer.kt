@@ -164,7 +164,7 @@ class TimelinePlayer(
                 val multiplier = owned.parameters.multiplier(owned.event.emissionRateMultiplier)
                 owned.effect.emitters.forEach { it.emission.setScaling(floatArrayOf(multiplier)) }
             }
-            if (owned.screenSpace) {
+            if (owned.screenSpace && !(owned.event.outdoorsOnly && cameraManager.isInsideInterior())) {
                 configureScreenEffect(owned.effect, cameraManager.camera.viewportWidth, cameraManager.camera.viewportHeight)
                 owned.effect.update(delta)
             }
@@ -187,7 +187,7 @@ class TimelinePlayer(
         val overlayIterator = overlays.iterator()
         while (overlayIterator.hasNext()) {
             val owned = overlayIterator.next()
-            owned.elapsed += delta
+            if (!(owned.event.outdoorsOnly && cameraManager.isInsideInterior())) owned.elapsed += delta
             if (owned.event.duration?.let { owned.elapsed >= it } == true) {
                 overlayIterator.remove()
                 cleanupInstance(owned.instanceId)
@@ -197,11 +197,12 @@ class TimelinePlayer(
 
     fun renderScreen(batch: Batch, width: Float, height: Float) {
         for (owned in effects) {
-            if (!owned.screenSpace) continue
+            if (!owned.screenSpace || (owned.event.outdoorsOnly && cameraManager.isInsideInterior())) continue
             configureScreenEffect(owned.effect, width, height)
             owned.effect.draw(batch)
         }
         for (owned in overlays) {
+            if (owned.event.outdoorsOnly && cameraManager.isInsideInterior()) continue
             val color = Color.valueOf(owned.event.keyedString("color", owned.event.color, owned.elapsed).removePrefix("#"))
             val alpha = owned.event.keyedFloat("alpha", owned.event.alpha, owned.elapsed).coerceIn(0f, 1f) * color.a * owned.parameters.multiplier(owned.event.alphaMultiplier).coerceAtMost(1f)
             if (alpha <= 0f) continue
@@ -302,7 +303,9 @@ class TimelinePlayer(
                     configureScreenEffect(effect, cameraManager.camera.viewportWidth, cameraManager.camera.viewportHeight)
                     effect.start()
                 } else {
-                    scene.add(ParticleEffectRenderable(coordinate!!, effect, grid))
+                    scene.add(ParticleEffectRenderable(coordinate!!, effect, grid) {
+                        !event.outdoorsOnly || !cameraManager.isInsideInterior()
+                    })
                 }
                 effects += OwnedEffect(playback.instanceId, playback.timeline, effect, event.space == ParticleSystemSpace.SCREEN, event, playback.parameters)
                 markPending(playback.instanceId, -1)

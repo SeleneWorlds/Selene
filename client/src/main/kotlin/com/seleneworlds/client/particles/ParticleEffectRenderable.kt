@@ -11,7 +11,8 @@ import com.seleneworlds.common.grid.Coordinate
 class ParticleEffectRenderable(
     override val coordinate: Coordinate,
     private val effect: ParticleEffect,
-    private val grid: ClientGrid
+    private val grid: ClientGrid,
+    private val isVisible: () -> Boolean = { true }
 ) : Renderable {
     override val sortLayerOffset = 0
     override val sortLayer get() = grid.getSortLayer(coordinate, sortLayerOffset)
@@ -24,11 +25,13 @@ class ParticleEffectRenderable(
     }
 
     override fun update(delta: Float) {
+        if (!isVisible()) return
         effect.update(delta)
         if (effect.isComplete) scene?.remove(this)
     }
 
     override fun render(batch: Batch, environment: Environment) {
+        if (!isVisible()) return
         val oldColor = batch.color.cpy()
         batch.setColor(1f, 1f, 1f, 1f)
         effect.draw(batch)

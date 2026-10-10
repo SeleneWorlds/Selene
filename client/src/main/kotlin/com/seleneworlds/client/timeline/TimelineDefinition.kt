@@ -50,6 +50,8 @@ data class ParticleSystemTimelineEvent(
     val space: ParticleSystemSpace = ParticleSystemSpace.WORLD,
     val position: String = "position",
     val emissionRateMultiplier: String? = null,
+    /** Hide and pause this effect while the camera focus is indoors or underground. */
+    val outdoorsOnly: Boolean = false,
     override val keys: Map<String, List<TimelineKeyframe>> = emptyMap()
 ) : TimelineEvent()
 
@@ -78,6 +80,8 @@ data class ScreenOverlayTimelineEvent(
     val duration: Float? = null,
     val texture: String? = null,
     val alphaMultiplier: String? = null,
+    /** Hide and pause this overlay while the camera focus is indoors or underground. */
+    val outdoorsOnly: Boolean = false,
     val color: String = "#ffffff",
     val alpha: Float = 1f,
     override val keys: Map<String, List<TimelineKeyframe>> = emptyMap()

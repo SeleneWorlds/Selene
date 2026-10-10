@@ -6,7 +6,7 @@ import type { ClientAssetManifest } from '@/core/services/ClientAssetManifest';
 import type { ClientRegistrySnapshots } from '@/data/ClientRegistryLoader';
 import type { ClientCamera } from '@/core/ClientCamera';
 import type { GameRenderer } from '@/core/GameRenderer';
-import { InteriorFadeController } from '@/renderer/InteriorFadeController';
+import { InteriorFadeController, isInsideInterior } from '@/renderer/InteriorFadeController';
 import { PixiTileGrid } from '@/renderer/PixiTileGrid';
 import { PixiScene } from '@/renderer/PixiScene';
 import { RenderPipeline } from '@/renderer/RenderPipeline';
@@ -83,6 +83,7 @@ export class PixiGameRenderer implements GameRenderer {
       this.screenEffects,
       coordinate => this.tilemapLayer.getSurface(coordinate),
       () => this.camera.getViewportRect(),
+      () => isInsideInterior(this.tilemapLayer, this.scene.getFocus(this.entityLayer).coordinate),
     );
     this.entityLayer = new PixiEntityLayer(
       new EntityVisualResolver(options.registries, options.nameIdMappings),

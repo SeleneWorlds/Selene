@@ -179,6 +179,7 @@ export const ParticleSystemTimelineEventSchema = z.object({
   space: z.enum(['world', 'screen']).default('world'),
   position: z.string().min(1).default('position'),
   emissionRateMultiplier: z.string().min(1).optional(),
+  outdoorsOnly: z.boolean().default(false),
   keys: timelineKeysSchema,
 });
 export type ParticleSystemTimelineEvent = z.infer<typeof ParticleSystemTimelineEventSchema>;
@@ -199,6 +200,7 @@ export const ScreenOverlayTimelineEventSchema = z.object({
   duration: z.number().finite().positive().optional(),
   texture: z.string().min(1).optional(),
   alphaMultiplier: z.string().min(1).optional(),
+  outdoorsOnly: z.boolean().default(false),
   color: z.string().regex(/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/).default('#ffffff'),
   alpha: z.number().min(0).max(1).default(1),
   keys: timelineKeysSchema,

@@ -75,6 +75,7 @@ export class TimelinePlayer {
     private readonly screenScene: Container,
     private readonly getSurface: (coordinate: Coordinate) => TileSurface,
     private readonly getViewport: () => { x: number; y: number; width: number; height: number },
+    private readonly isInsideInterior: () => boolean,
   ) {}
 
   setSoundPlayer(player: (sound: string, volume: number, pitch: number) => void): void {
@@ -148,8 +149,8 @@ export class TimelinePlayer {
     this.updatePlaybacks(deltaMs);
     for (let index = this.particleEffects.length - 1; index >= 0; index -= 1) {
       const effect = this.particleEffects[index];
-      effect.system.container.visible = particlesEnabled;
-      if (!particlesEnabled) continue;
+      effect.system.container.visible = particlesEnabled && !(effect.event.outdoorsOnly && this.isInsideInterior());
+      if (!effect.system.container.visible) continue;
       if (effect.screenSpace) {
         const viewport = this.getViewport();
         effect.system.container.position.set(viewport.x + viewport.width / 2, viewport.y);
@@ -187,6 +188,8 @@ export class TimelinePlayer {
     }
     for (let index = this.overlayEffects.length - 1; index >= 0; index -= 1) {
       const effect = this.overlayEffects[index];
+      effect.sprite.visible = !(effect.event.outdoorsOnly && this.isInsideInterior());
+      if (!effect.sprite.visible) continue;
       effect.elapsedMs += deltaMs;
       if (effect.event.duration !== undefined && effect.elapsedMs >= effect.event.duration * 1000) {
         effect.sprite.destroy();
@@ -257,6 +260,7 @@ export class TimelinePlayer {
   }
 
   private updateOverlay(effect: OverlayEffect): void {
+    effect.sprite.visible = !(effect.event.outdoorsOnly && this.isInsideInterior());
     const viewport = this.getViewport();
     effect.sprite.position.set(viewport.x, viewport.y);
     effect.sprite.width = viewport.width;
@@ -300,6 +304,7 @@ export class TimelinePlayer {
         emissionRateMultiplier,
       );
       const container = system.container;
+      container.visible = !(event.outdoorsOnly && this.isInsideInterior());
       if (event.space === 'screen') {
         const viewport = this.getViewport();
         container.position.set(viewport.x + viewport.width / 2, viewport.y);
