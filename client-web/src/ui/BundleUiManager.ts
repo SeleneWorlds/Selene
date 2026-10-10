@@ -59,7 +59,7 @@ interface BundleUiApi {
   readonly registries: {
     search(registry: string, query: string, lookup?: boolean): Promise<{
       registry: string; query: string; lookup: boolean;
-      options: Array<{ value: string; label: string; visual: string | null }>;
+      options: Array<{ value: string; label: string; data: unknown }>;
     } | null>;
   };
   readonly resolveAsset: (path: string) => Promise<string>;
@@ -231,10 +231,7 @@ export class BundleUiManager {
             const label = String(metadata.name ?? fields.name ?? value);
             const matches = lookup ? value.toLowerCase() === query.toLowerCase()
               : label.toLowerCase().includes(query.toLowerCase()) || value.toLowerCase().includes(query.toLowerCase());
-            const visual = typeof metadata.visual === 'string' ? metadata.visual
-              : typeof fields.visual === 'string' ? fields.visual
-              : registry === 'entities' || registry === 'selene:entities' ? value : null;
-            return matches ? [{ value, label, visual }] : [];
+            return matches ? [{ value, label, data: entry }] : [];
           }).sort((a, b) => a.label < b.label ? -1 : a.label > b.label ? 1 : 0).slice(0, 50);
           return { registry, query, lookup, options };
         },

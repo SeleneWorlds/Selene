@@ -306,12 +306,11 @@ class CefUiBridge(
                 val matches = if (lookup) value.equals(query, ignoreCase = true)
                     else label.contains(query, ignoreCase = true) || value.contains(query, ignoreCase = true)
                 if (!matches) return@mapNotNull null
-                val visual = metadata["visual"] as? String ?: (fields?.get("visual") as? JsonPrimitive)?.content
-                    ?: value.takeIf { Identifier.parse(registryName).path == "entities" }
                 buildJsonObject {
                     put("value", value)
                     put("label", label)
-                    put("visual", visual?.let(::JsonPrimitive) ?: kotlinx.serialization.json.JsonNull)
+                    (registry as? com.seleneworlds.common.data.json.FileBasedRegistry<*>)
+                        ?.getEntryElement(identifier)?.let { put("data", it) }
                 }
             }.sortedBy { it["label"]!!.jsonPrimitive.content }.take(50)
             callback.success(buildJsonObject {
