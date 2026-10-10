@@ -348,11 +348,13 @@ export class TimelinePlayer {
     const durationMs = (event.duration ?? visual.duration ?? 1) * 1000;
     const sprite = new Sprite();
     const projected = projectCoordinate(position);
-    const surface = this.getSurface(position);
+    const surface = event.ignoresElevation
+      ? { height: 0, renderOrder: null }
+      : this.getSurface(position);
     sprite.anchor.set(0.5, 1);
     sprite.position.set(
       projected.x + (visual.offsetX ?? 0),
-      projected.y - (event.ignoresElevation ? 0 : surface.height) - (visual.offsetY ?? 0),
+      projected.y - surface.height - (visual.offsetY ?? 0),
     );
     sprite.scale.set(visual.flipX ? -1 : 1, visual.flipY ? -1 : 1);
     const visualOrder = getRenderOrder(position, visual.sortLayerOffset ?? 0, ENTITY_LOCAL_SORT_LAYER);
