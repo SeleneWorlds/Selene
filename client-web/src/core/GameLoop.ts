@@ -18,7 +18,7 @@ export class GameLoop {
   }
 
   private readonly step = (timestamp: number): void => {
-    const deltaMs = Math.min(timestamp - this.lastTimestamp, maxDeltaMs);
+    const deltaMs = Math.max(0, Math.min(timestamp - this.lastTimestamp, maxDeltaMs));
     this.lastTimestamp = timestamp;
 
     this.update(deltaMs);
