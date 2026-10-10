@@ -138,7 +138,7 @@ class CefUiBridge(
         val allowed = when (method) {
             "GET" -> listOf("/resources/bundles", "/resources/bundles/$segment/registries",
                 bundleRegistry, "/resources/files/$segment(?:/$segment)*",
-                "/registries/$segment/entries", "/scripts", "/resources/changes")
+                "/registries/$segment/entries", "/scripts", "/resources/changes", "/worldmap/image")
             "POST" -> listOf("/resources/permissions", "$bundleRegistry/files", "/resources/changes/(?:persist|discard)(?:/$segment)*")
             "PUT" -> listOf("/resources/files/$segment(?:/$segment)*")
             else -> emptyList()
