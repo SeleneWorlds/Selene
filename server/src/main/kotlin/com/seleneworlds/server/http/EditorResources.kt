@@ -9,7 +9,6 @@ import com.seleneworlds.common.data.RegistryProvider
 import com.seleneworlds.common.data.custom.CustomRegistryObject
 import com.seleneworlds.common.data.json.FileBasedRegistry
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import com.seleneworlds.common.serialization.seleneJson
 import com.seleneworlds.common.serialization.SerializedMapSerializer
@@ -382,6 +381,26 @@ internal fun Route.registerEditorResourceRoutes(
                 } catch (error: Exception) {
                     logger.error("Resource HTTP operation failed: $operation", error)
                     500 to "{\"message\":\"Resource operation failed\"}"
+                }
+            }
+        }
+        call.respondText(result.second, ContentType.Application.Json, HttpStatusCode.fromValue(result.first))
+    }
+
+    get("/worldmap/image") {
+        call.response.header(HttpHeaders.CacheControl, "no-store")
+        val user = authenticatedUser(call)
+        val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            mainThreadDispatcher.callOnMainThread {
+                val player = playerManager.dereferencePersisted(user.userId)
+                if (player == null || !permissions.hasPermission(player.api, "selene:worldmap.image")) {
+                    403 to "{\"message\":\"Map access denied\"}"
+                } else try {
+                    val tree = requireNotNull(player.camera.dimension) { "Camera has no dimension" }.mapTree
+                    val z = call.request.queryParameters["z"]?.let { requireNotNull(it.toIntOrNull()) { "Invalid floor" } } ?: player.camera.coordinate.z
+                    200 to seleneJson.encodeToString(createWorldMapImage(tree, z))
+                } catch (error: IllegalArgumentException) {
+                    400 to seleneJson.encodeToString(mapOf("message" to error.message))
                 }
             }
         }

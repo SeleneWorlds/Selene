@@ -11,7 +11,7 @@ import com.seleneworlds.server.sync.ScopedChunkView
 /**
  * TODO This should use a cached view of the map tree. It can precompute and store data by chunks.
  */
-class MapTreeLayer(override val name: String, private val mapTree: MapTree) : MapLayer, BaseMapLayer {
+class MapTreeLayer(override val name: String, val mapTree: MapTree) : MapLayer, BaseMapLayer {
     override val visibilityTags = mutableSetOf("default")
     override val collisionTags = mutableSetOf("default")
 
