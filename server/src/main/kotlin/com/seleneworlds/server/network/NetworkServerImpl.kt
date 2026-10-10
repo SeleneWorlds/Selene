@@ -11,6 +11,8 @@ import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import io.netty.handler.codec.LengthFieldPrepender
 import io.netty.handler.timeout.ReadTimeoutHandler
+import io.netty.handler.timeout.IdleStateHandler
+import com.seleneworlds.common.network.HeartbeatHandler
 import org.slf4j.Logger
 import com.seleneworlds.common.network.PacketCodec
 import com.seleneworlds.common.network.PacketDecoder
@@ -95,6 +97,7 @@ class NetworkServerImpl(
                     clients.add(client)
                     channel.pipeline()
                         .addLast("timeout", ReadTimeoutHandler(networkReadTimeout, TimeUnit.SECONDS))
+                        .addLast("heartbeatIdle", IdleStateHandler(10, 10, 0, TimeUnit.SECONDS))
                         .addLast("server", this@NetworkServerImpl)
                         .addLast(
                             "frameDecoder",
@@ -108,9 +111,10 @@ class NetworkServerImpl(
                             )
                         )
                         .addLast("decoder", PacketDecoder(packetFactory, PacketDirection.CLIENT_TO_SERVER))
-                        .addLast("packetHandler", client)
                         .addLast("framePrepender", LengthFieldPrepender(lengthFieldLength, 0, false))
                         .addLast("encoder", PacketEncoder(packetFactory, PacketDirection.SERVER_TO_CLIENT))
+                        .addLast("heartbeat", HeartbeatHandler(server = true))
+                        .addLast("packetHandler", client)
                 }
             })
             .option(ChannelOption.SO_BACKLOG, 128)
@@ -144,7 +148,8 @@ class NetworkServerImpl(
                     channel.attr(NetworkClientAttributes.CLIENT).set(client)
                     clients.add(client)
                     channel.pipeline()
-                        .addLast("timeout", ReadTimeoutHandler(networkReadTimeout))
+                        .addLast("timeout", ReadTimeoutHandler(networkReadTimeout, TimeUnit.SECONDS))
+                        .addLast("heartbeatIdle", IdleStateHandler(10, 10, 0, TimeUnit.SECONDS))
                         .addLast("server", this@NetworkServerImpl)
                         .addLast("httpCodec", HttpServerCodec())
                         .addLast("httpAggregator", HttpObjectAggregator(maxFrameLength))

@@ -24,11 +24,13 @@ const PacketId = {
   SetEnvironmentLight: 22,
   PlayTimeline: 23,
   StopTimeline: 24,
+  Heartbeat: 25,
   CustomPayload: 254,
   Disconnect: 255,
 } as const;
 
 export type GamePacket =
+  | { type: 'heartbeat' }
   | NameIdMappingsPacket
   | MapChunkPacket
   | EntityPacket
@@ -203,6 +205,10 @@ export function encodePreferencesPacket(locale: string): ArrayBuffer {
   return encodePacket(PacketId.Preferences, (writer) => writer.writeString(locale));
 }
 
+export function encodeHeartbeatPacket(): ArrayBuffer {
+  return new Uint8Array([PacketId.Heartbeat]).buffer;
+}
+
 export function encodeFinalizeJoinPacket(): ArrayBuffer {
   return encodePacket(PacketId.FinalizeJoin);
 }
@@ -227,6 +233,8 @@ export function decodeGamePacket(data: ArrayBuffer): GamePacket {
   const packetId = reader.readUnsignedByte();
 
   switch (packetId) {
+    case PacketId.Heartbeat:
+      return { type: 'heartbeat' };
     case PacketId.NameIdMappings:
       return decodeNameIdMappingsPacket(reader);
     case PacketId.MapChunk:

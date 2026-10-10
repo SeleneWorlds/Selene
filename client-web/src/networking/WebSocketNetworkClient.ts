@@ -6,6 +6,7 @@ import {
   encodeAuthenticatePacket,
   encodeCustomPayloadPacket,
   encodeFinalizeJoinPacket,
+  encodeHeartbeatPacket,
   encodePreferencesPacket,
   encodeRequestFacingPacket,
   encodeRequestMovePacket,
@@ -37,22 +38,39 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
     this.nameIdMappings.clear();
 
     return new Promise((resolve, reject) => {
-      let opened = false;
       let connectionWasEstablished = false;
       const socket = new WebSocket(this.options.url);
       socket.binaryType = 'arraybuffer';
       this.socket = socket;
+      let readTimeout: ReturnType<typeof setTimeout> | undefined;
+      const resetReadTimeout = () => {
+        clearTimeout(readTimeout);
+        readTimeout = setTimeout(() => {
+          if (this.socket !== socket) return;
+          this.socket = null;
+          this.setStatus('disconnected');
+          socket.close();
+          if (connectionWasEstablished) {
+            this.options.onDisconnected?.('Connection to the server timed out.');
+          } else {
+            reject(new Error('Connection to the server timed out.'));
+          }
+        }, 30_000);
+      };
+      resetReadTimeout();
 
       socket.addEventListener(
         'open',
         async () => {
-          opened = true;
+          resetReadTimeout();
           try {
             await this.authenticate(socket);
+            if (this.socket !== socket) return;
             connectionWasEstablished = true;
             this.setStatus('connected');
             resolve();
           } catch (error) {
+            if (this.socket !== socket) return;
             this.setStatus('error');
             socket.close();
             reject(error);
@@ -62,16 +80,20 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
       );
 
       socket.addEventListener('message', (event: MessageEvent<ArrayBuffer | Blob | string>) => {
-        void this.handleMessage(event);
+        if (this.socket !== socket) return;
+        resetReadTimeout();
+        void this.handleMessage(event, socket);
       });
 
       socket.addEventListener('close', (event) => {
+        clearTimeout(readTimeout);
+        if (this.socket !== socket) return;
         const connectionWasLost = connectionWasEstablished && this.status !== 'disconnecting';
         this.socket = null;
         this.setStatus('disconnected');
 
-        if (!opened) {
-          reject(new Error(`Connection to ${this.options.url} closed before opening`));
+        if (!connectionWasEstablished) {
+          reject(new Error(`Connection to ${this.options.url} closed before authentication completed`));
         } else if (connectionWasLost) {
           this.options.onDisconnected?.(event.reason || 'Connection to the server was lost.');
         }
@@ -80,6 +102,7 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
       socket.addEventListener(
         'error',
         () => {
+          if (this.socket !== socket) return;
           if (!connectionWasEstablished) {
             this.setStatus('error');
             reject(new Error(`Could not connect to ${this.options.url}`));
@@ -134,7 +157,7 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
     socket.send(encodeFinalizeJoinPacket());
   }
 
-  private async handleMessage(event: MessageEvent<ArrayBuffer | Blob | string>): Promise<void> {
+  private async handleMessage(event: MessageEvent<ArrayBuffer | Blob | string>, socket: WebSocket): Promise<void> {
     if (typeof event.data === 'string') {
       console.warn('Ignoring text message from Selene server.');
       return;
@@ -142,7 +165,12 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
 
     try {
       const data = event.data instanceof Blob ? await event.data.arrayBuffer() : event.data;
+      if (this.socket !== socket) return;
       const packet = decodeGamePacket(data);
+      if (packet.type === 'heartbeat') {
+        socket.send(encodeHeartbeatPacket());
+        return;
+      }
 
       if (packet.type === 'nameIdMappings') {
         this.nameIdMappings.applyPacket(packet.scope, packet.mappings);

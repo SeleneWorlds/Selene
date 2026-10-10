@@ -173,6 +173,13 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             StopTimelinePacket::decode
         )
         packetFactory.registerPacket(
+            25,
+            setOf(PacketDirection.CLIENT_TO_SERVER, PacketDirection.SERVER_TO_CLIENT),
+            HeartbeatPacket::class,
+            HeartbeatPacket::encode,
+            HeartbeatPacket::decode
+        )
+        packetFactory.registerPacket(
             254,
             setOf(PacketDirection.CLIENT_TO_SERVER, PacketDirection.SERVER_TO_CLIENT),
             CustomPayloadPacket::class,
