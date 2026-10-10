@@ -15,7 +15,19 @@ import javax.imageio.ImageIO
 @Serializable
 internal data class WorldMapImage(val x: Int, val y: Int, val z: Int, val width: Int, val height: Int, val floors: List<Int>, val image: String)
 
-internal fun createWorldMapImage(tree: MapTree, z: Int): WorldMapImage {
+internal enum class WorldMapTiles { BASE, ALL }
+
+internal fun worldMapTiles(value: String?): WorldMapTiles = when (value) {
+    null, "all" -> WorldMapTiles.ALL
+    "base" -> WorldMapTiles.BASE
+    else -> throw IllegalArgumentException("Invalid tiles mode; expected base or all")
+}
+
+internal fun worldMapTile(view: ScopedChunkView, coordinate: Coordinate, tiles: WorldMapTiles): Int =
+    if (tiles == WorldMapTiles.BASE) view.getBaseTileAt(coordinate)
+    else view.getAdditionalTilesAt(coordinate).lastOrNull() ?: view.getBaseTileAt(coordinate)
+
+internal fun createWorldMapImage(tree: MapTree, z: Int, tiles: WorldMapTiles = WorldMapTiles.ALL): WorldMapImage {
     val windows = mutableListOf<ChunkWindow>()
     fun collect(current: MapTree) {
         current.layers.filter { DefaultViewer.canView(it) }.forEach { layer ->
@@ -39,11 +51,10 @@ internal fun createWorldMapImage(tree: MapTree, z: Int): WorldMapImage {
         val view = ScopedChunkView.create(tree, DefaultViewer, window)
         for (dy in 0 until window.height) for (dx in 0 until window.width) {
             val coordinate = Coordinate(window.x + dx, window.y + dy, z)
-            val tile = view.getAdditionalTilesAt(coordinate).lastOrNull() ?: view.getBaseTileAt(coordinate)
+            val tile = worldMapTile(view, coordinate, tiles)
             if (tile != 0) {
                 val definition = tree.registries.tiles.get(tile)
-                val hash = definition?.visual.toString().hashCode()
-                val color = if (definition?.impassable == true) 0xff475569.toInt() else 0xff000000.toInt() or (hash and 0x7f7f7f) or 0x404040
+                val color = 0xff000000.toInt() or (definition?.mapColor ?: "#ffffff").substring(1).toInt(16)
                 image.setRGB(coordinate.x - x, coordinate.y - y, color)
             }
         }

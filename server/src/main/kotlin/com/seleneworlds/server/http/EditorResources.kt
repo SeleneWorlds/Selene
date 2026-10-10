@@ -398,7 +398,7 @@ internal fun Route.registerEditorResourceRoutes(
                 } else try {
                     val tree = requireNotNull(player.camera.dimension) { "Camera has no dimension" }.mapTree
                     val z = call.request.queryParameters["z"]?.let { requireNotNull(it.toIntOrNull()) { "Invalid floor" } } ?: player.camera.coordinate.z
-                    200 to seleneJson.encodeToString(createWorldMapImage(tree, z))
+                    200 to seleneJson.encodeToString(createWorldMapImage(tree, z, worldMapTiles(call.request.queryParameters["tiles"])))
                 } catch (error: IllegalArgumentException) {
                     400 to seleneJson.encodeToString(mapOf("message" to error.message))
                 }
