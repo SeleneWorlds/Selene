@@ -19,7 +19,7 @@ export async function registerGridLuaModule(runtime: LuaRuntime, grid: GridApi):
     const args = new LuaArguments('selene.grid.getDirectionByName');
 
     const direction = grid.getDirectionByName(args.string(name, 'name'));
-    return direction ? toLuaDirection(direction) : null;
+    return direction ? toLuaDirection(direction) : undefined;
   };
   const screenToCoordinate = (x: unknown, y: unknown, z?: unknown) => {
     const args = new LuaArguments('selene.grid.screenToCoordinate');

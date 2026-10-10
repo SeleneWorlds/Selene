@@ -26,8 +26,8 @@ export async function registerCommonLuaModules(runtime: LuaRuntime, apis: Common
   await runtime.preloadModule('selene.registries', () => ({
     add: (registry: unknown, id: unknown, value: unknown) => apis.registries.add(str('registries.add', registry, 'registry'), str('registries.add', id, 'identifier'), value),
     findAll: (registry: unknown) => apis.registries.findAll(str('registries.findAll', registry, 'registry')),
-    findByName: (registry: unknown, id: unknown) => apis.registries.findByName(str('registries.findByName', registry, 'registry'), str('registries.findByName', id, 'identifier')),
-    findByMetadata: (registry: unknown, key: unknown, value: unknown) => apis.registries.findByMetadata(str('registries.findByMetadata', registry, 'registry'), str('registries.findByMetadata', key, 'key'), value),
+    findByName: (registry: unknown, id: unknown) => apis.registries.findByName(str('registries.findByName', registry, 'registry'), str('registries.findByName', id, 'identifier')) ?? undefined,
+    findByMetadata: (registry: unknown, key: unknown, value: unknown) => apis.registries.findByMetadata(str('registries.findByMetadata', registry, 'registry'), str('registries.findByMetadata', key, 'key'), value) ?? undefined,
   }));
   await runtime.preloadModule('selene.i18n', () => ({
     get: (key: unknown, locale?: unknown) => apis.i18n.get(str('i18n.get', key, 'key'), optStr(locale)),

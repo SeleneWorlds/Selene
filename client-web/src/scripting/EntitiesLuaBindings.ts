@@ -28,7 +28,7 @@ export async function registerEntitiesLuaModule(runtime: LuaRuntime, entities: E
     const networkId = args.integer(networkIdValue, 'networkId');
     const entity = entities.getEntityByNetworkId(networkId);
 
-    return entity ? toLuaEntity(entity, apis) : null;
+    return entity ? toLuaEntity(entity, apis) : undefined;
   };
   const findEntitiesAt = (coordinateValue: unknown, criteriaValue?: unknown) => {
     const args = new LuaArguments('selene.entities.findEntitiesAt');
@@ -103,7 +103,7 @@ function createLuaEntity(entity: EntityApi, apis: EntityLuaApis): {
         else entity.setComponentProperty(componentName, property, value);
       });
     },
-    getDefinition: () => apis.registries.findByName('entities', entity.getDefinitionName()),
+    getDefinition: () => apis.registries.findByName('entities', entity.getDefinitionName()) ?? undefined,
   };
 }
 
@@ -113,7 +113,7 @@ function toLuaComponent(
   update: (property: string, value: number) => void,
 ): unknown {
   if (!isRecord(component)) {
-    return component;
+    return component ?? undefined;
   }
 
   const set = (property: string, value: number) => {
@@ -124,7 +124,7 @@ function toLuaComponent(
     ...component,
     getVisual: () => typeof component.visual === 'string'
       ? visuals.create(component.visual)
-      : component.visual ?? null,
+      : component.visual ?? undefined,
     getRed: () => componentNumber(component.red),
     setRed: (...values: unknown[]) => set('red', componentArgument(values, 'red')),
     getGreen: () => componentNumber(component.green),
