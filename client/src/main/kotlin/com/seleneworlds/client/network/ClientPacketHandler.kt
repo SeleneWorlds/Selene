@@ -185,7 +185,7 @@ class ClientPacketHandler(
             }
 
             is SetEnvironmentLightPacket -> {
-                context.enqueueWork { environment.setLight(packet.red, packet.green, packet.blue) }
+                context.enqueueWork { environment.setLight(packet.name, packet.red, packet.green, packet.blue) }
             }
 
             is PlayTimelinePacket -> {

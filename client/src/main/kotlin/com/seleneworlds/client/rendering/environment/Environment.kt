@@ -16,10 +16,14 @@ class Environment(val cameraManager: CameraManager, val grid: ClientGrid) {
     private var interiorFadeAlpha = 1f
 
     private val focusBounds = Rectangle()
-    private val ambientLight = Color.WHITE.cpy()
+    private val ambientLights = mutableMapOf(
+        "outdoors" to Color.WHITE.cpy(),
+        "indoors" to Color(0.6f, 0.6f, 0.6f, 1f),
+        "underground" to Color(0.1f, 0.1f, 0.1f, 1f),
+    )
 
-    fun setLight(red: Float, green: Float, blue: Float) {
-        ambientLight.set(red.coerceIn(0f, 1f), green.coerceIn(0f, 1f), blue.coerceIn(0f, 1f), 1f)
+    fun setLight(name: String, red: Float, green: Float, blue: Float) {
+        ambientLights.getOrPut(name) { Color.WHITE.cpy() }.set(red.coerceIn(0f, 1f), green.coerceIn(0f, 1f), blue.coerceIn(0f, 1f), 1f)
     }
 
     fun update(delta: Float) {
@@ -60,7 +64,12 @@ class Environment(val cameraManager: CameraManager, val grid: ClientGrid) {
     }
 
     fun getColor(coordinate: Coordinate): Color {
-        val baseColor = ambientLight.cpy()
+        val name = when {
+            cameraManager.focusCoordinate.z < 0 -> "underground"
+            isInsideInterior -> "indoors"
+            else -> "outdoors"
+        }
+        val baseColor = ambientLights.getValue(name).cpy()
         if (coordinate.z > cameraManager.focusCoordinate.z) {
             baseColor.a = interiorFadeAlpha
         }

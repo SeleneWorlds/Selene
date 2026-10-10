@@ -2,7 +2,7 @@ import type { PixiTileGrid } from '@/renderer/PixiTileGrid';
 import type { Application } from 'pixi.js';
 import type { DebugState, RendererDebugOptions } from '@/core/DebugState';
 import type { PixiEntityLayer } from '@/renderer/entities/PixiEntityLayer';
-import type { InteriorFadeController } from '@/renderer/InteriorFadeController';
+import { isInsideInterior, type InteriorFadeController } from '@/renderer/InteriorFadeController';
 import type { PixiScene } from '@/renderer/PixiScene';
 import type { PixiViewport } from '@/renderer/PixiViewport';
 import type { PixiTilemapLayer } from '@/renderer/tiles/PixiTilemapLayer';
@@ -32,6 +32,10 @@ export class RenderPipeline {
     this.measure(timings, 'Renderer: entities', () => {
       if (options.entityUpdates) this.entityLayer.update(deltaMs);
     });
+    this.measure(timings, 'Renderer: camera', () => this.scene.updateCamera(this.entityLayer));
+    const focus = this.measure(timings, 'Renderer: focus bounds', () => this.scene.getFocus(this.entityLayer));
+    this.lighting.setActiveAmbientLight(Math.round(focus.coordinate.z) < 0
+      ? 'underground' : isInsideInterior(this.tilemapLayer, focus.coordinate) ? 'indoors' : 'outdoors');
     this.measure(timings, 'Renderer: lighting', () => {
       if (!options.lighting) return;
       const revision = this.lighting.getRevision();
@@ -41,8 +45,6 @@ export class RenderPipeline {
         this.entityLayer.updateLighting();
       }
     });
-    this.measure(timings, 'Renderer: camera', () => this.scene.updateCamera(this.entityLayer));
-    const focus = this.measure(timings, 'Renderer: focus bounds', () => this.scene.getFocus(this.entityLayer));
     this.measure(timings, 'Renderer: interior fade', () => {
       if (options.interiorFade) this.interiorFade.update(deltaMs, focus.coordinate);
     });

@@ -197,7 +197,7 @@ export class PixiGameRenderer implements GameRenderer {
         this.drawCameraScene();
         break;
       case 'setEnvironmentLight':
-        this.lighting.setAmbientLight(packet);
+        this.lighting.setAmbientLight(packet.name, packet);
         break;
       case 'playTimeline':
         this.timelinePlayer.play(packet);
@@ -290,8 +290,8 @@ export class PixiGameRenderer implements GameRenderer {
     return this.tilemapLayer.addMapChangedListener(listener);
   }
 
-  setAmbientLight(color: LightColor): void { this.lighting.setAmbientLight(color); }
-  getAmbientLight(): LightColor { return this.lighting.getAmbientLight(); }
+  setAmbientLight(name: string, color: LightColor): void { this.lighting.setAmbientLight(name, color); }
+  getAmbientLight(name: string): LightColor { return this.lighting.getAmbientLight(name); }
   setTileLight(coordinate: Coordinate, light: TileLight | null): void { this.lighting.setTileLight(coordinate, light); }
   clearTileLights(): void { this.lighting.clearTileLights(); }
 

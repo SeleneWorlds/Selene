@@ -30,8 +30,11 @@ export async function registerClientFeatureLuaModules(runtime: LuaRuntime, apis:
   await runtime.preloadModule('selene.visuals.internal', () => ({ create: createVisual }));
   await runtime.preloadModule('selene.visuals', () => ({ create: createVisual }));
   await runtime.preloadModule('selene.environment', () => ({
-    setAmbientLight: (value: unknown) => apis.environment.setAmbientLight(color(value)),
-    getAmbientLight: () => apis.environment.getAmbientLight(),
+    setAmbientLight: (name: string, value: unknown) => apis.environment.setAmbientLight(name, color(value)),
+    setOutdoorsAmbientLight: (value: unknown) => apis.environment.setAmbientLight('outdoors', color(value)),
+    setIndoorsAmbientLight: (value: unknown) => apis.environment.setAmbientLight('indoors', color(value)),
+    setUndergroundAmbientLight: (value: unknown) => apis.environment.setAmbientLight('underground', color(value)),
+    getAmbientLight: (name: string) => apis.environment.getAmbientLight(name),
     setTileLight: (position: unknown, value: unknown) => apis.environment.setTileLight(
       coordinate('environment.setTileLight', position), light(value),
     ),

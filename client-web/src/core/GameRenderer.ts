@@ -39,8 +39,8 @@ export interface GameRenderer {
   projectEntity(networkId: number): { x: number; y: number } | null;
   getMapTiles(coordinate?: Coordinate, width?: number, height?: number): ClientMapTile[];
   addMapChangedListener(listener: (coordinate: Coordinate, width: number, height: number) => void): () => void;
-  setAmbientLight(color: LightColor): void;
-  getAmbientLight(): LightColor;
+  setAmbientLight(name: string, color: LightColor): void;
+  getAmbientLight(name: string): LightColor;
   setTileLight(coordinate: Coordinate, light: TileLight | null): void;
   clearTileLights(): void;
   setTimelineSoundPlayer(player: (sound: string, volume: number, pitch: number) => void): void;

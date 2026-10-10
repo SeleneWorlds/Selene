@@ -165,6 +165,7 @@ export interface SetActiveGridPacket {
 
 export interface SetEnvironmentLightPacket {
   type: 'setEnvironmentLight';
+  name: string;
   red: number;
   green: number;
   blue: number;
@@ -279,7 +280,7 @@ export function decodeGamePacket(data: ArrayBuffer): GamePacket {
 }
 
 function decodeSetEnvironmentLightPacket(reader: PacketReader): SetEnvironmentLightPacket {
-  const packet = { type: 'setEnvironmentLight' as const, red: reader.readFloat(), green: reader.readFloat(), blue: reader.readFloat() };
+  const packet = { type: 'setEnvironmentLight' as const, name: reader.readString(), red: reader.readFloat(), green: reader.readFloat(), blue: reader.readFloat() };
   reader.assertFullyRead();
   return packet;
 }

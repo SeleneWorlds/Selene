@@ -13,7 +13,18 @@ const LIGHT_BUCKET_SIZE = 16;
 const WHITE: LightColor = { red: 1, green: 1, blue: 1 };
 
 export class LightingEnvironment {
-  private ambient: LightColor = { ...WHITE };
+  private readonly ambientLights = new Map<string, LightColor>([
+    ['outdoors', { ...WHITE }],
+    ['indoors', { red: 0.6, green: 0.6, blue: 0.6 }],
+    ['underground', { red: 0.1, green: 0.1, blue: 0.1 }],
+  ]);
+  private activeAmbientName = 'outdoors';
+
+  setActiveAmbientLight(name: string): void {
+    if (name === this.activeAmbientName) return;
+    this.activeAmbientName = name;
+    this.revision += 1;
+  }
   private readonly tileDefinitionLights = new Map<string, LightSource>();
   private readonly explicitLights = new Map<string, LightSource>();
   private readonly entityLights = new Map<number, LightSource>();
@@ -22,12 +33,13 @@ export class LightingEnvironment {
 
   getRevision(): number { return this.revision; }
 
-  getAmbientLight(): LightColor { return { ...this.ambient }; }
+  getAmbientLight(name: string): LightColor { return { ...(this.ambientLights.get(name) ?? WHITE) }; }
 
-  setAmbientLight(color: LightColor): void {
+  setAmbientLight(name: string, color: LightColor): void {
     const next = normalizeColor(color);
-    if (sameColor(this.ambient, next)) return;
-    this.ambient = next;
+    const previous = this.ambientLights.get(name);
+    if (previous && sameColor(previous, next)) return;
+    this.ambientLights.set(name, next);
     this.revision += 1;
   }
 
@@ -104,9 +116,10 @@ export class LightingEnvironment {
   }
 
   getColor(coordinate: Coordinate): ResolvedLightColor {
-    let red = this.ambient.red;
-    let green = this.ambient.green;
-    let blue = this.ambient.blue;
+    const ambient = this.getAmbientLight(this.activeAmbientName);
+    let red = ambient.red;
+    let green = ambient.green;
+    let blue = ambient.blue;
     const ambientLuminosity = (red + green + blue) / 3;
     const localScale = 1 - ambientLuminosity;
 
