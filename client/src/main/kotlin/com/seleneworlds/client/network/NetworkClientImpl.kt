@@ -15,6 +15,7 @@ import com.seleneworlds.common.network.*
 import com.seleneworlds.common.util.Disposable
 import java.net.InetSocketAddress
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.TimeUnit
 
 @Sharable
 class NetworkClientImpl(
@@ -24,7 +25,7 @@ class NetworkClientImpl(
 
     var packetHandler: PacketHandler<NetworkClient>? = null
 
-    private val networkReadTimeout: Int = 60000
+    private val networkReadTimeout: Long = 30
     private val maxFrameLength = Short.MAX_VALUE.toInt()
     private val lengthFieldLength = 2
 
@@ -45,7 +46,7 @@ class NetworkClientImpl(
         .handler(object : ChannelInitializer<SocketChannel>() {
             override fun initChannel(ch: SocketChannel) {
                 ch.pipeline()
-                    .addLast("timeout", ReadTimeoutHandler(networkReadTimeout))
+                    .addLast("timeout", ReadTimeoutHandler(networkReadTimeout, TimeUnit.SECONDS))
                     .addLast(
                         "frameDecoder",
                         LengthFieldBasedFrameDecoder(maxFrameLength, 0, lengthFieldLength, 0, lengthFieldLength)

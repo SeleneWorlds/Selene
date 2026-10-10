@@ -41,7 +41,7 @@ class NetworkServerImpl(
         require(config.maxPacketsPerClientPerTick > 0) { "maxPacketsPerClientPerTick must be positive" }
     }
 
-    private val networkReadTimeout: Int = 60000
+    private val networkReadTimeout: Long = 30
     private val maxFrameLength = Short.MAX_VALUE.toInt()
     private val lengthFieldLength = 2
     private val webSocketPath = "/ws"
@@ -94,7 +94,7 @@ class NetworkServerImpl(
                     channel.attr(NetworkClientAttributes.CLIENT).set(client)
                     clients.add(client)
                     channel.pipeline()
-                        .addLast("timeout", ReadTimeoutHandler(networkReadTimeout))
+                        .addLast("timeout", ReadTimeoutHandler(networkReadTimeout, TimeUnit.SECONDS))
                         .addLast("server", this@NetworkServerImpl)
                         .addLast(
                             "frameDecoder",
