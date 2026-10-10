@@ -25,6 +25,7 @@ open class GridLuaApi(private val api: GridApi) : LuaModule {
         return 1
     }
 
+    /** Returns nil when the named direction is not configured. */
     private fun getDirectionByName(lua: Lua): Int {
         lua.push(api.getDirectionByName(lua.checkString(1)), Lua.Conversion.NONE)
         return 1

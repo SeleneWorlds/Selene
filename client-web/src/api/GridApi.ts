@@ -9,7 +9,7 @@ export interface ClientDirection {
 
 export interface GridApi {
   defineDirection: (name: string, x: number, y: number, z: number, angle: number) => Coordinate;
-  getDirectionByName: (name: string) => ClientDirection;
+  getDirectionByName: (name: string) => ClientDirection | null;
   getDirection: (angle: number) => ClientDirection | null;
   screenToCoordinate: (x: number, y: number, z?: number) => Coordinate;
 }

@@ -51,12 +51,9 @@ export class ClientGrid implements GridApi {
     return { ...vector };
   }
 
-  getDirectionByName(name: string): ClientDirection {
+  getDirectionByName(name: string): ClientDirection | null {
     const direction = this.directions.get(name);
-
-    if (!direction) {
-      throw new Error(`Unknown direction: ${name}`);
-    }
+    if (!direction) return null;
 
     return {
       name: direction.name,

@@ -6,9 +6,8 @@ open class GridApi(private val grid: Grid) {
         return grid.directions.values.toList()
     }
 
-    fun getDirectionByName(name: String): Direction {
+    fun getDirectionByName(name: String): Direction? {
         return grid.getDirectionByName(name)
-            ?: throw IllegalArgumentException("Unknown direction: $name")
     }
 
     fun defineDirection(name: String, x: Int, y: Int, z: Int, angle: Float): Coordinate {
