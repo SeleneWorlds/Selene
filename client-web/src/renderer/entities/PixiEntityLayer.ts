@@ -323,7 +323,17 @@ export class PixiEntityLayer {
     if (surface.renderOrder !== null) {
       zIndex = Math.max(zIndex, surface.renderOrder + ENTITY_LOCAL_SORT_LAYER);
     }
-    entity.container.position.set(position.x, position.y - surface.height);
+    let surfaceHeight = surface.height;
+    const motion = entity.attachmentTarget !== null
+      ? this.renderedEntities.get(entity.attachmentTarget)?.motion
+      : entity.motion;
+    if (motion && !entity.visual?.ignoresElevation) {
+      const startHeight = this.getSurface(motion.start).height;
+      const endHeight = this.getSurface(motion.end).height;
+      const progress = Math.min(1, motion.elapsedMs / motion.durationMs);
+      surfaceHeight = startHeight + (endHeight - startHeight) * progress;
+    }
+    entity.container.position.set(position.x, position.y - surfaceHeight);
     if (entity.container.zIndex !== zIndex) {
       entity.container.zIndex = zIndex;
     }

@@ -182,7 +182,15 @@ class Entity(
                 val surfaceOffset = if (components.values.any { it is IgnoresElevationComponent }) {
                     0f
                 } else {
-                    environment.getSurfaceOffset(coordinate)
+                    val motion = getMotion()
+                    if (motion != null) {
+                        val progress = (motion.timePassed / motion.duration).coerceIn(0f, 1f)
+                        val startOffset = environment.getSurfaceOffset(motion.start)
+                        val endOffset = environment.getSurfaceOffset(motion.end)
+                        startOffset + (endOffset - startOffset) * progress
+                    } else {
+                        environment.getSurfaceOffset(coordinate)
+                    }
                 }
                 tmpDisplayPos.set(screenX, screenY + surfaceOffset)
                 component.positioner.applyPositioning(this, tmpDisplayPos)
