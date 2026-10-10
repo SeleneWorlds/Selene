@@ -52,7 +52,7 @@ class Tile(
 
     private var currentOcclusionAlpha: Float = 1f
     private var targetOcclusionAlpha: Float = 1f
-    private val fadeSpeed: Float = 5f
+    private val fadeSpeed: Float = 1.65f
 
     override fun update(delta: Float) {
         visual.update(delta)
@@ -74,7 +74,7 @@ class Tile(
         val bounds = getBounds(displayX, displayY, tmpRenderBounds)
         if (environment.shouldRender(coordinate, bounds)) {
             val occluding = visual.occlusionFade && environment.occludesFocus(coordinate, bounds)
-            targetOcclusionAlpha = if (occluding) 0.3f else 1f
+            targetOcclusionAlpha = if (occluding) 0.4f else 1f
             batch.color.set(environment.getColor(coordinate))
             batch.color = batch.color.mul(1f, 1f, 1f, currentOcclusionAlpha)
             visual.render(batch, displayX, displayY)

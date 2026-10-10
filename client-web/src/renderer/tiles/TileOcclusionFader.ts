@@ -4,8 +4,8 @@ import type { WorldBounds } from '../entities/PixiEntityLayer';
 import type { RenderedTileStack } from './RenderedTileStack';
 import type { TileSpatialIndex } from './TileSpatialIndex';
 
-const OCCLUDED_ALPHA = 0.3;
-const FADE_SPEED = 5;
+const OCCLUDED_ALPHA = 0.4;
+const FADE_SPEED = 1.65;
 
 export class TileOcclusionFader {
   private readonly fadingStacks = new Set<RenderedTileStack>();
