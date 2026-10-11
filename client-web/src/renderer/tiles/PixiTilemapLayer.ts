@@ -12,7 +12,7 @@ import { TileCuller } from './TileCuller';
 import { TileOcclusionFader } from './TileOcclusionFader';
 import { TileSpatialIndex } from './TileSpatialIndex';
 import type { LightingEnvironment } from '../LightingEnvironment';
-import { FrameWorkQueue } from './FrameWorkQueue';
+import { FrameWorkQueue, frameWorkBudget } from './FrameWorkQueue';
 import type { TileLight } from '@/api/EnvironmentApi';
 
 /** Coordinates map state and delegates tile rendering and visibility policy. */
@@ -39,7 +39,6 @@ export class PixiTilemapLayer {
   private timingBudgetHits = 0;
   private timingTexturesReady = 0;
   private timingTextureMaxMs = 0;
-
   private upperLayerFocusZ: number | null = null;
   private upperLayerAlpha: number | null = null;
 
@@ -53,7 +52,7 @@ export class PixiTilemapLayer {
       visualResolver,
       textureLoader,
       container,
-      (task, key) => this.workQueue.enqueue(key ?? Symbol(), task, true),
+      (task, key) => this.workQueue.enqueue(key ?? Symbol(), task, true, key !== undefined),
       (stack, index) => {
         if (this.renderedStacks.get(coordinateKey(stack.coordinate)) !== stack) return;
         this.spatialIndex.refreshBounds(stack, index);
@@ -141,8 +140,8 @@ export class PixiTilemapLayer {
     return () => this.mapChangedListeners.delete(listener);
   }
 
-  processPendingWork() {
-    const budgetMs = 3;
+  processPendingWork(elapsedMs = 0) {
+    const budgetMs = frameWorkBudget(this.workQueue.pendingCount, elapsedMs, this.workQueue.pendingIncomingCount);
     if (!chunkTimingEnabled) {
       const stats = this.workQueue.process(budgetMs);
       this.stackRenderer.flushRemovedStacks();
@@ -292,9 +291,11 @@ export class PixiTilemapLayer {
   private setTileStack(coordinate: Coordinate, tileIds: readonly number[]): void {
     const key = coordinateKey(coordinate);
     // Empty cells need work only when clearing existing or queued tiles.
-    if (tileIds.length === 0 && !this.mapTiles.has(key) && !this.renderedStacks.has(key)) return;
+    if (tileIds.length === 0 && !this.mapTiles.has(key) && !this.renderedStacks.has(key) && !this.pendingStacks.has(key)) return;
     const ids = [...tileIds];
-    this.workQueue.enqueue(key, () => this.renderTileStack(coordinate, ids));
+    const render = () => this.renderTileStack(coordinate, ids);
+    if (ids.length === 0) this.workQueue.enqueueRemoval(key, render);
+    else this.workQueue.enqueue(key, render);
     const baseTileId = tileIds[0];
     if (baseTileId === undefined) {
       this.mapTiles.delete(key);

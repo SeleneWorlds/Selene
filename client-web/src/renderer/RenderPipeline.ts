@@ -36,7 +36,7 @@ export class RenderPipeline {
     const lightingEnabled = options.lighting;
     this.tilemapLayer.setLightingEnabled(lightingEnabled);
     this.entityLayer.setLightingEnabled(lightingEnabled);
-    this.tilemapLayer.processPendingWork();
+    this.tilemapLayer.processPendingWork(elapsedMs);
     const workEndedAt = chunkTimingEnabled ? performance.now() : 0;
     if (options.entityUpdates) this.entityLayer.update(deltaMs);
 
