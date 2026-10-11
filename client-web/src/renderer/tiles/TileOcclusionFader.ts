@@ -13,11 +13,30 @@ export class TileOcclusionFader {
   private lastBounds: WorldBounds | null = null;
   private indexRevision = -1;
   private fading = false;
+  private enabled = true;
+
+  setEnabled(enabled: boolean, stacks: Iterable<RenderedTileStack>): void {
+    if (this.enabled === enabled) return;
+    this.enabled = enabled;
+    this.indexRevision = -1;
+    this.lastFocus = null;
+    this.lastBounds = null;
+    this.fading = false;
+    this.fadingStacks.clear();
+    for (const stack of stacks) {
+      stack.occlusionInitialized.fill(false);
+      if (!enabled) {
+        stack.occlusionAlphas.fill(1);
+        stack.targetOcclusionAlphas.fill(1);
+        for (const container of stack.containers) container.alpha = stack.upperLayerAlpha;
+      }
+    }
+  }
 
   constructor(private readonly spatialIndex: TileSpatialIndex) {}
 
   initialize(stack: RenderedTileStack): void {
-    if (!this.lastFocus || !this.lastBounds) return;
+    if (!this.enabled || !this.lastFocus || !this.lastBounds) return;
     fadeStack(stack, this.lastFocus, this.lastBounds, 0);
     if (stack.occlusionAlphas.some(alpha => alpha !== 1)) this.fadingStacks.add(stack);
   }
@@ -28,6 +47,7 @@ export class TileOcclusionFader {
   }
 
   update(deltaMs: number, focus: Coordinate, focusBounds: WorldBounds): void {
+    if (!this.enabled) return;
     if (this.indexRevision === this.spatialIndex.revision && !this.fading
       && sameCoordinate(this.lastFocus, focus) && sameBounds(this.lastBounds, focusBounds)) return;
     this.indexRevision = this.spatialIndex.revision;

@@ -62,7 +62,9 @@ export class RenderPipeline {
     if (options.tileAnimations) this.tilemapLayer.updateAnimations(deltaMs);
 
     const animationsEndedAt = chunkTimingEnabled ? performance.now() : 0;
-    if (options.tileOcclusion) this.tilemapLayer.updateOcclusion(deltaMs, focus.coordinate, focus.bounds);
+    const occlusionEnabled = options.tileOcclusion && this.tileOcclusionEnabled;
+    this.tilemapLayer.setOcclusionEnabled(occlusionEnabled);
+    if (occlusionEnabled) this.tilemapLayer.updateOcclusion(deltaMs, focus.coordinate, focus.bounds);
 
     this.viewport.updateCameraClip();
     const updatesEndedAt = chunkTimingEnabled ? performance.now() : 0;
