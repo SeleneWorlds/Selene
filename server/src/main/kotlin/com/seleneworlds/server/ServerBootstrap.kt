@@ -106,6 +106,8 @@ import com.seleneworlds.server.world.World
 
 @OptIn(ExperimentalHoplite::class)
 fun main(args: Array<String>) {
+    // Initialize logging (and Sentry) before configuration or dependency injection can fail.
+    LoggerFactory.getLogger("Selene")
     ServerConfig.createDefault()
     val coreModule = module {
         single { LoggerFactory.getLogger("Selene") }

@@ -58,6 +58,25 @@ bundles=illarion-gobaith,illarion-gobaith-data,illarion-gobaith-map
 # bundles=illarion-vbu,illarion-vbu-data,illarion-vbu-map,illarion-script-loader
 ```
 
+### Server error tracking
+
+Set `SENTRY_DSN` in the server process environment to enable error tracking. Without a DSN,
+the server runs with Sentry reporting disabled. You can also set `SENTRY_ENVIRONMENT`
+(for example, `production`) and `SENTRY_RELEASE` to identify the deployment.
+
+```shell
+export SENTRY_DSN="https://public-key@your-sentry-host/project-id"
+export SENTRY_ENVIRONMENT="production"
+export SENTRY_RELEASE="selene-server@your-version"
+```
+
+The server uses [Sentry's Log4j2 integration](https://docs.sentry.io/platforms/java/guides/log4j2/).
+ERROR and FATAL logs, including logged Lua failures, become Sentry events; INFO and higher
+logs provide breadcrumbs. Uncaught JVM exceptions are captured by the SDK, which flushes
+pending events on JVM shutdown. Existing console and file logging remains available.
+Sentry also supports `sentry.properties` in the working directory and `-Dsentry.dsn=...`
+JVM properties for configuration.
+
 ### Running the Client
 
 Example run configurations for IntelliJ are included. The client's working directory is located at `client/run`.
