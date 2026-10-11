@@ -18,7 +18,7 @@ export type GameRendererFactory = (context: GameRendererContext) => GameRenderer
 
 export interface GameRenderer {
   initialize(): Promise<void>;
-  update(deltaMs: number): void;
+  update(deltaMs: number, elapsedMs: number): void;
   handlePacket(packet: GamePacket): void;
   drawCameraScene(): void;
   upsertClientEntity(snapshot: ClientEntitySnapshot): void;

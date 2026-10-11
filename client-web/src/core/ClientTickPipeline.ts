@@ -17,7 +17,7 @@ export class ClientTickPipeline {
     private readonly entities: ClientEntities,
     private readonly renderer: GameRenderer,
   ) {
-    this.loop = new GameLoop((deltaMs) => this.tick(deltaMs));
+    this.loop = new GameLoop((deltaMs, elapsedMs) => this.tick(deltaMs, elapsedMs));
   }
 
   start(): void {
@@ -33,7 +33,7 @@ export class ClientTickPipeline {
     this.clientEntityScriptRunner = runner;
   }
 
-  private tick(deltaMs: number): void {
+  private tick(deltaMs: number, elapsedMs: number): void {
     for (const listener of [...this.preTickListeners]) {
       try {
         listener();
@@ -55,6 +55,6 @@ export class ClientTickPipeline {
         console.error('[Lua] Error in client entity script', error);
       }
     }
-    this.renderer.update(deltaMs);
+    this.renderer.update(deltaMs, elapsedMs);
   }
 }

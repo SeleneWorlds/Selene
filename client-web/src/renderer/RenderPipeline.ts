@@ -25,8 +25,8 @@ export class RenderPipeline {
     private readonly tileGrid: PixiTileGrid,
   ) {}
 
-  update(deltaMs: number, options: RendererDebugOptions): void {
-    this.recordFrame(deltaMs);
+  update(deltaMs: number, options: RendererDebugOptions, elapsedMs: number): void {
+    this.recordFrame(elapsedMs);
     this.tilemapLayer.processPendingWork();
     if (options.entityUpdates) this.entityLayer.update(deltaMs);
 

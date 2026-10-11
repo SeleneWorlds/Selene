@@ -1,4 +1,4 @@
-export type GameUpdate = (deltaMs: number) => void;
+export type GameUpdate = (deltaMs: number, elapsedMs: number) => void;
 
 const maxDeltaMs = 100;
 
@@ -18,10 +18,11 @@ export class GameLoop {
   }
 
   private readonly step = (timestamp: number): void => {
-    const deltaMs = Math.max(0, Math.min(timestamp - this.lastTimestamp, maxDeltaMs));
+    const elapsedMs = Math.max(0, timestamp - this.lastTimestamp);
+    const deltaMs = Math.min(elapsedMs, maxDeltaMs);
     this.lastTimestamp = timestamp;
 
-    this.update(deltaMs);
+    this.update(deltaMs, elapsedMs);
     this.animationFrameId = requestAnimationFrame(this.step);
   };
 }
