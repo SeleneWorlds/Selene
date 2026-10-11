@@ -17,6 +17,7 @@ export interface GameRendererContext {
 export type GameRendererFactory = (context: GameRendererContext) => GameRenderer;
 
 export interface GameRenderer {
+  setTileOcclusionEnabled(enabled: boolean): void;
   initialize(): Promise<void>;
   update(deltaMs: number, elapsedMs: number): void;
   handlePacket(packet: GamePacket): void;

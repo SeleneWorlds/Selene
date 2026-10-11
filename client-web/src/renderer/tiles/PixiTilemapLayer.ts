@@ -152,6 +152,10 @@ export class PixiTilemapLayer {
     for (const container of stack.containers) container.tint = tint;
   }
 
+  setOcclusionEnabled(enabled: boolean): void {
+    this.occlusionFader.setEnabled(enabled, this.renderedStacks.values());
+  }
+
   updateOcclusion(deltaMs: number, focusCoordinate: Coordinate, focusBounds: WorldBounds): void {
     this.occlusionFader.update(deltaMs, focusCoordinate, focusBounds);
   }

@@ -9,6 +9,9 @@ import type { PixiTilemapLayer } from '@/renderer/tiles/PixiTilemapLayer';
 import type { LightingEnvironment } from '@/renderer/LightingEnvironment';
 
 export class RenderPipeline {
+  private tileOcclusionEnabled = true;
+  setTileOcclusionEnabled(enabled: boolean): void { this.tileOcclusionEnabled = enabled; }
+
   private frame = 0;
   private fpsElapsedMs = 0;
   private fpsFrames = 0;

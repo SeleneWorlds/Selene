@@ -40,6 +40,7 @@ interface BundleUiManagerOptions {
   entities: EntitiesApi;
   getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
   hasTileAt: (coordinate: Coordinate) => boolean;
+  setTileOcclusionEnabled: (enabled: boolean) => void;
   setLightingEnabled: (enabled: boolean) => void;
   isLightingEnabled: () => boolean;
   setTileGridVisible: (visible: boolean) => void;
@@ -94,6 +95,7 @@ interface BundleUiApi {
     onConnected: (callback: () => void) => () => void;
   };
   readonly world: {
+    setTileOcclusionEnabled: (enabled: boolean) => void;
     getCameraCoordinate: CameraApi['getCoordinate'];
     hasTileAt: (coordinate: Coordinate) => Promise<boolean>;
     setLightingEnabled: (enabled: boolean) => Promise<void>;
@@ -333,6 +335,10 @@ export class BundleUiManager {
         },
       }),
       world: Object.freeze({
+        setTileOcclusionEnabled: (enabled: boolean) => {
+          if (typeof enabled !== 'boolean') throw new Error('Tile occlusion enabled must be a boolean.');
+          this.options.setTileOcclusionEnabled(enabled);
+        },
         isLightingEnabled: () => this.options.isLightingEnabled(),
         setLightingEnabled: async (enabled: boolean) => {
           if (typeof enabled !== 'boolean') throw new Error('Lighting enabled must be a boolean.');

@@ -145,6 +145,8 @@ export class PixiGameRenderer implements GameRenderer {
     });
   }
 
+  setTileOcclusionEnabled(enabled: boolean): void { this.pipeline.setTileOcclusionEnabled(enabled); }
+
   update(deltaMs: number, elapsedMs: number): void {
     this.timelinePlayer.update(deltaMs, this.rendererOptions.particles);
     this.pipeline.update(deltaMs, this.rendererOptions, elapsedMs);

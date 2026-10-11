@@ -122,6 +122,8 @@ export class GameClient {
     };
   }
 
+  setTileOcclusionEnabled(enabled: boolean): void { this.renderer.setTileOcclusionEnabled(enabled); }
+
   getGameApi(): GameApi {
     return {
       addPreTickListener: (listener) => {
