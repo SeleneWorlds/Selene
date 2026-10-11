@@ -45,7 +45,7 @@ export class PixiTilemapLayer {
 
   constructor(
     private readonly visualResolver: TileVisualResolver,
-    textureLoader: ContentTextureLoader,
+    private readonly textureLoader: ContentTextureLoader,
     readonly container: Container,
     private readonly lighting?: LightingEnvironment,
   ) {
@@ -297,7 +297,15 @@ export class PixiTilemapLayer {
       this.mapTiles.delete(key);
       return;
     }
-    const visualMetadata = this.visualResolver.resolve(baseTileId, coordinate)?.metadata ?? {};
+    const baseVisual = this.visualResolver.resolve(baseTileId, coordinate);
+    // Load assets while construction waits in the frame queue, rather than
+    // starting I/O only after each tile reaches the head of that queue.
+    if (baseVisual) this.textureLoader.prefetch(baseVisual.texturePath);
+    for (const tileId of tileIds.slice(1)) {
+      const visual = this.visualResolver.resolve(tileId, coordinate);
+      if (visual) this.textureLoader.prefetch(visual.texturePath);
+    }
+    const visualMetadata = baseVisual?.metadata ?? {};
     this.mapTiles.set(key, { ...coordinate, tileIds: [...tileIds], visualMetadata: { ...visualMetadata } });
   }
 

@@ -12,6 +12,12 @@ export class ContentTextureLoader {
     private readonly authToken: string,
   ) {}
 
+  /** Start a unique load early; renderers still handle failures and fallbacks. */
+  prefetch(texturePath: string): void {
+    if (this.texturePromises.has(texturePath)) return;
+    void this.load(texturePath).catch(() => undefined);
+  }
+
   load(texturePath: string): Promise<Texture> {
     const existing = this.texturePromises.get(texturePath);
     if (existing) {
