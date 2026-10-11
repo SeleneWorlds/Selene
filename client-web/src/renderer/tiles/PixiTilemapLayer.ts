@@ -42,7 +42,6 @@ export class PixiTilemapLayer {
 
   private upperLayerFocusZ: number | null = null;
   private upperLayerAlpha: number | null = null;
-  private upperLayerDirty = false;
 
   constructor(
     private readonly visualResolver: TileVisualResolver,
@@ -276,10 +275,9 @@ export class PixiTilemapLayer {
   }
 
   setUpperLayerAlpha(focusZ: number, alpha: number): void {
-    if (!this.upperLayerDirty && this.upperLayerFocusZ === focusZ && this.upperLayerAlpha === alpha) return;
+    if (this.upperLayerFocusZ === focusZ && this.upperLayerAlpha === alpha) return;
     this.upperLayerFocusZ = focusZ;
     this.upperLayerAlpha = alpha;
-    this.upperLayerDirty = false;
     this.occlusionFader.setUpperLayerAlpha(focusZ, alpha, this.renderedStacks.values());
   }
 
@@ -340,7 +338,9 @@ export class PixiTilemapLayer {
           this.spatialIndex.refreshBounds(stack, index);
         }
         this.culler.boundsChanged(stack);
-        this.upperLayerDirty = true;
+        if (this.upperLayerFocusZ !== null && this.upperLayerAlpha !== null) {
+          this.occlusionFader.setUpperLayerAlpha(this.upperLayerFocusZ, this.upperLayerAlpha, [stack]);
+        }
       }, true);
     });
   }

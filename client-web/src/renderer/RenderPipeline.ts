@@ -32,6 +32,7 @@ export class RenderPipeline {
   update(deltaMs: number, options: RendererDebugOptions, elapsedMs: number): void {
     const startedAt = chunkTimingEnabled ? performance.now() : 0;
     this.recordFrame(elapsedMs);
+    const interiorChecks = this.scene.getCameraZoom() > 0.5;
     const lightingEnabled = options.lighting;
     this.tilemapLayer.setLightingEnabled(lightingEnabled);
     this.entityLayer.setLightingEnabled(lightingEnabled);
@@ -43,7 +44,7 @@ export class RenderPipeline {
     const focus = this.scene.getFocus(this.entityLayer);
     const sceneEndedAt = chunkTimingEnabled ? performance.now() : 0;
     this.lighting.setActiveAmbientLight(Math.round(focus.coordinate.z) < 0
-      ? 'underground' : isInsideInterior(this.tilemapLayer, focus.coordinate) ? 'indoors' : 'outdoors');
+      ? 'underground' : interiorChecks && isInsideInterior(this.tilemapLayer, focus.coordinate) ? 'indoors' : 'outdoors');
     if (lightingEnabled) {
       const revision = this.lighting.getRevision();
       if (revision !== this.lastLightingRevision) {
@@ -55,7 +56,7 @@ export class RenderPipeline {
     }
 
     const lightingEndedAt = chunkTimingEnabled ? performance.now() : 0;
-    if (options.interiorFade) this.interiorFade.update(deltaMs, focus.coordinate);
+    if (options.interiorFade) this.interiorFade.update(deltaMs, focus.coordinate, interiorChecks);
 
     const interiorEndedAt = chunkTimingEnabled ? performance.now() : 0;
     if (options.tileAnimations) this.tilemapLayer.updateAnimations(deltaMs);

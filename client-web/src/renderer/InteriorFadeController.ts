@@ -19,8 +19,14 @@ export class InteriorFadeController {
     private readonly entities: UpperLayerTarget,
   ) {}
 
-  update(deltaMs: number, focus: Coordinate): void {
+  update(deltaMs: number, focus: Coordinate, checksEnabled = true): void {
     const focusTile = { x: Math.round(focus.x), y: Math.round(focus.y), z: Math.round(focus.z) };
+    if (!checksEnabled) {
+      this.upperLayerAlpha = 1;
+      this.tiles.setUpperLayerAlpha(focusTile.z, 1);
+      this.entities.setUpperLayerAlpha(focusTile.z, 1);
+      return;
+    }
     const targetAlpha = isInsideInterior(this.tiles, focus) ? HIDDEN_LAYER_ALPHA : 1;
     const blend = Math.min(1, (deltaMs / 1000) * INTERIOR_FADE_SPEED);
     this.upperLayerAlpha += (targetAlpha - this.upperLayerAlpha) * blend;

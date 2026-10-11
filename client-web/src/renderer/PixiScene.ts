@@ -26,6 +26,8 @@ export class PixiScene {
     this.container.position.set(Math.round(position.x), Math.round(position.y));
   }
 
+  getCameraZoom(): number { return this.camera.getZoom(); }
+
   getFocus(entityLayer: PixiEntityLayer): SceneFocus {
     const coordinate = this.camera.getCoordinate();
     const followedId = this.camera.getFollowedEntityId();
