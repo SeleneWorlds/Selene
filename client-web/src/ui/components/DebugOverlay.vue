@@ -11,16 +11,12 @@ const emit = defineEmits<{
   rendererOptionChanged: [option: keyof RendererDebugOptions, enabled: boolean];
 }>();
 
-const rendererOptionLabels: Record<keyof RendererDebugOptions, string> = {
-  cameraEvents: 'Camera events',
-  culling: 'Tile culling',
-  entityUpdates: 'Entity updates',
+const rendererOptionLabels: Record<Exclude<keyof RendererDebugOptions, 'cameraEvents' | 'entityUpdates' | 'pixiRender' | 'tileAnimations'>, string> = {
+  culling: 'Tile Culling',
   lighting: 'Lighting',
   particles: 'Particles',
-  tileAnimations: 'Tile animations',
-  tileOcclusion: 'Tile occlusion',
-  interiorFade: 'Interior fade',
-  pixiRender: 'Pixi render',
+  tileOcclusion: 'Tile Occlusion',
+  interiorFade: 'Interior Fade',
 };
 </script>
 
@@ -37,58 +33,14 @@ const rendererOptionLabels: Record<keyof RendererDebugOptions, string> = {
         <dd>{{ snapshot.fps.toFixed(0) }}</dd>
       </div>
       <div>
-        <dt>Frame</dt>
-        <dd>{{ snapshot.frame }}</dd>
-      </div>
-      <div>
         <dt>Delta</dt>
         <dd>{{ snapshot.deltaMs.toFixed(1) }} ms</dd>
       </div>
-      <div>
-        <dt>Canvas</dt>
-        <dd>{{ snapshot.viewport.width }} x {{ snapshot.viewport.height }}</dd>
-      </div>
-      <div>
-        <dt>Network</dt>
-        <dd>{{ snapshot.networkStatus }}</dd>
-      </div>
-      <div>
-        <dt>Renderer</dt>
-        <dd>{{ snapshot.rendererStatus }}</dd>
-      </div>
     </dl>
 
-    <section class="debug-timings" aria-label="Performance timings">
-      <h2>Performance</h2>
-      <div class="debug-timings__summary">
-        <span>Startup</span>
-        <strong>{{ snapshot.loadTotalMs > 0 ? `${snapshot.loadTotalMs.toFixed(0)} ms` : 'loading…' }}</strong>
-        <span>Frame work avg / peak</span>
-        <strong>{{ snapshot.frameTiming.averageMs.toFixed(2) }} / {{ snapshot.frameTiming.peakMs.toFixed(2) }} ms</strong>
-      </div>
-
+    <section class="debug-renderer" aria-label="Debug Toggles">
       <details open>
-        <summary>Loading phases</summary>
-        <dl class="debug-timing-list">
-          <div v-for="timing in snapshot.loadTimings" :key="timing.label">
-            <dt>{{ timing.label }}</dt>
-            <dd>{{ timing.durationMs.toFixed(1) }} ms</dd>
-          </div>
-        </dl>
-      </details>
-
-      <details v-if="snapshot.frameTiming.samples > 0">
-        <summary>Frame breakdown ({{ snapshot.frameTiming.samples }} samples)</summary>
-        <dl class="debug-timing-list">
-          <div v-for="(duration, label) in snapshot.frameTiming.breakdown" :key="label">
-            <dt>{{ label }}</dt>
-            <dd>{{ duration.toFixed(2) }} ms</dd>
-          </div>
-        </dl>
-      </details>
-
-      <details open>
-        <summary>Renderer switches</summary>
+        <summary>Debug Toggles</summary>
         <div class="debug-renderer-options">
           <label v-for="(label, option) in rendererOptionLabels" :key="option">
             <input

@@ -4,6 +4,7 @@ import BaseModal from './BaseModal.vue';
 defineProps<{
   debugOverlayVisible: boolean;
   fitToScreen: boolean;
+  tileAnimations: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -11,6 +12,7 @@ const emit = defineEmits<{
   close: [];
   debugOverlayVisibleChanged: [visible: boolean];
   fitToScreenChanged: [enabled: boolean];
+  tileAnimationsChanged: [enabled: boolean];
 }>();
 </script>
 
@@ -26,6 +28,18 @@ const emit = defineEmits<{
           type="checkbox"
           :checked="fitToScreen"
           @change="emit('fitToScreenChanged', ($event.target as HTMLInputElement).checked)"
+        >
+      </label>
+
+      <label class="settings-toggle">
+        <span>
+          <strong>Tile Animations</strong>
+          <small>Animate tiles in the game world.</small>
+        </span>
+        <input
+          type="checkbox"
+          :checked="tileAnimations"
+          @change="emit('tileAnimationsChanged', ($event.target as HTMLInputElement).checked)"
         >
       </label>
 

@@ -66,7 +66,6 @@ class DefaultWebClientRuntime implements WebClientRuntime {
   }
 
   async start(options: BootstrapClientOptions): Promise<void> {
-    const loadingStartedAt = performance.now();
     const reportProgress = (label: string, progress: number): void => {
       options.onStartupProgress?.({ label, progress });
     };
@@ -89,9 +88,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     startSessionRenewal(serverApiUrl, authToken);
 
     reportProgress('Loading game data', 0.2);
-    const serverRegistries = await this.timeLoad('Registry loading', () =>
-      loadClientRegistries({ serverApiUrl, authToken }),
-    );
+    const serverRegistries = await loadClientRegistries({ serverApiUrl, authToken });
     const registries = await applyModRegistryOverrides(serverRegistries);
     reportProgress('Loading assets', 0.42);
     const assetManifest = await loadClientAssetManifest({ serverApiUrl, authToken });
@@ -160,22 +157,18 @@ class DefaultWebClientRuntime implements WebClientRuntime {
 
     const luaRuntime = new LuaRuntime();
     reportProgress('Preparing game scripts', 0.68);
-    await this.timeLoad('Lua bindings', async () => {
-      await registerCameraLuaModule(luaRuntime, gameClient.getCameraApi());
-      await registerEntitiesLuaModule(luaRuntime, gameClient.getEntitiesApi(), entityApis);
-      await registerGameLuaModule(luaRuntime, gameClient.getGameApi());
-      await registerGridLuaModule(luaRuntime, gameClient.getGridApi());
-      await registerInputLuaModule(luaRuntime, gameClient.getInputApi());
-      await registerMovementGridLuaModule(luaRuntime, gameClient.getMovementGridApi());
-      await registerNetworkLuaModule(luaRuntime, gameClient.getNetworkApi());
-      await registerTimelinesLuaModule(luaRuntime, gameClient.getTimelinesApi());
-      await registerCommonLuaModules(luaRuntime, commonApis);
-      await registerClientFeatureLuaModules(luaRuntime, featureApis);
-    });
+    await registerCameraLuaModule(luaRuntime, gameClient.getCameraApi());
+    await registerEntitiesLuaModule(luaRuntime, gameClient.getEntitiesApi(), entityApis);
+    await registerGameLuaModule(luaRuntime, gameClient.getGameApi());
+    await registerGridLuaModule(luaRuntime, gameClient.getGridApi());
+    await registerInputLuaModule(luaRuntime, gameClient.getInputApi());
+    await registerMovementGridLuaModule(luaRuntime, gameClient.getMovementGridApi());
+    await registerNetworkLuaModule(luaRuntime, gameClient.getNetworkApi());
+    await registerTimelinesLuaModule(luaRuntime, gameClient.getTimelinesApi());
+    await registerCommonLuaModules(luaRuntime, commonApis);
+    await registerClientFeatureLuaModules(luaRuntime, featureApis);
     reportProgress('Loading game scripts', 0.78);
-    await this.timeLoad('Client Lua loading', () =>
-      loadAndRunClientLua({ serverApiUrl, authToken, runtime: luaRuntime }),
-    );
+    await loadAndRunClientLua({ serverApiUrl, authToken, runtime: luaRuntime });
     gameClient.setClientEntityScriptRunner(
       (scriptModule, entityId, entity, deltaSeconds) => {
         luaRuntime.runClientEntityScript(
@@ -213,22 +206,11 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       onMapChanged: (listener) => gameClient.addMapChangedListener(listener),
     });
     reportProgress('Loading interface', 0.88);
-    await this.timeLoad('Bundle UI loading', () => bundleUiManager.load());
+    await bundleUiManager.load();
     reportProgress('Joining game', 0.96);
     await gameClient.start();
 
-    this.debugState.update({ loadTotalMs: performance.now() - loadingStartedAt });
     reportProgress('Connected', 1);
-    console.info(`[Timing] Total startup: ${this.debugState.snapshot.value.loadTotalMs.toFixed(1)} ms`);
-  }
-
-  private async timeLoad<T>(label: string, operation: () => Promise<T>): Promise<T> {
-    const startedAt = performance.now();
-    try {
-      return await operation();
-    } finally {
-      this.debugState.recordLoadTiming(label, performance.now() - startedAt);
-    }
   }
 }
 

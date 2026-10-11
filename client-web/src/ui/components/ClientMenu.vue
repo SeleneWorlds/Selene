@@ -7,6 +7,7 @@ import SettingsModal from './SettingsModal.vue';
 defineProps<{
   debugOverlayVisible: boolean;
   fitToScreen: boolean;
+  tileAnimations: boolean;
 }>();
 
 const page = ref<'menu' | 'settings' | 'mods'>('menu');
@@ -14,6 +15,7 @@ const emit = defineEmits<{
   close: [];
   debugOverlayVisibleChanged: [visible: boolean];
   fitToScreenChanged: [enabled: boolean];
+  tileAnimationsChanged: [enabled: boolean];
 }>();
 </script>
 
@@ -22,10 +24,12 @@ const emit = defineEmits<{
     v-if="page === 'settings'"
     :debug-overlay-visible="debugOverlayVisible"
     :fit-to-screen="fitToScreen"
+    :tile-animations="tileAnimations"
     @back="page = 'menu'"
     @close="emit('close')"
     @debug-overlay-visible-changed="emit('debugOverlayVisibleChanged', $event)"
     @fit-to-screen-changed="emit('fitToScreenChanged', $event)"
+    @tile-animations-changed="emit('tileAnimationsChanged', $event)"
   />
   <BaseModal
     v-else

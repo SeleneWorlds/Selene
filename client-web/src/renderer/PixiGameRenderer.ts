@@ -145,9 +145,9 @@ export class PixiGameRenderer implements GameRenderer {
     });
   }
 
-  update(deltaMs: number): Record<string, number> {
+  update(deltaMs: number): void {
     this.timelinePlayer.update(deltaMs, this.rendererOptions.particles);
-    return this.pipeline.update(deltaMs, this.rendererOptions);
+    this.pipeline.update(deltaMs, this.rendererOptions);
   }
 
   setDebugOption(option: keyof RendererDebugOptions, enabled: boolean): void {

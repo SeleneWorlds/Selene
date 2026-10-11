@@ -19,6 +19,7 @@ const startupProgress = ref(0);
 const settings = loadSettings();
 const isDebugOverlayVisible = ref(settings.debugOverlayVisible);
 const fitToScreen = ref(settings.fitToScreen);
+const tileAnimations = ref(settings.tileAnimations);
 const isMenuOpen = ref(false);
 const debugState = createDebugState();
 
@@ -37,11 +38,18 @@ function setFitToScreen(enabled: boolean): void {
   persistSettings();
 }
 
+function setTileAnimations(enabled: boolean): void {
+  tileAnimations.value = enabled;
+  clientRuntime?.setRendererDebugOption('tileAnimations', enabled);
+  persistSettings();
+}
+
 function persistSettings(): void {
   saveSettings({
     ...loadSettings(),
     debugOverlayVisible: isDebugOverlayVisible.value,
     fitToScreen: fitToScreen.value,
+    tileAnimations: tileAnimations.value,
   });
 }
 
@@ -112,6 +120,7 @@ async function startClient(): Promise<void> {
         errorMessage.value = reason || 'The server disconnected the client.';
       },
     });
+    clientRuntime.setRendererDebugOption('tileAnimations', tileAnimations.value);
     if (status.value === 'booting') {
       status.value = 'running';
     }
@@ -155,9 +164,11 @@ onMounted(() => {
       v-if="isMenuOpen"
       :debug-overlay-visible="isDebugOverlayVisible"
       :fit-to-screen="fitToScreen"
+      :tile-animations="tileAnimations"
       @close="isMenuOpen = false"
       @debug-overlay-visible-changed="setDebugOverlayVisible"
       @fit-to-screen-changed="setFitToScreen"
+      @tile-animations-changed="setTileAnimations"
     />
 
     <ModDropInstaller />

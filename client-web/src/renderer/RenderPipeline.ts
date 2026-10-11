@@ -25,50 +25,41 @@ export class RenderPipeline {
     private readonly tileGrid: PixiTileGrid,
   ) {}
 
-  update(deltaMs: number, options: RendererDebugOptions): Record<string, number> {
+  update(deltaMs: number, options: RendererDebugOptions): void {
     this.recordFrame(deltaMs);
-    const timings: Record<string, number> = {};
-    this.measure(timings, 'Renderer: tile construction', () => this.tilemapLayer.processPendingWork());
-    this.measure(timings, 'Renderer: entities', () => {
-      if (options.entityUpdates) this.entityLayer.update(deltaMs);
-    });
-    this.measure(timings, 'Renderer: camera', () => this.scene.updateCamera(this.entityLayer));
-    const focus = this.measure(timings, 'Renderer: focus bounds', () => this.scene.getFocus(this.entityLayer));
+    this.tilemapLayer.processPendingWork();
+    if (options.entityUpdates) this.entityLayer.update(deltaMs);
+
+    this.scene.updateCamera(this.entityLayer);
+    const focus = this.scene.getFocus(this.entityLayer);
     this.lighting.setActiveAmbientLight(Math.round(focus.coordinate.z) < 0
       ? 'underground' : isInsideInterior(this.tilemapLayer, focus.coordinate) ? 'indoors' : 'outdoors');
-    this.measure(timings, 'Renderer: lighting', () => {
-      if (!options.lighting) return;
+    if (options.lighting) {
       const revision = this.lighting.getRevision();
       if (revision !== this.lastLightingRevision) {
         this.lastLightingRevision = revision;
         this.tilemapLayer.updateLighting();
         this.entityLayer.updateLighting();
       }
-    });
-    this.measure(timings, 'Renderer: interior fade', () => {
-      if (options.interiorFade) this.interiorFade.update(deltaMs, focus.coordinate);
-    });
-    this.measure(timings, 'Renderer: tile animations', () => {
-      if (options.tileAnimations) this.tilemapLayer.updateAnimations(deltaMs);
-    });
-    this.measure(timings, 'Renderer: tile occlusion', () => {
-      if (options.tileOcclusion) this.tilemapLayer.updateOcclusion(deltaMs, focus.coordinate, focus.bounds);
-    });
-    this.measure(timings, 'Renderer: scene update', () => this.viewport.updateCameraClip());
-    this.measure(timings, 'Renderer: tile cull', () => {
-      if (options.pixiRender && options.culling) {
-        this.tilemapLayer.updateCulling(this.scene.getViewBounds(
-          this.app.renderer.screen.width, this.app.renderer.screen.height,
-        ));
-      }
-    });
+    }
+
+    if (options.interiorFade) this.interiorFade.update(deltaMs, focus.coordinate);
+
+    if (options.tileAnimations) this.tilemapLayer.updateAnimations(deltaMs);
+
+    if (options.tileOcclusion) this.tilemapLayer.updateOcclusion(deltaMs, focus.coordinate, focus.bounds);
+
+    this.viewport.updateCameraClip();
+    if (options.pixiRender && options.culling) {
+      this.tilemapLayer.updateCulling(this.scene.getViewBounds(
+        this.app.renderer.screen.width, this.app.renderer.screen.height,
+      ));
+    }
+
     this.tileGrid.update(this.scene.getViewBounds(
       this.app.renderer.screen.width, this.app.renderer.screen.height,
     ), focus.coordinate.z);
-    this.measure(timings, 'Renderer: Pixi draw', () => {
-      if (options.pixiRender) this.app.renderer.render({ container: this.app.stage });
-    });
-    return timings;
+    if (options.pixiRender) this.app.renderer.render({ container: this.app.stage });
   }
 
   private lastLightingRevision = -1;
@@ -81,15 +72,6 @@ export class RenderPipeline {
       this.debugState.update({ frame: this.frame, fps: this.fpsFrames / this.fpsElapsedMs * 1000, deltaMs });
       this.fpsElapsedMs = 0;
       this.fpsFrames = 0;
-    }
-  }
-
-  private measure<T>(timings: Record<string, number>, label: string, operation: () => T): T {
-    const startedAt = performance.now();
-    try {
-      return operation();
-    } finally {
-      timings[label] = performance.now() - startedAt;
     }
   }
 }

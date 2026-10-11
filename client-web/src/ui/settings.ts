@@ -1,6 +1,7 @@
 export interface ClientSettings {
   debugOverlayVisible: boolean;
   fitToScreen: boolean;
+  tileAnimations: boolean;
   locale: string;
 }
 
@@ -8,6 +9,7 @@ const SETTINGS_STORAGE_KEY = 'selene.client.settings';
 const defaultSettings: ClientSettings = {
   debugOverlayVisible: false,
   fitToScreen: true,
+  tileAnimations: true,
   locale: navigator.language.replace(/-/g, '_'),
 };
 
@@ -71,6 +73,10 @@ function sanitizeSettings(value: unknown): ClientSettings {
       isRecord(value) && typeof value.debugOverlayVisible === 'boolean'
         ? value.debugOverlayVisible
         : defaultSettings.debugOverlayVisible,
+    tileAnimations:
+      isRecord(value) && typeof value.tileAnimations === 'boolean'
+        ? value.tileAnimations
+        : defaultSettings.tileAnimations,
     fitToScreen:
       isRecord(value) && typeof value.fitToScreen === 'boolean'
         ? value.fitToScreen

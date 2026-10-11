@@ -68,7 +68,6 @@ export class GameClient {
       this.renderer,
     );
     this.tickPipeline = new ClientTickPipeline(
-      this.debugState,
       this.inputManager,
       this.movementGrid,
       this.entities,
@@ -88,10 +87,10 @@ export class GameClient {
 
   async start(): Promise<void> {
     this.debugState.update({ networkStatus: this.networkClient.status });
-    await this.timeLoad('Renderer initialization', () => this.renderer.initialize());
+    await this.renderer.initialize();
     this.networkClient.addStatusListener(this.handleNetworkStatus);
     this.networkClient.addPacketListener(this.packetDispatcher.handlePacket);
-    await this.timeLoad('Network connection', () => this.networkClient.connect());
+    await this.networkClient.connect();
     this.tickPipeline.start();
   }
 
@@ -236,14 +235,4 @@ export class GameClient {
   private readonly handleNetworkStatus = (): void => {
     this.debugState.update({ networkStatus: this.networkClient.status });
   };
-
-  private async timeLoad<T>(label: string, operation: () => Promise<T>): Promise<T> {
-    const startedAt = performance.now();
-    try {
-      return await operation();
-    } finally {
-      this.debugState.recordLoadTiming(label, performance.now() - startedAt);
-    }
-  }
-
 }

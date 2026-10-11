@@ -12,9 +12,6 @@ export interface DebugSnapshot {
   };
   networkStatus: NetworkStatus;
   rendererStatus: 'created' | 'initializing' | 'ready';
-  loadTimings: DebugLoadTiming[];
-  loadTotalMs: number;
-  frameTiming: DebugFrameTiming;
   rendererOptions: RendererDebugOptions;
 }
 
@@ -30,22 +27,9 @@ export interface RendererDebugOptions {
   pixiRender: boolean;
 }
 
-export interface DebugLoadTiming {
-  label: string;
-  durationMs: number;
-}
-
-export interface DebugFrameTiming {
-  averageMs: number;
-  peakMs: number;
-  samples: number;
-  breakdown: Record<string, number>;
-}
-
 export interface DebugState {
   snapshot: ShallowRef<DebugSnapshot>;
   update: (next: PartialDebugSnapshot) => void;
-  recordLoadTiming: (label: string, durationMs: number) => void;
 }
 
 type PartialDebugSnapshot = Partial<
@@ -65,14 +49,6 @@ const initialSnapshot: DebugSnapshot = {
   },
   networkStatus: 'idle',
   rendererStatus: 'created',
-  loadTimings: [],
-  loadTotalMs: 0,
-  frameTiming: {
-    averageMs: 0,
-    peakMs: 0,
-    samples: 0,
-    breakdown: {},
-  },
   rendererOptions: {
     cameraEvents: true,
     culling: true,
@@ -99,14 +75,6 @@ export function createDebugState(): DebugState {
           ...snapshot.value.viewport,
           ...next.viewport,
         },
-      };
-    },
-    recordLoadTiming(label, durationMs) {
-      const timing = { label, durationMs };
-      console.info(`[Timing] ${label}: ${durationMs.toFixed(1)} ms`);
-      snapshot.value = {
-        ...snapshot.value,
-        loadTimings: [...snapshot.value.loadTimings, timing],
       };
     },
   };
