@@ -328,29 +328,40 @@ export class PixiTilemapLayer {
     this.pendingStacks.set(key, stack);
     // Keep the displayed stack until every replacement texture (or fallback) is ready.
     const textureStartedAt = chunkTimingEnabled ? performance.now() : 0;
-    void this.stackRenderer.renderStack(stack, candidate => this.isCurrent(candidate)).then(() => {
+    const attach = () => {
+    if (this.pendingStacks.get(key) !== stack) return;
+    this.removeTileStack(coordinate);
+    this.pendingStacks.delete(key);
+    this.renderedStacks.set(key, stack);
+    this.lighting?.setTileDefinitionLight(coordinate, light);
+    this.tintStack(stack);
+    this.stackRenderer.attachStack(stack);
+    this.culler.add(stack);
+    for (let index = 0; index < stack.containers.length; index += 1) {
+      this.spatialIndex.refreshBounds(stack, index);
+    }
+    this.culler.boundsChanged(stack);
+    if (this.upperLayerFocusZ !== null && this.upperLayerAlpha !== null) {
+      this.occlusionFader.setUpperLayerAlpha(this.upperLayerFocusZ, this.upperLayerAlpha, [stack]);
+    }
+    };
+    const prepared = this.stackRenderer.renderStack(stack, candidate => this.isCurrent(candidate));
+    const ready = () => {
       if (chunkTimingEnabled) {
         this.timingTexturesReady += 1;
         this.timingTextureMaxMs = Math.max(this.timingTextureMaxMs, performance.now() - textureStartedAt);
       }
-      this.workQueue.enqueue(stack, () => {
-        if (this.pendingStacks.get(key) !== stack) return;
-        this.removeTileStack(coordinate);
-        this.pendingStacks.delete(key);
-        this.renderedStacks.set(key, stack);
-        this.lighting?.setTileDefinitionLight(coordinate, light);
-        this.tintStack(stack);
-        this.stackRenderer.attachStack(stack);
-        this.culler.add(stack);
-        for (let index = 0; index < stack.containers.length; index += 1) {
-          this.spatialIndex.refreshBounds(stack, index);
-        }
-        this.culler.boundsChanged(stack);
-        if (this.upperLayerFocusZ !== null && this.upperLayerAlpha !== null) {
-          this.occlusionFader.setUpperLayerAlpha(this.upperLayerFocusZ, this.upperLayerAlpha, [stack]);
-        }
-      }, true);
-    });
+    };
+    if (prepared) {
+      void prepared.then(() => {
+        ready();
+        this.workQueue.enqueue(stack, attach, true);
+      });
+    } else {
+      ready();
+      // Cached construction and attachment share one budgeted job.
+      attach();
+    }
   }
 
   private removeTileStack(coordinate: Coordinate): void {

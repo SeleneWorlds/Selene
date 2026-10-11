@@ -1,10 +1,10 @@
 import { chunkTimingEnabled } from '@/core/ChunkTiming';
-import { Container, Graphics, Sprite } from 'pixi.js';
+import { Container, Graphics, Sprite, type Texture } from 'pixi.js';
 import { getRenderOrder, projectCoordinate, TILE_HEIGHT, TILE_WIDTH } from '@/renderer/IsoProjection';
 import type { Coordinate } from '@/networking/GameProtocol';
 import type { ContentTextureLoader } from '../entities/ContentTextureLoader';
 import type { RenderedAnimatedTile, RenderedTileStack } from './RenderedTileStack';
-import type { TileVisualResolver } from './TileVisualResolver';
+import type { ResolvedTileVisual, TileVisualResolver } from './TileVisualResolver';
 
 export class PixiTileStackRenderer {
   private readonly animatedStacks = new Set<RenderedTileStack>();
@@ -16,7 +16,6 @@ export class PixiTileStackRenderer {
     if (reset) this.timing = { cachedLayers: 0, asyncLayers: 0, textureWaitMaxMs: 0, completionWaitMaxMs: 0 };
     return stats;
   }
-
 
   constructor(
     private readonly visualResolver: TileVisualResolver,
@@ -96,8 +95,46 @@ export class PixiTileStackRenderer {
     }
   }
 
-  async renderStack(stack: RenderedTileStack, isCurrent: (stack: RenderedTileStack) => boolean): Promise<void> {
+  renderStack(stack: RenderedTileStack, isCurrent: (stack: RenderedTileStack) => boolean): Promise<void> | void {
+    const visuals = stack.tileIds.map(tileId => this.visualResolver.resolve(tileId, stack.coordinate));
+    const textures = visuals.map(visual => visual ? this.textureLoader.getReady(visual.texturePath) : null);
+    if (visuals.some((visual, index) => visual && !textures[index])) {
+      return this.renderAsyncStack(stack, isCurrent);
+    }
+    for (let index = 0; index < visuals.length; index += 1) {
+      if (!isCurrent(stack)) return;
+      const visual = visuals[index];
+      if (visual) this.applyTexture(stack, index, visual, textures[index]!, stack.generation, isCurrent);
+      else {
+        stack.containers[index].addChild(createFallbackTile(stack.tileIds[index]));
+        this.boundsChanged(stack, index);
+      }
+      if (chunkTimingEnabled && visual) this.timing.cachedLayers += 1;
+    }
+  }
+
+  private applyTexture(
+    stack: RenderedTileStack, index: number, visual: ResolvedTileVisual, texture: Texture,
+    generation: number, isCurrent: (stack: RenderedTileStack) => boolean,
+  ): void {
+    if (stack.generation !== generation || !isCurrent(stack)) return;
+    const sprite = stack.containers[index] as Sprite;
+    sprite.texture = texture;
+    sprite.anchor.set(0.5, 1);
+    const position = projectCoordinate(stack.coordinate);
+    sprite.position.set(position.x + visual.offsetX, position.y - stack.surfaceOffsets[index] - visual.offsetY);
+    sprite.scale.x = visual.flipX ? -1 : 1;
+    sprite.scale.y = visual.flipY ? -1 : 1;
+    this.boundsChanged(stack, index);
+    if (visual.animation && visual.animation.textures.length > 1) {
+      stack.animatedTiles.push({ sprite, visual, elapsedMs: 0, frameIndex: 0, revision: 0 });
+      this.animatedStacks.add(stack);
+    }
+  }
+
+  private async renderAsyncStack(stack: RenderedTileStack, isCurrent: (stack: RenderedTileStack) => boolean): Promise<void> {
     const generation = stack.generation;
+    let insideConstructionJob = true;
     for (const [localSortLayer, tileId] of stack.tileIds.entries()) {
       if (stack.generation !== generation || !isCurrent(stack)) return;
       const container = stack.containers[localSortLayer];
@@ -109,11 +146,22 @@ export class PixiTileStackRenderer {
       }
 
       try {
+        const applyTexture = (texture: Texture) => this.applyTexture(stack, localSortLayer, visual, texture, generation, isCurrent);
+        const cachedTexture = this.textureLoader.getReady(visual.texturePath);
+        if (cachedTexture && insideConstructionJob) {
+          // Construction already runs within the frame budget. Cached textures
+          // need no promise or extra queue round trip for each tile layer.
+          if (chunkTimingEnabled) this.timing.cachedLayers += 1;
+          applyTexture(cachedTexture);
+          continue;
+        }
         const loadStartedAt = chunkTimingEnabled ? performance.now() : 0;
-        const texture = await this.textureLoader.load(visual.texturePath);
+        const texture = cachedTexture ?? await this.textureLoader.load(visual.texturePath);
+        insideConstructionJob = false;
         const readyAt = chunkTimingEnabled ? performance.now() : 0;
         if (chunkTimingEnabled) {
-          this.timing.asyncLayers += 1;
+          if (cachedTexture) this.timing.cachedLayers += 1;
+          else this.timing.asyncLayers += 1;
           this.timing.textureWaitMaxMs = Math.max(this.timing.textureWaitMaxMs, readyAt - loadStartedAt);
         }
         await new Promise<void>((resolve, reject) => this.schedule(() => {
@@ -121,26 +169,10 @@ export class PixiTileStackRenderer {
             if (chunkTimingEnabled) this.timing.completionWaitMaxMs = Math.max(
               this.timing.completionWaitMaxMs, performance.now() - readyAt,
             );
-            if (stack.generation !== generation || !isCurrent(stack)) return;
-            const sprite = container as Sprite;
-            sprite.texture = texture;
-            sprite.anchor.set(0.5, 1);
-            const position = projectCoordinate(stack.coordinate);
-            sprite.position.set(
-              position.x + visual.offsetX,
-              position.y - stack.surfaceOffsets[localSortLayer] - visual.offsetY,
-            );
-            sprite.scale.x = visual.flipX ? -1 : 1;
-            sprite.scale.y = visual.flipY ? -1 : 1;
-            this.boundsChanged(stack, localSortLayer);
-            if (visual.animation && visual.animation.textures.length > 1) {
-              stack.animatedTiles.push({ sprite, visual, elapsedMs: 0, frameIndex: 0, revision: 0 });
-              this.animatedStacks.add(stack);
-            }
+            applyTexture(texture);
+            resolve();
           } catch (error) {
             reject(error);
-          } finally {
-            resolve();
           }
         }));
       } catch (error) {

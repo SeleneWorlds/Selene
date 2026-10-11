@@ -4,6 +4,12 @@ import { resolveServerUrl } from '@/data/ClientRegistryLoader';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
 export class ContentTextureLoader {
+  private readonly readyTextures = new Map<string, Texture>();
+
+  getReady(texturePath: string): Texture | undefined {
+    return this.readyTextures.get(texturePath);
+  }
+
   private readonly texturePromises = new Map<string, Promise<Texture>>();
 
   constructor(
@@ -49,6 +55,7 @@ export class ContentTextureLoader {
       autoGenerateMipmaps: false,
       antialias: false,
     }, true);
+    this.readyTextures.set(texturePath, texture);
     return texture;
   }
 
