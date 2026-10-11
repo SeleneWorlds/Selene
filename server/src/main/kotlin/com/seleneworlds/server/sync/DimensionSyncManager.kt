@@ -51,6 +51,8 @@ class DimensionSyncManager {
     }
 
     fun entityTeleported(entity: Entity) {
+        playerSyncManagers.filter { it.player.camera.followEntity == entity }
+            .forEach { it.beginWorldTransition() }
         updateEntityWatches(entity)
         sendToAllWatching(
             entity.networkId,

@@ -27,6 +27,7 @@ export class RenderPipeline {
     private readonly interiorFade: InteriorFadeController,
     private readonly lighting: LightingEnvironment,
     private readonly tileGrid: PixiTileGrid,
+    private readonly beforeRender: () => void = () => {},
   ) {}
 
   update(deltaMs: number, options: RendererDebugOptions, elapsedMs: number): void {
@@ -78,6 +79,7 @@ export class RenderPipeline {
       this.app.renderer.screen.width, this.app.renderer.screen.height,
     ), focus.coordinate.z);
     const cullingEndedAt = chunkTimingEnabled ? performance.now() : 0;
+    this.beforeRender();
     if (options.pixiRender) this.app.renderer.render({ container: this.app.stage });
     if (chunkTimingEnabled && performance.now() - startedAt >= 16) {
       chunkTiming('slow-frame', {

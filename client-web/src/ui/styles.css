@@ -61,6 +61,13 @@ select {
   height: 100%;
 }
 
+.world-loading-cover {
+  position: absolute;
+  inset: 0;
+  background: var(--color-neutral-950);
+  pointer-events: none;
+}
+
 .game-viewport canvas {
   display: block;
 }

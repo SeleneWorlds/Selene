@@ -252,6 +252,10 @@ export class PixiTilemapLayer {
     this.culler.update(view);
   }
 
+  hasPendingIncomingWork(): boolean {
+    return this.workQueue.pendingIncomingCount > 0 || this.pendingStacks.size > 0;
+  }
+
   hasTiles(): boolean { return this.mapTiles.size > 0; }
 
   hasTileAt(coordinate: Coordinate): boolean { return this.mapTiles.has(coordinateKey(coordinate)); }

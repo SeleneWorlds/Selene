@@ -23,6 +23,7 @@ import type { ClientGrid } from '@/core/ClientGrid';
 import { projectCoordinate as projectWorldCoordinate } from '@/core/WorldProjection';
 import { LightingEnvironment } from './LightingEnvironment';
 import type { LightColor, TileLight } from '@/api/EnvironmentApi';
+import { WorldLoadGate } from './WorldLoadGate';
 import { TimelinePlayer } from '@/renderer/timeline/TimelinePlayer';
 
 export interface PixiGameRendererOptions {
@@ -53,6 +54,8 @@ export class PixiGameRenderer implements GameRenderer {
   private readonly lighting = new LightingEnvironment();
   private readonly timelinePlayer: TimelinePlayer;
   private readonly screenEffects = new Container();
+  private readonly worldLoadGate = new WorldLoadGate();
+  private readonly loadingCover = document.createElement('div');
 
   private rendererOptions: RendererDebugOptions;
 
@@ -100,7 +103,7 @@ export class PixiGameRenderer implements GameRenderer {
       this.app, this.debugState, this.scene, this.viewport, this.entityLayer, this.tilemapLayer,
       new InteriorFadeController(this.tilemapLayer, this.entityLayer),
       this.lighting,
-      this.tileGrid,
+      this.tileGrid, () => this.updateLoadingCover(),
     );
   }
 
@@ -121,8 +124,17 @@ export class PixiGameRenderer implements GameRenderer {
     this.host.appendChild(this.app.canvas);
     this.app.stage.addChild(this.scene.container);
     this.app.stage.addChild(this.screenEffects);
+    this.loadingCover.className = 'world-loading-cover';
+    this.loadingCover.setAttribute('aria-hidden', 'true');
+    this.host.appendChild(this.loadingCover);
+    this.updateLoadingCover();
     this.viewport.initialize();
     this.debugState.update({ rendererStatus: 'ready' });
+  }
+
+  private updateLoadingCover(): void {
+    const hidden = this.worldLoadGate.update(this.tilemapLayer.hasPendingIncomingWork());
+    this.loadingCover.hidden = !hidden;
   }
 
   setTimelineSoundPlayer(player: (sound: string, volume: number, pitch: number) => void): void {
@@ -166,6 +178,9 @@ export class PixiGameRenderer implements GameRenderer {
 
   handlePacket(packet: GamePacket): void {
     switch (packet.type) {
+      case 'mapSyncState':
+        this.worldLoadGate.setTransferState(packet.complete, packet.hideWorld);
+        break;
       case 'setCameraPosition':
         this.camera.setCoordinate(packet.coordinate);
         this.drawCameraScene();

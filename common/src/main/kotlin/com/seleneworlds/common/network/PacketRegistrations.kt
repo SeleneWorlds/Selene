@@ -180,6 +180,13 @@ class PacketRegistrations(private val packetFactory: PacketFactory) {
             HeartbeatPacket::decode
         )
         packetFactory.registerPacket(
+            26,
+            setOf(PacketDirection.SERVER_TO_CLIENT),
+            MapSyncStatePacket::class,
+            MapSyncStatePacket::encode,
+            MapSyncStatePacket::decode
+        )
+        packetFactory.registerPacket(
             254,
             setOf(PacketDirection.CLIENT_TO_SERVER, PacketDirection.SERVER_TO_CLIENT),
             CustomPayloadPacket::class,

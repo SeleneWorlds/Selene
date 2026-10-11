@@ -31,6 +31,12 @@ class PlayerSyncManager(
     val entitySyncRadius get() = ceil(64.0 / player.camera.zoom).toInt()
 
     private val pendingChunks = ArrayDeque<ChunkWindow>()
+    private var mapTransferInProgress = false
+
+    fun beginWorldTransition() {
+        mapTransferInProgress = true
+        player.client.send(MapSyncStatePacket(complete = false, hideWorld = true))
+    }
 
     var dimensionDirty = false
     var coordinateDirty = false
@@ -43,6 +49,7 @@ class PlayerSyncManager(
             dimensionDirty = false
             coordinateDirty = false
         } else if (dimensionDirty) {
+            beginWorldTransition()
             syncedChunks.forEach {
                 player.client.send(RemoveMapChunkPacket(it.x, it.y, it.z, it.width, it.height))
             }
@@ -74,6 +81,8 @@ class PlayerSyncManager(
     private fun refreshPendingChunks() {
         pendingChunks.clear()
         if (player.camera.dimension == null) return
+        mapTransferInProgress = true
+        player.client.send(MapSyncStatePacket(complete = false, hideWorld = !initialSync || dimensionDirty))
         val coordinate = player.camera.coordinate
         val center = ChunkWindow.at(coordinate, chunkViewManager.chunkSize)
         pendingChunks.addAll(ChunkWindow.around(
@@ -132,6 +141,10 @@ class PlayerSyncManager(
                 bytesSent += packetBytes
             }
             syncedChunks.add(window)
+        }
+        if (pendingChunks.isEmpty() && mapTransferInProgress) {
+            mapTransferInProgress = false
+            player.client.send(MapSyncStatePacket(complete = true))
         }
     }
 

@@ -25,12 +25,14 @@ const PacketId = {
   PlayTimeline: 23,
   StopTimeline: 24,
   Heartbeat: 25,
+  MapSyncState: 26,
   CustomPayload: 254,
   Disconnect: 255,
 } as const;
 
 export type GamePacket =
   | { type: 'heartbeat' }
+  | { type: 'mapSyncState'; complete: boolean; hideWorld: boolean }
   | NameIdMappingsPacket
   | MapChunkPacket
   | EntityPacket
@@ -234,6 +236,8 @@ export function decodeGamePacket(data: ArrayBuffer): GamePacket {
   const packetId = reader.readUnsignedByte();
 
   switch (packetId) {
+    case PacketId.MapSyncState:
+      return { type: 'mapSyncState', complete: reader.readBoolean(), hideWorld: reader.readBoolean() };
     case PacketId.Heartbeat:
       return { type: 'heartbeat' };
     case PacketId.NameIdMappings:

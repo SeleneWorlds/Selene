@@ -6,6 +6,7 @@ import com.seleneworlds.common.entities.component.ComponentRegistry
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.server.maps.layers.DenseMapLayer
+import com.seleneworlds.common.network.packet.MapSyncStatePacket
 import com.seleneworlds.common.network.packet.MapChunkPacket
 import com.seleneworlds.common.network.packet.UpdateMapTilesPacket
 import com.seleneworlds.common.grid.ChunkWindow
@@ -255,5 +256,33 @@ class CameraZoomSyncTest {
             assertFailsWith<IllegalArgumentException> { player.api.setCameraZoom(invalid) }
             assertEquals(2f, player.camera.zoom)
         }
+    }
+
+    @Test
+    fun `map transfer completion waits through backpressure and empty windows`() {
+        val dimension = Dimension(registries, world)
+        player.camera.focusCoordinate(dimension, Coordinate.Zero)
+        player.camera.zoom = 0.25f
+        val sync = PlayerSyncManager(chunks, Json, player, entities, nanoTime = { 0L })
+        writable = false
+        sync.update()
+        assertEquals(listOf(MapSyncStatePacket(false, true)), packets.filterIsInstance<MapSyncStatePacket>())
+        writable = true
+        sync.update()
+        assertFalse(packets.filterIsInstance<MapSyncStatePacket>().any { it.complete })
+        repeat(20) { sync.update() }
+        assertEquals(listOf(MapSyncStatePacket(false, true), MapSyncStatePacket(true)),
+            packets.filterIsInstance<MapSyncStatePacket>())
+        packets.clear()
+        sync.beginWorldTransition()
+        assertEquals(MapSyncStatePacket(false, true), packets.single())
+        sync.update()
+        assertEquals(MapSyncStatePacket(true), packets.last())
+        packets.clear()
+        player.camera.focusCoordinate(Dimension(registries, world), Coordinate.Zero)
+        sync.dimensionDirty = true
+        sync.update()
+        assertEquals(MapSyncStatePacket(false, true), packets.first())
+        assertTrue(packets.any { it is RemoveMapChunkPacket })
     }
 }
