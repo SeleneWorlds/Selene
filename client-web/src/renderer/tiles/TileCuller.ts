@@ -36,6 +36,7 @@ export class TileCuller {
       for (const container of stack.containers) {
         container.cullable = enabled;
         container.culled = enabled;
+        container.visible = !enabled;
       }
     }
     this.visibleStacks.clear();
@@ -64,7 +65,10 @@ export class TileCuller {
 }
 
 function setCulled(stack: RenderedTileStack, culled: boolean): void {
-  for (const container of stack.containers) container.culled = culled;
+  for (const container of stack.containers) {
+    container.culled = culled;
+    container.visible = !culled;
+  }
 }
 
 function overlaps(left: WorldBounds, right: WorldBounds): boolean {
