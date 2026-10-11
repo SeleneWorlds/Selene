@@ -91,6 +91,7 @@ export class PixiEntityLayer {
   }
 
   setLightingEnabled(enabled: boolean): void {
+    if (this.lightingEnabled === enabled) return;
     this.lightingEnabled = enabled;
     this.updateLighting();
   }

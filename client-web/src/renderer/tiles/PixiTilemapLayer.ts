@@ -205,13 +205,25 @@ export class PixiTilemapLayer {
   private lightingEnabled = true;
 
   setLightingEnabled(enabled: boolean): void {
+    if (this.lightingEnabled === enabled) return;
     this.lightingEnabled = enabled;
     this.updateLighting();
   }
 
-  updateLighting(): void {
+  updateLighting(regions?: readonly Coordinate[]): void {
     if (!this.lighting) return;
-    for (const stack of this.renderedStacks.values()) this.tintStack(stack);
+    if (!regions) {
+      for (const stack of this.renderedStacks.values()) this.tintStack(stack);
+      return;
+    }
+    for (const region of regions) {
+      for (let y = region.y; y < region.y + 16; y += 1) {
+        for (let x = region.x; x < region.x + 16; x += 1) {
+          const stack = this.renderedStacks.get(coordinateKey({ x, y, z: region.z }));
+          if (stack) this.tintStack(stack);
+        }
+      }
+    }
   }
 
   private tintStack(stack: RenderedTileStack): void {

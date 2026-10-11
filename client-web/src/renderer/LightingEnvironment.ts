@@ -18,11 +18,23 @@ export class LightingEnvironment {
     ['indoors', { red: 0.6, green: 0.6, blue: 0.6 }],
     ['underground', { red: 0.1, green: 0.1, blue: 0.1 }],
   ]);
+  private ambientDirty = true;
+  private readonly dirtyLightBuckets = new Map<string, Coordinate>();
+
+  /** null means ambient light changed; otherwise only these 16x16 regions need retinting. */
+  takeChangedLightRegions(): Coordinate[] | null {
+    const regions = this.ambientDirty ? null : [...this.dirtyLightBuckets.values()];
+    this.ambientDirty = false;
+    this.dirtyLightBuckets.clear();
+    return regions;
+  }
+
   private activeAmbientName = 'outdoors';
 
   setActiveAmbientLight(name: string): void {
     if (name === this.activeAmbientName) return;
     this.activeAmbientName = name;
+    this.ambientDirty = true;
     this.revision += 1;
   }
   private readonly tileDefinitionLights = new Map<string, LightSource>();
@@ -40,6 +52,7 @@ export class LightingEnvironment {
     const previous = this.ambientLights.get(name);
     if (previous && sameColor(previous, next)) return;
     this.ambientLights.set(name, next);
+    this.ambientDirty = true;
     this.revision += 1;
   }
 
@@ -102,6 +115,7 @@ export class LightingEnvironment {
     for (let x = minX; x <= maxX; x += 1) {
       for (let y = minY; y <= maxY; y += 1) {
         const key = `${x}:${y}:${coordinate.z}`;
+        this.dirtyLightBuckets.set(key, { x: x * LIGHT_BUCKET_SIZE, y: y * LIGHT_BUCKET_SIZE, z: coordinate.z });
         if (add) {
           let bucket = this.sourceBuckets.get(key);
           if (!bucket) this.sourceBuckets.set(key, bucket = new Set());
