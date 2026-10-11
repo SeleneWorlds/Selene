@@ -81,7 +81,7 @@ interface BundleUiApi {
     passThroughKeys: (...keys: string[]) => () => void;
     isPassthroughKey: (key: string) => boolean;
     hasEditableFocus: () => boolean;
-    onScroll: (callback: (event: { amountY: number }) => void) => () => void;
+    onScroll: (callback: (event: BundleUiScrollEvent) => void) => () => void;
     onPointerDown: (callback: (event: BundleUiPointerEvent) => void) => () => void;
     onPointerMove: (callback: (event: BundleUiPointerEvent) => void) => () => void;
     onPointerUp: (callback: (event: BundleUiPointerEvent) => void) => () => void;
@@ -107,6 +107,12 @@ interface BundleUiApi {
     onCameraCoordinateChanged: CameraApi['addCoordinateChangedListener'];
     onMapChanged: (callback: (coordinate: Coordinate, width: number, height: number) => void) => () => void;
   };
+}
+interface BundleUiScrollEvent {
+  amountY: number;
+  clientX: number;
+  clientY: number;
+  coordinate: Coordinate;
 }
 interface BundleUiPointerEvent {
   clientX: number;
@@ -272,12 +278,19 @@ export class BundleUiManager {
         passThroughKeys: (...keys: string[]) => this.options.input.passThroughKeys(...keys),
         isPassthroughKey: (key: string) => this.options.input.isPassthroughKey(key),
         hasEditableFocus: () => this.options.input.hasEditableFocus(),
-        onScroll: (callback: (event: { amountY: number }) => void) => {
+        onScroll: (callback: (event: BundleUiScrollEvent) => void) => {
           if (typeof callback !== 'function') throw new Error('Scroll callback must be a function.');
           const listener = (event: WheelEvent) => {
             if (this.options.input.consumesPointer(event)) return;
             const pixels = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1);
-            callback({ amountY: pixels / 100 });
+            const world = this.options.camera.screenToWorld(event.clientX, event.clientY);
+            const z = this.options.camera.getCoordinate().z;
+            callback({
+              amountY: pixels / 100,
+              clientX: event.clientX,
+              clientY: event.clientY,
+              coordinate: this.options.grid.screenToCoordinate(world.x, world.y, z),
+            });
           };
           window.addEventListener('wheel', listener, { passive: true });
           return () => window.removeEventListener('wheel', listener);

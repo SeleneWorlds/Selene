@@ -1,6 +1,7 @@
 package com.seleneworlds.client.ui.cef
 
 import com.badlogic.gdx.Input
+import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.InputAdapter
 import com.seleneworlds.client.camera.CameraManager
 import com.seleneworlds.client.grid.ClientGrid
@@ -80,7 +81,7 @@ class CefInputProcessor(
     override fun scrolled(amountX: Float, amountY: Float): Boolean {
         if (!cef.enabled) return false
         if (!interactionState.isInteractive(mouseX, mouseY)) {
-            cef.dispatchGameScroll(amountY)
+            cef.dispatchGameScroll(amountY, mouseX, mouseY, gamePointerCoordinate(Gdx.input.x, Gdx.input.y))
             return false
         }
         cef.dispatchWheel(

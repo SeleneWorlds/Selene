@@ -423,8 +423,9 @@
     }
 
     window.__seleneBridge = Object.freeze({
-        gameScroll(amountY) {
-            for (const callback of [...scrollCallbacks]) callback({amountY});
+        gameScroll(amountY, clientX, clientY, coordinateX, coordinateY, coordinateZ) {
+            const event = {amountY, clientX, clientY, coordinate: {x: coordinateX, y: coordinateY, z: coordinateZ}};
+            for (const callback of [...scrollCallbacks]) callback(event);
         },
         gamePointerDown(x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ) {
             dispatchPointerCallbacks(pointerDownCallbacks, x, y, button, shiftKey, coordinateX, coordinateY, coordinateZ);

@@ -382,9 +382,9 @@ class CefBrowserUi(
             (if (alt) InputEvent.ALT_DOWN_MASK else 0) or
             (if (meta) InputEvent.META_DOWN_MASK else 0)
 
-    fun dispatchGameScroll(amountY: Float) {
+    fun dispatchGameScroll(amountY: Float, x: Int, y: Int, coordinate: Coordinate) {
         if (!initialized || !amountY.isFinite()) return
-        browser?.executeJavaScript("window.__seleneBridge?.gameScroll($amountY)", "", 0)
+        browser?.executeJavaScript("window.__seleneBridge?.gameScroll($amountY, $x, $y, ${coordinate.x}, ${coordinate.y}, ${coordinate.z})", "", 0)
     }
 
     fun dispatchGamePointerDown(x: Int, y: Int, button: Int, shift: Boolean, coordinate: Coordinate) {
