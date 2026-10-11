@@ -1,3 +1,4 @@
+import { chunkTimingEnabled } from '@/core/ChunkTiming';
 import { Container, Graphics, Sprite } from 'pixi.js';
 import { getRenderOrder, projectCoordinate, TILE_HEIGHT, TILE_WIDTH } from '@/renderer/IsoProjection';
 import type { Coordinate } from '@/networking/GameProtocol';
@@ -8,6 +9,14 @@ import type { TileVisualResolver } from './TileVisualResolver';
 export class PixiTileStackRenderer {
   private readonly animatedStacks = new Set<RenderedTileStack>();
   private elapsedMs = 0;
+  private timing = { cachedLayers: 0, asyncLayers: 0, textureWaitMaxMs: 0, completionWaitMaxMs: 0 };
+
+  getTimingStats(reset = false) {
+    const stats = { ...this.timing };
+    if (reset) this.timing = { cachedLayers: 0, asyncLayers: 0, textureWaitMaxMs: 0, completionWaitMaxMs: 0 };
+    return stats;
+  }
+
 
   constructor(
     private readonly visualResolver: TileVisualResolver,
@@ -98,9 +107,18 @@ export class PixiTileStackRenderer {
       }
 
       try {
+        const loadStartedAt = chunkTimingEnabled ? performance.now() : 0;
         const texture = await this.textureLoader.load(visual.texturePath);
+        const readyAt = chunkTimingEnabled ? performance.now() : 0;
+        if (chunkTimingEnabled) {
+          this.timing.asyncLayers += 1;
+          this.timing.textureWaitMaxMs = Math.max(this.timing.textureWaitMaxMs, readyAt - loadStartedAt);
+        }
         await new Promise<void>((resolve, reject) => this.schedule(() => {
           try {
+            if (chunkTimingEnabled) this.timing.completionWaitMaxMs = Math.max(
+              this.timing.completionWaitMaxMs, performance.now() - readyAt,
+            );
             if (stack.generation !== generation || !isCurrent(stack)) return;
             const sprite = container as Sprite;
             sprite.texture = texture;

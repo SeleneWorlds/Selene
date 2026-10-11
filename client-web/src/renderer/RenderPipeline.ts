@@ -1,3 +1,4 @@
+import { chunkTiming, chunkTimingEnabled } from '@/core/ChunkTiming';
 import type { PixiTileGrid } from '@/renderer/PixiTileGrid';
 import type { Application } from 'pixi.js';
 import type { DebugState, RendererDebugOptions } from '@/core/DebugState';
@@ -29,12 +30,15 @@ export class RenderPipeline {
   ) {}
 
   update(deltaMs: number, options: RendererDebugOptions, elapsedMs: number): void {
+    const startedAt = chunkTimingEnabled ? performance.now() : 0;
     this.recordFrame(elapsedMs);
     this.tilemapLayer.processPendingWork();
+    const workEndedAt = chunkTimingEnabled ? performance.now() : 0;
     if (options.entityUpdates) this.entityLayer.update(deltaMs);
 
     this.scene.updateCamera(this.entityLayer);
     const focus = this.scene.getFocus(this.entityLayer);
+    const sceneEndedAt = chunkTimingEnabled ? performance.now() : 0;
     this.lighting.setActiveAmbientLight(Math.round(focus.coordinate.z) < 0
       ? 'underground' : isInsideInterior(this.tilemapLayer, focus.coordinate) ? 'indoors' : 'outdoors');
     if (options.lighting) {
@@ -46,13 +50,17 @@ export class RenderPipeline {
       }
     }
 
+    const lightingEndedAt = chunkTimingEnabled ? performance.now() : 0;
     if (options.interiorFade) this.interiorFade.update(deltaMs, focus.coordinate);
 
+    const interiorEndedAt = chunkTimingEnabled ? performance.now() : 0;
     if (options.tileAnimations) this.tilemapLayer.updateAnimations(deltaMs);
 
+    const animationsEndedAt = chunkTimingEnabled ? performance.now() : 0;
     if (options.tileOcclusion) this.tilemapLayer.updateOcclusion(deltaMs, focus.coordinate, focus.bounds);
 
     this.viewport.updateCameraClip();
+    const updatesEndedAt = chunkTimingEnabled ? performance.now() : 0;
     if (options.pixiRender && options.culling) {
       this.tilemapLayer.updateCulling(this.scene.getViewBounds(
         this.app.renderer.screen.width, this.app.renderer.screen.height,
@@ -62,7 +70,20 @@ export class RenderPipeline {
     this.tileGrid.update(this.scene.getViewBounds(
       this.app.renderer.screen.width, this.app.renderer.screen.height,
     ), focus.coordinate.z);
+    const cullingEndedAt = chunkTimingEnabled ? performance.now() : 0;
     if (options.pixiRender) this.app.renderer.render({ container: this.app.stage });
+    if (chunkTimingEnabled && performance.now() - startedAt >= 16) {
+      chunkTiming('slow-frame', {
+        frame: this.frame, elapsedMs, workMs: workEndedAt - startedAt,
+        updatesMs: updatesEndedAt - workEndedAt,
+        entityAndSceneMs: sceneEndedAt - workEndedAt,
+        lightingMs: lightingEndedAt - sceneEndedAt,
+        interiorFadeMs: interiorEndedAt - lightingEndedAt,
+        animationMs: animationsEndedAt - interiorEndedAt,
+        occlusionAndClipMs: updatesEndedAt - animationsEndedAt, cullingAndGridMs: cullingEndedAt - updatesEndedAt,
+        renderCpuMs: performance.now() - cullingEndedAt,
+      });
+    }
   }
 
   private lastLightingRevision = -1;

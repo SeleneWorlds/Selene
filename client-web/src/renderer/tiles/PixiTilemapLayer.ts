@@ -1,3 +1,4 @@
+import { chunkTiming, chunkTimingEnabled, reportChunkWork } from '@/core/ChunkTiming';
 import type { Container } from 'pixi.js';
 import { getRenderOrder } from '../IsoProjection';
 import type { ClientMapTile } from '@/core/ClientMap';
@@ -26,6 +27,19 @@ export class PixiTilemapLayer {
   private readonly stackRenderer: PixiTileStackRenderer;
   private readonly workQueue = new FrameWorkQueue();
   private generation = 0;
+  private timingIncomingStartedAt: number | null = null;
+  private timingStart: number | null = null;
+  private timingLastReport = 0;
+  private timingFrames = 0;
+  private timingWorkMs = 0;
+  private timingConstructionMs = 0;
+  private timingRemovalMs = 0;
+  private timingCompletionMs = 0;
+  private timingBackgroundMs = 0;
+  private timingBudgetHits = 0;
+  private timingTexturesReady = 0;
+  private timingTextureMaxMs = 0;
+
   private upperLayerFocusZ: number | null = null;
   private upperLayerAlpha: number | null = null;
   private upperLayerDirty = false;
@@ -51,6 +65,7 @@ export class PixiTilemapLayer {
   }
 
   setMapChunk(packet: MapChunkPacket): void {
+    const startedAt = chunkTimingEnabled ? performance.now() : 0;
     const tileIdsByCell = Array.from<unknown, number[]>(
       { length: packet.width * packet.height },
       (_, index) => {
@@ -79,6 +94,10 @@ export class PixiTilemapLayer {
     }
     for (const tile of outOfBoundsTiles) this.appendTile(tile.coordinate, tile.tileId);
     this.notifyMapChanged({ x: packet.x, y: packet.y, z: packet.z }, packet.width, packet.height);
+    if (chunkTimingEnabled) chunkTiming('chunk-enqueued', {
+      coordinate: { x: packet.x, y: packet.y, z: packet.z }, width: packet.width, height: packet.height,
+      additionalTiles: packet.additionalTiles.length, enqueueMs: performance.now() - startedAt,
+    });
   }
 
   removeMapChunk(packet: RemoveMapChunkPacket): void {
@@ -124,7 +143,59 @@ export class PixiTilemapLayer {
   }
 
   processPendingWork() {
-    return this.workQueue.process();
+    const budgetMs = 3;
+    if (!chunkTimingEnabled) {
+      const stats = this.workQueue.process(budgetMs);
+      return stats;
+    }
+    const startedAt = performance.now();
+    if (this.workQueue.pendingIncomingCount || this.pendingStacks.size) this.timingIncomingStartedAt ??= startedAt;
+    const stats = this.workQueue.process(budgetMs, 4096, () => performance.now(), true);
+    const endedAt = performance.now();
+    reportChunkWork(stats.pending - stats.pendingBackground, this.pendingStacks.size);
+    const incoming = this.workQueue.pendingIncomingCount;
+    if (incoming === 0 && this.pendingStacks.size === 0 && this.timingIncomingStartedAt !== null) {
+      chunkTiming('new-tiles-ready', {
+        elapsedMs: endedAt - this.timingIncomingStartedAt, queuedRemovals: stats.pendingRemovals,
+        renderedStacks: this.renderedStacks.size,
+      });
+      this.timingIncomingStartedAt = null;
+    }
+    if (stats.processed || this.pendingStacks.size || this.timingStart !== null) {
+      this.timingStart ??= startedAt;
+      this.timingFrames += 1;
+      this.timingWorkMs += endedAt - startedAt;
+      this.timingConstructionMs += stats.constructionMs;
+      this.timingRemovalMs += stats.removalMs;
+      this.timingCompletionMs += stats.completionMs;
+      this.timingBackgroundMs += stats.backgroundMs;
+      if (stats.limitReached) this.timingBudgetHits += 1;
+      const drained = stats.pending === 0 && this.pendingStacks.size === 0;
+      if (drained || endedAt - this.timingLastReport >= 250) {
+        chunkTiming('render-work', {
+          drained, budgetMs, burstMs: endedAt - this.timingStart, frames: this.timingFrames,
+          workMs: this.timingWorkMs, budgetHits: this.timingBudgetHits,
+          queuedBackground: stats.pendingBackground,
+          queuedRemovals: stats.pendingRemovals, queuedIncoming: incoming,
+          constructionCpuMs: this.timingConstructionMs, removalCpuMs: this.timingRemovalMs,
+          completionCpuMs: this.timingCompletionMs, backgroundCpuMs: this.timingBackgroundMs,
+          renderedStacks: this.renderedStacks.size, sceneChildren: this.container.children.length,
+          queued: stats.pending, queuedCompletions: stats.pendingCompletions,
+          awaitingAttachment: this.pendingStacks.size, stacksReady: this.timingTexturesReady,
+          stackPreparationMaxMs: this.timingTextureMaxMs,
+          ...this.stackRenderer.getTimingStats(drained),
+        });
+        this.timingLastReport = endedAt;
+        if (drained) {
+          this.timingStart = null;
+          this.timingFrames = this.timingWorkMs = this.timingBudgetHits = 0;
+          this.timingTexturesReady = this.timingTextureMaxMs = 0;
+          this.timingConstructionMs = this.timingRemovalMs = 0;
+          this.timingCompletionMs = this.timingBackgroundMs = 0;
+        }
+      }
+    }
+    return stats;
   }
 
   updateAnimations(deltaMs: number): void {
@@ -238,7 +309,12 @@ export class PixiTilemapLayer {
     const stack = this.stackRenderer.createStack(coordinate, tileIds, ++this.generation);
     this.pendingStacks.set(key, stack);
     // Keep the displayed stack until every replacement texture (or fallback) is ready.
+    const textureStartedAt = chunkTimingEnabled ? performance.now() : 0;
     void this.stackRenderer.renderStack(stack, candidate => this.isCurrent(candidate)).then(() => {
+      if (chunkTimingEnabled) {
+        this.timingTexturesReady += 1;
+        this.timingTextureMaxMs = Math.max(this.timingTextureMaxMs, performance.now() - textureStartedAt);
+      }
       this.workQueue.enqueue(stack, () => {
         if (this.pendingStacks.get(key) !== stack) return;
         this.removeTileStack(coordinate);

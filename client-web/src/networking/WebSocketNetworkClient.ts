@@ -1,3 +1,4 @@
+import { chunkTiming, chunkTimingEnabled } from '@/core/ChunkTiming';
 import { AbstractNetworkClient } from './AbstractNetworkClient';
 import { MutableNameIdMappings } from './NameIdMappings';
 import type { NetworkClient } from './NetworkClient';
@@ -139,6 +140,7 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
   }
 
   sendCustomPayload(payloadId: string, payload: string): void {
+    chunkTiming('custom-payload-send', { payloadId, bufferedBytes: this.socket?.bufferedAmount });
     this.sendPacket(encodeCustomPayloadPacket(payloadId, payload));
   }
 
@@ -158,6 +160,7 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
   }
 
   private async handleMessage(event: MessageEvent<ArrayBuffer | Blob | string>, socket: WebSocket): Promise<void> {
+    const receivedAt = chunkTimingEnabled ? performance.now() : 0;
     if (typeof event.data === 'string') {
       console.warn('Ignoring text message from Selene server.');
       return;
@@ -166,7 +169,9 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
     try {
       const data = event.data instanceof Blob ? await event.data.arrayBuffer() : event.data;
       if (this.socket !== socket) return;
+      const decodeStartedAt = chunkTimingEnabled ? performance.now() : 0;
       const packet = decodeGamePacket(data);
+      const decodedAt = chunkTimingEnabled ? performance.now() : 0;
       if (packet.type === 'heartbeat') {
         socket.send(encodeHeartbeatPacket());
         return;
@@ -187,6 +192,14 @@ export class WebSocketNetworkClient extends AbstractNetworkClient implements Net
       }
 
       this.emitPacket(packet);
+      if (chunkTimingEnabled && (packet.type === 'mapChunk' || packet.type === 'removeMapChunk' || packet.type === 'updateMapTiles')) {
+        chunkTiming('packet', {
+          type: packet.type, receivedAtMs: receivedAt, bytes: data.byteLength,
+          coordinate: packet.type === 'updateMapTiles' ? packet.coordinate : { x: packet.x, y: packet.y, z: packet.z },
+          readMs: decodeStartedAt - receivedAt, decodeMs: decodedAt - decodeStartedAt,
+          dispatchMs: performance.now() - decodedAt,
+        });
+      }
     } catch (error) {
       console.warn('Failed to decode Selene server packet.', error);
     }
