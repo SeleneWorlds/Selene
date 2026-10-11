@@ -83,6 +83,8 @@ export class PixiTileStackRenderer {
       for (const tile of stack.animatedTiles) {
         const animation = tile.visual.animation!;
         if (animation.instanced) tile.elapsedMs += deltaMs;
+        // Preserve elapsed animation time, but avoid producing work for culled tiles.
+        if (tile.sprite.culled || !tile.sprite.visible || !tile.sprite.renderable || tile.sprite.alpha === 0) continue;
         const elapsedMs = animation.instanced ? tile.elapsedMs : this.elapsedMs;
         const frameDurationMs = (animation.duration * 1000) / animation.textures.length;
         const nextFrame = Math.floor(elapsedMs / frameDurationMs) % animation.textures.length;

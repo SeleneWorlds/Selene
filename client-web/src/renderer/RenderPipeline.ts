@@ -59,7 +59,7 @@ export class RenderPipeline {
     if (options.interiorFade) this.interiorFade.update(deltaMs, focus.coordinate, interiorChecks);
 
     const interiorEndedAt = chunkTimingEnabled ? performance.now() : 0;
-    if (options.tileAnimations) this.tilemapLayer.updateAnimations(deltaMs);
+    if (options.tileAnimations && interiorChecks) this.tilemapLayer.updateAnimations(deltaMs);
 
     const animationsEndedAt = chunkTimingEnabled ? performance.now() : 0;
     const occlusionEnabled = options.tileOcclusion && this.tileOcclusionEnabled;
