@@ -131,6 +131,13 @@ export class PixiTilemapLayer {
     this.stackRenderer.updateAnimations(deltaMs, stack => this.isCurrent(stack));
   }
 
+  private lightingEnabled = true;
+
+  setLightingEnabled(enabled: boolean): void {
+    this.lightingEnabled = enabled;
+    this.updateLighting();
+  }
+
   updateLighting(): void {
     if (!this.lighting) return;
     for (const stack of this.renderedStacks.values()) this.tintStack(stack);
@@ -138,7 +145,9 @@ export class PixiTilemapLayer {
 
   private tintStack(stack: RenderedTileStack): void {
     if (!this.lighting) return;
-    const color = this.lighting.getColor(stack.coordinate);
+    const color = this.lightingEnabled
+      ? this.lighting.getColor(stack.coordinate)
+      : { red: 1, green: 1, blue: 1 };
     const tint = toTint(color.red, color.green, color.blue);
     for (const container of stack.containers) container.tint = tint;
   }

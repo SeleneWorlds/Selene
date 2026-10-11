@@ -204,6 +204,8 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) =>
         gameClient.getMapTiles(coordinate, width, height),
       hasTileAt: (coordinate) => gameClient.hasTileAt(coordinate),
+      setLightingEnabled: (enabled) => gameClient.getEnvironmentApi().setLightingEnabled(enabled),
+      isLightingEnabled: () => gameClient.getEnvironmentApi().isLightingEnabled(),
       setTileGridVisible: (visible) => gameClient.setTileGridVisible(visible),
       projectCoordinate: (coordinate) => gameClient.projectCoordinate(coordinate),
       projectEntity: (networkId) => gameClient.projectEntity(networkId),

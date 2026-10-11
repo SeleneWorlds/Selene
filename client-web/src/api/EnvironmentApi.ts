@@ -12,6 +12,8 @@ export interface TileLight extends LightColor {
 }
 
 export interface EnvironmentApi {
+  setLightingEnabled(enabled: boolean): void;
+  isLightingEnabled(): boolean;
   setAmbientLight(name: string, color: LightColor): void;
   getAmbientLight(name: string): LightColor;
   setTileLight(coordinate: Coordinate, light: TileLight | null): void;

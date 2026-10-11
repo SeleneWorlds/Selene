@@ -92,6 +92,7 @@ export class PixiEntityLayer {
 
   setLightingEnabled(enabled: boolean): void {
     this.lightingEnabled = enabled;
+    this.updateLighting();
   }
 
   upsertServerEntity(packet: EntityPacket): void {
@@ -346,15 +347,16 @@ export class PixiEntityLayer {
   }
 
   private applyLighting(entity: RenderedEntity): void {
-    if (!this.lightingEnabled || !this.lighting || !entity.sprite || !entity.visual) return;
-    const light = this.lighting.getColor(entity.coordinate);
+    if (!this.lighting || !entity.sprite || !entity.visual) return;
+    const light = this.lightingEnabled
+      ? this.lighting.getColor(entity.coordinate)
+      : { red: 1, green: 1, blue: 1 };
     entity.sprite.tint = (Math.round(light.red * entity.visual.red * 255) << 16)
       | (Math.round(light.green * entity.visual.green * 255) << 8)
       | Math.round(light.blue * entity.visual.blue * 255);
   }
 
   private updateEntityLight(id: number, entity: RenderedEntity): void {
-    if (!this.lightingEnabled) return;
     this.lighting?.setEntityLight(id, entity.coordinate, entity.visual?.light ?? null);
   }
 

@@ -137,6 +137,8 @@ export class GameClient {
 
   getEnvironmentApi(): EnvironmentApi {
     return {
+      setLightingEnabled: enabled => this.renderer.setLightingEnabled(enabled),
+      isLightingEnabled: () => this.renderer.isLightingEnabled(),
       setAmbientLight: (name, color) => this.renderer.setAmbientLight(name, color),
       getAmbientLight: name => this.renderer.getAmbientLight(name),
       setTileLight: (coordinate, light) => this.renderer.setTileLight(coordinate, light),

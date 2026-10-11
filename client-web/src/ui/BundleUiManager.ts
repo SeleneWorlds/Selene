@@ -22,7 +22,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 18;
+const API_VERSION = 19;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -40,6 +40,8 @@ interface BundleUiManagerOptions {
   entities: EntitiesApi;
   getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
   hasTileAt: (coordinate: Coordinate) => boolean;
+  setLightingEnabled: (enabled: boolean) => void;
+  isLightingEnabled: () => boolean;
   setTileGridVisible: (visible: boolean) => void;
   projectCoordinate: (coordinate: Coordinate) => { x: number; y: number };
   projectEntity: (networkId: number) => { x: number; y: number } | null;
@@ -94,6 +96,8 @@ interface BundleUiApi {
   readonly world: {
     getCameraCoordinate: CameraApi['getCoordinate'];
     hasTileAt: (coordinate: Coordinate) => Promise<boolean>;
+    setLightingEnabled: (enabled: boolean) => Promise<void>;
+    isLightingEnabled: () => boolean;
     setTileGridVisible: (visible: boolean) => Promise<void>;
     setCameraZoom: (zoom: number) => Promise<number>;
     getCameraPosition: () => Promise<ReturnType<CameraApi['getPosition']>>;
@@ -329,6 +333,11 @@ export class BundleUiManager {
         },
       }),
       world: Object.freeze({
+        isLightingEnabled: () => this.options.isLightingEnabled(),
+        setLightingEnabled: async (enabled: boolean) => {
+          if (typeof enabled !== 'boolean') throw new Error('Lighting enabled must be a boolean.');
+          this.options.setLightingEnabled(enabled);
+        },
         getCameraCoordinate: () => this.options.camera.getCoordinate(),
         hasTileAt: async (coordinate: Coordinate) => this.options.hasTileAt(requireCoordinate(coordinate)),
         setTileGridVisible: async (visible: boolean) => {

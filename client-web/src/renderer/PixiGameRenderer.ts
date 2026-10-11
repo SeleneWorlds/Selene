@@ -156,6 +156,7 @@ export class PixiGameRenderer implements GameRenderer {
       this.tilemapLayer.setCullingEnabled(enabled);
     }
     if (option === 'lighting') {
+      this.tilemapLayer.setLightingEnabled(enabled);
       this.entityLayer.setLightingEnabled(enabled);
     }
     this.debugState.update({ rendererOptions: this.rendererOptions });
@@ -290,6 +291,8 @@ export class PixiGameRenderer implements GameRenderer {
     return this.tilemapLayer.addMapChangedListener(listener);
   }
 
+  setLightingEnabled(enabled: boolean): void { this.setDebugOption('lighting', enabled); }
+  isLightingEnabled(): boolean { return this.rendererOptions.lighting; }
   setAmbientLight(name: string, color: LightColor): void { this.lighting.setAmbientLight(name, color); }
   getAmbientLight(name: string): LightColor { return this.lighting.getAmbientLight(name); }
   setTileLight(coordinate: Coordinate, light: TileLight | null): void { this.lighting.setTileLight(coordinate, light); }
