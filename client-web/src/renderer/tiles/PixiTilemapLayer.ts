@@ -145,11 +145,14 @@ export class PixiTilemapLayer {
     const budgetMs = 3;
     if (!chunkTimingEnabled) {
       const stats = this.workQueue.process(budgetMs);
+      this.stackRenderer.flushRemovedStacks();
       return stats;
     }
     const startedAt = performance.now();
     if (this.workQueue.pendingIncomingCount || this.pendingStacks.size) this.timingIncomingStartedAt ??= startedAt;
     const stats = this.workQueue.process(budgetMs, 4096, () => performance.now(), true);
+    const detachStartedAt = performance.now();
+    this.stackRenderer.flushRemovedStacks();
     const endedAt = performance.now();
     reportChunkWork(stats.pending - stats.pendingBackground, this.pendingStacks.size);
     const incoming = this.workQueue.pendingIncomingCount;
@@ -165,7 +168,7 @@ export class PixiTilemapLayer {
       this.timingFrames += 1;
       this.timingWorkMs += endedAt - startedAt;
       this.timingConstructionMs += stats.constructionMs;
-      this.timingRemovalMs += stats.removalMs;
+      this.timingRemovalMs += stats.removalMs + endedAt - detachStartedAt;
       this.timingCompletionMs += stats.completionMs;
       this.timingBackgroundMs += stats.backgroundMs;
       if (stats.limitReached) this.timingBudgetHits += 1;

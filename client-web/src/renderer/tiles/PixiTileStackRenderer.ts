@@ -8,6 +8,7 @@ import type { ResolvedTileVisual, TileVisualResolver } from './TileVisualResolve
 
 export class PixiTileStackRenderer {
   private readonly animatedStacks = new Set<RenderedTileStack>();
+  private readonly retiredContainers = new Set<Container>();
   private elapsedMs = 0;
   private timing = { cachedLayers: 0, asyncLayers: 0, textureWaitMaxMs: 0, completionWaitMaxMs: 0 };
 
@@ -73,7 +74,33 @@ export class PixiTileStackRenderer {
 
   removeStack(stack: RenderedTileStack): void {
     this.animatedStacks.delete(stack);
-    for (const container of stack.containers) container.destroy({ children: true });
+    for (const container of stack.containers) {
+      if (container.parent === this.parent) {
+        container.visible = false;
+        this.retiredContainers.add(container);
+      } else {
+        container.destroy({ children: true });
+      }
+    }
+  }
+
+  flushRemovedStacks(): void {
+    if (this.retiredContainers.size === 0) return;
+    // Stable partition keeps the surviving depth order. Detaching one suffix
+    // through Pixi also updates render groups, parent links and removal events.
+    // Per-sprite destroy would search and shift this entire array each time.
+    const children = this.parent.children;
+    const removed: Container[] = [];
+    let retained = 0;
+    for (let index = 0; index < children.length; index += 1) {
+      const child = children[index];
+      if (this.retiredContainers.has(child)) removed.push(child);
+      else children[retained++] = child;
+    }
+    for (let index = 0; index < removed.length; index += 1) children[retained + index] = removed[index];
+    if (removed.length) this.parent.removeChildren(retained);
+    this.retiredContainers.clear();
+    for (const child of removed) child.destroy({ children: true });
   }
 
   updateAnimations(deltaMs: number, isCurrent: (stack: RenderedTileStack) => boolean): void {
