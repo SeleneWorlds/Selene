@@ -19,8 +19,6 @@ import com.seleneworlds.server.dimensions.DimensionManager
 import com.seleneworlds.server.dimensions.Dimension
 import com.seleneworlds.server.entities.component.EntityComponentFactory
 import com.seleneworlds.server.players.PlayerManager
-import com.seleneworlds.server.script.ServerEntityScript
-import com.seleneworlds.server.script.ServerScriptProvider
 import com.seleneworlds.server.sync.ChunkViewManager
 import com.seleneworlds.server.tiles.transitions.TransitionResolver
 import com.seleneworlds.server.world.World
@@ -45,9 +43,7 @@ class MovementDurationTest {
     private val entities = EntityManager()
     private val players = PlayerManager(dimensions, chunks, Json, entities, MainThreadDispatcher())
     private val world = World(Grid(), CollisionResolver(registries, chunks), dimensions, entities, chunks, players)
-    private val entity = Entity(registries, world, EntityComponentFactory(object : ServerScriptProvider {
-        override fun loadEntityScript(module: String): ServerEntityScript = error("Unused")
-    }))
+    private val entity = Entity(registries, world, EntityComponentFactory())
 
     @Test
     fun `lua exposes movement state and multiplier methods`() {
@@ -104,9 +100,7 @@ class MovementDurationTest {
 
     @Test
     fun `entity factory resolves without a clock dependency`() {
-        val components = EntityComponentFactory(object : ServerScriptProvider {
-            override fun loadEntityScript(module: String): ServerEntityScript = error("Unused")
-        })
+        val components = EntityComponentFactory()
         val application = koinApplication {
             modules(module {
                 single { registries }

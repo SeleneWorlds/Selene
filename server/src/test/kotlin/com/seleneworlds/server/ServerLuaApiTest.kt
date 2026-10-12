@@ -9,7 +9,6 @@ import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.libraries.LuaPackageModule
 import com.seleneworlds.common.lua.util.newTable
 import com.seleneworlds.server.config.ServerConfig
-import com.seleneworlds.server.data.ServerCustomData
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -17,7 +16,7 @@ class ServerLuaApiTest {
     @Test
     fun `profiling clock exposes monotonic elapsed milliseconds to Lua`() {
         val manager = LuaManager(LuaPackageModule())
-        val module = ServerLuaApi(ServerApi(ServerConfig(), ServerCustomData()))
+        val module = ServerLuaApi(ServerApi(ServerConfig()))
         try {
             manager.lua.push(manager.lua.newTable { module.register(this) })
             manager.lua.setGlobal("Server")
@@ -36,7 +35,7 @@ class ServerLuaApiTest {
     fun `bundle file notifications expose sorted Lua arrays`() {
         val luaPackage = LuaPackageModule()
         val manager = LuaManager(luaPackage)
-        val module = ServerLuaApi(ServerApi(ServerConfig(), ServerCustomData()))
+        val module = ServerLuaApi(ServerApi(ServerConfig()))
         val owner = Bundle(BundleManifest(name = "npc-compiler-test"), File("."))
         try {
             manager.lua.push(manager.lua.newTable { module.register(this) })

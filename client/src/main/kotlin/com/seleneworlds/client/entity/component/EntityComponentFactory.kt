@@ -8,22 +8,18 @@ import com.seleneworlds.client.rendering.visual.ReloadableVisual
 import com.seleneworlds.client.rendering.visual.VisualCreationContext
 import com.seleneworlds.client.rendering.visual.VisualFactory
 import com.seleneworlds.client.rendering.visual.VisualRegistry
-import com.seleneworlds.client.script.ClientScriptProvider
-import com.seleneworlds.common.entities.ClientScriptComponentConfiguration
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.entities.DraggableComponentConfiguration
 import com.seleneworlds.common.entities.GravityComponentConfiguration
 import com.seleneworlds.common.entities.ImpassableComponentConfiguration
 import com.seleneworlds.common.entities.PassableAboveComponentConfiguration
 import com.seleneworlds.common.entities.IgnoresElevationComponentConfiguration
-import com.seleneworlds.common.entities.ServerScriptComponentConfiguration
 import com.seleneworlds.common.entities.VisualComponentConfiguration
 import com.seleneworlds.common.entities.LightComponentConfiguration
 
 class EntityComponentFactory(
     private val visualRegistry: VisualRegistry,
     private val visualFactory: VisualFactory,
-    private val scriptProvider: ClientScriptProvider,
     private val logger: Logger
 ) {
     fun create(entity: Entity, configuration: ComponentConfiguration): EntityComponent? {
@@ -54,8 +50,6 @@ class EntityComponentFactory(
                 }
             }
 
-            is ClientScriptComponentConfiguration -> ClientScriptComponent(scriptProvider.loadEntityScript(configuration.script))
-            is ServerScriptComponentConfiguration -> null
             is GravityComponentConfiguration -> null
             is ImpassableComponentConfiguration -> null
             is PassableAboveComponentConfiguration -> null

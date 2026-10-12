@@ -7,7 +7,6 @@ import com.seleneworlds.common.entities.ImpassableComponentConfiguration
 import com.seleneworlds.common.entities.PassableAboveComponentConfiguration
 import com.seleneworlds.common.grid.Direction
 import com.seleneworlds.common.network.packet.EntityAnimationPacket
-import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.tiles.TileDefinition
@@ -52,7 +51,6 @@ class Entity(
             world.entityManager.onEntityLocationChanged(this)
         }
     val map get() = dimension?.mapTree
-    val customData = ObservableMap()
     var customLuaData: LuaValue? = null
     var movementDurationMultiplier: Float = 1f
         set(value) {

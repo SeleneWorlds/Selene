@@ -65,8 +65,6 @@ import com.seleneworlds.client.rendering.visual.VisualFactory
 import com.seleneworlds.client.rendering.visual.VisualRegistry
 import com.seleneworlds.client.rendering.visual.VisualsApi
 import com.seleneworlds.client.rendering.visual.VisualsLuaApi
-import com.seleneworlds.client.script.ClientLuaScriptProvider
-import com.seleneworlds.client.script.ClientScriptProvider
 import com.seleneworlds.client.sounds.AudioRegistry
 import com.seleneworlds.client.sounds.SoundManager
 import com.seleneworlds.client.particles.ParticleSystemLoader
@@ -256,7 +254,6 @@ class SeleneApplication(
             single { runtimeConfig }
             singleOf(::UI)
             singleOf(::MainThreadDispatcher)
-            singleOf(::ClientLuaScriptProvider) { bind<ClientScriptProvider>() }
             singleOf(::ClientReloadManager) { bind<BundleRuntimeRebuilder>() }
             singleOf(::SeleneClient)
             singleOf(::RuntimeBundleUpdateManager) { bind<Disposable>() }

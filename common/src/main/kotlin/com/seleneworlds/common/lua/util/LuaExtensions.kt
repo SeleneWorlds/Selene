@@ -17,7 +17,6 @@ import com.seleneworlds.common.threading.Awaitable
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.ResolvableReference
 import com.seleneworlds.common.script.ScriptTrace
-import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.serialization.SerializedMap
 import java.util.*
 import kotlin.math.abs
@@ -385,8 +384,6 @@ fun Lua.toSerializedMap(index: Int): SerializedMap? {
             }
             map
         }
-    } else if (isUserdata(index)) {
-        return toUserdata(index, ObservableMap::class)?.map
     }
 
     return null

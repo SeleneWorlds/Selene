@@ -22,7 +22,7 @@ import { PixiGameRenderer } from '@/renderer/PixiGameRenderer';
 import { registerCameraLuaModule } from '@/scripting/CameraLuaBindings';
 import { registerClientFeatureLuaModules } from '@/scripting/ClientFeatureLuaBindings';
 import { registerCommonLuaModules } from '@/scripting/CommonLuaBindings';
-import { registerEntitiesLuaModule, toLuaEntity } from '@/scripting/EntitiesLuaBindings';
+import { registerEntitiesLuaModule } from '@/scripting/EntitiesLuaBindings';
 import { registerGameLuaModule } from '@/scripting/GameLuaBindings';
 import { registerGridLuaModule } from '@/scripting/GridLuaBindings';
 import { registerInputLuaModule } from '@/scripting/InputLuaBindings';
@@ -169,17 +169,6 @@ class DefaultWebClientRuntime implements WebClientRuntime {
     await registerClientFeatureLuaModules(luaRuntime, featureApis);
     reportProgress('Loading game scripts', 0.78);
     await loadAndRunClientLua({ serverApiUrl, authToken, runtime: luaRuntime });
-    gameClient.setClientEntityScriptRunner(
-      (scriptModule, entityId, entity, deltaSeconds) => {
-        luaRuntime.runClientEntityScript(
-          scriptModule,
-          entityId,
-          toLuaEntity(entity, entityApis),
-          deltaSeconds,
-        );
-      },
-      (entityId) => luaRuntime.removeClientEntityScript(entityId),
-    );
 
     const bundleUiManager = new BundleUiManager({
       host: options.bundleUiHost,

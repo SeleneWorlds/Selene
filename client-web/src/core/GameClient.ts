@@ -1,7 +1,7 @@
 import { BrowserInputManager } from '@/core/BrowserInputManager';
 import { BundleUiInputClaims } from '@/ui/BundleUiInputClaims';
 import { ClientEntities } from '@/core/ClientEntities';
-import type { EntitiesApi, ClientEntityScriptRunner, EntityApi } from '@/api/EntitiesApi';
+import type { EntitiesApi, EntityApi } from '@/api/EntitiesApi';
 import type { DebugState, RendererDebugOptions } from './DebugState';
 import type { CameraApi } from '@/api/CameraApi';
 import type { GameApi } from '@/api/GameApi';
@@ -43,7 +43,6 @@ export class GameClient {
   private readonly packetDispatcher: ClientPacketDispatcher;
   private readonly renderer: GameRenderer;
   private readonly tickPipeline: ClientTickPipeline;
-  private clientEntityScriptRemover: ((entityId: number) => void) | null = null;
 
   constructor(options: GameClientOptions) {
     this.debugState = options.debugState;
@@ -70,7 +69,6 @@ export class GameClient {
     this.tickPipeline = new ClientTickPipeline(
       this.inputManager,
       this.movementGrid,
-      this.entities,
       this.renderer,
     );
     this.entities.addListener({
@@ -78,7 +76,6 @@ export class GameClient {
       entityTransformChanged: (id, coordinate, facing) => this.renderer.setClientEntityTransform(id, coordinate, facing),
       entityAttachmentChanged: (id, target) => this.renderer.attachClientEntityTo(id, target),
       entityRemoved: (id) => {
-        this.clientEntityScriptRemover?.(id);
         this.renderer.removeClientEntity(id);
       },
       entityVisualAlphaChanged: (id, alpha) => this.renderer.setClientEntityAlpha(id, alpha),
@@ -165,14 +162,6 @@ export class GameClient {
 
   getEntitiesApi(): EntitiesApi {
     return this.entities;
-  }
-
-  setClientEntityScriptRunner(
-    runner: ClientEntityScriptRunner,
-    remover?: (entityId: number) => void,
-  ): void {
-    this.tickPipeline.setClientEntityScriptRunner(runner);
-    this.clientEntityScriptRemover = remover ?? null;
   }
 
   getInputApi(): InputApi {

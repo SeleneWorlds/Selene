@@ -3,7 +3,6 @@ import type {
   ClientEntitiesListener,
   EntityApi,
   ClientEntityDefinition,
-  ClientEntityScriptRunner,
   ClientEntitySnapshot,
 } from '@/api/EntitiesApi';
 import { getRegistryEntry, type ClientRegistrySnapshots } from '@/data/ClientRegistryLoader';
@@ -13,7 +12,6 @@ import type { NameIdMappings } from '@/networking/NameIdMappings';
 export class ClientEntities implements EntitiesApi {
   private readonly entitiesById = new Map<number, ClientEntity>();
   private readonly listeners = new Set<ClientEntitiesListener>();
-  private readonly scriptedEntities = new Set<ClientEntity>();
   private nextLocalId = -1;
 
   constructor(
@@ -33,7 +31,6 @@ export class ClientEntities implements EntitiesApi {
       (id, target) => this.emitEntityAttachmentChanged(id, target),
       (id) => this.emitEntityRemoved(id),
       (id, alpha) => this.emitEntityVisualAlphaChanged(id, alpha),
-      (scriptedEntity, isScripted) => this.updateScriptedEntity(scriptedEntity, isScripted),
     );
 
     this.entitiesById.set(entity.id, entity);
@@ -64,18 +61,6 @@ export class ClientEntities implements EntitiesApi {
 
       return entity.getDefinition().tags?.includes(criteria.tag) ?? false;
     });
-  }
-
-  tickClientScripts(deltaSeconds: number, runScript: ClientEntityScriptRunner): void {
-    for (const entity of [...this.scriptedEntities]) {
-      if (!entity.isClientScriptActive()) {
-        continue;
-      }
-      const scriptModule = entity.getClientScriptModule();
-      if (scriptModule) {
-        runScript(scriptModule, entity.id, entity, deltaSeconds);
-      }
-    }
   }
 
   handlePacket(packet: GamePacket): GamePacket {
@@ -127,7 +112,6 @@ export class ClientEntities implements EntitiesApi {
       (id, target) => this.emitEntityAttachmentChanged(id, target),
       (id) => this.emitEntityRemoved(id),
       (id, alpha) => this.emitEntityVisualAlphaChanged(id, alpha),
-      (scriptedEntity, isScripted) => this.updateScriptedEntity(scriptedEntity, isScripted),
       packet.networkId,
     );
     entity.applyNetworkState(packet.coordinate, packet.facing, packet.components);
@@ -170,7 +154,6 @@ export class ClientEntities implements EntitiesApi {
   private emitEntityRemoved(id: number): void {
     const entity = this.entitiesById.get(id);
     if (entity) {
-      this.scriptedEntities.delete(entity);
       this.entitiesById.delete(id);
     }
 
@@ -194,14 +177,6 @@ export class ClientEntities implements EntitiesApi {
       listener.entityVisualAlphaChanged(id, alpha);
     }
   }
-
-  private updateScriptedEntity(entity: ClientEntity, isScripted: boolean): void {
-    if (isScripted) {
-      this.scriptedEntities.add(entity);
-    } else {
-      this.scriptedEntities.delete(entity);
-    }
-  }
 }
 
 class ClientEntity implements EntityApi {
@@ -209,7 +184,6 @@ class ClientEntity implements EntityApi {
   facing = 0;
   spawned = false;
   private readonly components: Record<string, unknown>;
-  private clientScriptModule: string | null;
   private attachmentTarget: number | null = null;
 
   constructor(
@@ -221,11 +195,9 @@ class ClientEntity implements EntityApi {
     private readonly onAttachmentChanged: (id: number, target: number | null) => void,
     private readonly onRemoved: (id: number) => void,
     private readonly onVisualAlphaChanged: (id: number, alpha: number) => void,
-    private readonly onScriptedChanged: (entity: ClientEntity, isScripted: boolean) => void,
     private readonly networkId = 0,
   ) {
     this.components = { ...(definition.components ?? {}) };
-    this.clientScriptModule = findClientScriptModule(this.components);
   }
 
   getNetworkId(): number {
@@ -246,14 +218,12 @@ class ClientEntity implements EntityApi {
 
   spawn(): void {
     this.spawned = true;
-    this.updateScriptedState();
     this.notifyChanged();
     this.onAttachmentChanged(this.id, this.attachmentTarget);
   }
 
   despawn(): void {
     this.spawned = false;
-    this.updateScriptedState();
     this.onRemoved(this.id);
   }
 
@@ -279,8 +249,6 @@ class ClientEntity implements EntityApi {
 
   addComponent(name: string, componentData: unknown): void {
     this.components[name] = componentData;
-    this.clientScriptModule = findClientScriptModule(this.components);
-    this.updateScriptedState();
     if (this.spawned) {
       this.notifyChanged();
     }
@@ -316,21 +284,6 @@ class ClientEntity implements EntityApi {
 
   getDefinition(): ClientEntityDefinition {
     return this.definition;
-  }
-
-  getClientScriptModule(): string | null {
-    return this.clientScriptModule;
-  }
-
-  isClientScriptActive(): boolean {
-    return this.spawned && this.networkId <= 0 && this.clientScriptModule !== null;
-  }
-
-  private updateScriptedState(): void {
-    this.onScriptedChanged(
-      this,
-      this.isClientScriptActive(),
-    );
   }
 
   private snapshot(): ClientEntitySnapshot {
@@ -369,7 +322,6 @@ class ClientEntity implements EntityApi {
 
   applyNetworkSpawn(): void {
     this.spawned = true;
-    this.updateScriptedState();
   }
 
   private notifyChanged(): void {
@@ -379,15 +331,6 @@ class ClientEntity implements EntityApi {
 
 function isSameCoordinate(left: Coordinate, right: Coordinate): boolean {
   return left.x === right.x && left.y === right.y && left.z === right.z;
-}
-
-function isClientScriptComponent(value: unknown): value is { type: string; script: string } {
-  return (
-    typeof value === 'object'
-    && value !== null
-    && (value as { type?: unknown }).type === 'client_script'
-    && typeof (value as { script?: unknown }).script === 'string'
-  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -403,9 +346,4 @@ function parseNetworkComponent(value: unknown): unknown {
   } catch {
     return value;
   }
-}
-
-function findClientScriptModule(components: Record<string, unknown>): string | null {
-  const scriptComponent = Object.values(components).find(isClientScriptComponent);
-  return scriptComponent?.script ?? null;
 }

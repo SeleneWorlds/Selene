@@ -7,7 +7,6 @@ import com.seleneworlds.common.lua.util.*
 import com.seleneworlds.server.ServerApi
 import com.seleneworlds.server.ServerLuaApi
 import com.seleneworlds.server.config.ServerConfig
-import com.seleneworlds.server.data.ServerCustomData
 import party.iroiro.luajava.lua54.Lua54
 import party.iroiro.luajava.Lua
 import java.io.File
@@ -189,7 +188,7 @@ object LuaIntegrationBenchmark {
     }
 
     private fun install(lua: Lua54) {
-        val server = ServerLuaApi(ServerApi(ServerConfig(), ServerCustomData()))
+        val server = ServerLuaApi(ServerApi(ServerConfig()))
         lua.push(lua.newTable { server.register(this) })
         lua.setGlobal("Server")
         lua.push(Coordinate(1, 0, 0), Lua.Conversion.NONE)

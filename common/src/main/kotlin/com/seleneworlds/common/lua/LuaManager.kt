@@ -20,8 +20,6 @@ import com.seleneworlds.common.lua.libraries.LuaPackageModule
 import com.seleneworlds.common.lua.util.newTable
 import com.seleneworlds.common.lua.util.register
 import com.seleneworlds.common.lua.util.xpCall
-import com.seleneworlds.common.observable.ObservableMap
-import com.seleneworlds.common.observable.ObservableMapLuaApi
 import com.seleneworlds.common.util.ResolvableReference
 import com.seleneworlds.common.util.ResolvableReferenceLuaApi
 import java.nio.Buffer
@@ -41,7 +39,6 @@ class LuaManager(private val luaPackage: LuaPackageModule) {
         defineMetatable(LuaEvent::class, LuaEvent.luaMeta)
         defineMetatable(LuaEventSink::class, LuaEventSink.luaMeta)
         defineMetatable(ResolvableReference::class, ResolvableReferenceLuaApi.luaMeta)
-        defineMetatable(ObservableMap::class, ObservableMapLuaApi.luaMeta)
 
         // Default metatables of LuaJava are unsafe, we override them. Adds support for LuaMetatable interface too.
         secureClassMetatable()

@@ -93,14 +93,6 @@
               {
                 "value": "visual",
                 "label": "Visual"
-              },
-              {
-                "value": "client_script",
-                "label": "Client Script"
-              },
-              {
-                "value": "server_script",
-                "label": "Server Script"
               }
             ]
           },
@@ -160,10 +152,6 @@
             "optional": true,
             "keyType": "string",
             "valueType": "any"
-          },
-          "script": {
-            "type": "script",
-            "optional": true
           }
         }
       }

@@ -3,7 +3,6 @@ package com.seleneworlds.server.players
 import com.seleneworlds.common.network.packet.SetCameraFollowEntityPacket
 import com.seleneworlds.common.network.packet.SetCameraPositionPacket
 import com.seleneworlds.common.network.packet.SetControlledEntityPacket
-import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.util.IdResolvable
@@ -36,7 +35,6 @@ class Player(
     var locale: Locale = Locale.ENGLISH
     val localeString get() = locale.toString()
     val languageString: String get() = locale.language
-    val customData = ObservableMap()
     var customLuaData: LuaValue? = null
 
     override fun resolvableReference(): ResolvableReference<String, Player> {

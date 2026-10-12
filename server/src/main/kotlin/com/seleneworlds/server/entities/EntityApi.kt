@@ -1,12 +1,10 @@
 package com.seleneworlds.server.entities
 
-import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.RegistryReference
 import com.seleneworlds.common.entities.ComponentConfiguration
 import com.seleneworlds.common.entities.EntityDefinition
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.grid.Direction
-import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.util.IdResolvable
 import com.seleneworlds.common.util.ResolvableReference
 import com.seleneworlds.server.cameras.viewer.Viewer
@@ -21,20 +19,6 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
 
     fun getNetworkId(): Int {
         return delegate.networkId
-    }
-
-    fun getCustomData(identifier: Identifier): Any? {
-        return delegate.customData[identifier.toString()]
-    }
-
-    fun getCustomDataMap(identifier: Identifier): ObservableMap {
-        val key = identifier.toString()
-        val value = delegate.customData[key]
-        return value as? ObservableMap ?: ObservableMap().also { delegate.customData[key] = it }
-    }
-
-    fun setCustomData(identifier: Identifier, value: Any?) {
-        delegate.customData[identifier.toString()] = value
     }
 
     fun getEntityDefinition(): RegistryReference<EntityDefinition> {

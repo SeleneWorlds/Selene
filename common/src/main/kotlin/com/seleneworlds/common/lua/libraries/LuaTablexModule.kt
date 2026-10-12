@@ -2,7 +2,6 @@ package com.seleneworlds.common.lua.libraries
 
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.*
-import com.seleneworlds.common.observable.ObservableMap
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 
@@ -15,14 +14,13 @@ class LuaTablexModule : LuaModule {
     override val registerAsGlobal: Boolean = true
 
     override fun register(table: LuaValue) {
-        table.register("observable", this::observable)
         table.register("deepEquals", this::deepEquals)
         table.register("find", this::find)
         table.register("tostring", this::toString)
     }
 
     /**
-     * Compares two values recursively, including tables and observable maps.
+     * Compares two values recursively, including tables.
      *
      * ```signatures
      * deepEquals(left: any, right: any) -> boolean
@@ -36,8 +34,8 @@ class LuaTablexModule : LuaModule {
     }
 
     private fun deepEquals(left: Any?, right: Any?): Boolean {
-        val leftValue = if (left is ObservableMap) left.map else left
-        val rightValue = if (right is ObservableMap) right.map else right
+        val leftValue = left
+        val rightValue = right
 
         return leftValue === rightValue || when (leftValue) {
             is Map<*, *> if rightValue is Map<*, *> -> {
@@ -54,22 +52,6 @@ class LuaTablexModule : LuaModule {
 
             else -> leftValue == rightValue
         }
-    }
-
-    /**
-     * Creates an observable map.
-     * Observable maps consist of read-writable key-value pairs.
-     * They are no longer considered a `table` and cannot be used in `table`-specific functions.
-     *
-     * ```signatures
-     * observable() -> ObservableMap
-     * observable(data: table) -> ObservableMap
-     * ```
-     */
-    private fun observable(lua: Lua): Int {
-        val data = if (lua.isTable(1)) lua.checkSerializedMap(1).toMutableMap() else mutableMapOf()
-        lua.push(ObservableMap(data), Lua.Conversion.NONE)
-        return 1
     }
 
     /**
@@ -112,7 +94,7 @@ class LuaTablexModule : LuaModule {
      * Handles nested tables and various data types.
      *
      * ```signatures
-     * tostring(tbl: table|ObservableMap) -> string
+     * tostring(tbl: table) -> string
      * ```
      */
     private fun toString(lua: Lua): Int {
@@ -147,10 +129,6 @@ class LuaTablexModule : LuaModule {
                 }
                 sb.append("}")
                 lua.push(sb.toString())
-            }
-
-            Lua.LuaType.USERDATA -> {
-                lua.push(lua.checkUserdata(1, ObservableMap::class).toString())
             }
 
             else -> lua.throwTypeError(1, Lua.LuaType.TABLE)

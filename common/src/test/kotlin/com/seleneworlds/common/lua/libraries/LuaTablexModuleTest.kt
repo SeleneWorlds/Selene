@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 class LuaTablexModuleTest {
 
     @Test
-    fun `deepEquals compares nested tables and observable maps by value`() {
+    fun `deepEquals compares nested tables by value`() {
         val luaPackage = LuaPackageModule()
         val luaManager = LuaManager(luaPackage)
         val tablex = LuaTablexModule()
@@ -28,7 +28,6 @@ class LuaTablexModuleTest {
                     """
                     local value = { name = "item", nested = { enabled = true }, values = { 1, 2, 3 } }
                     equalTables = tablex.deepEquals(value, { name = "item", nested = { enabled = true }, values = { 1, 2, 3 } })
-                    equalObservable = tablex.deepEquals(tablex.observable(value), value)
                     unequalNestedValue = tablex.deepEquals(value, { name = "item", nested = { enabled = false }, values = { 1, 2, 3 } })
                     unequalMissingKey = tablex.deepEquals(value, { name = "item", nested = { enabled = true } })
                     """.trimIndent()
@@ -38,10 +37,6 @@ class LuaTablexModuleTest {
             luaManager.lua.pCall(0, 0)
 
             luaManager.lua.getGlobal("equalTables")
-            assertTrue(luaManager.lua.toBoolean(-1))
-            luaManager.lua.pop(1)
-
-            luaManager.lua.getGlobal("equalObservable")
             assertTrue(luaManager.lua.toBoolean(-1))
             luaManager.lua.pop(1)
 

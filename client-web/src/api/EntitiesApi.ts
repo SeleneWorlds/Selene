@@ -30,13 +30,6 @@ export interface EntityApi {
   getDefinition: () => ClientEntityDefinition;
 }
 
-export type ClientEntityScriptRunner = (
-  scriptModule: string,
-  entityId: number,
-  entity: EntityApi,
-  deltaSeconds: number,
-) => void;
-
 export interface EntitiesApi {
   create: (entityDefinition: string | ClientEntityDefinition) => EntityApi;
   getEntityByNetworkId: (networkId: number) => EntityApi | null;

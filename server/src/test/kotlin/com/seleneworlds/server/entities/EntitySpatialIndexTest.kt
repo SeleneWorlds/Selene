@@ -17,8 +17,6 @@ import com.seleneworlds.server.dimensions.DimensionManager
 import com.seleneworlds.server.dimensions.Dimension
 import com.seleneworlds.server.entities.component.EntityComponentFactory
 import com.seleneworlds.server.players.PlayerManager
-import com.seleneworlds.server.script.ServerEntityScript
-import com.seleneworlds.server.script.ServerScriptProvider
 import com.seleneworlds.server.sync.ChunkViewManager
 import com.seleneworlds.server.tiles.transitions.TransitionResolver
 import com.seleneworlds.server.world.World
@@ -51,9 +49,7 @@ class EntitySpatialIndexTest {
     private val world = World(Grid(), CollisionResolver(registries, chunks), dimensions, entities, chunks, players)
 
     private fun entity(id: Int, coordinate: Coordinate, dimension: Dimension?): Entity {
-        return Entity(registries, world, EntityComponentFactory(object : ServerScriptProvider {
-            override fun loadEntityScript(module: String): ServerEntityScript = error("Unused")
-        })).also {
+        return Entity(registries, world, EntityComponentFactory()).also {
             it.networkId = id
             it.coordinate = coordinate
             it.dimension = dimension
@@ -131,9 +127,7 @@ class EntitySpatialIndexTest {
         assertEquals(listOf(replacement, c), entities.getEntitiesAt(Coordinate.Zero, first))
         b.coordinate = Coordinate(500, 500, 0) // Replaced object must not update its replacement.
         compare(Coordinate.Zero, first, 0)
-        val transient = Entity(registries, world, EntityComponentFactory(object : ServerScriptProvider {
-            override fun loadEntityScript(module: String): ServerEntityScript = error("Unused")
-        }))
+        val transient = Entity(registries, world, EntityComponentFactory())
         transient.coordinate = Coordinate.Zero
         transient.dimension = first
         compare(Coordinate.Zero, first, 0)

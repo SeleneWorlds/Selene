@@ -58,7 +58,6 @@ import com.seleneworlds.server.bundles.ServerBundleLocator
 import com.seleneworlds.server.collision.CollisionResolver
 import com.seleneworlds.server.config.*
 import com.seleneworlds.server.data.Registries
-import com.seleneworlds.server.data.ServerCustomData
 import com.seleneworlds.server.data.mappings.PersistentNameIdRegistry
 import com.seleneworlds.server.dimensions.Dimension
 import com.seleneworlds.server.dimensions.DimensionManager
@@ -88,8 +87,6 @@ import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.players.PlayerManager
 import com.seleneworlds.server.players.PlayersApi
 import com.seleneworlds.server.players.PlayersLuaApi
-import com.seleneworlds.server.script.ServerLuaScriptProvider
-import com.seleneworlds.server.script.ServerScriptProvider
 import com.seleneworlds.server.saves.*
 import com.seleneworlds.server.serialization.JsonLuaApi
 import com.seleneworlds.server.sounds.SoundsApi
@@ -151,9 +148,7 @@ fun main(args: Array<String>) {
     }
     val luaModule = module {
         singleOf(::LuaManager)
-        singleOf(::ServerLuaScriptProvider) { bind<ServerScriptProvider>() }
         single { PayloadHandlerRegistry<Player>() }
-        singleOf(::ServerCustomData)
         singleOf(::Messages)
         singleOf(::LuaDebugModule) { bind<LuaModule>() }
         singleOf(::LuaOsModule) { bind<LuaModule>() }

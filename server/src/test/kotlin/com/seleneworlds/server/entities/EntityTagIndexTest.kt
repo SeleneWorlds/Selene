@@ -16,8 +16,6 @@ import com.seleneworlds.server.dimensions.DimensionManager
 import com.seleneworlds.server.dimensions.Dimension
 import com.seleneworlds.server.entities.component.EntityComponentFactory
 import com.seleneworlds.server.players.PlayerManager
-import com.seleneworlds.server.script.ServerEntityScript
-import com.seleneworlds.server.script.ServerScriptProvider
 import com.seleneworlds.server.sync.ChunkViewManager
 import com.seleneworlds.server.tiles.transitions.TransitionResolver
 import com.seleneworlds.server.world.World
@@ -148,9 +146,7 @@ class EntityTagIndexTest {
     }
 
     private fun entity(id: Int, definition: Identifier, spawned: Boolean = true): Entity =
-        Entity(registries, world, EntityComponentFactory(object : ServerScriptProvider {
-            override fun loadEntityScript(module: String): ServerEntityScript = error("Unused")
-        })).also {
+        Entity(registries, world, EntityComponentFactory()).also {
             it.networkId = id
             it.entityDefinition = RegistryReference.ByIdentifier(countedRegistry, definition)
             if (spawned) it.dimension = dimension
