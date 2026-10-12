@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class EntityManager : ReferenceResolver<Int, Entity> {
     private val entities = mutableMapOf<Int, Entity>()
+    private val spatialIndex = EntitySpatialIndex()
     private val activeTickingEntities = linkedSetOf<Entity>()
     private val nextId = AtomicInteger(1)
 
@@ -16,23 +17,25 @@ class EntityManager : ReferenceResolver<Int, Entity> {
 
     fun addEntity(entity: Entity) {
         entities[entity.networkId] = entity
+        spatialIndex.add(entity)
     }
 
     fun removeEntity(entity: Entity) {
         deactivateEntity(entity)
         entities.remove(entity.networkId)
+        spatialIndex.remove(entity.networkId)
     }
 
     fun getNearbyEntities(center: Coordinate, dimension: Dimension?, radius: Int): List<Entity> {
-        return entities.values.filter {
-            it.dimension == dimension && it.coordinate.horizontalDistanceTo(center) <= radius
-        }
+        return spatialIndex.nearby(center, dimension, radius)
     }
 
     fun getEntitiesAt(coordinate: Coordinate, dimension: Dimension?): List<Entity> {
-        return entities.values.filter {
-            it.dimension == dimension && it.coordinate == coordinate
-        }
+        return spatialIndex.at(coordinate, dimension)
+    }
+
+    internal fun onEntityLocationChanged(entity: Entity) {
+        spatialIndex.update(entity)
     }
 
     fun createEntity(entityDefinition: EntityDefinition): Entity {

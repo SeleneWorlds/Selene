@@ -38,8 +38,16 @@ class Entity(
     var entityDefinition: RegistryReference<EntityDefinition> = RegistryReference.unbound()
     var name = "Someone"
     var coordinate = Coordinate(0, 0, 0)
+        set(value) {
+            field = value
+            world.entityManager.onEntityLocationChanged(this)
+        }
     var facing: Direction? = null
     var dimension: Dimension? = null
+        set(value) {
+            field = value
+            world.entityManager.onEntityLocationChanged(this)
+        }
     val map get() = dimension?.mapTree
     val customData = ObservableMap()
     var customLuaData: LuaValue? = null
