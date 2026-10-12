@@ -89,15 +89,17 @@ class ServerSchedulesLuaApiTest {
         val profiler = ServerProfiler(ServerConfig(savePath = root.path), LoggerFactory.getLogger(javaClass))
         val manager = LuaManager(LuaPackageModule())
         try {
-            val api = ProfilingLuaApi(profiler)
+            val api = ProfilerLuaApi(profiler)
             val lua = manager.lua
             lua.push(lua.newTable { api.register(this) })
             lua.setGlobal("Profiling")
             lua.load(LuaManager.loadBuffer("""
+                assert(Profiling.isCapturing() == false)
                 local function callback(a,b) return a,nil,b end
                 local before = table.pack(Profiling.measure("disabled",callback,17,42))
                 assert(before.n == 3 and before[1] == 17 and before[3] == 42)
                 Profiling.startCapture(60)
+                assert(Profiling.isCapturing() == true)
                 local after = table.pack(Profiling.measure("enabled",callback,17,42))
                 assert(after.n == 3 and after[1] == 17 and after[2] == nil and after[3] == 42)
                 local ok = pcall(Profiling.measure,"failing",function() error("expected") end)
@@ -105,6 +107,7 @@ class ServerSchedulesLuaApiTest {
                 local summary = Profiling.getSummary()
                 assert(summary.active == true and #summary.scopes == 2)
                 assert(type(Profiling.stopCapture()) == "string")
+                assert(Profiling.isCapturing() == false)
             """.trimIndent()), "optional_profile_scope")
             lua.pCall(0, 0)
         } finally {

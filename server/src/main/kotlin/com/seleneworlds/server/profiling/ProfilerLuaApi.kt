@@ -12,14 +12,20 @@ import party.iroiro.luajava.Lua
 import party.iroiro.luajava.value.LuaValue
 
 /** Trusted server scripts may start bounded captures and optionally name deeper scopes. */
-class ProfilingLuaApi(private val profiler: ServerProfiler) : LuaModule {
+class ProfilerLuaApi(private val profiler: ServerProfiler) : LuaModule {
     override val name = "selene.profiler"
 
     override fun register(table: LuaValue) {
         table.register("startCapture", ::startCapture)
         table.register("stopCapture", ::stopCapture)
         table.register("getSummary", ::getSummary)
+        table.register("isCapturing", ::isCapturing)
         table.register("measure", ::measure)
+    }
+
+    private fun isCapturing(lua: Lua): Int {
+        lua.push(profiler.isCapturing)
+        return 1
     }
 
     private fun startCapture(lua: Lua): Int {

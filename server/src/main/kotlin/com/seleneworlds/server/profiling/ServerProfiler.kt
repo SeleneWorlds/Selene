@@ -45,6 +45,9 @@ class ServerProfiler(private val config: ServerConfig, private val logger: Logge
     private var lastCapture: Capture? = null
     private var expiry: ScheduledFuture<*>? = null
 
+    val isCapturing: Boolean
+        get() = capture != null || eventType.isEnabled
+
     fun <T> measure(scope: Scope, callback: () -> T): T {
         val current = capture
         val recordEvent = eventType.isEnabled

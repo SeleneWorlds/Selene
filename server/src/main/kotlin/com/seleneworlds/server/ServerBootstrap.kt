@@ -37,7 +37,7 @@ import com.seleneworlds.common.i18n.Messages
 import com.seleneworlds.common.jobs.SchedulesApi
 import com.seleneworlds.server.profiling.ServerSchedulesLuaApi
 import com.seleneworlds.server.profiling.ServerProfiler
-import com.seleneworlds.server.profiling.ProfilingLuaApi
+import com.seleneworlds.server.profiling.ProfilerLuaApi
 import com.seleneworlds.common.lua.EventsLuaApi
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.LuaModule
@@ -276,7 +276,7 @@ fun main(args: Array<String>) {
         }
         singleOf(::ScriptProperties)
         singleOf(::ServerProfiler) { bind<Disposable>() }
-        singleOf(::ProfilingLuaApi) { bind<LuaModule>() }
+        singleOf(::ProfilerLuaApi) { bind<LuaModule>() }
         singleOf(::MainThreadDispatcher)
         singleOf(::SeleneServer)
     }
