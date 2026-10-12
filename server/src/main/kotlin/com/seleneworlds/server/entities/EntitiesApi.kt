@@ -4,6 +4,11 @@ import com.seleneworlds.common.entities.EntityDefinition
 
 class EntitiesApi(private val entityManager: EntityManager) {
 
+    internal fun subscribeByTag(tag: String, listener: (List<Entity>) -> Unit): () -> Unit =
+        entityManager.subscribeByTag(tag, listener)
+
+    internal fun refreshTagCollections() = entityManager.refreshTagCollections()
+
     fun create(entityDefinition: EntityDefinition): EntityApi {
         return entityManager.createEntity(entityDefinition).api
     }

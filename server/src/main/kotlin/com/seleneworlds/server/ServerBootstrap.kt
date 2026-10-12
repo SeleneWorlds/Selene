@@ -175,7 +175,7 @@ fun main(args: Array<String>) {
         singleOf(::ResourcesLuaApi) { bind<LuaModule>() }
         singleOf(::SavesLuaApi) { bind<LuaModule>() }
         singleOf(::ServerMapLuaApi) { bind<LuaModule>() }
-        singleOf(::EntitiesLuaApi) { bind<LuaModule>() }
+        singleOf(::EntitiesLuaApi) { bind<LuaModule>(); bind<Disposable>() }
         singleOf(::DimensionsLuaApi) { bind<LuaModule>() }
         singleOf(::RegistriesLuaApi) { bind<LuaModule>() }
         singleOf(::ServerSchedulesLuaApi) { bind<LuaModule>(); bind<Disposable>() }

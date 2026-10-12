@@ -13,6 +13,7 @@ import com.seleneworlds.common.lua.util.register
 import com.seleneworlds.common.lua.util.toAny
 import com.seleneworlds.common.lua.util.xpCall
 import com.seleneworlds.server.data.Registries
+import com.seleneworlds.common.util.Disposable
 
 /**
  * Create or lookup entities.
@@ -20,8 +21,10 @@ import com.seleneworlds.server.data.Registries
 class EntitiesLuaApi(
     private val api: EntitiesApi,
     private val registries: Registries
-) : LuaModule {
+) : LuaModule, Disposable {
     override val name = "selene.entities"
+    private class CollectionSubscription(val collection: EntityCollection, val unsubscribe: () -> Unit)
+    private val collections = mutableMapOf<Lua, MutableMap<String, CollectionSubscription>>()
 
     private val beforeEntityMove = LuaEventSink(EntityEvents.BeforeEntityMove.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         EntityEvents.BeforeEntityMove { entity, coordinate ->
@@ -78,6 +81,7 @@ class EntitiesLuaApi(
         table.register("createTransient", this::createTransient)
         table.register("getAll", this::getAll)
         table.register("findAllByTag", this::findAllByTag)
+        table.register("byTag", this::byTag)
         table.register("getByNetworkId", this::getByNetworkId)
         table.register("findByRuntimeData", this::findByRuntimeData)
         table.set("beforeMove", beforeEntityMove)
@@ -115,6 +119,30 @@ class EntitiesLuaApi(
     private fun findAllByTag(lua: Lua): Int {
         lua.push(api.findAllByTag(lua.checkString(1)), Lua.Conversion.FULL)
         return 1
+    }
+
+    /** Returns the same live, mutable array for this tag. Do not modify it.
+     * Membership changes immediately; use findAllByTag when iteration needs a snapshot.
+     * byTag(tag: string) -> Entity[]
+     */
+    private fun byTag(lua: Lua): Int {
+        val tag = lua.checkString(1)
+        val subscription = collections.getOrPut(lua.mainState) { mutableMapOf() }.getOrPut(tag) {
+            val collection = EntityCollection(lua.mainState)
+            CollectionSubscription(collection, api.subscribeByTag(tag, collection::update))
+        }
+        // Also observes registry revisions before later registry listeners execute.
+        api.refreshTagCollections()
+        subscription.collection.push(lua)
+        return 1
+    }
+
+    override fun dispose() {
+        collections.values.forEach { tags -> tags.values.forEach {
+            it.unsubscribe()
+            it.collection.close()
+        } }
+        collections.clear()
     }
 
     private fun findByRuntimeData(lua: Lua): Int {

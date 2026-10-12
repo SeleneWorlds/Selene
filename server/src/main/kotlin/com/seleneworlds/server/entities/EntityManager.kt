@@ -103,6 +103,11 @@ class EntityManager : ReferenceResolver<Int, Entity> {
         return tagIndex.find(tag)
     }
 
+    internal fun subscribeByTag(tag: String, listener: (List<Entity>) -> Unit): () -> Unit =
+        tagIndex.subscribe(tag, listener)
+
+    internal fun refreshTagCollections() = tagIndex.refreshDefinitions()
+
     private fun deactivateEntity(entity: Entity) {
         activeTickingEntities.remove(entity)
     }

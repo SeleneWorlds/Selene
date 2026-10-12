@@ -25,6 +25,9 @@ import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import com.seleneworlds.common.lua.LuaManager
+import com.seleneworlds.common.lua.libraries.LuaPackageModule
+import com.seleneworlds.common.lua.util.newTable
 
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.Registry
@@ -37,6 +40,76 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
 
 class EntityTagIndexTest {
+    @Test
+    fun `Lua byTag retains table and userdata identity while lifecycle and reload update membership`() {
+        definition(first, "character")
+        definition(second, "other")
+        val manager = LuaManager(LuaPackageModule())
+        val module = EntitiesLuaApi(EntitiesApi(entities), registries)
+        fun run(script: String) {
+            manager.lua.load(LuaManager.loadBuffer(script), "entity_collection_test")
+            manager.lua.pCall(0, 0)
+            assertEquals(0, manager.lua.top)
+        }
+        try {
+            module.initialize(manager)
+            manager.lua.push(manager.lua.newTable { module.register(this) })
+            manager.lua.setGlobal("Entities")
+            run("characters = Entities.byTag('character'); assert(#characters == 0)")
+            val a = entity(30, first)
+            run("assert(#characters == 1); original = characters[1]; snapshot = Entities.findAllByTag('character')")
+            val b = entity(10, first)
+            run("assert(rawequal(characters, Entities.byTag('character'))); assert(#characters == 2); assert(rawequal(original, characters[1])); other = characters[2]; assert(#snapshot == 1)")
+            a.despawn()
+            run("assert(#characters == 1); assert(rawequal(other, characters[1]))")
+            a.api.spawn(dimension)
+            run("assert(#characters == 2); assert(rawequal(other, characters[2]))")
+            a.entityDefinition = RegistryReference.ByIdentifier(countedRegistry, second)
+            run("assert(#characters == 1); assert(rawequal(other, characters[1]))")
+            definition(first, "other")
+            run("assert(#characters == 0)")
+            definition(first, "character")
+            run("assert(#characters == 1)")
+            b.remove()
+            run("assert(#characters == 0)")
+            a.remove()
+            entity(20, first)
+            run("assert(#characters == 1)")
+            module.dispose()
+            run("assert(#characters == 0)")
+        } finally {
+            module.dispose()
+            manager.lua.close()
+        }
+    }
+
+    @Test
+    fun `Lua tag collections are independent across states and tags`() {
+        definition(first, "character", "monster")
+        val a = entity(1, first)
+        val firstState = party.iroiro.luajava.lua54.Lua54()
+        val secondState = party.iroiro.luajava.lua54.Lua54()
+        val collection = EntityCollection(firstState)
+        val other = EntityCollection(secondState)
+        val unsubscribe = entities.subscribeByTag("character", collection::update)
+        val unsubscribeOther = entities.subscribeByTag("monster", other::update)
+        try {
+            collection.push(firstState)
+            other.push(secondState)
+            definition(first, "character")
+            firstState.rawGetI(1, 1)
+            secondState.rawGetI(1, 1)
+            assertEquals(a.api, firstState.toJavaObject(-1))
+            assertEquals(true, secondState.isNil(-1))
+        } finally {
+            unsubscribe()
+            unsubscribeOther()
+            collection.close()
+            other.close()
+            firstState.close()
+            secondState.close()
+        }
+    }
     private val registries = Registries(
         TileRegistry(Json), TransitionRegistry(Json), EntityRegistry(Json),
         ComponentRegistry(Json), GridRegistry(Json), SoundRegistry(Json), CustomRegistries(Json)

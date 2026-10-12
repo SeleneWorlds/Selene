@@ -21,6 +21,33 @@ internal class EntityTagIndex {
     private val watches = mutableMapOf<Registry<EntityDefinition>, Watch>()
     private var nextOrder = 0L
     private var dirty = false
+    private val listeners = mutableMapOf<String, MutableList<(List<Entity>) -> Unit>>()
+    private var rebuilding = false
+
+    fun subscribe(tag: String, listener: (List<Entity>) -> Unit): () -> Unit {
+        find(tag)
+        listeners.getOrPut(tag) { mutableListOf() }.add(listener)
+        listener(byTag[tag]?.values?.toList() ?: emptyList())
+        return {
+            listeners[tag]?.let { bucket ->
+                bucket.remove(listener)
+                if (bucket.isEmpty()) listeners.remove(tag)
+            }
+        }
+    }
+
+    private fun publish(tags: Set<String>) {
+        if (rebuilding) return
+        tags.forEach { tag ->
+            listeners[tag]?.toList()?.forEach { it(byTag[tag]?.values?.toList() ?: emptyList()) }
+        }
+    }
+
+    private fun invalidate() {
+        dirty = true
+        // Live tables must update even when their consumers never query again.
+        listeners.keys.firstOrNull()?.let { find(it) }
+    }
 
     fun add(entity: Entity) {
         val previous = entries[entity.networkId]
@@ -35,6 +62,7 @@ internal class EntityTagIndex {
         val entry = entries.remove(id) ?: return
         erase(entry)
         unwatchDefinition(entry)
+        publish(entry.tags)
     }
 
     fun locationChanged(entity: Entity) {
@@ -51,12 +79,18 @@ internal class EntityTagIndex {
     }
 
     fun find(tag: String): List<Entity> {
+        refreshDefinitions()
+        return byTag[tag]?.values?.toList() ?: emptyList()
+    }
+
+    fun refreshDefinitions() {
         // An earlier registry listener may query entities before our listener runs.
         // Revision checks make those queries see the just-published definitions too.
         if (!dirty) dirty = watches.any { (registry, watch) ->
             registry is CacheableRegistry && registry.cacheKey != watch.cacheKey
         }
         if (dirty) {
+            rebuilding = true
             byTag.clear()
             entries.values.forEach { entry ->
                 entry.tags = emptySet()
@@ -64,15 +98,18 @@ internal class EntityTagIndex {
             }
             dirty = false
             watches.forEach { (registry, watch) -> watch.cacheKey = (registry as? CacheableRegistry)?.cacheKey }
+            rebuilding = false
+            publish(listeners.keys.toSet())
         }
-        return byTag[tag]?.values?.toList() ?: emptyList()
     }
 
     private fun refresh(entry: Entry) {
+        val oldTags = entry.tags
         erase(entry)
         entry.spawned = entry.entity.dimension != null
         entry.tags = if (entry.spawned) entry.entity.entityDefinition.tags.toSet() else emptySet()
         entry.tags.forEach { tag -> byTag.getOrPut(tag) { TreeMap() }[entry.order] = entry.entity }
+        publish(oldTags + entry.tags)
     }
 
     private fun erase(entry: Entry) {
@@ -91,10 +128,10 @@ internal class EntityTagIndex {
         entry.registry = registry
         val watch = watches.getOrPut(registry) {
             val listener = object : RegistryReloadListener<EntityDefinition> {
-                override fun onRegistryReloaded(registry: Registry<EntityDefinition>) { dirty = true }
-                override fun onEntryAdded(registry: Registry<EntityDefinition>, identifier: Identifier, newData: EntityDefinition) { dirty = true }
-                override fun onEntryChanged(registry: Registry<EntityDefinition>, identifier: Identifier, oldData: EntityDefinition, newData: EntityDefinition) { dirty = true }
-                override fun onEntryRemoved(registry: Registry<EntityDefinition>, identifier: Identifier, oldData: EntityDefinition) { dirty = true }
+                override fun onRegistryReloaded(registry: Registry<EntityDefinition>) { invalidate() }
+                override fun onEntryAdded(registry: Registry<EntityDefinition>, identifier: Identifier, newData: EntityDefinition) { invalidate() }
+                override fun onEntryChanged(registry: Registry<EntityDefinition>, identifier: Identifier, oldData: EntityDefinition, newData: EntityDefinition) { invalidate() }
+                override fun onEntryRemoved(registry: Registry<EntityDefinition>, identifier: Identifier, oldData: EntityDefinition) { invalidate() }
             }
             registry.addReloadListener(listener)
             Watch(listener, cacheKey = (registry as? CacheableRegistry)?.cacheKey)
