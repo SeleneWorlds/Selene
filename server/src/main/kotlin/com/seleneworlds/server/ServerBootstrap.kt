@@ -35,7 +35,9 @@ import com.seleneworlds.common.i18n.I18nApi
 import com.seleneworlds.common.i18n.I18nLuaApi
 import com.seleneworlds.common.i18n.Messages
 import com.seleneworlds.common.jobs.SchedulesApi
-import com.seleneworlds.common.jobs.SchedulesLuaApi
+import com.seleneworlds.server.profiling.ServerSchedulesLuaApi
+import com.seleneworlds.server.profiling.ServerProfiler
+import com.seleneworlds.server.profiling.ProfilingLuaApi
 import com.seleneworlds.common.lua.EventsLuaApi
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.LuaModule
@@ -179,7 +181,7 @@ fun main(args: Array<String>) {
         singleOf(::EntitiesLuaApi) { bind<LuaModule>() }
         singleOf(::DimensionsLuaApi) { bind<LuaModule>() }
         singleOf(::RegistriesLuaApi) { bind<LuaModule>() }
-        singleOf(::SchedulesLuaApi) { bind<LuaModule>(); bind<Disposable>() }
+        singleOf(::ServerSchedulesLuaApi) { bind<LuaModule>(); bind<Disposable>() }
         singleOf(::HttpLuaApi) { bind<LuaModule>(); bind<Disposable>() }
         singleOf(::ConfigLuaApi) { bind<LuaModule>() }
         singleOf(::I18nLuaApi) { bind<LuaModule>() }
@@ -273,6 +275,8 @@ fun main(args: Array<String>) {
                 .getOrElse { SystemConfig() }
         }
         singleOf(::ScriptProperties)
+        singleOf(::ServerProfiler) { bind<Disposable>() }
+        singleOf(::ProfilingLuaApi) { bind<LuaModule>() }
         singleOf(::MainThreadDispatcher)
         singleOf(::SeleneServer)
     }

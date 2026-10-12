@@ -12,6 +12,7 @@ import com.seleneworlds.common.network.PacketRegistrations
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.Disposable
 import com.seleneworlds.server.entities.EntityManager
+import com.seleneworlds.server.profiling.ServerProfiler
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
@@ -30,6 +31,7 @@ class SeleneServer(
     luaManager: LuaManager,
     private val config: com.seleneworlds.server.config.ServerConfig,
     private val logger: Logger,
+    private val profiler: ServerProfiler,
     private val mainThreadDispatcher: MainThreadDispatcher
 ) {
 
@@ -92,14 +94,15 @@ class SeleneServer(
 
     private fun startMainEventLoop() {
         mainThreadDispatcher.bindToCurrentThread()
+        if (config.profilingCaptureSeconds > 0) profiler.startCapture(config.profilingCaptureSeconds)
         var lastTick = System.nanoTime()
         while (running.get()) {
             val now = System.nanoTime()
-            entityManager.update((now - lastTick) / 1_000_000_000f)
+            profiler.measure(ENTITY_UPDATE) { entityManager.update((now - lastTick) / 1_000_000_000f) }
             lastTick = now
-            mainThreadDispatcher.process()
-            networkServer.process()
-            bundleWatcher.processPendingUpdates()
+            profiler.measure(DISPATCH) { mainThreadDispatcher.process() }
+            profiler.measure(NETWORK) { networkServer.process() }
+            profiler.measure(RELOAD) { bundleWatcher.processPendingUpdates() }
 
             Thread.sleep(10)
         }
@@ -114,4 +117,11 @@ class SeleneServer(
 
         getKoin().getAll<Disposable>().forEach { it.dispose() }
     }
+    companion object {
+        private val ENTITY_UPDATE = ServerProfiler.Scope("main loop", "entity updates")
+        private val DISPATCH = ServerProfiler.Scope("main loop", "queued callbacks")
+        private val NETWORK = ServerProfiler.Scope("main loop", "network processing")
+        private val RELOAD = ServerProfiler.Scope("main loop", "bundle reloads")
+    }
+
 }

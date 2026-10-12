@@ -1,6 +1,7 @@
 package com.seleneworlds.server.script
 
 import org.slf4j.Logger
+import com.seleneworlds.server.profiling.ServerProfiler
 import party.iroiro.luajava.Lua
 import party.iroiro.luajava.LuaException
 import com.seleneworlds.common.lua.LuaManager
@@ -12,7 +13,8 @@ import com.seleneworlds.server.entities.EntityApi
 class ServerEntityLuaScript(
     private val module: String,
     private val luaManager: LuaManager,
-    private val logger: Logger
+    private val logger: Logger,
+    private val profiler: ServerProfiler
 ) : ServerEntityScript, ScriptTrace {
 
     override fun initialize(entity: EntityApi, data: ObservableMap): Boolean {
@@ -32,24 +34,30 @@ class ServerEntityLuaScript(
         }
     }
 
-    private inline fun invokeIfPresent(functionName: String, body: (Lua) -> Unit): Boolean {
+    private val scopes = listOf("Initialize", "TickEntity").associateWith {
+        ServerProfiler.Scope("entity script", "$module.$it", source = module)
+    }
+
+    private fun invokeIfPresent(functionName: String, body: (Lua) -> Unit): Boolean {
         val lua = luaManager.lua
-        lua.getGlobal("require")
-        lua.push(module)
-        try {
-            lua.pCall(1, 1)
-            lua.getField(-1, functionName)
-            if (!lua.isFunction(-1)) {
-                lua.pop(2)
-                return true
+        return try {
+            profiler.measure(scopes.getValue(functionName)) {
+                lua.getGlobal("require")
+                lua.push(module)
+                lua.pCall(1, 1)
+                lua.getField(-1, functionName)
+                if (!lua.isFunction(-1)) {
+                    lua.pop(2)
+                    return@measure true
+                }
+                body(lua)
+                lua.pop(1)
+                true
             }
-            body(lua)
-            lua.pop(1)
-            return true
         } catch (e: LuaException) {
             logger.error("Lua error in server entity script {}", module, e)
             lua.top = 0
-            return false
+            false
         }
     }
 

@@ -23,8 +23,13 @@ data class ServerConfig(
     val proxyHeaders: String = "none",
     val apiCorsOrigins: List<String> = emptyList(),
     val hotReload: String = "false",
-    val grid: String = ""
+    val grid: String = "",
+    val profilingCaptureSeconds: Int = 0
 ) {
+    init {
+        require(profilingCaptureSeconds in 0..3600) { "profiling_capture_seconds must be between 0 and 3600" }
+    }
+
     val hotReloadMode: HotReloadMode
         get() = HotReloadMode.parse(hotReload)
 
