@@ -7,6 +7,7 @@ import com.seleneworlds.server.cameras.viewer.Viewer
 import com.seleneworlds.server.entities.EntityApi
 import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.players.PlayerApi
+import com.seleneworlds.server.spatial.CoordinateBox
 import com.seleneworlds.server.maps.tree.MapTreeApi
 import com.seleneworlds.server.tiles.TransientTile
 import com.seleneworlds.server.tiles.TransientTileApi
@@ -80,6 +81,28 @@ class DimensionApi(val dimension: Dimension) {
 
     fun getEntitiesInRange(coordinate: Coordinate, range: Int): List<EntityApi> {
         return dimension.getEntitiesInRange(coordinate, range).map { it.api }
+    }
+
+    /** Returns entities in an inclusive axis-aligned box, in entity registration order. */
+    fun getEntitiesInBox(center: Coordinate, halfExtents: Coordinate): List<EntityApi> =
+        dimension.world.entityManager.getEntitiesInBox(center, dimension, halfExtents).map { it.api }
+
+    /** Uses controlled entities, rather than camera positions, to locate connected players. */
+    fun getPlayersInBox(center: Coordinate, halfExtents: Coordinate): List<PlayerApi> {
+        val box = CoordinateBox(center, halfExtents)
+        return dimension.world.playerManager.players.filter { player ->
+            val entity = player.controlledEntity
+            entity != null && entity.dimension === dimension && box.contains(entity.coordinate)
+        }.map { it.api }
+    }
+
+    /** Short-circuits without constructing a player list. Invisible players are included. */
+    fun hasPlayersInBox(center: Coordinate, halfExtents: Coordinate): Boolean {
+        val box = CoordinateBox(center, halfExtents)
+        return dimension.world.playerManager.players.any { player ->
+            val entity = player.controlledEntity
+            entity != null && entity.dimension === dimension && box.contains(entity.coordinate)
+        }
     }
 
     fun getObserversInRange(coordinate: Coordinate, range: Int, zRange: Int = 0): List<PlayerApi> {

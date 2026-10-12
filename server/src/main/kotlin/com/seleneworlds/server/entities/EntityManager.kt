@@ -34,6 +34,10 @@ class EntityManager : ReferenceResolver<Int, Entity> {
         return spatialIndex.at(coordinate, dimension)
     }
 
+    fun getEntitiesInBox(center: Coordinate, dimension: Dimension?, halfExtents: Coordinate): List<Entity> {
+        return spatialIndex.inBox(center, dimension, halfExtents)
+    }
+
     internal fun onEntityLocationChanged(entity: Entity) {
         spatialIndex.update(entity)
     }

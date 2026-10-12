@@ -135,6 +135,33 @@ object DimensionLuaApi {
         return 1
     }
 
+    /** getEntitiesInBox(center: Coordinate, halfExtents: Coordinate) -> {Entity} */
+    private fun getEntitiesInBox(lua: Lua): Int {
+        val dimension = lua.checkUserdata<DimensionApi>(1)
+        val (center, index) = lua.checkCoordinate(2)
+        val (halfExtents, _) = lua.checkCoordinate(index + 1)
+        lua.push(dimension.getEntitiesInBox(center, halfExtents), Lua.Conversion.FULL)
+        return 1
+    }
+
+    /** getPlayersInBox(center: Coordinate, halfExtents: Coordinate) -> {Player} */
+    private fun getPlayersInBox(lua: Lua): Int {
+        val dimension = lua.checkUserdata<DimensionApi>(1)
+        val (center, index) = lua.checkCoordinate(2)
+        val (halfExtents, _) = lua.checkCoordinate(index + 1)
+        lua.push(dimension.getPlayersInBox(center, halfExtents), Lua.Conversion.FULL)
+        return 1
+    }
+
+    /** hasPlayersInBox(center: Coordinate, halfExtents: Coordinate) -> boolean */
+    private fun hasPlayersInBox(lua: Lua): Int {
+        val dimension = lua.checkUserdata<DimensionApi>(1)
+        val (center, index) = lua.checkCoordinate(2)
+        val (halfExtents, _) = lua.checkCoordinate(index + 1)
+        lua.push(dimension.hasPlayersInBox(center, halfExtents))
+        return 1
+    }
+
     val luaMeta = LuaMappedMetatable(DimensionApi::class) {
         callable(::getMap)
         callable(::setMap)
@@ -148,6 +175,9 @@ object DimensionLuaApi {
         callable(::hasCollisionAt)
         callable(::getEntitiesAt)
         callable(::getEntitiesInRange)
+        callable(::getEntitiesInBox)
+        callable(::getPlayersInBox)
+        callable(::hasPlayersInBox)
         callable(::getObserversInRange)
     }
 

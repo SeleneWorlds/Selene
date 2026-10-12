@@ -2,6 +2,7 @@ package com.seleneworlds.server.entities
 
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.server.dimensions.Dimension
+import com.seleneworlds.server.spatial.CoordinateBox
 
 /** Main-thread index. Horizontal queries deliberately include every floor. */
 internal class EntitySpatialIndex {
@@ -85,6 +86,26 @@ internal class EntitySpatialIndex {
         }
         return ordered(candidates.filter {
             it.entity.dimension == dimension && it.entity.coordinate.horizontalDistanceTo(center) <= radius
+        }.toList())
+    }
+
+    fun inBox(center: Coordinate, dimension: Dimension?, halfExtents: Coordinate): List<Entity> {
+        val box = CoordinateBox(center, halfExtents)
+        fun cellBound(value: Long): Int = Math.floorDiv(
+            value.coerceIn(Int.MIN_VALUE.toLong(), Int.MAX_VALUE.toLong()).toInt(), CELL_SIZE
+        )
+        val minX = cellBound(center.x.toLong() - halfExtents.x)
+        val maxX = cellBound(center.x.toLong() + halfExtents.x)
+        val minY = cellBound(center.y.toLong() - halfExtents.y)
+        val maxY = cellBound(center.y.toLong() + halfExtents.y)
+        val cellCount = (maxX.toLong() - minX + 1) * (maxY.toLong() - minY + 1)
+        val candidates = if (cellCount > entries.size) entries.values.asSequence() else sequence {
+            for (x in minX..maxX) for (y in minY..maxY) {
+                cells[Cell(dimension, x, y)]?.let { yieldAll(it) }
+            }
+        }
+        return ordered(candidates.filter {
+            it.entity.dimension == dimension && box.contains(it.entity.coordinate)
         }.toList())
     }
 

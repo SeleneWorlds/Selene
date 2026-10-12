@@ -23,6 +23,17 @@ import com.seleneworlds.server.tiles.transitions.TransitionResolver
 import com.seleneworlds.server.world.World
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
+import com.seleneworlds.server.dimensions.DimensionApi
+import com.seleneworlds.server.dimensions.DimensionLuaApi
+import com.seleneworlds.server.network.NetworkClient
+import com.seleneworlds.common.network.Packet
+import java.net.InetSocketAddress
+import kotlin.math.abs
+import com.seleneworlds.common.lua.LuaManager
+import com.seleneworlds.common.lua.libraries.LuaPackageModule
+import party.iroiro.luajava.Lua
+import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -56,6 +67,15 @@ class EntitySpatialIndexTest {
         assertEquals(entities.getEntities().filter {
             it.dimension == dimension && it.coordinate == center
         }, entities.getEntitiesAt(center, dimension))
+        if (radius >= 0) {
+            val halfExtents = Coordinate(radius, radius, 2)
+            val expected = entities.getEntities().filter {
+                val c = it.coordinate
+                it.dimension == dimension && abs(c.x.toLong() - center.x) <= radius &&
+                    abs(c.y.toLong() - center.y) <= radius && abs(c.z.toLong() - center.z) <= 2
+            }
+            assertEquals(expected, entities.getEntitiesInBox(center, dimension, halfExtents))
+        }
     }
 
     @Test
@@ -117,4 +137,67 @@ class EntitySpatialIndexTest {
         transient.dimension = first
         compare(Coordinate.Zero, first, 0)
     }
+    @Test
+    fun `player boxes use controlled position and dimension with inclusive independent bounds`() {
+        val dimension = Dimension(registries, world)
+        val client = object : NetworkClient {
+            override val writable = true
+            override val address = InetSocketAddress("localhost", 0)
+            override fun send(packet: Packet) {}
+            override fun disconnect() {}
+            override fun poll(): Packet? = null
+            override fun enqueueWork(runnable: Runnable) = runnable.run()
+        }
+        val player = players.createPlayer(client)
+        val controlled = entity(1, Coordinate(60, 60, 2), dimension)
+        controlled.visibilityTags.clear()
+        player.controlledEntity = controlled
+        player.camera.focusCoordinate(dimension, Coordinate(1000, 1000, 0))
+        val extents = Coordinate(60, 60, 2)
+        assertEquals(listOf(player.api), dimension.api.getPlayersInBox(Coordinate.Zero, extents))
+        assertTrue(dimension.api.hasPlayersInBox(Coordinate.Zero, extents))
+        controlled.coordinate = Coordinate(60, 60, 3)
+        assertFalse(dimension.api.hasPlayersInBox(Coordinate.Zero, extents))
+        controlled.coordinate = Coordinate(61, 0, 0)
+        assertTrue(dimension.api.getPlayersInBox(Coordinate.Zero, extents).isEmpty())
+        controlled.coordinate = Coordinate.Zero
+        controlled.dimension = Dimension(registries, world)
+        assertFalse(dimension.api.hasPlayersInBox(Coordinate.Zero, extents))
+        controlled.dimension = dimension
+        player.controlledEntity = null
+        assertFalse(dimension.api.hasPlayersInBox(Coordinate.Zero, extents))
+        assertFailsWith<IllegalArgumentException> {
+            dimension.api.getEntitiesInBox(Coordinate.Zero, Coordinate(-1, 0, 0))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            dimension.api.getPlayersInBox(Coordinate.Zero, Coordinate(0, -1, 0))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            dimension.api.hasPlayersInBox(Coordinate.Zero, Coordinate(0, 0, -1))
+        }
+    }
+
+    @Test
+    fun `Lua box queries accept table and scalar coordinate arguments`() {
+        val manager = LuaManager(LuaPackageModule())
+        try {
+            manager.defineMetatable(DimensionApi::class, DimensionLuaApi.luaMeta)
+            manager.defineMetatable(EntityApi::class, EntityLuaApi.luaMeta)
+            val dimension = Dimension(registries, world)
+            entity(1, Coordinate(2, 3, 4), dimension)
+            val lua = manager.lua
+            lua.push(dimension.api, Lua.Conversion.NONE)
+            lua.setGlobal("dimension")
+            lua.load(LuaManager.loadBuffer("""
+                assert(#dimension:getEntitiesInBox({x=0,y=0,z=0}, {x=2,y=3,z=4}) == 1)
+                assert(#dimension:getEntitiesInBox(0,0,0, 2,3,3) == 0)
+                assert(#dimension:getPlayersInBox(0,0,0, 2,3,4) == 0)
+                assert(dimension:hasPlayersInBox({x=0,y=0,z=0}, {x=2,y=3,z=4}) == false)
+            """.trimIndent()), "box_queries_test")
+            lua.pCall(0, 0)
+        } finally {
+            manager.lua.close()
+        }
+    }
+
 }
