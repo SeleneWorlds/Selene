@@ -221,6 +221,10 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
         }
     }
 
+    fun getPrimaryControllingPlayer(): PlayerApi? {
+        return delegate.getPrimaryControllingPlayer()?.api
+    }
+
     fun getControllingPlayers(): List<PlayerApi> {
         return delegate.getControllingPlayers().map { it.api }
     }

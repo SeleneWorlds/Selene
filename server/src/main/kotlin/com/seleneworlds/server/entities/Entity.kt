@@ -218,6 +218,12 @@ class Entity(
         world.entityManager.removeEntity(this)
     }
 
+    fun getPrimaryControllingPlayer(): Player? {
+        return world.playerManager.players.firstOrNull { player ->
+            player.controlledEntity == this
+        }
+    }
+
     fun getControllingPlayers(): List<Player> {
         return world.playerManager.players.filter { player ->
             player.controlledEntity == this

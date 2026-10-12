@@ -359,6 +359,12 @@ object EntityLuaApi {
         return 0
     }
 
+    private fun getPrimaryControllingPlayer(lua: Lua): Int {
+        val entity = lua.checkUserdata<EntityApi>(1)
+        lua.push(entity.getPrimaryControllingPlayer(), Lua.Conversion.NONE)
+        return 1
+    }
+
     private fun getControllingPlayers(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.getControllingPlayers(), Lua.Conversion.FULL)
@@ -425,6 +431,7 @@ object EntityLuaApi {
         callable(::enableInteractions)
         callable(::disableInteractions)
         callable(::addDynamicComponent)
+        callable(::getPrimaryControllingPlayer)
         callable(::getControllingPlayers)
         callable(::hasTag)
         callable(::playAnimation)
