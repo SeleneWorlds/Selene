@@ -51,8 +51,6 @@ import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.tiles.TileRegistry
 import com.seleneworlds.common.tiles.transitions.TransitionRegistry
 import com.seleneworlds.common.util.Disposable
-import com.seleneworlds.server.attributes.AttributesApi
-import com.seleneworlds.server.attributes.AttributesLuaApi
 import com.seleneworlds.server.bundle.ServerBundleWatcher
 import com.seleneworlds.server.bundle.ServerBundleRuntimeRebuilder
 import com.seleneworlds.server.bundles.ClientBundleCache
@@ -141,7 +139,6 @@ fun main(args: Array<String>) {
         singleOf(::EntitiesApi)
         singleOf(::DimensionsApi)
         singleOf(::ConfigApi)
-        singleOf(::AttributesApi)
         singleOf(::SchedulesApi)
         singleOf(::HttpApi)
         singleOf(::I18nApi)
@@ -185,7 +182,6 @@ fun main(args: Array<String>) {
         singleOf(::HttpLuaApi) { bind<LuaModule>(); bind<Disposable>() }
         singleOf(::ConfigLuaApi) { bind<LuaModule>() }
         singleOf(::I18nLuaApi) { bind<LuaModule>() }
-        singleOf(::AttributesLuaApi) { bind<LuaModule>() }
         singleOf(::PathfindingLuaApi) { bind<LuaModule>() }
         singleOf(::SqliteLuaApi) { bind<LuaModule>() }
         singleOf(::JsonLuaApi) { bind<LuaModule>() }

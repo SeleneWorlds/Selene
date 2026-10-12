@@ -13,8 +13,6 @@ import com.seleneworlds.common.sounds.SoundRegistry
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.tiles.TileRegistry
 import com.seleneworlds.common.tiles.transitions.TransitionRegistry
-import com.seleneworlds.server.attributes.Attribute
-import com.seleneworlds.server.attributes.filters.AttributeFilter
 import com.seleneworlds.server.collision.CollisionResolver
 import com.seleneworlds.server.data.Registries
 import com.seleneworlds.server.dimensions.DimensionManager
@@ -77,6 +75,34 @@ class MovementDurationTest {
     }
 
     @Test
+    fun `entity runtime data retains lua object identity and metatables`() {
+        val manager = LuaManager(LuaPackageModule())
+        try {
+            manager.defineMetatable(EntityApi::class, EntityLuaApi.luaMeta)
+            val lua = manager.lua
+            lua.push(entity.api, Lua.Conversion.NONE)
+            lua.setGlobal("first")
+            lua.push(EntityApi(entity), Lua.Conversion.NONE)
+            lua.setGlobal("second")
+            lua.load(LuaManager.loadBuffer("""
+                local prototype = { getValue = function(self) return self._value end }
+                prototype.__index = prototype
+                local attribute = setmetatable({ _value = 12 }, prototype)
+                first:getRuntimeData("attributes-test").strength = attribute
+                local retrieved = second:getRuntimeData("attributes-test").strength
+                assert(rawequal(retrieved, attribute))
+                assert(getmetatable(retrieved) == prototype)
+                assert(retrieved:getValue() == 12)
+                assert(first.getAttribute == nil and first.createAttribute == nil)
+            """.trimIndent()), "attribute_runtime_identity_test")
+            lua.pCall(0, 0)
+        } finally {
+            entity.customLuaData = null
+            manager.lua.close()
+        }
+    }
+
+    @Test
     fun `entity factory resolves without a clock dependency`() {
         val components = EntityComponentFactory(object : ServerScriptProvider {
             override fun loadEntityScript(module: String): ServerEntityScript = error("Unused")
@@ -120,20 +146,13 @@ class MovementDurationTest {
     }
 
     @Test
-    fun `duration uses the current effective multiplier`() {
+    fun `duration uses the published multiplier`() {
         assertEquals(0.2f, entity.getMovementDuration(Coordinate.Zero))
         entity.api.setMovementDurationMultiplier(2f)
         assertEquals(0.4f, entity.getMovementDuration(Coordinate.Zero))
-        val attribute = entity.attributes.getValue("selene:movement_duration_multiplier")
-        var loadMultiplier = 1.5f
-        @Suppress("UNCHECKED_CAST")
-        (attribute as Attribute<Any?>).addModifier("load", object : AttributeFilter<Any?> {
-            override val enabled = true
-            override fun apply(attribute: Attribute<Any?>, value: Any?): Any? =
-                (value as Number).toFloat() * loadMultiplier
-        })
+        entity.api.setMovementDurationMultiplier(3f)
         assertEquals(0.6f, entity.getMovementDuration(Coordinate.Zero))
-        loadMultiplier = 2f
+        entity.api.setMovementDurationMultiplier(4f)
         assertEquals(0.8f, entity.getMovementDuration(Coordinate.Zero))
     }
 
@@ -141,7 +160,7 @@ class MovementDurationTest {
     fun `invalid multipliers cannot make movement free or nonfinite`() {
         for (value in listOf(0f, -1f, Float.NaN, Float.POSITIVE_INFINITY)) {
             assertFailsWith<IllegalArgumentException> { entity.api.setMovementDurationMultiplier(value) }
-            entity.api.createAttribute("selene:movement_duration_multiplier", value)
+            assertFailsWith<IllegalArgumentException> { entity.movementDurationMultiplier = value }
             assertEquals(0.2f, entity.getMovementDuration(Coordinate.Zero))
         }
     }

@@ -17,7 +17,6 @@ import com.seleneworlds.server.entities.component.EntityComponent
 import com.seleneworlds.server.entities.component.EntityComponentFactory
 import com.seleneworlds.server.entities.component.GravityComponent
 import com.seleneworlds.server.entities.component.TickableComponent
-import com.seleneworlds.server.attributes.Attribute
 import com.seleneworlds.server.cameras.viewer.Viewer
 import com.seleneworlds.server.data.Registries
 import com.seleneworlds.server.dimensions.Dimension
@@ -55,7 +54,11 @@ class Entity(
     val map get() = dimension?.mapTree
     val customData = ObservableMap()
     var customLuaData: LuaValue? = null
-    val attributes = mutableMapOf<String, Attribute<*>>()
+    var movementDurationMultiplier: Float = 1f
+        set(value) {
+            require(value.isFinite() && value > 0f) { "Movement duration multiplier must be positive and finite" }
+            field = value
+        }
     val dynamicComponents = mutableMapOf<String, ComponentResolver>()
     val components = mutableMapOf<String, EntityComponent>()
     val tickableComponents = mutableListOf<TickableComponent>()
@@ -164,13 +167,7 @@ class Entity(
             val tileId = chunkView.getBaseTileAt(coordinate)
             registries.tiles.get(tileId)?.movementDuration ?: TileDefinition.DEFAULT_MOVEMENT_DURATION
         }
-        return baseDuration * getMovementDurationMultiplier()
-    }
-
-    fun getMovementDurationMultiplier(): Float {
-        val value = attributes["selene:movement_duration_multiplier"]?.effectiveValue ?: return 1f
-        val multiplier = (value as? Number)?.toFloat()
-        return multiplier?.takeIf { it.isFinite() && it > 0f } ?: 1f
+        return baseDuration * movementDurationMultiplier
     }
 
     fun moveTo(coordinate: Coordinate, duration: Float = getMovementDuration(coordinate)): Boolean {

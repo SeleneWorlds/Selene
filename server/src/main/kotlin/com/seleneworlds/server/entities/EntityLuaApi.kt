@@ -365,20 +365,6 @@ object EntityLuaApi {
         return 1
     }
 
-    private fun getAttribute(lua: Lua): Int {
-        val entity = lua.checkUserdata<EntityApi>(1)
-        lua.push(entity.getAttribute(lua.checkString(2)), Lua.Conversion.NONE)
-        return 1
-    }
-
-    private fun createAttribute(lua: Lua): Int {
-        val entity = lua.checkUserdata<EntityApi>(1)
-        val name = lua.checkString(2)
-        val initialValue = lua.toAny(3)
-        lua.push(entity.createAttribute(name, initialValue), Lua.Conversion.NONE)
-        return 1
-    }
-
     private fun hasTag(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
         lua.push(entity.hasTag(lua.checkString(2)))
@@ -440,8 +426,6 @@ object EntityLuaApi {
         callable(::disableInteractions)
         callable(::addDynamicComponent)
         callable(::getControllingPlayers)
-        callable(::getAttribute)
-        callable(::createAttribute)
         callable(::hasTag)
         callable(::playAnimation)
         callable(::updateVisuals)

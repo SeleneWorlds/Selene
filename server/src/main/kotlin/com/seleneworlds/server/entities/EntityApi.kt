@@ -9,8 +9,6 @@ import com.seleneworlds.common.grid.Direction
 import com.seleneworlds.common.observable.ObservableMap
 import com.seleneworlds.common.util.IdResolvable
 import com.seleneworlds.common.util.ResolvableReference
-import com.seleneworlds.server.attributes.Attribute
-import com.seleneworlds.server.attributes.AttributeApi
 import com.seleneworlds.server.cameras.viewer.Viewer
 import com.seleneworlds.server.dimensions.Dimension
 import com.seleneworlds.server.dimensions.DimensionApi
@@ -111,14 +109,11 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
     fun isMoving(): Boolean = delegate.isMoving()
 
     fun getMovementDurationMultiplier(): Float {
-        return delegate.getMovementDurationMultiplier()
+        return delegate.movementDurationMultiplier
     }
 
     fun setMovementDurationMultiplier(multiplier: Float) {
-        require(multiplier.isFinite() && multiplier > 0f) { "Movement duration multiplier must be positive and finite" }
-        val attribute = getAttribute("selene:movement_duration_multiplier")
-            ?: createAttribute("selene:movement_duration_multiplier", 1f)
-        attribute.setValue(multiplier)
+        delegate.movementDurationMultiplier = multiplier
     }
 
     fun setVision(enabled: Boolean, tagName: String = "default") {
@@ -228,16 +223,6 @@ class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
 
     fun getControllingPlayers(): List<PlayerApi> {
         return delegate.getControllingPlayers().map { it.api }
-    }
-
-    fun getAttribute(name: String): AttributeApi? {
-        return delegate.attributes[name]?.api
-    }
-
-    fun createAttribute(name: String, initialValue: Any?): AttributeApi {
-        val attribute = Attribute(delegate, name, initialValue)
-        delegate.attributes[name] = attribute
-        return attribute.api
     }
 
     fun hasTag(tag: String): Boolean {
