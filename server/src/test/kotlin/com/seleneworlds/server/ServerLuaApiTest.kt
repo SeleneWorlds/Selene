@@ -15,6 +15,24 @@ import kotlin.test.assertEquals
 
 class ServerLuaApiTest {
     @Test
+    fun `profiling clock exposes monotonic elapsed milliseconds to Lua`() {
+        val manager = LuaManager(LuaPackageModule())
+        val module = ServerLuaApi(ServerApi(ServerConfig(), ServerCustomData()))
+        try {
+            manager.lua.push(manager.lua.newTable { module.register(this) })
+            manager.lua.setGlobal("Server")
+            manager.lua.load(LuaManager.loadBuffer("""
+                local before = Server.getMonotonicTimeMs()
+                local after = Server.getMonotonicTimeMs()
+                assert(type(before) == "number" and after >= before)
+            """.trimIndent()), "profiling_clock_test")
+            manager.lua.pCall(0, 0)
+        } finally {
+            manager.lua.close()
+        }
+    }
+
+    @Test
     fun `bundle file notifications expose sorted Lua arrays`() {
         val luaPackage = LuaPackageModule()
         val manager = LuaManager(luaPackage)

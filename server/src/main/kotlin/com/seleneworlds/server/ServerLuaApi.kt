@@ -121,7 +121,13 @@ class ServerLuaApi(private val api: ServerApi) : LuaModule {
         }
     }
 
+    private fun getMonotonicTimeMs(lua: Lua): Int {
+        lua.push(System.nanoTime() / 1_000_000.0)
+        return 1
+    }
+
     override fun register(table: LuaValue) {
+        table.register("getMonotonicTimeMs", this::getMonotonicTimeMs)
         table.register("getRuntimeData", this::getRuntimeData)
         table.register("overwriteRuntimeData", this::overwriteRuntimeData)
         table.register("hasRuntimeData", this::hasRuntimeData)
