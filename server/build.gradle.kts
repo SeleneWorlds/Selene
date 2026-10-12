@@ -37,6 +37,23 @@ tasks.test {
     useJUnitPlatform()
 }
 
+// Keep diagnostic workloads out of production artifacts and avoid building the web client.
+val benchmark by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().output.classesDirs + configurations.runtimeClasspath.get()
+    runtimeClasspath += sourceSets.main.get().output.classesDirs + configurations.runtimeClasspath.get()
+}
+
+tasks.register<JavaExec>("benchmarkLua") {
+    group = "verification"
+    description = "Measures native Lua/platform throughput and batch latency under increasing load."
+    classpath = benchmark.runtimeClasspath
+    mainClass.set("com.seleneworlds.server.benchmark.LuaIntegrationBenchmark")
+    workingDir = rootDir
+    providers.gradleProperty("benchmarkJvmArgs").orNull?.let {
+        jvmArgs(it.split(" ").filter(String::isNotBlank))
+    }
+}
+
 val buildWebClient by tasks.registering(Exec::class) {
     description = "Builds the browser client for embedding in the server"
     group = "build"
