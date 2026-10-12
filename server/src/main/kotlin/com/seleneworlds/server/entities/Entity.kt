@@ -30,6 +30,38 @@ class Entity(
     private val entityComponentFactory: EntityComponentFactory
 ) : IdResolvable<Int, Entity>, ExposedApi<EntityApi> {
     override val api = EntityApi(this)
+    var enabled = true
+        set(value) {
+            if (field == value) return
+            field = value
+            world.entityManager.onEntityActivityChanged(this)
+        }
+    var keepAwake = false
+        set(value) {
+            if (field == value) return
+            field = value
+            world.entityManager.onEntityActivityChanged(this)
+        }
+    var sleepWhenUnobserved = false
+        private set
+    var wakeRange = 60
+        private set
+    var sleepRange = 70
+        private set
+    var activationZRange = 2
+        private set
+    internal var proximityAwake = false
+    val awake get() = !sleepWhenUnobserved || keepAwake || proximityAwake
+    val active get() = enabled && awake
+
+    fun configureSleeping(sleep: Boolean, wakeRange: Int = 60, sleepRange: Int = 70, zRange: Int = 2) {
+        require(wakeRange >= 0 && sleepRange >= wakeRange && zRange >= 0)
+        sleepWhenUnobserved = sleep
+        this.wakeRange = wakeRange
+        this.sleepRange = sleepRange
+        activationZRange = zRange
+        world.entityManager.onEntitySleepPolicyChanged(this)
+    }
     var impassable: Boolean = true
     var passableAbove: Boolean = false
     var networkId: Int = -1

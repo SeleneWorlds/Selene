@@ -10,6 +10,34 @@ import com.seleneworlds.server.dimensions.DimensionApi
 import party.iroiro.luajava.Lua
 
 object EntityLuaApi {
+    private fun isActive(lua: Lua): Int {
+        lua.push(lua.checkUserdata<EntityApi>(1).isActive())
+        return 1
+    }
+    private fun isAwake(lua: Lua): Int {
+        lua.push(lua.checkUserdata<EntityApi>(1).isAwake())
+        return 1
+    }
+    private fun isEnabled(lua: Lua): Int {
+        lua.push(lua.checkUserdata<EntityApi>(1).isEnabled())
+        return 1
+    }
+    private fun setEnabled(lua: Lua): Int {
+        lua.checkUserdata<EntityApi>(1).setEnabled(lua.checkBoolean(2))
+        return 0
+    }
+    private fun setKeepAwake(lua: Lua): Int {
+        lua.checkUserdata<EntityApi>(1).setKeepAwake(lua.checkBoolean(2))
+        return 0
+    }
+    /** Opt-in proximity sleeping; defaults: wake 60, sleep 70, vertical range 2. */
+    private fun setSleepWhenUnobserved(lua: Lua): Int {
+        lua.checkUserdata<EntityApi>(1).setSleepWhenUnobserved(lua.checkBoolean(2),
+            if (lua.top >= 3) lua.checkInt(3) else 60,
+            if (lua.top >= 4) lua.checkInt(4) else 70,
+            if (lua.top >= 5) lua.checkInt(5) else 2)
+        return 0
+    }
 
     private fun isMoving(lua: Lua): Int {
         val entity = lua.checkUserdata<EntityApi>(1)
@@ -390,6 +418,12 @@ object EntityLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(EntityApi::class) {
+        callable(::isActive)
+        callable(::isAwake)
+        callable(::isEnabled)
+        callable(::setEnabled)
+        callable(::setKeepAwake)
+        callable(::setSleepWhenUnobserved)
         callable(::getNetworkId)
         callable(::getEntityDefinition)
         callable(::getName)

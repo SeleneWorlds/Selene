@@ -24,7 +24,7 @@ class EntitiesLuaApi(
 ) : LuaModule, Disposable {
     override val name = "selene.entities"
     private class CollectionSubscription(val collection: EntityCollection, val unsubscribe: () -> Unit)
-    private val collections = mutableMapOf<Lua, MutableMap<String, CollectionSubscription>>()
+    private val collections = mutableMapOf<Lua, MutableMap<Pair<String, Boolean>, CollectionSubscription>>()
 
     private val beforeEntityMove = LuaEventSink(EntityEvents.BeforeEntityMove.EVENT) { callback: LuaValue, trace: ScriptTrace ->
         EntityEvents.BeforeEntityMove { entity, coordinate ->
@@ -82,6 +82,7 @@ class EntitiesLuaApi(
         table.register("getAll", this::getAll)
         table.register("findAllByTag", this::findAllByTag)
         table.register("byTag", this::byTag)
+        table.register("activeByTag", this::activeByTag)
         table.register("getByNetworkId", this::getByNetworkId)
         table.register("findByRuntimeData", this::findByRuntimeData)
         table.set("beforeMove", beforeEntityMove)
@@ -126,10 +127,21 @@ class EntitiesLuaApi(
      * byTag(tag: string) -> Entity[]
      */
     private fun byTag(lua: Lua): Int {
+        return pushCollection(lua, false)
+    }
+
+    /** Live array of spawned, enabled, awake entities. Do not modify it.
+     * activeByTag(tag: string) -> Entity[]
+     */
+    private fun activeByTag(lua: Lua): Int = pushCollection(lua, true)
+
+    private fun pushCollection(lua: Lua, activeOnly: Boolean): Int {
         val tag = lua.checkString(1)
-        val subscription = collections.getOrPut(lua.mainState) { mutableMapOf() }.getOrPut(tag) {
+        val subscription = collections.getOrPut(lua.mainState) { mutableMapOf() }.getOrPut(tag to activeOnly) {
             val collection = EntityCollection(lua.mainState)
-            CollectionSubscription(collection, api.subscribeByTag(tag, collection::update))
+            val unsubscribe = if (activeOnly) api.subscribeActiveByTag(tag, collection::update)
+                else api.subscribeByTag(tag, collection::update)
+            CollectionSubscription(collection, unsubscribe)
         }
         // Also observes registry revisions before later registry listeners execute.
         api.refreshTagCollections()

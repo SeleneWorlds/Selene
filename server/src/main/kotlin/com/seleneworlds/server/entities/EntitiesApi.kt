@@ -9,6 +9,9 @@ class EntitiesApi(private val entityManager: EntityManager) {
 
     internal fun refreshTagCollections() = entityManager.refreshTagCollections()
 
+    internal fun subscribeActiveByTag(tag: String, listener: (List<Entity>) -> Unit): () -> Unit =
+        entityManager.subscribeActiveByTag(tag, listener)
+
     fun create(entityDefinition: EntityDefinition): EntityApi {
         return entityManager.createEntity(entityDefinition).api
     }

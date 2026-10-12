@@ -39,6 +39,149 @@ import kotlinx.serialization.json.JsonPrimitive
 
 class EntityTagIndexTest {
     @Test
+    fun `sleeping and disabled entities stop component ticking and overrides resume it`() {
+        definition(first, "character")
+        val monster = entity(1, first)
+        var ticks = 0
+        monster.tickableComponents.add(object : com.seleneworlds.server.entities.component.TickableComponent {
+            override fun update(entity: Entity, delta: Float) { ticks++ }
+        })
+        entities.onEntitySpawned(monster)
+        entities.update(0.1f)
+        assertEquals(1, ticks)
+        monster.configureSleeping(true)
+        entities.update(0.1f)
+        assertEquals(1, ticks)
+        monster.keepAwake = true
+        entities.update(0.1f)
+        assertEquals(2, ticks)
+        monster.enabled = false
+        entities.update(0.1f)
+        assertEquals(2, ticks)
+        monster.enabled = true
+        entities.update(0.1f)
+        assertEquals(3, ticks)
+        monster.despawn()
+        entities.update(0.1f)
+        assertEquals(3, ticks)
+        monster.api.spawn(dimension)
+        entities.update(0.1f)
+        assertEquals(4, ticks)
+    }
+
+    @Test
+    fun `proximity sleeping respects hysteresis floors dimensions and enabled state`() {
+        definition(first, "character")
+        val monster = entity(1, first)
+        val observer = entity(2, first)
+        monster.configureSleeping(true)
+        val updates = mutableListOf<List<Entity>>()
+        val unsubscribe = entities.subscribeActiveByTag("character") { updates.add(it) }
+        try {
+            assertEquals(false, monster.awake)
+            assertEquals(listOf(observer), updates.last())
+            observer.coordinate = Coordinate(60, 0, 2)
+            entities.refreshActivation(listOf(observer))
+            assertEquals(true, monster.active)
+            observer.coordinate = Coordinate(70, 0, 2)
+            entities.refreshActivation(listOf(observer))
+            assertEquals(true, monster.awake)
+            observer.coordinate = Coordinate(71, 0, 2)
+            entities.refreshActivation(listOf(observer))
+            assertEquals(false, monster.awake)
+            observer.coordinate = Coordinate(65, 0, 0)
+            entities.refreshActivation(listOf(observer))
+            assertEquals(false, monster.awake)
+            observer.coordinate = Coordinate(0, 0, 3)
+            entities.refreshActivation(listOf(observer))
+            assertEquals(false, monster.awake)
+            observer.coordinate = Coordinate(0, 0, 0)
+            observer.dimension = Dimension(registries, world)
+            entities.refreshActivation(listOf(observer))
+            assertEquals(false, monster.awake)
+            observer.dimension = dimension
+            entities.refreshActivation(listOf(observer))
+            monster.enabled = false
+            assertEquals(true, monster.awake)
+            assertEquals(false, monster.active)
+            assertEquals(listOf(observer), updates.last())
+            monster.enabled = true
+            assertEquals(listOf(monster, observer), updates.last())
+            entities.refreshActivation(emptyList())
+            assertEquals(false, monster.active)
+            monster.keepAwake = true
+            assertEquals(true, monster.active)
+            monster.enabled = false
+            assertEquals(false, monster.active)
+            monster.enabled = true
+            monster.keepAwake = false
+            assertEquals(false, monster.active)
+            monster.configureSleeping(false)
+            assertEquals(true, monster.active)
+            monster.despawn()
+            assertEquals(listOf(observer), updates.last())
+        } finally { unsubscribe() }
+    }
+
+    @Test
+    fun `waking a population publishes once and steady idle passes do not look up definitions`() {
+        definition(first, "character")
+        val population = (1..2000).map { entity(it, first).also { e -> e.configureSleeping(true) } }
+        val observer = entity(2001, first)
+        var publications = 0
+        var active = emptyList<Entity>()
+        val unsubscribe = entities.subscribeActiveByTag("character") { publications++; active = it }
+        try {
+            assertEquals(listOf(observer), active)
+            lookups = 0
+            repeat(100) { entities.refreshActivation(emptyList()) }
+            assertEquals(0, lookups)
+            assertEquals(1, publications)
+            entities.refreshActivation(listOf(observer))
+            assertEquals(population + observer, active)
+            assertEquals(2, publications)
+            entities.refreshActivation(emptyList())
+            assertEquals(listOf(observer), active)
+            assertEquals(3, publications)
+            lookups = 0
+            repeat(100) { entities.refreshActivation(emptyList()) }
+            assertEquals(3, publications)
+            assertEquals(0, lookups)
+        } finally { unsubscribe() }
+    }
+
+    @Test
+    fun `Lua active collection retains identity and updates on script flags and registry changes`() {
+        definition(first, "character")
+        val entity = entity(1, first)
+        val manager = LuaManager(LuaPackageModule())
+        val module = EntitiesLuaApi(EntitiesApi(entities), registries)
+        fun run(script: String) {
+            manager.lua.load(LuaManager.loadBuffer(script), "active_collection_test")
+            manager.lua.pCall(0, 0)
+            assertEquals(0, manager.lua.top)
+        }
+        try {
+            module.initialize(manager)
+            manager.lua.push(manager.lua.newTable { module.register(this) })
+            manager.lua.setGlobal("Entities")
+            run("all = Entities.byTag('character'); active = Entities.activeByTag('character'); e = active[1]; assert(e:isActive() and e:isAwake() and e:isEnabled())")
+            run("e:setSleepWhenUnobserved(true); assert(#active == 0 and #all == 1 and not e:isAwake())")
+            run("e:setKeepAwake(true); assert(#active == 1 and active[1]:getNetworkId() == e:getNetworkId()); e:setEnabled(false); assert(#active == 0 and e:isAwake())")
+            run("e:setEnabled(true); assert(#active == 1); assert(rawequal(active, Entities.activeByTag('character')))")
+            definition(first, "other")
+            run("assert(#active == 0)")
+            definition(first, "character")
+            run("assert(#active == 1)")
+            entity.remove()
+            run("assert(#active == 0 and #all == 0)")
+        } finally {
+            module.dispose()
+            manager.lua.close()
+        }
+    }
+
+    @Test
     fun `Lua byTag retains table and userdata identity while lifecycle and reload update membership`() {
         definition(first, "character")
         definition(second, "other")

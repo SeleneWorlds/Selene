@@ -9,7 +9,7 @@ import com.seleneworlds.common.entities.EntityDefinition
 import java.util.TreeMap
 
 /** Main-thread index of spawned entities, ordered like EntityManager's entity map. */
-internal class EntityTagIndex {
+internal class EntityTagIndex(private val eligible: (Entity) -> Boolean = { it.dimension != null }) {
     private class Entry(val entity: Entity, val order: Long) {
         var registry: Registry<EntityDefinition>? = null
         var spawned = false
@@ -23,6 +23,18 @@ internal class EntityTagIndex {
     private var dirty = false
     private val listeners = mutableMapOf<String, MutableList<(List<Entity>) -> Unit>>()
     private var rebuilding = false
+    private var batching = false
+    private val pendingTags = mutableSetOf<String>()
+
+    fun batch(callback: () -> Unit) {
+        batching = true
+        try { callback() } finally {
+            batching = false
+            val tags = pendingTags.toSet()
+            pendingTags.clear()
+            publish(tags)
+        }
+    }
 
     fun subscribe(tag: String, listener: (List<Entity>) -> Unit): () -> Unit {
         find(tag)
@@ -38,6 +50,7 @@ internal class EntityTagIndex {
 
     private fun publish(tags: Set<String>) {
         if (rebuilding) return
+        if (batching) { pendingTags.addAll(tags); return }
         tags.forEach { tag ->
             listeners[tag]?.toList()?.forEach { it(byTag[tag]?.values?.toList() ?: emptyList()) }
         }
@@ -68,7 +81,7 @@ internal class EntityTagIndex {
     fun locationChanged(entity: Entity) {
         val entry = entries[entity.networkId]?.takeIf { it.entity === entity } ?: return
         // Moving between positions or two live dimensions does not change tag membership.
-        if (entry.spawned != (entity.dimension != null)) refresh(entry)
+        if (entry.spawned != eligible(entity)) refresh(entry)
     }
 
     fun definitionChanged(entity: Entity) {
@@ -106,7 +119,7 @@ internal class EntityTagIndex {
     private fun refresh(entry: Entry) {
         val oldTags = entry.tags
         erase(entry)
-        entry.spawned = entry.entity.dimension != null
+        entry.spawned = eligible(entry.entity)
         entry.tags = if (entry.spawned) entry.entity.entityDefinition.tags.toSet() else emptySet()
         entry.tags.forEach { tag -> byTag.getOrPut(tag) { TreeMap() }[entry.order] = entry.entity }
         publish(oldTags + entry.tags)

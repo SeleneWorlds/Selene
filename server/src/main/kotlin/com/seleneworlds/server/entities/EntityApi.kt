@@ -16,6 +16,14 @@ import com.seleneworlds.server.players.Player
 import com.seleneworlds.server.players.PlayerApi
 
 class EntityApi(val delegate: Entity) : IdResolvable<Int, Entity> {
+    fun isActive(): Boolean = delegate.active
+    fun isAwake(): Boolean = delegate.awake
+    fun isEnabled(): Boolean = delegate.enabled
+    fun setEnabled(enabled: Boolean) { delegate.enabled = enabled }
+    fun setKeepAwake(keepAwake: Boolean) { delegate.keepAwake = keepAwake }
+    fun setSleepWhenUnobserved(sleep: Boolean, wakeRange: Int = 60, sleepRange: Int = 70, zRange: Int = 2) {
+        delegate.configureSleeping(sleep, wakeRange, sleepRange, zRange)
+    }
 
     fun getNetworkId(): Int {
         return delegate.networkId
