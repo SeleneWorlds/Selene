@@ -214,7 +214,11 @@ class NetworkServerImpl(
     }
 
     override fun reportClientError(client: NetworkClient, cause: Throwable) {
-        logger.error("Client error: ${client.address}", cause)
+        if (cause.isConnectionReset()) {
+            logger.info("Client connection reset: ${client.address}")
+        } else {
+            logger.error("Client error: ${client.address}", cause)
+        }
         client.disconnect()
     }
 
