@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class EntityManager : ReferenceResolver<Int, Entity> {
     private val entities = mutableMapOf<Int, Entity>()
     private val spatialIndex = EntitySpatialIndex()
+    private val tagIndex = EntityTagIndex()
     private val activeTickingEntities = linkedSetOf<Entity>()
     private val nextId = AtomicInteger(1)
 
@@ -18,12 +19,14 @@ class EntityManager : ReferenceResolver<Int, Entity> {
     fun addEntity(entity: Entity) {
         entities[entity.networkId] = entity
         spatialIndex.add(entity)
+        tagIndex.add(entity)
     }
 
     fun removeEntity(entity: Entity) {
         deactivateEntity(entity)
         entities.remove(entity.networkId)
         spatialIndex.remove(entity.networkId)
+        tagIndex.remove(entity.networkId)
     }
 
     fun getNearbyEntities(center: Coordinate, dimension: Dimension?, radius: Int): List<Entity> {
@@ -40,6 +43,11 @@ class EntityManager : ReferenceResolver<Int, Entity> {
 
     internal fun onEntityLocationChanged(entity: Entity) {
         spatialIndex.update(entity)
+        tagIndex.locationChanged(entity)
+    }
+
+    internal fun onEntityDefinitionChanged(entity: Entity) {
+        tagIndex.definitionChanged(entity)
     }
 
     fun createEntity(entityDefinition: EntityDefinition): Entity {
@@ -92,9 +100,7 @@ class EntityManager : ReferenceResolver<Int, Entity> {
     }
 
     fun findEntitiesByTag(tag: String): List<Entity> {
-        return entities.values.filter { entity ->
-            entity.dimension != null && entity.entityDefinition.tags.contains(tag)
-        }
+        return tagIndex.find(tag)
     }
 
     private fun deactivateEntity(entity: Entity) {

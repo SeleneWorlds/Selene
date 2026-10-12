@@ -36,6 +36,10 @@ class Entity(
     var passableAbove: Boolean = false
     var networkId: Int = -1
     var entityDefinition: RegistryReference<EntityDefinition> = RegistryReference.unbound()
+        set(value) {
+            field = value
+            world.entityManager.onEntityDefinitionChanged(this)
+        }
     var name = "Someone"
     var coordinate = Coordinate(0, 0, 0)
         set(value) {
