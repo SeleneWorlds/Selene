@@ -5,6 +5,8 @@ import {
   getSortLayer,
   projectCoordinate,
   ROW_SORT_SCALE,
+  TILE_HEIGHT,
+  TILE_WIDTH,
 } from '@/renderer/IsoProjection';
 import type { Coordinate, EntityPacket, MoveEntityPacket } from '@/networking/GameProtocol';
 import type { ContentTextureLoader } from './ContentTextureLoader';
@@ -581,14 +583,22 @@ function applySpriteVisual(
 }
 
 function createFallbackMarker(): Graphics {
-  const fallback = new Graphics()
-    .moveTo(0, -38)
-    .lineTo(36, 0)
-    .lineTo(0, 38)
-    .lineTo(-36, 0)
-    .closePath()
-    .fill({ color: 0xd5c06f, alpha: 0.85 })
-    .stroke({ color: 0xffffff, alpha: 0.55, width: 2 });
+  const fallback = new Graphics();
+  const halfCellWidth = TILE_WIDTH / 4;
+  const halfCellHeight = TILE_HEIGHT / 4;
+  for (let row = 0; row < 2; row += 1) {
+    for (let column = 0; column < 2; column += 1) {
+      const x = (column - row) * halfCellWidth;
+      const y = -TILE_HEIGHT / 2 + (column + row) * halfCellHeight;
+      fallback
+        .moveTo(x, y)
+        .lineTo(x + halfCellWidth, y + halfCellHeight)
+        .lineTo(x, y + 2 * halfCellHeight)
+        .lineTo(x - halfCellWidth, y + halfCellHeight)
+        .closePath()
+        .fill({ color: (row + column) % 2 === 0 ? 0x000000 : 0xff00ff });
+    }
+  }
   fallback.visible = false;
   return fallback;
 }
