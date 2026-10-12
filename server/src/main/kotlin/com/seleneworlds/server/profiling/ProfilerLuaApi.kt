@@ -21,6 +21,12 @@ class ProfilerLuaApi(private val profiler: ServerProfiler) : LuaModule {
         table.register("getSummary", ::getSummary)
         table.register("isCapturing", ::isCapturing)
         table.register("measure", ::measure)
+        table.register("recordCount", ::recordCount)
+    }
+
+    private fun recordCount(lua: Lua): Int {
+        profiler.recordCount(lua.checkString(1), lua.checkInt(2))
+        return 0
     }
 
     private fun isCapturing(lua: Lua): Int {

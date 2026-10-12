@@ -11,6 +11,7 @@ import jdk.jfr.Recording
 import jdk.jfr.StackTrace
 import org.slf4j.Logger
 import java.time.Instant
+import java.lang.management.ManagementFactory
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -25,6 +26,15 @@ class ServerWorkEvent : Event() {
     @Label("Registration source") var source = ""
     @Label("Interval milliseconds") var intervalMs = 0
     @Label("Failed") var failed = false
+    @Label("Thread CPU nanoseconds (-1 when unavailable)") var cpuNanos = -1L
+}
+
+@Name("selene.WorkCount")
+@Label("Selene Work Count")
+@StackTrace(false)
+class WorkCountEvent : Event() {
+    @Label("Name") var label = ""
+    @Label("Count") var count = 0
 }
 
 /** Records execution boundaries without requiring scripts to install wrappers. */
@@ -38,6 +48,8 @@ class ServerProfiler(private val config: ServerConfig, private val logger: Logge
         val stats = linkedMapOf<Scope, Stats>()
     }
     private val eventType = EventType.getEventType(ServerWorkEvent::class.java)
+    private val countEventType = EventType.getEventType(WorkCountEvent::class.java)
+    private val threadBean = ManagementFactory.getThreadMXBean()
     private val timer = Executors.newSingleThreadScheduledExecutor { runnable ->
         Thread(runnable, "Profiling capture timer").apply { isDaemon = true }
     }
@@ -47,6 +59,14 @@ class ServerProfiler(private val config: ServerConfig, private val logger: Logge
 
     val isCapturing: Boolean
         get() = capture != null || eventType.isEnabled
+
+    fun recordCount(name: String, count: Int) {
+        if (!countEventType.isEnabled) return
+        WorkCountEvent().apply { label = name; this.count = count; commit() }
+    }
+
+    private fun cpuTime(): Long = if (threadBean.isCurrentThreadCpuTimeSupported && threadBean.isThreadCpuTimeEnabled)
+        threadBean.currentThreadCpuTime else -1L
 
     fun <T> measure(scope: Scope, callback: () -> T): T {
         val current = capture
@@ -58,6 +78,7 @@ class ServerProfiler(private val config: ServerConfig, private val logger: Logge
             begin()
         } else null
         val started = System.nanoTime()
+        val cpuStarted = if (event != null) cpuTime() else -1L
         var failed = false
         try {
             return callback()
@@ -66,7 +87,12 @@ class ServerProfiler(private val config: ServerConfig, private val logger: Logge
             throw failure
         } finally {
             val elapsed = System.nanoTime() - started
-            event?.apply { this.failed = failed; end(); commit() }
+            event?.apply {
+                this.failed = failed
+                val cpuFinished = cpuTime()
+                cpuNanos = if (cpuStarted >= 0 && cpuFinished >= 0) cpuFinished - cpuStarted else -1L
+                end(); commit()
+            }
             if (current != null) synchronized(this) {
                 if (capture === current) {
                     // Bound memory even if scripts create unlimited unique scopes.
@@ -90,6 +116,7 @@ class ServerProfiler(private val config: ServerConfig, private val logger: Logge
         val recording = Recording(Configuration.getConfiguration("profile"))
         try {
             recording.enable("selene.ServerWork")
+            recording.enable("selene.WorkCount")
             recording.destination = destination.toPath()
             recording.start()
             val current = Capture(recording, path)
