@@ -43,14 +43,22 @@ val benchmark by sourceSets.creating {
     runtimeClasspath += sourceSets.main.get().output.classesDirs + configurations.runtimeClasspath.get()
 }
 
-tasks.register<JavaExec>("benchmarkLua") {
-    group = "verification"
-    description = "Measures native Lua/platform throughput and batch latency under increasing load."
-    classpath = benchmark.runtimeClasspath
-    mainClass.set("com.seleneworlds.server.benchmark.LuaIntegrationBenchmark")
-    workingDir = rootDir
-    providers.gradleProperty("benchmarkJvmArgs").orNull?.let {
-        jvmArgs(it.split(" ").filter(String::isNotBlank))
+for (taskName in listOf("benchmarkLua", "benchmarkLuaCompare")) {
+    tasks.register<JavaExec>(taskName) {
+        group = "verification"
+        description = if (taskName == "benchmarkLuaCompare")
+            "Compares Selene's Lua integration with stock LuaJava."
+        else "Measures native Lua/platform throughput and batch latency under increasing load."
+        classpath = benchmark.runtimeClasspath
+        mainClass.set("com.seleneworlds.server.benchmark.LuaIntegrationBenchmark")
+        workingDir = rootDir
+        // An explicit --implementation option can override the comparison default.
+        if (taskName == "benchmarkLuaCompare") {
+            doFirst { args = listOf("--implementation=compare") + (args ?: emptyList()) }
+        }
+        providers.gradleProperty("benchmarkJvmArgs").orNull?.let {
+            jvmArgs(it.split(" ").filter(String::isNotBlank))
+        }
     }
 }
 
