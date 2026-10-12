@@ -26,14 +26,8 @@ class ResourcesApi(private val bundleDatabase: BundleDatabase) {
     fun listFiles(bundle: String, filter: String): List<String> {
         val baseDir = bundleDatabase.getBundle(bundle)?.dir ?: return emptyList()
         val matcher = globToRegex(filter)
-        val literalPrefix = filter.takeWhile { it !in "\\.*?[](){}+^$|" }
-        val directoryPrefix = literalPrefix.substringBeforeLast('/', "")
-        val scanDir = if (directoryPrefix.isNotEmpty() &&
-            directoryPrefix.split('/').none { it == ".." } && !directoryPrefix.startsWith('/')) {
-            baseDir.resolve(directoryPrefix)
-        } else baseDir
-        return scanDir.walkTopDown().filter {
-            it.isFile && matcher.matches(it.relativeTo(baseDir).path)
+        return bundleContentFiles(baseDir).filter {
+            matcher.matches(it.relativeTo(baseDir).invariantSeparatorsPath)
         }.map {
             bundle + File.separator + it.relativeTo(baseDir).path
         }.toList()
@@ -80,10 +74,8 @@ class ResourcesApi(private val bundleDatabase: BundleDatabase) {
         require(bundleName.isNotEmpty() && remainingPath.isNotEmpty()) { "Invalid resource path: $path" }
         val baseDir = bundleDatabase.getBundle(bundleName)?.dir?.canonicalFile
             ?: throw IllegalArgumentException("Failed to find bundle: $bundleName")
-        val file = baseDir.resolve(remainingPath).canonicalFile
-        if (!file.toPath().startsWith(baseDir.toPath())) {
-            throw IllegalArgumentException("Invalid file path: $path")
-        }
+        val file = resolveBundleContentFile(baseDir, remainingPath)
+            ?: throw IllegalArgumentException("Invalid file path: $path")
         return baseDir to file
     }
 

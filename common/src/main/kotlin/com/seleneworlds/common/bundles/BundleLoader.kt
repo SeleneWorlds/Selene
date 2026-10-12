@@ -112,8 +112,9 @@ class BundleLoader(
     override fun preloadBundleModules(bundle: Bundle) {
         for (preloadSpec in bundle.manifest.getPreloadSpecs()) {
             try {
-                val scriptFile = File(bundle.dir, preloadSpec.file)
-                if (scriptFile.exists()) {
+                val scriptFile = resolveBundleContentFile(bundle.dir, preloadSpec.file)
+                    ?: throw IllegalArgumentException("Invalid preload path: ${preloadSpec.file}")
+                if (scriptFile.isFile) {
                     logger.debug(
                         "Pre-loading Lua module {} from {} with encoding {}",
                         preloadSpec.moduleName,
@@ -168,7 +169,7 @@ class BundleLoader(
     fun listLuaModuleNames(bundle: Bundle): Set<String> {
         val moduleNames = mutableSetOf<String>()
 
-        bundle.dir.walkTopDown()
+        bundleContentFiles(bundle.dir)
             .filter { it.isFile && it.extension == "lua" }
             .forEach { file ->
                 val relativePath = file.relativeTo(bundle.dir).invariantSeparatorsPath
@@ -194,15 +195,16 @@ class BundleLoader(
 
             if (path == bundle.manifest.name) {
                 val luaInitFile = File(bundle.dir, "init.lua")
-                if (luaInitFile.exists()) {
+                if (luaInitFile.isFile) {
                     return@addPackageResolver (bundle.getFileDebugName(luaInitFile)) to luaInitFile.readText()
                 }
             }
             if (!path.startsWith("${bundle.manifest.name}.")) {
                 return@addPackageResolver null
             }
-            val luaFile = File(bundle.dir, path.substringAfter('.').replace('.', File.separatorChar) + ".lua")
-            if (luaFile.exists()) {
+            val luaFile = resolveBundleContentFile(bundle.dir, path.substringAfter('.').replace('.', File.separatorChar) + ".lua")
+                ?: return@addPackageResolver null
+            if (luaFile.isFile) {
                 return@addPackageResolver (bundle.getFileDebugName(luaFile)) to luaFile.readText()
             }
             null
@@ -210,8 +212,9 @@ class BundleLoader(
     }
 
     fun runBundleEntrypoint(bundle: Bundle, entrypoint: String) {
-        val scriptFile = File(bundle.dir, entrypoint)
-        if (scriptFile.exists()) {
+        val scriptFile = resolveBundleContentFile(bundle.dir, entrypoint)
+            ?: throw IllegalArgumentException("Invalid entrypoint path: $entrypoint")
+        if (scriptFile.isFile) {
             try {
                 BundleExecutionContext.withBundle(bundle) {
                     val lua = luaManager.lua

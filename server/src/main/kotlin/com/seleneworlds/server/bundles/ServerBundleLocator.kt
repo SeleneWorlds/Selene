@@ -5,6 +5,7 @@ import org.slf4j.Logger
 import com.seleneworlds.common.bundles.BundleLocator
 import com.seleneworlds.common.bundles.BundleManifest
 import com.seleneworlds.common.bundles.Bundle
+import com.seleneworlds.common.bundles.bundleContentDirectories
 import com.seleneworlds.common.serialization.decodeFromFile
 import com.seleneworlds.server.config.ServerConfig
 import java.io.File
@@ -14,17 +15,36 @@ class ServerBundleLocator(
     private val config: ServerConfig,
     private val logger: Logger
 ) : BundleLocator {
-    override fun locateBundle(name: String): Bundle? {
-        val dir = File(config.bundlesPath, name)
-        val manifestFile = File(dir, "bundle.json")
-        if (!manifestFile.exists()) return null
-        val manifest = try {
-            json.decodeFromFile(BundleManifest.serializer(), manifestFile)
-        } catch (e: Exception) {
-            logger.error("Failed to read bundle manifest", e)
-            return null
-        }
-        return Bundle(manifest, dir)
+    // Build once per locator so dependency resolution does not repeatedly scan the tree.
+    private val bundlesByName: Map<String, Bundle> by lazy {
+        val bundles = linkedMapOf<String, Bundle>()
+        val root = File(config.bundlesPath)
+        root.walkTopDown()
+            .onEnter { directory ->
+                directory == root || (!directory.name.startsWith(".") &&
+                    !(directory.name in bundleContentDirectories && directory.parentFile.resolve("bundle.json").isFile))
+            }
+            .filter { it.isFile && it.name == "bundle.json" }
+            .sortedBy { it.invariantSeparatorsPath }
+            .forEach { manifestFile ->
+                val manifest = try {
+                    json.decodeFromFile(BundleManifest.serializer(), manifestFile)
+                } catch (e: Exception) {
+                    logger.error("Failed to read bundle manifest at $manifestFile", e)
+                    return@forEach
+                }
+                require(manifest.name.isNotBlank() && manifest.name !in setOf(".", "..") &&
+                    '/' !in manifest.name && '\\' !in manifest.name) {
+                    "Bundle names must be flat: '${manifest.name}' at $manifestFile"
+                }
+                val bundle = Bundle(manifest, manifestFile.parentFile)
+                val previous = bundles.putIfAbsent(manifest.name, bundle)
+                require(previous == null) {
+                    "Duplicate bundle name '${manifest.name}' at ${previous?.dir} and ${bundle.dir}"
+                }
+            }
+        bundles
     }
-}
 
+    override fun locateBundle(name: String): Bundle? = bundlesByName[name]
+}

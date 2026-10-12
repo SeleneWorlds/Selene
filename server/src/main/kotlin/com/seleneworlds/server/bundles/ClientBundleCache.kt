@@ -5,82 +5,43 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.slf4j.Logger
 import com.seleneworlds.server.config.ServerConfig
+import com.seleneworlds.common.bundles.Bundle
+import com.seleneworlds.common.bundles.bundleContentFiles
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.*
-import java.nio.file.attribute.BasicFileAttributes
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class ClientBundleCache(config: ServerConfig, private val logger: Logger) {
-    private val bundlesDir = File(config.bundlesPath)
+    private val directoriesByBundleName = ConcurrentHashMap<String, File>()
     private val cacheDir = File("cache", "client_bundles")
     private val hashByBundleName = ConcurrentHashMap<String, String>()
     private val cachedZipByBundleName = ConcurrentHashMap<String, File>()
 
     fun createClientZip(bundleDir: File, outputFile: File) {
         outputFile.parentFile.mkdirs()
-        val bundlePath = bundleDir.toPath()
         ZipOutputStream(outputFile.outputStream()).use { zipOut ->
-            Files.walkFileTree(bundlePath, object : SimpleFileVisitor<Path>() {
-                override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-                    val relPath = bundlePath.relativize(file).toString()
-                    if (relPath.startsWith("server") || relPath.contains("${File.separator}server")) {
-                        return FileVisitResult.CONTINUE
-                    }
-                    if (relPath.startsWith(".")) {
-                        return FileVisitResult.CONTINUE
-                    }
-                    val entry = ZipEntry(relPath)
-                    zipOut.putNextEntry(entry)
-                    Files.newInputStream(file).use { input ->
-                        input.copyTo(zipOut)
-                    }
-                    zipOut.closeEntry()
-                    return FileVisitResult.CONTINUE
-                }
-
-                override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
-                    val relPath = bundlePath.relativize(dir).toString()
-                    if (relPath == ".") return FileVisitResult.CONTINUE
-                    if (relPath == "server" || relPath.contains("${File.separator}server")) {
-                        return FileVisitResult.SKIP_SUBTREE
-                    }
-                    return FileVisitResult.CONTINUE
-                }
-            })
+            for (file in bundleContentFiles(bundleDir, listOf("common", "client"))) {
+                val relPath = file.relativeTo(bundleDir).invariantSeparatorsPath
+                if (relPath.split('/').any { it.startsWith(".") }) continue
+                zipOut.putNextEntry(ZipEntry(relPath))
+                file.inputStream().use { it.copyTo(zipOut) }
+                zipOut.closeEntry()
+            }
         }
     }
 
     private fun hashBundleDir(bundleDir: File): String {
         val hasher = MessageDigest.getInstance("SHA-256")
-        val files = mutableListOf<Path>()
-        Files.walkFileTree(bundleDir.toPath(), object : SimpleFileVisitor<Path>() {
-            override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-                files.add(file)
-                return FileVisitResult.CONTINUE
-            }
-
-            override fun visitFileFailed(
-                file: Path,
-                exc: IOException
-            ): FileVisitResult {
-                if (exc is NoSuchFileException) {
-                    return FileVisitResult.CONTINUE
-                } else if (exc is AccessDeniedException) {
-                    return FileVisitResult.CONTINUE
-                }
-                throw exc
-            }
-        })
-        files.sortBy { it.toString() }
+        val files = bundleContentFiles(bundleDir).sortedBy { it.invariantSeparatorsPath }.toList()
         for (file in files) {
             try {
-                FileInputStream(file.toFile()).use { fis ->
+                FileInputStream(file).use { fis ->
                     val buffer = ByteArray(8192)
                     var read: Int
                     while (fis.read(buffer).also { read = it } != -1) {
@@ -98,8 +59,9 @@ class ClientBundleCache(config: ServerConfig, private val logger: Logger) {
     }
 
     fun clearCacheForBundle(bundleName: String) {
+        val cacheKey = directoriesByBundleName[bundleName]?.canonicalPath ?: bundleName
         // Remove old zip file if it exists
-        cachedZipByBundleName.remove(bundleName)?.let { oldZipFile ->
+        cachedZipByBundleName.remove(cacheKey)?.let { oldZipFile ->
             try {
                 if (oldZipFile.exists()) {
                     oldZipFile.delete()
@@ -110,7 +72,7 @@ class ClientBundleCache(config: ServerConfig, private val logger: Logger) {
         }
         
         // Remove hash entry to force recalculation
-        hashByBundleName.remove(bundleName)
+        hashByBundleName.remove(cacheKey)
     }
 
     fun cleanupStaleZips() {
@@ -129,9 +91,10 @@ class ClientBundleCache(config: ServerConfig, private val logger: Logger) {
         }
     }
 
-    fun watchBundles(bundles: List<String>) {
+    fun watchBundles(bundles: List<Bundle>) {
         val watcher = FileSystems.getDefault().newWatchService()
-        val bundleDirs = bundles.map { File(bundlesDir, it) }
+        bundles.forEach { directoriesByBundleName[it.manifest.name] = it.dir }
+        val bundleDirs = bundles.map { it.dir }
         val bundleByWatchKey = mutableMapOf<WatchKey, File>()
         for (dir in bundleDirs) {
             try {
@@ -150,15 +113,15 @@ class ClientBundleCache(config: ServerConfig, private val logger: Logger) {
                 val key = watcher.take() ?: break
                 if (key.pollEvents().isNotEmpty()) {
                     bundleByWatchKey[key]?.let { bundleDir ->
-                        val oldHash = hashByBundleName[bundleDir.name]
+                        val oldHash = hashByBundleName[bundleDir.canonicalPath]
                         val newHash = hashBundleDir(bundleDir)
                         
                         // Clear cache if bundle content changed
                         if (oldHash != null && oldHash != newHash) {
-                            clearCacheForBundle(bundleDir.name)
+                            directoriesByBundleName.entries.firstOrNull { it.value == bundleDir }?.key?.let(::clearCacheForBundle)
                         }
                         
-                        hashByBundleName[bundleDir.name] = newHash
+                        hashByBundleName[bundleDir.canonicalPath] = newHash
                         logger.debug("Recomputed hash for ${bundleDir.name}: $newHash")
                     }
                 }
@@ -168,7 +131,7 @@ class ClientBundleCache(config: ServerConfig, private val logger: Logger) {
     }
 
     fun getHash(bundleDir: File): String? {
-        return hashByBundleName.getOrPut(bundleDir.name) {
+        return hashByBundleName.getOrPut(bundleDir.canonicalPath) {
             hashBundleDir(bundleDir)
         }
     }
@@ -184,7 +147,7 @@ class ClientBundleCache(config: ServerConfig, private val logger: Logger) {
         }
 
         // Track the zip file for this bundle
-        cachedZipByBundleName[bundleDir.name] = zipFile
+        cachedZipByBundleName[bundleDir.canonicalPath] = zipFile
 
         return zipFile
     }

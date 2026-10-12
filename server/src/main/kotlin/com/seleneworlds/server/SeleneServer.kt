@@ -44,7 +44,7 @@ class SeleneServer(
         val bundles = bundleLoader.resolveBundles(config.bundles.filter { it.isNotBlank() }.toSet())
         bundleLifecycleManager.initializeBundles(bundles)
 
-        clientBundleCache.watchBundles(config.bundles)
+        clientBundleCache.watchBundles(bundles)
     }
 
     fun start() {

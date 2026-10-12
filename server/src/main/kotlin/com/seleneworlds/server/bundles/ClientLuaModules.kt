@@ -1,6 +1,7 @@
 package com.seleneworlds.server.bundles
 
 import com.seleneworlds.common.bundles.Bundle
+import com.seleneworlds.common.bundles.bundleContentFiles
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.getPreloadSpecs
 import kotlinx.serialization.Serializable
@@ -87,7 +88,7 @@ class ClientLuaModules(
         bundle: Bundle,
         modules: MutableMap<String, ClientLuaModuleSourceResponse>
     ) {
-        bundle.dir.walkTopDown()
+        bundleContentFiles(bundle.dir, listOf("common", "client"))
             .filter { it.isFile && it.extension == "lua" }
             .forEach { file ->
                 val relativePath = file.relativeTo(bundle.dir).invariantSeparatorsPath
