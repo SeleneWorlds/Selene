@@ -4,6 +4,7 @@ import com.seleneworlds.common.data.custom.CustomRegistries
 import com.seleneworlds.common.entities.EntityRegistry
 import com.seleneworlds.common.entities.component.ComponentRegistry
 import com.seleneworlds.common.grid.Coordinate
+import com.seleneworlds.common.grid.CoordinateLuaApi
 import com.seleneworlds.common.grid.Grid
 import com.seleneworlds.common.grid.GridRegistry
 import com.seleneworlds.common.sounds.SoundRegistry
@@ -183,16 +184,22 @@ class EntitySpatialIndexTest {
         try {
             manager.defineMetatable(DimensionApi::class, DimensionLuaApi.luaMeta)
             manager.defineMetatable(EntityApi::class, EntityLuaApi.luaMeta)
+            manager.defineMetatable(Coordinate::class, CoordinateLuaApi.luaMeta)
             val dimension = Dimension(registries, world)
             entity(1, Coordinate(2, 3, 4), dimension)
             val lua = manager.lua
             lua.push(dimension.api, Lua.Conversion.NONE)
             lua.setGlobal("dimension")
+            lua.push(entity(2, Coordinate.Zero, dimension).api, Lua.Conversion.NONE)
+            lua.setGlobal("origin")
             lua.load(LuaManager.loadBuffer("""
-                assert(#dimension:getEntitiesInBox({x=0,y=0,z=0}, {x=2,y=3,z=4}) == 1)
-                assert(#dimension:getEntitiesInBox(0,0,0, 2,3,3) == 0)
+                assert(#dimension:getEntitiesInBox({x=0,y=0,z=0}, {x=2,y=3,z=4}) == 2)
+                assert(#dimension:getEntitiesInBox(0,0,0, 2,3,3) == 1)
                 assert(#dimension:getPlayersInBox(0,0,0, 2,3,4) == 0)
                 assert(dimension:hasPlayersInBox({x=0,y=0,z=0}, {x=2,y=3,z=4}) == false)
+                local coordinate = origin:getCoordinate()
+                assert(#dimension:getEntitiesInBox(coordinate, 2,3,4) == 2)
+                assert(dimension:hasPlayersInBox(coordinate, 60,60,2) == false)
             """.trimIndent()), "box_queries_test")
             lua.pCall(0, 0)
         } finally {
