@@ -24,8 +24,10 @@ class Attribute<T : Any?>(val owner: Any, val name: String, initialValue: T) : O
                         newValue = it.apply(this, newValue)
                     }
                 }
-                field = newValue
-                notifyObservers(api)
+                if (field != newValue) {
+                    field = newValue
+                    notifyObservers(api)
+                }
             }
         }
 
