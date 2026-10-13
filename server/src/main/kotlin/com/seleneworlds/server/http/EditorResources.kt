@@ -31,6 +31,8 @@ class EditorResources(
 ) {
     private val resourceJson = Json(json) { prettyPrint = true }
     private val registries = RegistriesApi(registryProvider)
+    private data class Rename(val original: Identifier, val renamed: Identifier)
+    private val renames = mutableMapOf<Triple<String, Identifier, Identifier>, Rename>()
     private val builtinSchemas: JsonObject by lazy {
         val contents = requireNotNull(javaClass.getResourceAsStream("/schemas/registries.json")) {
             "Missing built-in registry schemas"
@@ -139,6 +141,27 @@ class EditorResources(
         return ResourceCreated(bundle, registry.toString(), path, contents, identifier.toString())
     }
 
+    fun rename(bundle: String, registry: Identifier, identifier: Identifier, name: String): ResourceFile {
+        requireEnabledBundle(bundle)
+        require(name.matches(Regex("[A-Za-z0-9_-]+"))) { "Invalid entry name" }
+        val fileRegistry = fileRegistry(registry)
+        val oldPath = fileRegistry.getResourcePath(bundle, identifier)
+        require(fileRegistry.getSourcePath(identifier) == oldPath) { "Resource is no longer the active registry entry." }
+        val prefix = identifier.path.substringBeforeLast('/', "")
+        val newIdentifier = Identifier(identifier.namespace, if (prefix.isEmpty()) name else "$prefix/$name")
+        val newPath = "${oldPath.substringBeforeLast('/')}/$name.json"
+        require(!resources.fileExists(newPath) && fileRegistry.get(newIdentifier) == null &&
+            newPath !in pendingChanges().paths) { "An entry with this name already exists." }
+        val element = requireNotNull(fileRegistry.getEntryElement(identifier)) { "Entry no longer exists." }
+        fileRegistry.upsertEntry(newIdentifier, element, sourcePath = newPath)
+        fileRegistry.removeEntry(identifier)
+        val previous = renames.remove(Triple(bundle, registry, identifier))
+        val rename = Rename(previous?.original ?: identifier, newIdentifier)
+        renames[Triple(bundle, registry, rename.original)] = rename
+        renames[Triple(bundle, registry, newIdentifier)] = rename
+        return ResourceFile(newPath, encode(element), registry.toString(), newIdentifier.toString())
+    }
+
     fun persist(bundle: String, registry: Identifier, identifier: Identifier): ChangesResult =
         change(bundle, registry, identifier, ::persistResource)
 
@@ -173,7 +196,7 @@ class EditorResources(
                 if (registry !is FileBasedRegistry<*>) continue
                 for ((identifier, path) in registry.getDirtyEntries().entries.sortedBy { it.value }) {
                     val bundle = path.substringBefore('/')
-                    if (bundle !in enabledBundles || registry.getResourceIdentifier(bundle, path) == null) continue
+                    if (bundle !in enabledBundles || registry.getResourceIdentifier(bundle, path) == null || !registry.isDirty(identifier)) continue
                     action(bundle, name, identifier)?.let(removed::add)
                 }
             }
@@ -183,7 +206,23 @@ class EditorResources(
         return ChangesResult(null, pendingChanges(), removed)
     }
 
-    private fun persistResource(bundle: String, registry: Identifier, identifier: Identifier): String? {
+    private fun changeRename(
+        bundle: String, registry: Identifier, identifier: Identifier,
+        action: (String, Identifier, Identifier) -> String?
+    ): String? {
+        val rename = renames[Triple(bundle, registry, identifier)] ?: return action(bundle, registry, identifier)
+        // Write the destination before removing the original so a failed write preserves the source.
+        val removedNew = action(bundle, registry, rename.renamed)
+        val removedOld = action(bundle, registry, rename.original)
+        renames.remove(Triple(bundle, registry, rename.original))
+        renames.remove(Triple(bundle, registry, rename.renamed))
+        return removedOld ?: removedNew
+    }
+
+    private fun persistResource(bundle: String, registry: Identifier, identifier: Identifier): String? =
+        changeRename(bundle, registry, identifier, ::persistSingleResource)
+
+    private fun persistSingleResource(bundle: String, registry: Identifier, identifier: Identifier): String? {
         val fileRegistry = fileRegistry(registry)
         val path = fileRegistry.getResourcePath(bundle, identifier)
         val data = fileRegistry.getEntryElement(identifier)
@@ -199,7 +238,10 @@ class EditorResources(
         return if (data == null) path else null
     }
 
-    private fun discardResource(bundle: String, registry: Identifier, identifier: Identifier): String? {
+    private fun discardResource(bundle: String, registry: Identifier, identifier: Identifier): String? =
+        changeRename(bundle, registry, identifier, ::discardSingleResource)
+
+    private fun discardSingleResource(bundle: String, registry: Identifier, identifier: Identifier): String? {
         val fileRegistry = fileRegistry(registry)
         val path = fileRegistry.getResourcePath(bundle, identifier)
         val exists = resources.fileExists(path)
@@ -212,7 +254,10 @@ class EditorResources(
     private fun files(bundle: String, registry: FileBasedRegistry<*>): List<String> {
         val paths = resources.listRegistryFiles(bundle, registry) +
             registry.getAll().keys.mapNotNull { registry.getSourcePath(it) }
-        return paths.filter { registry.getResourceIdentifier(bundle, it) != null }.distinct().sorted()
+        return paths.filter { path ->
+            val identifier = registry.getResourceIdentifier(bundle, path)
+            identifier != null && !(registry.isDirty(identifier) && registry.get(identifier) == null)
+        }.distinct().sorted()
     }
 
     internal fun <T> withResource(path: String, action: (String, Identifier, Identifier) -> T): T {
@@ -245,7 +290,7 @@ class EditorResources(
         return when (operation) {
             "request-project" -> listOf(selectionKey("read"))
             "create-file" -> listOf(selectionKey("edit"))
-            "open-file", "save-file" -> listOf(resourceKey(
+            "open-file", "save-file", "rename-file" -> listOf(resourceKey(
                 requireNotNull(request.string("path")) { "Missing resource path" },
                 if (operation == "open-file") "read" else "edit"
             ))
@@ -488,6 +533,14 @@ internal fun Route.registerEditorResourceRoutes(
             seleneJson.encodeToString(editorResources.create(request.bundle, registry, identifier, request.contents ?: "{}\n"))
         }
     }
+    post("/resources/rename/{path...}") {
+        execute(call, "rename-file", { call.resourceBody() }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<RenameResourceRequest>(payload)
+            seleneJson.encodeToString(editorResources.withResource(request.path) { bundle, registry, identifier ->
+                editorResources.rename(bundle, registry, identifier, request.name.trim())
+            })
+        }
+    }
     put("/resources/files/{path...}") {
         execute(call, "save-file", { call.resourceBody() }) { payload ->
             val request = seleneJson.decodeFromJsonElement<UpdateResourceRequest>(payload)
@@ -569,6 +622,9 @@ data class CreateResourceRequest(
     val contents: String? = null,
     val namespace: String? = null
 )
+
+@Serializable
+data class RenameResourceRequest(val path: String, val name: String)
 
 @Serializable
 data class UpdateResourceRequest(val path: String, val contents: String)

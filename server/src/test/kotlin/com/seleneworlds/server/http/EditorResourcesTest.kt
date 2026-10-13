@@ -180,6 +180,72 @@ class EditorResourcesTest {
     }
 
     @Test
+    fun `rename stages both paths and preserves contents`() = fixture { api, resources, registry ->
+        val renamed = api.rename("active", registryName, entry, "renamed")
+        assertNull(registry.get(entry))
+        assertNotNull(registry.get(Identifier("test", "renamed")))
+        assertEquals(setOf(path, renamed.path), api.pendingChanges().paths.toSet())
+        assertNull(api.persist().error)
+        assertFalse(resources.fileExists(path))
+        assertEquals(seleneJson.parseToJsonElement(renamed.contents), seleneJson.parseToJsonElement(resources.loadAsString(renamed.path)))
+    }
+
+    @Test
+    fun `rollback restores the original filename`() = fixture { api, resources, registry ->
+        val renamed = api.rename("active", registryName, entry, "renamed")
+        assertNull(api.discard().error)
+        assertNotNull(registry.get(entry))
+        assertNull(registry.get(Identifier("test", "renamed")))
+        assertTrue(resources.fileExists(path))
+        assertFalse(resources.fileExists(renamed.path))
+        assertEquals(0, api.pendingChanges().count)
+    }
+
+    @Test
+    fun `persisting the renamed entry removes the original file`() = fixture { api, resources, _ ->
+        val renamed = api.rename("active", registryName, entry, "renamed")
+        val result = api.persist("active", registryName, Identifier("test", "renamed"))
+        assertNull(result.error)
+        assertEquals(listOf(path), result.removedPaths)
+        assertFalse(resources.fileExists(path))
+        assertTrue(resources.fileExists(renamed.path))
+        assertEquals(0, api.pendingChanges().count)
+    }
+
+    @Test
+    fun `rolling back the renamed entry restores the original entry`() = fixture { api, resources, registry ->
+        val renamed = api.rename("active", registryName, entry, "renamed")
+        val result = api.discard("active", registryName, Identifier("test", "renamed"))
+        assertNull(result.error)
+        assertEquals(listOf(renamed.path), result.removedPaths)
+        assertNotNull(registry.get(entry))
+        assertNull(registry.get(Identifier("test", "renamed")))
+        assertTrue(resources.fileExists(path))
+        assertFalse(resources.fileExists(renamed.path))
+        assertEquals(0, api.pendingChanges().count)
+    }
+
+    @Test
+    fun `successive renames persist only the final filename`() = fixture { api, resources, _ ->
+        val first = api.rename("active", registryName, entry, "first")
+        val last = api.rename("active", registryName, Identifier("test", "first"), "last")
+        assertNull(api.persist("active", registryName, Identifier("test", "last")).error)
+        assertFalse(resources.fileExists(path))
+        assertFalse(resources.fileExists(first.path))
+        assertTrue(resources.fileExists(last.path))
+        assertEquals(0, api.pendingChanges().count)
+    }
+
+    @Test
+    fun `rename rejects conflicts and invalid names`() = fixture { api, _, registry ->
+        for (name in listOf("example", "../other", "")) {
+            assertFailsWith<IllegalArgumentException> { api.rename("active", registryName, entry, name) }
+        }
+        assertNotNull(registry.get(entry))
+        assertEquals(0, api.pendingChanges().count)
+    }
+
+    @Test
     fun `new resources remain browser drafts until applied`() = fixture { api, resources, registry ->
         val identifier = Identifier("test", "new")
         val draft = api.create("active", registryName, identifier)

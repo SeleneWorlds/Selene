@@ -212,6 +212,7 @@ export class BundleUiManager {
             `^/registries/${segment}/entries$`, '^/scripts$', '^/resources/changes$', '^/worldmap/image$',
           ] : method === 'POST' ? [
             '^/resources/permissions$', `^${bundleRegistry}/files$`, `^/resources/changes/(?:persist|discard)(?:/${segment})*$`,
+            `^/resources/rename/${segment}(?:/${segment})*$`,
           ] : method === 'PUT' ? [`^/resources/files/${segment}(?:/${segment})*$`] : [];
           if (!allowed.some((pattern) => new RegExp(pattern).test(path)) ||
             path.split('/').slice(1).some((part) => {
