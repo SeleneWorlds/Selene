@@ -57,6 +57,31 @@ class EditorResources(
         return RegistrySearchResult(request.registry, request.query, request.lookup, options)
     }
 
+    fun registryFieldOptions(request: RegistryFieldRequest): JsonObject {
+        val registry = Identifier.parse(request.registry)
+        val definition = findSchema(registry)?.get(request.property) as? JsonObject
+        require(definition.string("type") == "map") { "Referenced field must be a map." }
+        val keyDefinition = definition?.get("keyType")
+        val keyType = (keyDefinition as? JsonPrimitive)?.content
+            ?: (keyDefinition as? JsonObject).string("type")
+        require(keyType in listOf("integer", "number", "string")) { "Unsupported map key type." }
+        val entry = registries.findByName(request.registry, request.value) as? CustomRegistryObject
+            ?: throw IllegalArgumentException("Referenced registry entry was not found.")
+        val field = (entry.element as? JsonObject)?.get(request.property)
+        require(field == null || field is JsonObject) { "Referenced field must be a map." }
+        val options = field?.keys.orEmpty().map { key ->
+            val value = when (keyType) {
+                "integer" -> JsonPrimitive(requireNotNull(key.toLongOrNull()) { "Invalid integer map key." })
+                "number" -> JsonPrimitive(requireNotNull(key.toDoubleOrNull()?.takeIf { it.isFinite() }) { "Invalid number map key." })
+                else -> JsonPrimitive(key)
+            }
+            buildJsonObject { put("value", value); put("label", key) }
+        }.sortedWith(compareBy<JsonObject> {
+            if (keyType == "string") 0.0 else it.getValue("value").jsonPrimitive.double
+        }.thenBy { it.getValue("label").jsonPrimitive.content })
+        return buildJsonObject { put("options", JsonArray(options)) }
+    }
+
     fun searchScripts(request: ScriptSearchRequest): ScriptSearchResult {
         val names = sortedSetOf<String>()
         for (bundle in bundles.enabledBundles) {
@@ -306,7 +331,7 @@ class EditorResources(
             }
             "request-bundles" -> listOf("selene.resources.read")
             "request-bundle-registries" -> listOf("${requireNotNull(request.string("bundle"))}.registries.read")
-            "search-registry" -> {
+            "search-registry", "registry-field-options" -> {
                 val registry = Identifier.parse(requireNotNull(request.string("registry")))
                 listOf("${registry.namespace}.${registry.path}.read")
             }
@@ -489,6 +514,12 @@ internal fun Route.registerEditorResourceRoutes(
             seleneJson.encodeToString(editorResources.searchRegistry(request))
         }
     }
+    get("/registries/{registry}/field-options") {
+        execute(call, "registry-field-options", { call.resourceQuery() }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<RegistryFieldRequest>(payload)
+            editorResources.registryFieldOptions(request).toString()
+        }
+    }
     get("/scripts") {
         execute(call, "search-scripts", { call.resourceQuery() }) { payload ->
             val request = seleneJson.decodeFromJsonElement<ScriptSearchRequest>(payload)
@@ -587,16 +618,19 @@ private fun RoutingCall.resourceParameters(): JsonObject = buildJsonObject {
     pathParameters.getAll("path")?.takeIf { it.isNotEmpty() }?.let { put("path", it.joinToString("/")) }
 }
 
-private fun RoutingCall.resourceQuery(): JsonObject = buildJsonObject {
-    for (name in listOf("query", "lookup")) {
-        val value = request.queryParameters[name] ?: continue
+private fun RoutingCall.resourceQuery(): JsonObject =
+    parseResourceQuery(request.queryParameters, resourceParameters())
+
+internal fun parseResourceQuery(query: Parameters, path: JsonObject): JsonObject = buildJsonObject {
+    for (name in listOf("query", "lookup", "value", "property")) {
+        val value = query[name] ?: continue
         if (name == "lookup") {
             put(name, JsonPrimitive(requireNotNull(value.toBooleanStrictOrNull()) { "Invalid lookup value" }))
         } else {
             put(name, value)
         }
     }
-    for ((name, value) in resourceParameters()) put(name, value)
+    for ((name, value) in path) put(name, value)
 }
 
 private suspend fun RoutingCall.resourceBody(): JsonObject = buildJsonObject {
@@ -677,3 +711,6 @@ internal data class ResourcePermissionRequest(val operation: String, val request
 
 @Serializable
 internal data class ResourcePermissionChecks(val checks: List<ResourcePermissionRequest>)
+
+@Serializable
+data class RegistryFieldRequest(val registry: String, val value: String, val property: String)

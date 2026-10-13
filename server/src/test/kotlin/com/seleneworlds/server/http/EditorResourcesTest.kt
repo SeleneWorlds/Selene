@@ -6,6 +6,7 @@ import com.seleneworlds.common.data.custom.*
 import com.seleneworlds.common.serialization.seleneJson
 import kotlinx.serialization.json.*
 import java.nio.file.Files
+import io.ktor.http.Parameters
 import kotlin.test.*
 
 class EditorResourcesTest {
@@ -42,6 +43,49 @@ class EditorResourcesTest {
         } finally {
             root.toFile().deleteRecursively()
         }
+    }
+
+    @Test
+    fun `field option query parameters survive request parsing`() {
+        val payload = parseResourceQuery(Parameters.build {
+            append("value", "test:example")
+            append("property", "types")
+            append("registry", "test:wrong")
+        }, buildJsonObject { put("registry", "test:items") })
+        assertEquals(RegistryFieldRequest("test:items", "test:example", "types"),
+            seleneJson.decodeFromJsonElement<RegistryFieldRequest>(payload))
+        val lookup = parseResourceQuery(Parameters.build {
+            append("query", "example")
+            append("lookup", "true")
+        }, buildJsonObject { put("registry", "test:items") })
+        assertEquals(JsonPrimitive(true), lookup["lookup"])
+        assertEquals(JsonPrimitive("example"), lookup["query"])
+    }
+
+    @Test
+    fun `registry field references infer map key values from the schema`() = fixture { api, resources, _ ->
+        val schemaPath = "active/common/data/test/registries.json"
+        resources.createAsString(schemaPath,
+            """{"entries":{"items":{"schema":{"types":{"type":"map","keyType":"integer"}}}}}""")
+        api.update("active", registryName, entry, """{"types":{"10":{},"2":{},"0":{}}}""")
+        val request = RegistryFieldRequest("test:items", "test:example", "types")
+        val options = api.registryFieldOptions(request).getValue("options").jsonArray
+        assertEquals(listOf(0, 2, 10), options.map { it.jsonObject.getValue("value").jsonPrimitive.int })
+        assertTrue(options.all { !it.jsonObject.getValue("value").jsonPrimitive.isString })
+        resources.saveAsString(schemaPath,
+            """{"entries":{"items":{"schema":{"types":{"type":"map","keyType":"string"}}}}}""")
+        assertTrue(api.registryFieldOptions(request).getValue("options").jsonArray.all {
+            it.jsonObject.getValue("value").jsonPrimitive.isString
+        })
+        api.update("active", registryName, entry, "{}")
+        assertEquals(JsonArray(emptyList()), api.registryFieldOptions(request)["options"])
+        assertFailsWith<IllegalArgumentException> { api.registryFieldOptions(request.copy(property = "unknown")) }
+        assertFailsWith<IllegalArgumentException> { api.registryFieldOptions(request.copy(value = "test:missing")) }
+        api.update("active", registryName, entry, """{"types":3}""")
+        assertFailsWith<IllegalArgumentException> { api.registryFieldOptions(request) }
+        assertEquals(listOf("test.items.read"), api.permissionKeys("registry-field-options", buildJsonObject {
+            put("registry", "test:items")
+        }))
     }
 
     @Test
