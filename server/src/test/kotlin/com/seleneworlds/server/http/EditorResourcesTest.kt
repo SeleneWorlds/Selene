@@ -47,6 +47,24 @@ class EditorResourcesTest {
     }
 
     @Test
+    fun `metadata search returns the registry icon from individual and aggregated definitions`() = fixture { api, resources, _ ->
+        val request = ResourceMetadataSearchRequest("active", registryName.toString(), "category")
+        api.update("active", registryName, entry, """{"metadata":{"category":"quest"}}""")
+        assertNull(api.searchMetadata(request).icon)
+        resources.createAsString("active/common/data/test/registries/items.json",
+            """{"name":"items","platform":"common","icon":"map-pin","schema":{"enabled":"enabled"}}""",
+            createDirectories = true)
+        assertEquals("map-pin", api.searchMetadata(request).icon)
+        resources.createAsString("active/common/data/test/registries.json",
+            """{"entries":{"items":{"icon":"DoorOpen"}}}""")
+        val result = api.searchMetadata(request)
+        assertEquals("DoorOpen", result.icon)
+        assertEquals(buildJsonObject { put("enabled", "enabled") }, result.schema)
+        assertEquals("map-pin", seleneJson.decodeFromString<CustomRegistryDefinition>(
+            resources.loadAsString("active/common/data/test/registries/items.json")).icon)
+    }
+
+    @Test
     fun `metadata search can project fields by schema type`() = fixture { api, resources, _ ->
         resources.createAsString("active/common/data/test/registries.json",
             """{"entries":{"items":{"schema":{"active":{"type":"enabled"},"script":"script"}}}}""")

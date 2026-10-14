@@ -167,7 +167,7 @@ class EditorResources(
             }
             MetadataProjectFile(path, label, buildJsonObject { put(request.key, value) }, fields)
         }
-        return ResourceMetadataSearchResult(request.bundle, request.registry, matches, schema)
+        return ResourceMetadataSearchResult(request.bundle, request.registry, matches, schema, findRegistryDefinition(registryName).string("icon"))
     }
 
     fun read(bundle: String, registry: Identifier, identifier: Identifier): ResourceFile {
@@ -373,19 +373,22 @@ class EditorResources(
         }
     }
 
-    private fun findSchema(registry: Identifier): JsonObject? {
-        var schema: JsonObject? = null
-        var customDefinition = false
+    private fun findRegistryDefinition(registry: Identifier): JsonObject? {
+        var definition: JsonObject? = null
         for (bundle in resources.listBundles()) {
             val individual = readObject("$bundle/common/data/${registry.namespace}/registries/${registry.path}.json")
             val collection = readObject("$bundle/common/data/${registry.namespace}/registries.json")
             val aggregated = (collection?.get("entries") as? JsonObject)?.get(registry.path) as? JsonObject
-            for (definition in listOfNotNull(individual, aggregated)) {
-                customDefinition = true
-                (definition["schema"] as? JsonObject)?.let { schema = it }
+            for (candidate in listOfNotNull(individual, aggregated)) {
+                definition = JsonObject(definition.orEmpty() + candidate.filter { (key, value) -> key != "schema" || value is JsonObject })
             }
         }
-        return schema ?: if (customDefinition) null else
+        return definition
+    }
+
+    private fun findSchema(registry: Identifier): JsonObject? {
+        val definition = findRegistryDefinition(registry)
+        return (definition?.get("schema") as? JsonObject) ?: if (definition != null) null else
             builtinSchemas[registry.path] as? JsonObject
     }
 
@@ -737,7 +740,8 @@ data class ResourceMetadataSearchResult(
     val bundle: String,
     val registry: String,
     val files: List<MetadataProjectFile>,
-    val schema: JsonObject?
+    val schema: JsonObject?,
+    val icon: String? = null
 )
 
 @Serializable
