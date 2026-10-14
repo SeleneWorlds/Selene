@@ -78,6 +78,20 @@ object DimensionLuaApi {
         return 1
     }
 
+    /** Returns a snapshot of annotation records across all floors. */
+    private fun getAllAnnotations(lua: Lua): Int {
+        val dimension = lua.checkUserdata<DimensionApi>(1)
+        val viewer = if (lua.isUserdata(2)) lua.checkUserdata<Viewer>(2) else DefaultViewer
+        val entries = dimension.getAllAnnotations(viewer).map { (position, annotations) ->
+            mapOf(
+                "coordinate" to mapOf("x" to position.x, "y" to position.y, "z" to position.z),
+                "annotations" to annotations
+            )
+        }
+        lua.push(entries, Lua.Conversion.FULL)
+        return 1
+    }
+
     private fun getAnnotationsAt(lua: Lua): Int {
         val dimension = lua.checkUserdata<DimensionApi>(1)
         val (coordinate, index) = lua.checkCoordinate(2)
@@ -170,6 +184,7 @@ object DimensionLuaApi {
         callable(::annotateTile)
         callable(::getTilesAt)
         callable(::getAnnotationsInRange)
+        callable(::getAllAnnotations)
         callable(::getAnnotationsAt)
         callable(::getAnnotationAt)
         callable(::hasCollisionAt)

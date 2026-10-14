@@ -5,6 +5,7 @@ import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.common.script.ExposedApi
 import com.seleneworlds.common.tiles.TileDefinition
 import com.seleneworlds.server.data.Registries
+import com.seleneworlds.server.cameras.viewer.DefaultViewer
 import com.seleneworlds.server.cameras.viewer.Viewer
 import com.seleneworlds.server.maps.layers.BaseMapLayer
 import com.seleneworlds.server.maps.layers.DenseMapLayer
@@ -29,15 +30,27 @@ class MapTree(val registries: Registries) : ExposedApi<MapTreeApi> {
         viewer: Viewer
     ): Map<Coordinate, Map<String, SerializedMap>> {
         require(range >= 0) { "Range must be non-negative" }
+        return collectAnnotations(viewer,
+            { coordinate -> coordinate.z == center.z &&
+                kotlin.math.abs(coordinate.x.toLong() - center.x) <= range &&
+                kotlin.math.abs(coordinate.y.toLong() - center.y) <= range },
+            { start, size -> start.z == center.z &&
+                start.x.toLong() <= center.x.toLong() + range &&
+                start.x.toLong() + size - 1 >= center.x.toLong() - range &&
+                start.y.toLong() <= center.y.toLong() + range &&
+                start.y.toLong() + size - 1 >= center.y.toLong() - range })
+    }
+
+    /** Returns a snapshot of visible annotations across all floors, without scanning tiles. */
+    fun getAllAnnotations(viewer: Viewer): Map<Coordinate, Map<String, SerializedMap>> =
+        collectAnnotations(viewer, { true }, { _, _ -> true })
+
+    private fun collectAnnotations(
+        viewer: Viewer,
+        contains: (Coordinate) -> Boolean,
+        intersects: (Coordinate, Int) -> Boolean
+    ): Map<Coordinate, Map<String, SerializedMap>> {
         val result = mutableMapOf<Coordinate, MutableMap<String, SerializedMap>>()
-        fun contains(coordinate: Coordinate): Boolean = coordinate.z == center.z &&
-            kotlin.math.abs(coordinate.x.toLong() - center.x) <= range &&
-            kotlin.math.abs(coordinate.y.toLong() - center.y) <= range
-        fun intersects(start: Coordinate, size: Int): Boolean = start.z == center.z &&
-            start.x.toLong() <= center.x.toLong() + range &&
-            start.x.toLong() + size - 1 >= center.x.toLong() - range &&
-            start.y.toLong() <= center.y.toLong() + range &&
-            start.y.toLong() + size - 1 >= center.y.toLong() - range
         layers.filter { viewer.canView(it) }.forEach { layer ->
             when (layer) {
                 is DenseMapLayer -> layer.chunks.forEach { (start, chunk) ->
@@ -48,7 +61,7 @@ class MapTree(val registries: Registries) : ExposedApi<MapTreeApi> {
                     }
                 }
                 is MapTreeLayer -> {
-                    layer.getAnnotationsInRange(center, range).forEach { (coordinate, annotations) ->
+                    layer.mapTree.collectAnnotations(DefaultViewer, contains, intersects).forEach { (coordinate, annotations) ->
                         result.getOrPut(coordinate) { mutableMapOf() }.putAll(annotations)
                     }
                 }

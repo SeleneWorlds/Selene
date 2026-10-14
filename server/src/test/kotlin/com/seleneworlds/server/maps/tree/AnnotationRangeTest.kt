@@ -34,6 +34,8 @@ class AnnotationRangeTest {
         layer.annotateTile(Coordinate(-64, -64, 3), "upstairs", emptyMap())
         assertEquals(mapOf(boundary to mapOf("warp" to mapOf("x" to 3))),
             map.getAnnotationsInRange(Coordinate(-65, -65, 2), 1, DefaultViewer))
+        assertEquals(setOf(boundary, Coordinate(-67, -64, 2), Coordinate(-64, -64, 3)),
+            map.getAllAnnotations(DefaultViewer).keys)
         assertEquals(1, map.getAnnotationsInRange(boundary, 0, DefaultViewer).size)
         assertFailsWith<IllegalArgumentException> { map.getAnnotationsInRange(boundary, -1, DefaultViewer) }
     }
@@ -63,6 +65,8 @@ class AnnotationRangeTest {
         }
         assertEquals(mapOf(coordinate to mapOf("warp" to mapOf("x" to 4))),
             map.getAnnotationsInRange(coordinate, 2, DefaultViewer))
+        assertEquals(mapOf(coordinate to mapOf("warp" to mapOf("x" to 4))),
+            map.getAllAnnotations(DefaultViewer))
         overlay.resetTile(coordinate)
         assertEquals(base.getAnnotations(coordinate), map.getAnnotationsInRange(coordinate, 2, DefaultViewer)[coordinate])
     }
