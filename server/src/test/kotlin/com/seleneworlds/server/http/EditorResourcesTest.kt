@@ -32,6 +32,25 @@ class EditorResourcesTest {
         assertFailsWith<IllegalArgumentException> { api.project("active", registryName) }
     }
 
+    @Test
+    fun `named schemas accept static parameters without changing shared definitions`() = fixture { api, resources, _ ->
+        resources.createAsString("active/common/data/test/registries/items.json",
+            """{"schema":{"drops":{"type":"test:table","optional":true,"parameters":{"entryTypes":{"item":"test:payload","nothing":"any"},"conditionTypes":{"level":"integer"}}},"plain":"test:table"}}""", createDirectories = true)
+        resources.createAsString("active/common/data/test/schemas/table.json",
+            """{"definition":{"type":"object","editor":"test:table","properties":{"conditions":{"type":"array","valueType":{"type":"object","properties":{"type":{"${'$'}parameter":"conditionTypes","transform":"enum","default":"string"},"data":{"type":"schema_lookup","property":"type","variants":{"${'$'}parameter":"conditionTypes","default":{}}}}}},"pools":{"type":"array","valueType":{"type":"object","properties":{"entries":{"type":"array","valueType":{"type":"object","properties":{"type":{"${'$'}parameter":"entryTypes","transform":"enum","default":"string"},"weight":"number","data":{"type":"schema_lookup","property":"type","variants":{"${'$'}parameter":"entryTypes","default":{}}}}}}}}}}}}""", createDirectories = true)
+        resources.createAsString("active/common/data/test/schemas/payload.json",
+            """{"definition":{"type":"object","properties":{"item":"string"}}}""", createDirectories = true)
+        val schema = api.project("active", registryName).schema!!
+        fun entry(field: String) = schema[field]!!.jsonObject["properties"]!!.jsonObject["pools"]!!.jsonObject["valueType"]!!.jsonObject["properties"]!!.jsonObject["entries"]!!.jsonObject["valueType"]!!.jsonObject["properties"]!!.jsonObject
+        val payload = entry("drops")["data"]!!.jsonObject
+        assertEquals(JsonPrimitive("schema_lookup"), payload["type"])
+        assertEquals(JsonPrimitive("string"), payload["variants"]!!.jsonObject["item"]!!.jsonObject["properties"]!!.jsonObject["item"])
+        assertEquals(JsonPrimitive("string"), entry("plain")["type"])
+        assertNull(schema["drops"]!!.jsonObject["parameters"])
+        val condition = schema["drops"]!!.jsonObject["properties"]!!.jsonObject["conditions"]!!.jsonObject["valueType"]!!.jsonObject["properties"]!!.jsonObject
+        assertEquals(JsonPrimitive("integer"), condition["data"]!!.jsonObject["variants"]!!.jsonObject["level"])
+    }
+
     private val registryName = Identifier("test", "items")
     private val entry = Identifier("test", "example")
     private val path = "active/common/data/test/items/example.json"

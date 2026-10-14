@@ -393,6 +393,29 @@ class EditorResources(
         return schema?.let { JsonObject(it.mapValues { (_, field) -> resolveSchema(field) }) }
     }
 
+    private fun bindSchemaParameters(template: JsonElement, parameters: JsonObject): JsonElement {
+        if (template is JsonArray) return JsonArray(template.map { bindSchemaParameters(it, parameters) })
+        if (template !is JsonObject) return template
+        val parameter = template.string("$" + "parameter")
+        if (parameter != null) {
+            val value = parameters[parameter] ?: return requireNotNull(template["default"]) {
+                "Missing schema parameter: $parameter"
+            }
+            if (template.string("transform") == "enum") {
+                require(value is JsonObject) { "Enum schema parameter must be an object: $parameter" }
+                return buildJsonObject {
+                    put("type", "enum")
+                    put("values", JsonArray(value.keys.sorted().map { name -> buildJsonObject {
+                        put("value", name); put("label", name)
+                    } }))
+                }
+            }
+            require(template["transform"] == null) { "Unknown schema parameter transform" }
+            return value
+        }
+        return JsonObject(template.mapValues { (_, value) -> bindSchemaParameters(value, parameters) })
+    }
+
     private fun resolveSchema(field: JsonElement, resolving: Set<String> = emptySet()): JsonElement {
         val kind = (field as? JsonPrimitive)?.contentOrNull ?: (field as? JsonObject).string("type")
         var resolved = field
@@ -408,9 +431,10 @@ class EditorResources(
                     candidate["definition"]?.let { definition = it }
                 }
             }
-            val base = resolveSchema(requireNotNull(definition) { "Unknown schema: $kind" }, resolving + kind)
+            val base = resolveSchema(bindSchemaParameters(requireNotNull(definition) { "Unknown schema: $kind" },
+                (field as? JsonObject)?.get("parameters") as? JsonObject ?: JsonObject(emptyMap())), resolving + kind)
             require(base is JsonObject) { "Named schema must resolve to an object: $kind" }
-            resolved = JsonObject(base + (field as? JsonObject).orEmpty().filterKeys { it != "type" })
+            resolved = JsonObject(base + (field as? JsonObject).orEmpty().filterKeys { it != "type" && it != "parameters" })
         }
         if (resolved !is JsonObject) return resolved
         return JsonObject(resolved.mapValues { (key, value) ->
