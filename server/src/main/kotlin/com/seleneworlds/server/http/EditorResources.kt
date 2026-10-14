@@ -388,8 +388,38 @@ class EditorResources(
 
     private fun findSchema(registry: Identifier): JsonObject? {
         val definition = findRegistryDefinition(registry)
-        return (definition?.get("schema") as? JsonObject) ?: if (definition != null) null else
+        val schema = (definition?.get("schema") as? JsonObject) ?: if (definition != null) null else
             builtinSchemas[registry.path] as? JsonObject
+        return schema?.let { JsonObject(it.mapValues { (_, field) -> resolveSchema(field) }) }
+    }
+
+    private fun resolveSchema(field: JsonElement, resolving: Set<String> = emptySet()): JsonElement {
+        val kind = (field as? JsonPrimitive)?.contentOrNull ?: (field as? JsonObject).string("type")
+        var resolved = field
+        if (kind != null && ':' in kind) {
+            require(kind !in resolving) { "Cyclic schema reference: $kind" }
+            val identifier = Identifier.parse(kind)
+            var definition: JsonElement? = null
+            for (bundle in resources.listBundles()) {
+                val individual = readObject("$bundle/common/data/${identifier.namespace}/schemas/${identifier.path}.json")
+                val collection = readObject("$bundle/common/data/${identifier.namespace}/schemas.json")
+                val aggregated = (collection?.get("entries") as? JsonObject)?.get(identifier.path) as? JsonObject
+                for (candidate in listOfNotNull(individual, aggregated)) {
+                    candidate["definition"]?.let { definition = it }
+                }
+            }
+            val base = resolveSchema(requireNotNull(definition) { "Unknown schema: $kind" }, resolving + kind)
+            require(base is JsonObject) { "Named schema must resolve to an object: $kind" }
+            resolved = JsonObject(base + (field as? JsonObject).orEmpty().filterKeys { it != "type" })
+        }
+        if (resolved !is JsonObject) return resolved
+        return JsonObject(resolved.mapValues { (key, value) ->
+            when (key) {
+                "properties", "variants" -> JsonObject(value.jsonObject.mapValues { (_, child) -> resolveSchema(child, resolving) })
+                "valueType", "keyType" -> resolveSchema(value, resolving)
+                else -> value
+            }
+        })
     }
 
     private fun readObject(path: String): JsonObject? {

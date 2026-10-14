@@ -10,6 +10,28 @@ import io.ktor.http.Parameters
 import kotlin.test.*
 
 class EditorResourcesTest {
+    @Test
+    fun `registry schemas resolve shared types recursively and preserve field options`() = fixture { api, resources, _ ->
+        resources.createAsString("active/common/data/test/registries/items.json",
+            """{"schema":{"drops":{"type":"moonlight:rolls","optional":true}}}""", createDirectories = true)
+        resources.createAsString("active/common/data/moonlight/schemas/rolls.json",
+            """{"definition":{"type":"object","editor":"moonlight:rolls","properties":{"pools":{"type":"array","valueType":"test:pool"}}}}""",
+            createDirectories = true)
+        resources.createAsString("active/common/data/test/schemas.json",
+            """{"entries":{"pool":{"definition":{"type":"object","properties":{"rolls":"integer","data":{"type":"schema_lookup","variants":{"item":"test:item"}}}}},"item":{"definition":{"type":"object","properties":{"name":"string"}}}}}""",
+            createDirectories = true)
+        val drops = api.project("active", registryName).schema!!.getValue("drops").jsonObject
+        assertEquals(JsonPrimitive(true), drops["optional"])
+        assertEquals(JsonPrimitive("moonlight:rolls"), drops["editor"])
+        val pool = drops["properties"]!!.jsonObject["pools"]!!.jsonObject["valueType"]!!.jsonObject
+        assertEquals(JsonPrimitive("integer"), pool["properties"]!!.jsonObject["rolls"])
+        val item = pool["properties"]!!.jsonObject["data"]!!.jsonObject["variants"]!!.jsonObject["item"]!!.jsonObject
+        assertEquals(JsonPrimitive("string"), item["properties"]!!.jsonObject["name"])
+        resources.saveAsString("active/common/data/moonlight/schemas/rolls.json",
+            """{"definition":{"type":"object","properties":{"nested":"moonlight:rolls"}}}""")
+        assertFailsWith<IllegalArgumentException> { api.project("active", registryName) }
+    }
+
     private val registryName = Identifier("test", "items")
     private val entry = Identifier("test", "example")
     private val path = "active/common/data/test/items/example.json"
