@@ -20,6 +20,8 @@ class ServerBundleLocator(
         val bundles = linkedMapOf<String, Bundle>()
         val root = File(config.bundlesPath)
         root.walkTopDown()
+            // Allow direct bundles and one nested directory layer, including their manifests.
+            .maxDepth(3)
             .onEnter { directory ->
                 directory == root || (!directory.name.startsWith(".") &&
                     !(directory.name in bundleContentDirectories && directory.parentFile.resolve("bundle.json").isFile))

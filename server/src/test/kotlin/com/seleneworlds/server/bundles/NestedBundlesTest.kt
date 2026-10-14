@@ -65,6 +65,33 @@ class NestedBundlesTest {
     }
 
     @Test
+    fun `discovery ignores bundles below one nested directory layer`() {
+        val root = Files.createTempDirectory("bundle-depth").toFile()
+        try {
+            for ((path, name) in listOf(
+                "direct" to "direct",
+                "moonlight/moonlight-ui" to "moonlight-ui",
+                "moonlight/moonlight-admin" to "moonlight-admin",
+                "moonlight/moonlight-editor" to "moonlight-editor",
+                "moonlight/moonlight-admin/node_modules/moonlight-ui" to "moonlight-ui",
+                "moonlight/moonlight-editor/node_modules/moonlight-ui" to "moonlight-ui",
+                "group/child/grandchild" to "too-deep"
+            )) {
+                root.resolve(path).apply { mkdirs() }.resolve("bundle.json")
+                    .writeText("""{"name":"$name"}""")
+            }
+            val locator = ServerBundleLocator(Json, ServerConfig(bundlesPath = root.path), NOPLogger.NOP_LOGGER)
+            assertNotNull(locator.locateBundle("direct"))
+            assertEquals(root.resolve("moonlight/moonlight-ui"), assertNotNull(locator.locateBundle("moonlight-ui")).dir)
+            assertNotNull(locator.locateBundle("moonlight-admin"))
+            assertNotNull(locator.locateBundle("moonlight-editor"))
+            assertNull(locator.locateBundle("too-deep"))
+        } finally {
+            root.deleteRecursively()
+        }
+    }
+
+    @Test
     fun `duplicate flat names are rejected across nesting levels`() {
         val root = Files.createTempDirectory("duplicate-bundles").toFile()
         try {
