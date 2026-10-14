@@ -208,7 +208,7 @@ export class BundleUiManager {
           const bundleRegistry = `/resources/bundles/${segment}/registries/${segment}`;
           const allowed = method === 'GET' ? [
             '^/resources/bundles$', `^/resources/bundles/${segment}/registries$`,
-            `^${bundleRegistry}$`, `^/resources/files/${segment}(?:/${segment})*$`,
+            `^${bundleRegistry}$`, `^${bundleRegistry}/metadata$`, `^/resources/files/${segment}(?:/${segment})*$`,
             `^/registries/${segment}/entries$`, `^/registries/${segment}/field-options$`,
             '^/scripts$', '^/resources/changes$', '^/worldmap/image$',
           ] : method === 'POST' ? [

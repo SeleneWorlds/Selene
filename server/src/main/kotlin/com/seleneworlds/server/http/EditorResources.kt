@@ -137,6 +137,39 @@ class EditorResources(
         return ResourceProject(bundle, registry.toString(), files, findSchema(registry), files.size)
     }
 
+    /** Search editable resources by a metadata key, optionally matching an exact string value. */
+    fun searchMetadata(request: ResourceMetadataSearchRequest): ResourceMetadataSearchResult {
+        requireEnabledBundle(request.bundle)
+        require(request.key.isNotBlank()) { "Missing metadata key." }
+        val registryName = Identifier.parse(request.registry)
+        val registry = fileRegistry(registryName)
+        val schema = findSchema(registryName)
+        val projectedFields = schema.orEmpty().filterValues { definition ->
+            request.fieldType != null && ((definition as? JsonPrimitive)?.contentOrNull
+                ?: (definition as? JsonObject).string("type")) == request.fieldType
+        }.keys
+        val matches = files(request.bundle, registry).mapNotNull { path ->
+            val identifier = requireNotNull(registry.getResourceIdentifier(request.bundle, path))
+            val active = registry.getSourcePath(identifier) == path
+            val entry = if (active) registry.get(identifier) else null
+            val data = if (!active) runCatching {
+                json.parseToJsonElement(resources.loadAsString(path)) as? JsonObject
+            }.getOrNull() else (entry as? CustomRegistryObject)?.element as? JsonObject
+            val metadata = if (entry is MetadataHolder) {
+                json.encodeToJsonElement(SerializedMapSerializer, entry.metadata).jsonObject
+            } else (data?.get("metadata") as? JsonObject) ?: JsonObject(emptyMap())
+            val value = metadata[request.key] ?: return@mapNotNull null
+            if (request.value != null && value != JsonPrimitive(request.value)) return@mapNotNull null
+            val label = data.string("name") ?: metadata.string("name")
+            val fields = if (projectedFields.isEmpty()) JsonObject(emptyMap()) else {
+                val element = data ?: registry.getEntryElement(identifier) as? JsonObject
+                buildJsonObject { for (field in projectedFields) element?.get(field)?.let { put(field, it) } }
+            }
+            MetadataProjectFile(path, label, buildJsonObject { put(request.key, value) }, fields)
+        }
+        return ResourceMetadataSearchResult(request.bundle, request.registry, matches, schema)
+    }
+
     fun read(bundle: String, registry: Identifier, identifier: Identifier): ResourceFile {
         requireEnabledBundle(bundle)
         val fileRegistry = fileRegistry(registry)
@@ -313,7 +346,7 @@ class EditorResources(
             return "$bundle.${registry.path}.$action"
         }
         return when (operation) {
-            "request-project" -> listOf(selectionKey("read"))
+            "request-project", "search-resource-metadata" -> listOf(selectionKey("read"))
             "create-file" -> listOf(selectionKey("edit"))
             "open-file", "save-file", "rename-file" -> listOf(resourceKey(
                 requireNotNull(request.string("path")) { "Missing resource path" },
@@ -544,6 +577,12 @@ internal fun Route.registerEditorResourceRoutes(
             seleneJson.encodeToString(editorResources.project(request.bundle, Identifier.parse(request.registry)))
         }
     }
+    get("/resources/bundles/{bundle}/registries/{registry}/metadata") {
+        execute(call, "search-resource-metadata", { call.resourceQuery() }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<ResourceMetadataSearchRequest>(payload)
+            seleneJson.encodeToString(editorResources.searchMetadata(request))
+        }
+    }
     get("/resources/files/{path...}") {
         execute(call, "open-file", { call.resourceQuery() }) { payload ->
             val request = seleneJson.decodeFromJsonElement<ResourcePathRequest>(payload)
@@ -622,7 +661,7 @@ private fun RoutingCall.resourceQuery(): JsonObject =
     parseResourceQuery(request.queryParameters, resourceParameters())
 
 internal fun parseResourceQuery(query: Parameters, path: JsonObject): JsonObject = buildJsonObject {
-    for (name in listOf("query", "lookup", "value", "property")) {
+    for (name in listOf("query", "lookup", "value", "property", "key", "fieldType")) {
         val value = query[name] ?: continue
         if (name == "lookup") {
             put(name, JsonPrimitive(requireNotNull(value.toBooleanStrictOrNull()) { "Invalid lookup value" }))
@@ -685,6 +724,20 @@ data class ResourceProject(
     val files: List<ProjectFile>,
     val schema: JsonObject?,
     val count: Int
+)
+
+@Serializable
+data class ResourceMetadataSearchRequest(val bundle: String, val registry: String, val key: String, val value: String? = null, val fieldType: String? = null)
+
+@Serializable
+data class MetadataProjectFile(val path: String, val name: String?, val metadata: JsonObject, val fields: JsonObject = JsonObject(emptyMap()))
+
+@Serializable
+data class ResourceMetadataSearchResult(
+    val bundle: String,
+    val registry: String,
+    val files: List<MetadataProjectFile>,
+    val schema: JsonObject?
 )
 
 @Serializable

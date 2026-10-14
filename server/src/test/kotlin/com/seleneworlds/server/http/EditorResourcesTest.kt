@@ -46,6 +46,40 @@ class EditorResourcesTest {
     }
 
     @Test
+    fun `metadata search can project fields by schema type`() = fixture { api, resources, _ ->
+        resources.createAsString("active/common/data/test/registries.json",
+            """{"entries":{"items":{"schema":{"active":{"type":"enabled"},"script":"script"}}}}""")
+        api.update("active", registryName, entry,
+            """{"active":true,"script":"large","metadata":{"category":"quest"}}""")
+        val request = ResourceMetadataSearchRequest("active", registryName.toString(), "category", fieldType = "enabled")
+        assertEquals(buildJsonObject { put("active", true) }, api.searchMetadata(request).files.single().fields)
+        assertTrue(api.searchMetadata(request.copy(fieldType = null)).files.single().fields.isEmpty())
+    }
+
+    @Test
+    fun `metadata searches return matching resources without their contents`() = fixture { api, _, _ ->
+        val request = ResourceMetadataSearchRequest("active", registryName.toString(), "category")
+        assertTrue(api.searchMetadata(request).files.isEmpty())
+        api.update("active", registryName, entry,
+            """{"name":"Example","metadata":{"category":"quest","secret":"excluded"},"script":"large"}""")
+        val result = api.searchMetadata(request)
+        assertEquals(listOf(path), result.files.map { it.path })
+        assertEquals("Example", result.files.single().name)
+        assertEquals(buildJsonObject { put("category", "quest") }, result.files.single().metadata)
+        assertEquals(result, api.searchMetadata(request.copy(value = "quest")))
+        assertTrue(api.searchMetadata(request.copy(value = "other")).files.isEmpty())
+        assertEquals(listOf("active.items.read"), api.permissionKeys("search-resource-metadata", buildJsonObject {
+            put("bundle", "active"); put("registry", registryName.toString())
+        }))
+        assertFailsWith<IllegalArgumentException> { api.searchMetadata(request.copy(bundle = "disabled")) }
+        assertFailsWith<IllegalArgumentException> { api.searchMetadata(request.copy(key = "")) }
+        val encoded = seleneJson.encodeToString(ResourceMetadataSearchResult.serializer(), result)
+        assertFalse(encoded.contains("script"))
+        assertFalse(encoded.contains("contents"))
+        assertFalse(encoded.contains("secret"))
+    }
+
+    @Test
     fun `field option query parameters survive request parsing`() {
         val payload = parseResourceQuery(Parameters.build {
             append("value", "test:example")
@@ -54,6 +88,12 @@ class EditorResourcesTest {
         }, buildJsonObject { put("registry", "test:items") })
         assertEquals(RegistryFieldRequest("test:items", "test:example", "types"),
             seleneJson.decodeFromJsonElement<RegistryFieldRequest>(payload))
+        val metadata = parseResourceQuery(Parameters.build {
+            append("key", "category")
+            append("value", "quest")
+        }, buildJsonObject { put("bundle", "active"); put("registry", "test:items") })
+        assertEquals(ResourceMetadataSearchRequest("active", "test:items", "category", "quest"),
+            seleneJson.decodeFromJsonElement<ResourceMetadataSearchRequest>(metadata))
         val lookup = parseResourceQuery(Parameters.build {
             append("query", "example")
             append("lookup", "true")
