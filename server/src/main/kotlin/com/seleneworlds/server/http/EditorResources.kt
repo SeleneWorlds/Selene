@@ -290,7 +290,7 @@ class EditorResources(
             require(fileRegistry.getSourcePath(identifier) == path) { "Resource is no longer the active registry entry." }
             val contents = encode(data)
             checkSize(contents)
-            if (resources.fileExists(path)) resources.saveAsString(path, contents) else resources.createAsString(path, contents)
+            if (resources.fileExists(path)) resources.saveAsString(path, contents) else resources.createAsString(path, contents, createDirectories = true)
         }
         fileRegistry.markPersisted(identifier)
         return if (data == null) path else null

@@ -105,6 +105,28 @@ class ResourcesApiTest {
     }
 
     @Test
+    fun `resource creation can create missing parents without overwriting files`() {
+        val root = Files.createTempDirectory("resources-api-parents")
+        try {
+            val resources = ResourcesApi(BundleDatabase().apply {
+                addBundle(Bundle(BundleManifest("active"), root.toFile()))
+            })
+            val path = "active/server/data/moonlight/scenarios/new.json"
+            resources.createAsString(path, "{}", createDirectories = true)
+            assertEquals("{}", resources.loadAsString(path))
+            assertFailsWith<java.nio.file.FileAlreadyExistsException> {
+                resources.createAsString(path, "overwritten", createDirectories = true)
+            }
+            assertEquals("{}", resources.loadAsString(path))
+            assertFailsWith<IllegalArgumentException> {
+                resources.createAsString("active/../outside/new.json", "{}", createDirectories = true)
+            }
+        } finally {
+            root.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun `lists enabled bundles and reads and writes existing files`() {
         val root = Files.createTempDirectory("resources-api")
         try {

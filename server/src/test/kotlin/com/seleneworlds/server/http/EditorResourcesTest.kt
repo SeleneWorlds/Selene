@@ -17,6 +17,7 @@ class EditorResourcesTest {
     private fun fixture(
         registryIdentifier: Identifier = registryName,
         includeEmptyBundle: Boolean = false,
+        platform: String = "common",
         test: (EditorResources, ResourcesApi, CustomRegistry) -> Unit
     ) {
         val root = Files.createTempDirectory("http-resources")
@@ -31,7 +32,7 @@ class EditorResourcesTest {
                     addBundle(Bundle(BundleManifest("empty"), root.resolve("empty").toFile()))
                 }
             }
-            val registry = CustomRegistry(seleneJson, CustomRegistryDefinition("items", "common"))
+            val registry = CustomRegistry(seleneJson, CustomRegistryDefinition("items", platform))
             registry.load(database)
             val provider = object : RegistryProvider {
                 override fun getRegistries(): Map<Identifier, Registry<*>> = mapOf(registryIdentifier to registry)
@@ -203,6 +204,21 @@ class EditorResourcesTest {
     fun `custom registry definitions without schemas suppress the built-in fallback`() = fixture { api, resources, _ ->
         resources.createAsString("active/common/data/test/registries.json", """{"entries":{"items":{}}}""")
         assertNull(api.project("active", registryName).schema)
+    }
+
+    @Test
+    fun `persisting the first server entry creates missing namespace directories`() = fixture(platform = "server") { api, resources, registry ->
+        val identifier = Identifier("moonlight", "new")
+        val created = api.create("active", registryName, identifier, """{"name":"New","enabled":false}""")
+        assertEquals("active/server/data/moonlight/items/new.json", created.path)
+        assertFalse(resources.fileExists(created.path))
+        api.update("active", registryName, identifier, created.contents)
+        assertEquals(listOf(created.path), api.pendingChanges().paths)
+        assertNull(api.persist("active", registryName, identifier).error)
+        assertTrue(resources.fileExists(created.path))
+        assertEquals(seleneJson.parseToJsonElement(created.contents), seleneJson.parseToJsonElement(resources.loadAsString(created.path)))
+        assertFalse(registry.isDirty(identifier))
+        assertEquals(0, api.pendingChanges().count)
     }
 
     @Test
@@ -404,6 +420,7 @@ class EditorResourcesTest {
 
     @Test
     fun `partial persistence keeps failed resources dirty`() = fixture { api, resources, _ ->
+        resources.createAsString("active/common/data/test/items/missing", "blocked directory")
         api.update("active", registryName, Identifier("test", "a"), "{}")
         api.update("active", registryName, Identifier("test", "missing/z"), "{}")
         assertNotNull(api.persist().error)

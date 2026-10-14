@@ -56,8 +56,9 @@ class ResourcesApi(private val bundleDatabase: BundleDatabase) {
         }.getOrDefault(false)
     }
 
-    fun createAsString(path: String, contents: String) {
+    fun createAsString(path: String, contents: String, createDirectories: Boolean = false) {
         val (_, file) = resolveFile(path)
+        if (createDirectories) Files.createDirectories(file.parentFile.toPath())
         require(file.parentFile.isDirectory) { "Resource directory not found: $path" }
         Files.writeString(file.toPath(), contents, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)
     }
