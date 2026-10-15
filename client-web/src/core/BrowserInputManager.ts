@@ -5,6 +5,8 @@ import type {
   ClientMouseInputListener,
 } from '@/api/InputApi';
 import type { BundleUiInputClaims } from '@/ui/BundleUiInputClaims';
+import { keyboardControls } from '@/ui/controls';
+import { movementControls } from '@/ui/KeyboardControls';
 
 type InputKey = `${ClientInputType}:${string}`;
 
@@ -44,6 +46,7 @@ export class BrowserInputManager implements InputApi {
   private readonly mousePressActions = new Map<number, ClientMouseInputListener>();
   private readonly mouseReleaseActions = new Map<number, ClientMouseInputListener>();
   private readonly pressedKeys = new Set<string>();
+  private readonly pressedKeyValues = new Map<string, string>();
   private readonly pressedMouseButtons = new Set<number>();
 
   private mouseX = 0;
@@ -107,7 +110,12 @@ export class BrowserInputManager implements InputApi {
   }
 
   isKeyPressed(key: string): boolean {
-    return this.pressedKeys.has(normalizeKeyboardKey(key));
+    if (keyboardControls.blocked) return false;
+    const logicalKey = normalizeKeyboardKey(key);
+    if (movementControls[logicalKey]) {
+      return keyboardControls.movementPressed(logicalKey, this.movementEvents(), this.uiInput.hasEditableFocus());
+    }
+    return this.pressedKeys.has(logicalKey);
   }
 
   isMousePressed(button: string): boolean {
@@ -119,10 +127,14 @@ export class BrowserInputManager implements InputApi {
   }
 
   update(): void {
+    if (keyboardControls.blocked) {
+      this.handleWindowBlur();
+      return;
+    }
     for (const [inputKey, action] of this.continuousActions) {
       const [type, input] = inputKey.split(':', 2) as [ClientInputType, string];
 
-      if ((type === 'keyboard' && this.pressedKeys.has(input)) || (type === 'mouse' && this.pressedMouseButtons.has(Number(input)))) {
+      if ((type === 'keyboard' && this.isKeyPressed(input)) || (type === 'mouse' && this.pressedMouseButtons.has(Number(input)))) {
         action();
       }
     }
@@ -137,6 +149,7 @@ export class BrowserInputManager implements InputApi {
     const wasPressed = this.pressedKeys.has(key);
 
     this.pressedKeys.add(key);
+    this.pressedKeyValues.set(key, event.key);
     if (!wasPressed) {
       this.keyboardActions.get(key)?.();
       this.keyboardPressActions.get(key)?.();
@@ -146,20 +159,30 @@ export class BrowserInputManager implements InputApi {
 
   private readonly handleKeyUp = (event: KeyboardEvent): void => {
     const key = normalizeKeyboardEvent(event);
+    this.pressedKeys.delete(key);
+    this.pressedKeyValues.delete(key);
     if (this.uiInput.consumes(event)) {
       if (isModifierKey(event)) this.pressedKeys.delete(key);
       return;
     }
 
-    this.pressedKeys.delete(key);
     this.keyboardReleaseActions.get(key)?.();
     if (this.uiInput.isProtectedKey(event.key)) event.stopImmediatePropagation();
   };
 
   private readonly handleWindowBlur = (): void => {
     this.pressedKeys.clear();
+    this.pressedKeyValues.clear();
     this.pressedMouseButtons.clear();
   };
+
+  private movementEvents(): Iterable<import('@/ui/KeyboardControls').KeyChord> {
+    const ctrlKey = this.pressedKeys.has('ControlLeft') || this.pressedKeys.has('ControlRight');
+    const shiftKey = this.pressedKeys.has('ShiftLeft') || this.pressedKeys.has('ShiftRight');
+    const altKey = this.pressedKeys.has('AltLeft') || this.pressedKeys.has('AltRight');
+    const metaKey = this.pressedKeys.has('MetaLeft') || this.pressedKeys.has('MetaRight');
+    return [...this.pressedKeyValues.values()].map(key => ({ key, ctrlKey, shiftKey, altKey, metaKey }));
+  }
 
   private readonly handleMouseDown = (event: MouseEvent): void => {
     this.updateMousePosition(event);

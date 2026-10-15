@@ -22,7 +22,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 19;
+const API_VERSION = 20;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -79,6 +79,8 @@ interface BundleUiApi {
     setBundleVisible: (bundle: string, visible: boolean) => void;
   };
   readonly input: {
+    registerBinding: import('./KeyboardControls').KeyboardControls['registerBinding'];
+    matchesBinding: import('./KeyboardControls').KeyboardControls['matchesBinding'];
     captureKeys: (...keys: string[]) => () => void;
     captureText: () => () => void;
     passThroughKeys: (...keys: string[]) => () => void;
@@ -281,6 +283,9 @@ export class BundleUiManager {
         setBundleVisible: (bundle: string, visible: boolean) => this.setBundleVisible(bundle, visible),
       }),
       input: Object.freeze({
+        registerBinding: (definition: import('./KeyboardControls').ShortcutDefinition,
+          callback?: (event: KeyboardEvent) => boolean | void) => this.options.input.registerBinding(definition, callback),
+        matchesBinding: (id: string, event: KeyboardEvent) => this.options.input.matchesBinding(id, event),
         captureKeys: (...keys: string[]) => this.options.input.captureKeys(...keys),
         captureText: () => this.options.input.captureText(),
         passThroughKeys: (...keys: string[]) => this.options.input.passThroughKeys(...keys),

@@ -46,7 +46,7 @@ const emit = defineEmits<{
       <label class="settings-toggle">
         <span>
           <strong>Debug Overlay</strong>
-          <small>Show performance and renderer diagnostics. You can also toggle this with F3.</small>
+          <small>Show performance and renderer diagnostics. Change its shortcut in Controls.</small>
         </span>
         <input
           type="checkbox"

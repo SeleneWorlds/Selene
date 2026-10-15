@@ -1,13 +1,21 @@
-const protectedKeys = new Set([
-  'F3',
-  'F5',
-]);
+import { keyboardControls } from './controls';
+import type { ShortcutDefinition } from './KeyboardControls';
 
 export class BundleUiInputClaims {
   private readonly capturedKeys = new Map<string, number>();
   private readonly passthroughKeys = new Map<string, number>();
   private readonly roots = new Set<ShadowRoot>();
   private textCaptureCount = 0;
+
+  constructor() { keyboardControls.registerEditableFocusSource(() => this.hasEditableFocus()); }
+
+  registerBinding(definition: ShortcutDefinition, callback?: (event: KeyboardEvent) => boolean | void): () => void {
+    return keyboardControls.registerBinding(definition, callback);
+  }
+
+  matchesBinding(id: string, event: KeyboardEvent): boolean {
+    return keyboardControls.matchesBinding(id, event);
+  }
 
   captureKeys(...keys: string[]): () => void {
     return this.registerKeys(this.capturedKeys, keys);
@@ -28,14 +36,16 @@ export class BundleUiInputClaims {
   }
 
   isPassthroughKey(key: string): boolean {
-    return this.isProtectedKey(key) || this.passthroughKeys.has(key);
+    return this.passthroughKeys.has(key) || keyboardControls.isMovementKey(key, this.hasEditableFocus());
   }
 
   isProtectedKey(key: string): boolean {
-    return protectedKeys.has(key);
+    return key === 'F5';
   }
 
   consumes(event: KeyboardEvent): boolean {
+    if (keyboardControls.blocked || event.defaultPrevented) return true;
+    if (keyboardControls.isMovementEvent(event, this.hasEditableFocus())) return false;
     if (this.isPassthroughKey(event.key)) return false;
     return this.hasEditableFocus() || this.capturedKeys.has(event.key) ||
       (this.textCaptureCount > 0 && event.key.length === 1);
@@ -72,6 +82,9 @@ export class BundleUiInputClaims {
   }
 
   hasEditableFocus(): boolean {
+    const active = document.activeElement;
+    if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ||
+      active instanceof HTMLSelectElement || (active instanceof HTMLElement && active.isContentEditable)) return true;
     for (const root of this.roots) {
       const active = root.activeElement;
       if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement ||
