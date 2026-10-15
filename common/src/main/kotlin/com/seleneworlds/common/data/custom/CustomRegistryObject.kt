@@ -22,6 +22,10 @@ class CustomRegistryObject(val customRegistry: CustomRegistry, override val iden
 
     override var id: Int = -1
 
+    /** Resolve on access; element always remains the original, editable JSON. */
+    fun getField(key: String): JsonElement? = customRegistry.valueReferences?.resolveField(this, key)
+        ?: (element as? JsonObject)?.get(key)
+
     override val metadata: SerializedMap by lazy {
         (element as? JsonObject)?.get("metadata")?.let { metadataNode ->
             val metadataMap = mutableMapOf<String, Any?>()

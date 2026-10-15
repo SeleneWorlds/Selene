@@ -46,6 +46,14 @@ abstract class FileBasedRegistry<TData : Any>(
         _cacheKey++
     }
 
+    /** Notify consumers that derived data changed without replacing or dirtying the stored entry. */
+    protected fun invalidateEntry(identifier: Identifier) {
+        val data = entries[identifier] ?: return
+        incrementCacheKey()
+        notifyEntryChanged(identifier, data, data)
+        subscriptions[identifier]?.toList()?.forEach { it(data) }
+    }
+
     override fun get(id: Int): TData? = entriesById[id]
     override fun getId(identifier: Identifier): Int = idByIdentifier[identifier] ?: -1
     override fun get(identifier: Identifier): TData? = entries[identifier]

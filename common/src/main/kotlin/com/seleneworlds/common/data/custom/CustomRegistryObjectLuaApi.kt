@@ -59,7 +59,8 @@ object CustomRegistryObjectLuaApi {
     }
 
     /**
-     * Gets a field value from this custom registry object's JSON element.
+     * Gets a field value, recursively resolving registry value references.
+     * References remain intact in the stored JSON used by resource editors.
      *
      * ```signatures
      * GetField(key: string) -> any|nil
@@ -68,7 +69,7 @@ object CustomRegistryObjectLuaApi {
     private fun getField(lua: Lua): Int {
         val registryObject = lua.checkUserdata<CustomRegistryObject>(1)
         val key = lua.checkString(2)
-        when (val value = (registryObject.element as? JsonObject)?.get(key)) {
+        when (val value = registryObject.getField(key)) {
             is JsonPrimitive -> lua.push(value.unwrap(), Lua.Conversion.FULL)
             is JsonArray -> lua.push(value.unwrap(), Lua.Conversion.FULL)
             is JsonObject -> lua.push(value.unwrap(), Lua.Conversion.FULL)
