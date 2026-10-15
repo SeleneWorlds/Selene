@@ -57,7 +57,7 @@ class LuaExtensionsTest {
         val luaManager = LuaManager(LuaPackageModule())
         try {
             luaManager.lua.load(
-                LuaManager.loadBuffer("return xpcall(function(a, b) return a + b, a * b end, 6, 7)"),
+                LuaManager.loadBuffer("return xpcall(function(a, b) return a + b, a * b end, function(err) return err end, 6, 7)"),
                 "xpcall_success_test"
             )
             luaManager.lua.pCall(0, 3)
@@ -71,7 +71,32 @@ class LuaExtensionsTest {
     }
 
     @Test
-    fun `xpcall returns engine formatted traceback`() {
+    fun `xpcall invokes the supplied error handler`() {
+        val luaManager = LuaManager(LuaPackageModule())
+        try {
+            luaManager.lua.load(
+                LuaManager.loadBuffer(
+                    """
+                    return xpcall(function(value)
+                        error(value, 0)
+                    end, function(err)
+                        return "handled: " .. err
+                    end, "failure")
+                    """.trimIndent()
+                ),
+                "xpcall_handler_test"
+            )
+            luaManager.lua.pCall(0, 2)
+
+            assertFalse(luaManager.lua.toBoolean(-2))
+            assertEquals("handled: failure", luaManager.lua.toString(-1))
+        } finally {
+            luaManager.lua.close()
+        }
+    }
+
+    @Test
+    fun `xpcall returns standard traceback`() {
         val luaManager = LuaManager(LuaPackageModule())
         try {
             val debug = LuaDebugModule()
@@ -87,7 +112,7 @@ class LuaExtensionsTest {
                     local function outer()
                         inner()
                     end
-                    return xpcall(outer)
+                    return xpcall(outer, debug.traceback)
                     """.trimIndent()
                 ),
                 "xpcall_error_test"
@@ -99,8 +124,7 @@ class LuaExtensionsTest {
             assertTrue(message.contains("something went wrong"), message)
             assertTrue(message.contains("stack traceback:"), message)
             assertTrue(message.contains("in upvalue 'inner'"), message)
-            assertTrue(message.contains("in function <[xpcall_error_test]"), message)
-            assertFalse(message.contains("[string \""), message)
+            assertTrue(message.contains("xpcall_error_test"), message)
         } finally {
             luaManager.lua.close()
         }
