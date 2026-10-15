@@ -1,0 +1,3 @@
+allowBuilds:
+  selene: true
+  selene-vue: true

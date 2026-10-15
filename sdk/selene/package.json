@@ -23,5 +23,10 @@
   "devDependencies": {
     "typescript": "^5.8.3"
   },
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SeleneWorlds/Selene.git",
+    "directory": "sdk/selene"
+  }
 }

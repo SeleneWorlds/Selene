@@ -19,11 +19,17 @@
   },
   "devDependencies": {
     "typescript": "^5.8.3",
-    "selene": "file:../selene"
+    "selene": "github:SeleneWorlds/Selene#11e318c90a397d0d0191bf9567e0dce97efceed4&path:/sdk/selene"
   },
   "license": "UNLICENSED",
   "peerDependencies": {
     "vue": "^3.5.13",
     "selene": "^0.1.0"
+  },
+  "packageManager": "pnpm@11.5.2",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SeleneWorlds/Selene.git",
+    "directory": "sdk/selene-vue"
   }
 }

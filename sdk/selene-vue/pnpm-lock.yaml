@@ -13,8 +13,8 @@ importers:
         version: 3.5.44(typescript@5.9.3)
     devDependencies:
       selene:
-        specifier: file:../selene
-        version: file:../selene
+        specifier: github:SeleneWorlds/Selene#11e318c90a397d0d0191bf9567e0dce97efceed4&path:/sdk/selene
+        version: https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4#path:/sdk/selene
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
@@ -93,8 +93,9 @@ packages:
     resolution: {integrity: sha512-zkd+e9S1AQHhmaBKye9zlFHWjOwVgqXl1q3ECYy8561K7qxR2cREf/STLskulBFd78k6AOFeA+ff1TtEzk9bAA==}
     engines: {node: ^10 || ^12 || >=14}
 
-  selene@file:../selene:
-    resolution: {directory: ../selene, type: directory}
+  selene@https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4#path:/sdk/selene:
+    resolution: {gitHosted: true, path: /sdk/selene, tarball: https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4}
+    version: 0.1.0
 
   source-map-js@1.2.2:
     resolution: {integrity: sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==}
@@ -204,7 +205,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.2
 
-  selene@file:../selene: {}
+  selene@https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4#path:/sdk/selene: {}
 
   source-map-js@1.2.2: {}
 
