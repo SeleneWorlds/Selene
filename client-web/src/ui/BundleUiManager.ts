@@ -1,3 +1,10 @@
+import {
+  SELENE_UI_API_VERSION,
+  type SeleneUiApi as BundleUiApi,
+  type SelenePointerEvent as BundleUiPointerEvent,
+  type SeleneScrollEvent as BundleUiScrollEvent,
+  type WorldEntity as BundleUiWorldEntity,
+} from 'selene';
 import type { ClientPreferencesApi } from '@/core/ClientPreferences';
 import type { NetworkApi, ClientNetworkPayload } from '@/api/NetworkApi';
 import {
@@ -12,7 +19,6 @@ import type { GridApi } from '@/api/GridApi';
 import type { EntitiesApi } from '@/api/EntitiesApi';
 import type { Coordinate } from '@/networking/GameProtocol';
 import type { ClientMapTile } from '@/core/ClientMap';
-import type { ClientVisualDefinition } from '@/data/ClientRegistrySchemas';
 import type { ClientAssetManifest } from '@/core/services/ClientAssetManifest';
 import type { I18nApi } from '@/api/I18nApi';
 import {
@@ -22,7 +28,7 @@ import {
 } from '@/data/ClientServerResponseSchemas';
 import { getModAsset } from '@/core/services/ModAssetStore';
 
-const API_VERSION = 20;
+const API_VERSION = SELENE_UI_API_VERSION;
 const MAX_PAYLOAD_ID_LENGTH = 128;
 const MAX_PAYLOAD_BYTES = 64 * 1024;
 const MAX_SUBSCRIPTIONS = 32767;
@@ -54,88 +60,6 @@ interface BundleUiManagerOptions {
 }
 interface BundleUiModule {
   mount: (root: ShadowRoot, selene: BundleUiApi) => void | Promise<void>;
-}
-interface BundleUiApi {
-  readonly apiVersion: number;
-  readonly launch: { getParameters(): Readonly<Record<string, string>> };
-  readonly http: { request(path: string, payload?: ClientNetworkPayload, method?: 'GET' | 'POST' | 'PUT'): Promise<unknown> };
-  readonly registries: {
-    search(registry: string, query: string, lookup?: boolean): Promise<{
-      registry: string; query: string; lookup: boolean;
-      options: Array<{ value: string; label: string; data: unknown }>;
-    } | null>;
-  };
-  readonly resolveAsset: (path: string) => Promise<string>;
-  readonly i18n: I18nApi;
-  readonly preferences: ClientPreferencesApi;
-  readonly visuals: {
-    getDefinition: (identifier: string) => Promise<ClientVisualDefinition>;
-  };
-  readonly storage: {
-    load: (key: string) => Promise<string | null>;
-    save: (key: string, value: string) => Promise<void>;
-  };
-  readonly ui: {
-    setBundleVisible: (bundle: string, visible: boolean) => void;
-  };
-  readonly input: {
-    registerBinding: import('./KeyboardControls').KeyboardControls['registerBinding'];
-    matchesBinding: import('./KeyboardControls').KeyboardControls['matchesBinding'];
-    captureKeys: (...keys: string[]) => () => void;
-    captureText: () => () => void;
-    passThroughKeys: (...keys: string[]) => () => void;
-    isPassthroughKey: (key: string) => boolean;
-    hasEditableFocus: () => boolean;
-    onScroll: (callback: (event: BundleUiScrollEvent) => void) => () => void;
-    onPointerDown: (callback: (event: BundleUiPointerEvent) => void) => () => void;
-    onPointerMove: (callback: (event: BundleUiPointerEvent) => void) => () => void;
-    onPointerUp: (callback: (event: BundleUiPointerEvent) => void) => () => void;
-  };
-  readonly network: {
-    sendToServer: (payloadId: string, payload?: ClientNetworkPayload) => void;
-    onPayload: (payloadId: string, callback: (payload: ClientNetworkPayload) => void) => () => void;
-    onConnected: (callback: () => void) => () => void;
-  };
-  readonly world: {
-    setTileOcclusionEnabled: (enabled: boolean) => void;
-    getCameraCoordinate: CameraApi['getCoordinate'];
-    hasTileAt: (coordinate: Coordinate) => Promise<boolean>;
-    setLightingEnabled: (enabled: boolean) => Promise<void>;
-    isLightingEnabled: () => boolean;
-    setTileGridVisible: (visible: boolean) => Promise<void>;
-    setCameraZoom: (zoom: number) => Promise<number>;
-    getCameraPosition: () => Promise<ReturnType<CameraApi['getPosition']>>;
-    setCameraPosition: (position: { x: number; y: number }) => Promise<Coordinate>;
-    setViewport: (x: number, y: number, width: number, height: number) => void;
-    getControlledEntity: () => BundleUiWorldEntity | null;
-    getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
-    projectCoordinate: (coordinate: Coordinate) => { x: number; y: number };
-    getEntitiesAt: (coordinate: Coordinate) => Promise<BundleUiWorldEntity[]>;
-    projectEntity: (networkId: number) => { x: number; y: number } | null;
-    onCameraCoordinateChanged: CameraApi['addCoordinateChangedListener'];
-    onMapChanged: (callback: (coordinate: Coordinate, width: number, height: number) => void) => () => void;
-  };
-}
-interface BundleUiScrollEvent {
-  amountY: number;
-  clientX: number;
-  clientY: number;
-  coordinate: Coordinate;
-}
-interface BundleUiPointerEvent {
-  clientX: number;
-  clientY: number;
-  button: number;
-  shiftKey: boolean;
-  coordinate: Coordinate;
-}
-interface BundleUiWorldEntity {
-  networkId: number;
-  coordinate: Coordinate;
-  tags: string[];
-  visual?: string;
-  draggable: boolean;
-  getComponent(name: string): unknown;
 }
 export class BundleUiManager {
   private readonly clientAssetUrls = new Map<string, Promise<string>>();
