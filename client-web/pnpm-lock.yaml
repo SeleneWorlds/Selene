@@ -15,8 +15,8 @@ importers:
         specifier: ^8.9.2
         version: 8.20.1
       selene:
-        specifier: file:../sdk/selene
-        version: file:../sdk/selene
+        specifier: github:SeleneWorlds/Selene#11e318c90a397d0d0191bf9567e0dce97efceed4&path:/sdk/selene
+        version: https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4#path:/sdk/selene
       vue:
         specifier: ^3.5.13
         version: 3.5.42(typescript@5.9.3)
@@ -559,8 +559,9 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
-  selene@file:../sdk/selene:
-    resolution: {directory: ../sdk/selene, type: directory}
+  selene@https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4#path:/sdk/selene:
+    resolution: {gitHosted: true, path: /sdk/selene, tarball: https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4}
+    version: 0.1.0
 
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
@@ -1068,7 +1069,7 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.63.1
       fsevents: 2.3.3
 
-  selene@file:../sdk/selene: {}
+  selene@https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4#path:/sdk/selene: {}
 
   source-map-js@1.2.1: {}
 
