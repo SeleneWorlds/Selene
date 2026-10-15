@@ -1,0 +1,29 @@
+{
+  "name": "selene-vue",
+  "version": "0.1.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepack": "npm run build",
+    "test": "npm run build && node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "selene": "file:../selene"
+  },
+  "license": "UNLICENSED",
+  "peerDependencies": {
+    "vue": "^3.5.13",
+    "selene": "^0.1.0"
+  }
+}
