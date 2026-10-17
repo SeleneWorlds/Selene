@@ -38,6 +38,9 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
         newTileDef: TileDefinition
     ): Boolean {
         val chunk = getOrCreateChunk(coordinate)
+        if (!chunk.hasTileAbsolute(coordinate.x, coordinate.y)) {
+            return false
+        }
         val currentTileDef = chunk.getTileAbsolute(coordinate.x, coordinate.y)
         if (currentTileDef == tileDef) {
             chunk.setTileAbsolute(coordinate.x, coordinate.y, newTileDef)
@@ -57,6 +60,9 @@ class DenseMapLayer(override val name: String, private val registries: Registrie
 
     override fun removeTile(coordinate: Coordinate, tileDef: TileDefinition): Boolean {
         val chunk = getOrCreateChunk(coordinate)
+        if (!chunk.hasTileAbsolute(coordinate.x, coordinate.y)) {
+            return false
+        }
         val currentTileDef = chunk.getTileAbsolute(coordinate.x, coordinate.y)
         if (currentTileDef == tileDef) {
             chunk.setTileAbsolute(coordinate.x, coordinate.y, null)
