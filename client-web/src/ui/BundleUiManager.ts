@@ -335,7 +335,7 @@ export class BundleUiManager {
 
   private toWorldEntity(entity: NonNullable<ReturnType<EntitiesApi['getEntityByNetworkId']>>): BundleUiWorldEntity {
     const definition = entity.getDefinition();
-    const components = Object.values(definition.components ?? {});
+    const components = Object.values(entity.getComponents());
     const component = components.find((value) => value !== null
       && typeof value === 'object'
       && (value as Record<string, unknown>).type === 'visual');
