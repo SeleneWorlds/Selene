@@ -69,6 +69,7 @@ import com.seleneworlds.server.entities.Entity
 import com.seleneworlds.server.entities.component.EntityComponentFactory
 import com.seleneworlds.server.entities.EntityManager
 import com.seleneworlds.server.heartbeat.ServerHeartbeat
+import com.seleneworlds.server.discord.DiscordBot
 import com.seleneworlds.server.http.ClientAssetIndexProvider
 import com.seleneworlds.server.permissions.PermissionsApi
 import com.seleneworlds.server.permissions.PermissionsLuaApi
@@ -115,6 +116,7 @@ fun main(args: Array<String>) {
         singleOf(::SessionAuthentication)
         singleOf(::ClientAuthorization)
         singleOf(::ServerHeartbeat) { bind<Disposable>() }
+        singleOf(::DiscordBot) { bind<Disposable>() }
         single {
             val json = get<Json>()
             HttpClient(CIO) {

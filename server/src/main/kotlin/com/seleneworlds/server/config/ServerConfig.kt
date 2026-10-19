@@ -24,6 +24,7 @@ data class ServerConfig(
     val apiCorsOrigins: List<String> = emptyList(),
     val hotReload: String = "false",
     val grid: String = "",
+    val discordBotToken: String = "",
     val profilingCaptureSeconds: Int = 0
 ) {
     init {

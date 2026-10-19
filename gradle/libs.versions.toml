@@ -11,6 +11,7 @@ jcef = "146.0.10"
 sqlite = "3.50.3.0"
 
 [libraries]
+jda = { module = "net.dv8tion:JDA", version = "6.3.2" }
 gdx-backend-lwjgl3 = { module = "com.badlogicgames.gdx:gdx-backend-lwjgl3", version.ref = "gdx" }
 gdx-tools = { module = "com.badlogicgames.gdx:gdx-tools", version.ref = "gdx" }
 gdx-platform = { module = "com.badlogicgames.gdx:gdx-platform", version.ref = "gdx" }

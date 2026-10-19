@@ -11,24 +11,32 @@ import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.network.PacketRegistrations
 import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.Disposable
+import com.seleneworlds.server.bundle.ServerBundleWatcher
+import com.seleneworlds.server.bundles.ClientBundleCache
+import com.seleneworlds.server.config.ServerConfig
+import com.seleneworlds.server.discord.DiscordBot
 import com.seleneworlds.server.entities.EntityManager
+import com.seleneworlds.server.heartbeat.ServerHeartbeat
+import com.seleneworlds.server.http.HttpServer
+import com.seleneworlds.server.network.NetworkServer
 import com.seleneworlds.server.profiling.ServerProfiler
 import kotlin.concurrent.thread
 
 val startupTime = System.currentTimeMillis()
 
 class SeleneServer(
-    private val httpServer: com.seleneworlds.server.http.HttpServer,
-    private val networkServer: com.seleneworlds.server.network.NetworkServer,
-    private val serverHeartbeat: com.seleneworlds.server.heartbeat.ServerHeartbeat,
-    private val bundleWatcher: com.seleneworlds.server.bundle.ServerBundleWatcher,
+    private val httpServer: HttpServer,
+    private val networkServer: NetworkServer,
+    private val serverHeartbeat: ServerHeartbeat,
+    private val discordBot: DiscordBot,
+    private val bundleWatcher: ServerBundleWatcher,
     private val entityManager: EntityManager,
     packetRegistrations: PacketRegistrations,
-    clientBundleCache: com.seleneworlds.server.bundles.ClientBundleCache,
+    clientBundleCache: ClientBundleCache,
     bundleLoader: BundleLoader,
     private val bundleLifecycleManager: BundleLifecycleManager,
     luaManager: LuaManager,
-    private val config: com.seleneworlds.server.config.ServerConfig,
+    private val config: ServerConfig,
     private val logger: Logger,
     private val profiler: ServerProfiler,
     private val mainThreadDispatcher: MainThreadDispatcher
@@ -55,6 +63,7 @@ class SeleneServer(
         httpServer.start()
         networkServer.start(config.port)
         serverHeartbeat.start()
+        discordBot.start()
         if (config.hotReloadMode.isEnabled) {
             bundleWatcher.startWatching()
         }
@@ -111,6 +120,7 @@ class SeleneServer(
 
     private fun dispose() {
         serverHeartbeat.stop()
+        discordBot.dispose()
         networkServer.stop()
 
         getKoin().getAll<Disposable>().forEach { it.dispose() }

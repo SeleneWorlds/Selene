@@ -9,6 +9,20 @@ import com.sksamuel.hoplite.ConfigLoaderBuilder
 
 class ServerConfigTest {
     @Test
+    fun `Discord is disabled by default and token loads from properties`() {
+        assertEquals("", ServerConfig().discordBotToken)
+        val file = Files.createTempFile("discord-config", ".properties").toFile()
+        try {
+            file.writeText("discord_bot_token=test-bot-token\n")
+            val config = ConfigLoaderBuilder.default().build()
+                .loadConfigOrThrow<ServerConfig>(file.absolutePath)
+            assertEquals("test-bot-token", config.discordBotToken)
+        } finally {
+            file.delete()
+        }
+    }
+
+    @Test
     fun `loads packet rate limits from server properties`() {
         val file = Files.createTempFile("packet-rate-limits", ".properties").toFile()
         try {

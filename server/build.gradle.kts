@@ -29,6 +29,7 @@ dependencies {
     implementation(libs.jline)
     implementation(libs.sqlite.jdbc)
     implementation(libs.sentry.log4j2)
+    implementation(libs.jda)
 
     testImplementation(kotlin("test"))
 }
