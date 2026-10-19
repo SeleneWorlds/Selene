@@ -8,6 +8,8 @@ import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.handler.codec.http.HttpObjectAggregator
 import io.netty.handler.codec.http.HttpServerCodec
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler
+import io.netty.handler.codec.http.websocketx.WebSocketCloseStatus
+import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolConfig
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder
 import io.netty.handler.codec.LengthFieldPrepender
 import io.netty.handler.timeout.ReadTimeoutHandler
@@ -155,7 +157,14 @@ class NetworkServerImpl(
                         .addLast("httpAggregator", HttpObjectAggregator(maxFrameLength))
                         .addLast(
                             "webSocketProtocol",
-                            WebSocketServerProtocolHandler(webSocketPath, null, true, maxFrameLength)
+                            WebSocketServerProtocolHandler(
+                                WebSocketServerProtocolConfig.newBuilder()
+                                    .websocketPath(webSocketPath)
+                                    .allowExtensions(true)
+                                    .maxFramePayloadLength(maxFrameLength)
+                                    .sendCloseFrame(WebSocketCloseStatus(1000, "Connection closed by the server."))
+                                    .build()
+                            )
                         )
                         .addLast("packetHandler", WebSocketPacketHandler(this@NetworkServerImpl, client, packetCodec))
                 }
