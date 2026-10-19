@@ -25,6 +25,11 @@ export interface ResolvedEntityVisual {
 
 export interface ResolvedEntityNameTag {
   text: string;
+  fontFamily: string;
+  fontSize: number;
+  fontWeight: 'normal' | 'bold';
+  strokeColor: number;
+  strokeWidth: number;
   color: number;
   origin: string;
   offsetX: number;
@@ -205,6 +210,11 @@ function resolveNameTag(
     }
     return {
       text,
+      fontFamily: definition.fontFamily ?? 'Arial, sans-serif',
+      fontSize: definition.fontSize ?? 14,
+      fontWeight: definition.fontWeight ?? 'normal',
+      strokeColor: definition.strokeColor ?? 0x000000,
+      strokeWidth: definition.strokeWidth ?? 3,
       color: (Math.round(clampAlpha(component.red ?? 1) * 255) << 16)
         | (Math.round(clampAlpha(component.green ?? 1) * 255) << 8)
         | Math.round(clampAlpha(component.blue ?? 1) * 255),

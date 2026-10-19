@@ -512,9 +512,10 @@ function applyNameTag(rendered: RenderedEntity): void {
       text: resolved.text,
       style: {
         fill: resolved.color,
-        fontFamily: 'Arial, sans-serif',
-        fontSize: 14,
-        stroke: { color: 0x000000, width: 3 },
+        fontFamily: resolved.fontFamily,
+        fontSize: resolved.fontSize,
+        fontWeight: resolved.fontWeight,
+        stroke: { color: resolved.strokeColor, width: resolved.strokeWidth },
       },
     });
     rendered.nameTag.zIndex = 1;
@@ -522,6 +523,10 @@ function applyNameTag(rendered: RenderedEntity): void {
   } else {
     rendered.nameTag.text = resolved.text;
     rendered.nameTag.style.fill = resolved.color;
+    rendered.nameTag.style.fontFamily = resolved.fontFamily;
+    rendered.nameTag.style.fontSize = resolved.fontSize;
+    rendered.nameTag.style.fontWeight = resolved.fontWeight;
+    rendered.nameTag.style.stroke = { color: resolved.strokeColor, width: resolved.strokeWidth };
   }
   positionNameTag(rendered);
 }
@@ -540,6 +545,11 @@ function positionNameTag(rendered: RenderedEntity): void {
   const bottom = top + bounds.height;
 
   switch (resolved.origin) {
+    case 'tile_bottom_right':
+      // The midpoint of the tile's lower-right edge, independent of sprite bounds.
+      nameTag.anchor.set(1, 1);
+      nameTag.position.set(TILE_WIDTH / 4 + resolved.offsetX, TILE_HEIGHT / 4 - resolved.offsetY);
+      break;
     case 'bottom_right':
       nameTag.anchor.set(1, 1);
       nameTag.position.set(right + resolved.offsetX, bottom - resolved.offsetY);
