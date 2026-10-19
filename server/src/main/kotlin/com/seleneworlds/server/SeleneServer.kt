@@ -13,7 +13,6 @@ import com.seleneworlds.common.threading.MainThreadDispatcher
 import com.seleneworlds.common.util.Disposable
 import com.seleneworlds.server.entities.EntityManager
 import com.seleneworlds.server.profiling.ServerProfiler
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 val startupTime = System.currentTimeMillis()
@@ -35,7 +34,7 @@ class SeleneServer(
     private val mainThreadDispatcher: MainThreadDispatcher
 ) {
 
-    private val running = AtomicBoolean(true)
+    private val lifecycle = ServerLifecycle(::dispose)
 
     init {
         logger.info("Starting Selene server")
@@ -49,7 +48,7 @@ class SeleneServer(
         clientBundleCache.watchBundles(bundles)
     }
 
-    fun start() {
+    fun start() = lifecycle.run {
         ServerEvents.ServerStarted.EVENT.invoker().serverStarted()
         ServerEvents.ServerReloaded.EVENT.invoker().serverReloaded()
 
@@ -81,9 +80,9 @@ class SeleneServer(
 
             try {
                 var line = reader.readLine()
-                while (line != null && running.get()) {
+                while (line != null && lifecycle.running) {
                     if (line.equals("exit", ignoreCase = true)) {
-                        running.set(false)
+                        lifecycle.shutdown()
                         break
                     }
                     line = reader.readLine()
@@ -96,7 +95,7 @@ class SeleneServer(
         mainThreadDispatcher.bindToCurrentThread()
         if (config.profilingCaptureSeconds > 0) profiler.startCapture(config.profilingCaptureSeconds)
         var lastTick = System.nanoTime()
-        while (running.get()) {
+        while (lifecycle.running) {
             val now = System.nanoTime()
             profiler.measure(ENTITY_UPDATE) { entityManager.update((now - lastTick) / 1_000_000_000f) }
             lastTick = now
@@ -106,12 +105,11 @@ class SeleneServer(
 
             Thread.sleep(10)
         }
-
-        shutdown()
     }
 
-    fun shutdown() {
-        running.set(false)
+    fun shutdown() = lifecycle.shutdown()
+
+    private fun dispose() {
         serverHeartbeat.stop()
         networkServer.stop()
 
