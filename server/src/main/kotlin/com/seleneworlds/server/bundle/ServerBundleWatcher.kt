@@ -3,6 +3,7 @@ package com.seleneworlds.server.bundle
 import org.slf4j.Logger
 import com.seleneworlds.common.bundles.BundleDatabase
 import com.seleneworlds.common.bundles.BundleWatcher
+import com.seleneworlds.common.i18n.Messages
 import com.seleneworlds.common.config.HotReloadMode
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.Registry
@@ -23,7 +24,8 @@ class ServerBundleWatcher(
     private val clientBundleCache: ClientBundleCache,
     private val clientAssetIndexProvider: ClientAssetIndexProvider,
     private val scriptHotReload: ScriptHotReload,
-    private val config: ServerConfig
+    private val config: ServerConfig,
+    private val messages: Messages
 ) : BundleWatcher(logger, bundleDatabase, setOf("common", "client", "server")) {
 
     override fun processPendingBundleUpdates(
@@ -31,6 +33,11 @@ class ServerBundleWatcher(
         updatedFiles: Set<String>,
         deletedFiles: Set<String>
     ) {
+        if ((updatedFiles + deletedFiles).any {
+            it.replace('\\', '/').matches(Regex("(common|client|server)/i18n/[^/]+\\.properties"))
+        }) {
+            messages.reload()
+        }
         val bundle = bundleDatabase.getBundle(bundleId)
         if (bundle != null) {
             if (config.hotReloadMode == HotReloadMode.EAGER) {

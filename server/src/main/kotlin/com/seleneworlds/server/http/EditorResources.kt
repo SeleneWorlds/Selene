@@ -1,6 +1,7 @@
 package com.seleneworlds.server.http
 
 import com.seleneworlds.common.bundles.BundleDatabase
+import com.seleneworlds.common.i18n.Messages
 import com.seleneworlds.common.bundles.ResourcesApi
 import com.seleneworlds.common.data.Identifier
 import com.seleneworlds.common.data.MetadataHolder
@@ -27,7 +28,8 @@ class EditorResources(
     private val resources: ResourcesApi,
     private val registryProvider: RegistryProvider,
     private val json: Json,
-    private val bundles: BundleDatabase
+    private val bundles: BundleDatabase,
+    private val messages: Messages
 ) {
     private val resourceJson = Json(json) { prettyPrint = true }
     private val registries = RegistriesApi(registryProvider)
@@ -143,6 +145,7 @@ class EditorResources(
             "This messages file changed since it was opened. Reload it before saving."
         }
         resources.saveAsString(path, contents)
+        messages.reload()
         return LocalizationFile(path, contents)
     }
 

@@ -14,6 +14,11 @@ class Messages(
     private val messagesByLocale = mutableMapOf<Locale, Properties>()
     var defaultLocale: Locale = Locale.getDefault()
 
+    /** Invalidate merged locale caches so subsequent lookups read the current bundle files. */
+    fun reload() {
+        messagesByLocale.clear()
+    }
+
     fun get(key: String, locale: Locale? = null): String? {
         val messages = getOrLoadMessages(locale ?: defaultLocale)
         return messages.getProperty(key)

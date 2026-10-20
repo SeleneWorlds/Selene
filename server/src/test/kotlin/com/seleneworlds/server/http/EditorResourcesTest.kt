@@ -2,6 +2,9 @@ package com.seleneworlds.server.http
 
 import com.seleneworlds.common.bundles.*
 import com.seleneworlds.common.data.*
+import com.seleneworlds.common.i18n.Messages
+import org.slf4j.LoggerFactory
+import java.util.Locale
 import com.seleneworlds.common.data.custom.*
 import com.seleneworlds.common.serialization.seleneJson
 import kotlinx.serialization.json.*
@@ -75,6 +78,21 @@ class EditorResourcesTest {
         assertFalse(api.isAllowed("save-localization", request) { it.endsWith(".read") })
     }
 
+    @Test
+    fun `saving localization refreshes cached server lookups immediately`() {
+        lateinit var messages: Messages
+        fixture(configureMessages = { messages = it }) { api, resources, _ ->
+            val path = "active/server/i18n/messages_de.properties"
+            val original = "greeting=Hallo\nremoved=Alt\n"
+            resources.createAsString(path, original, createDirectories = true)
+            assertEquals("Hallo", messages.get("greeting", Locale.GERMAN))
+            api.saveLocalization(path, "greeting=Grüße\nadded=Neu\n", original)
+            assertEquals("Grüße", messages.get("greeting", Locale.GERMAN))
+            assertEquals("Neu", messages.get("added", Locale.GERMAN))
+            assertNull(messages.get("removed", Locale.GERMAN))
+        }
+    }
+
     private val registryName = Identifier("test", "items")
     private val entry = Identifier("test", "example")
     private val path = "active/common/data/test/items/example.json"
@@ -83,6 +101,7 @@ class EditorResourcesTest {
         registryIdentifier: Identifier = registryName,
         includeEmptyBundle: Boolean = false,
         platform: String = "common",
+        configureMessages: (Messages) -> Unit = {},
         test: (EditorResources, ResourcesApi, CustomRegistry) -> Unit
     ) {
         val root = Files.createTempDirectory("http-resources")
@@ -104,7 +123,9 @@ class EditorResourcesTest {
                 override fun getRegistry(identifier: Identifier): Registry<*>? = registry.takeIf { identifier == registryIdentifier }
             }
             val resources = ResourcesApi(database)
-            val editor = EditorResources(resources, provider, seleneJson, database)
+            val messages = Messages(database, LoggerFactory.getLogger(Messages::class.java))
+            configureMessages(messages)
+            val editor = EditorResources(resources, provider, seleneJson, database, messages)
             test(editor, resources, registry)
         } finally {
             root.toFile().deleteRecursively()
@@ -525,7 +546,7 @@ class EditorResourcesTest {
         }
         val bundles = BundleDatabase()
         val resources = ResourcesApi(bundles)
-        val editor = EditorResources(resources, provider, seleneJson, bundles)
+        val editor = EditorResources(resources, provider, seleneJson, bundles, Messages(bundles, LoggerFactory.getLogger(Messages::class.java)))
         val result = editor.searchRegistry(RegistrySearchRequest("test:items", "EXAM"))
         assertEquals(listOf(RegistryOption("test:example", "Example", "test:preview")), result.options)
         assertTrue(editor.searchRegistry(RegistrySearchRequest("test:items", "example", lookup = true)).options.isEmpty())
