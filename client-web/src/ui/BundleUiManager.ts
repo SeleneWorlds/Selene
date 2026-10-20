@@ -137,10 +137,13 @@ export class BundleUiManager {
             `^${bundleRegistry}$`, `^${bundleRegistry}/metadata$`, `^/resources/files/${segment}(?:/${segment})*$`,
             `^/registries/${segment}/entries$`, `^/registries/${segment}/field-options$`,
             '^/scripts$', '^/resources/changes$', '^/worldmap/image$',
+            `^/localization/bundles/${segment}$`, `^/localization/files/${segment}(?:/${segment})*$`,
           ] : method === 'POST' ? [
             '^/resources/permissions$', `^${bundleRegistry}/files$`, `^/resources/changes/(?:persist|discard)(?:/${segment})*$`,
             `^/resources/rename/${segment}(?:/${segment})*$`,
-          ] : method === 'PUT' ? [`^/resources/files/${segment}(?:/${segment})*$`] : [];
+          ] : method === 'PUT' ? [
+            `^/resources/files/${segment}(?:/${segment})*$`, `^/localization/files/${segment}(?:/${segment})*$`,
+          ] : [];
           if (!allowed.some((pattern) => new RegExp(pattern).test(path)) ||
             path.split('/').slice(1).some((part) => {
               const decoded = decodeURIComponent(part);

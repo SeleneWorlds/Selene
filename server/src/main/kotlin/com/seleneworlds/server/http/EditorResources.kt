@@ -114,6 +114,38 @@ class EditorResources(
         return PendingChanges(paths)
     }
 
+    private fun localizationBundle(path: String): String {
+        require(path.matches(Regex("[^/]+/(client|common|server)/i18n/messages(?:_[A-Za-z0-9_-]+)?\\.properties"))) {
+            "Invalid messages file path."
+        }
+        return path.substringBefore('/').also(::requireEnabledBundle)
+    }
+
+    fun localizationFiles(bundle: String): List<String> {
+        requireEnabledBundle(bundle)
+        return resources.listFiles(bundle, "*.properties").filter {
+            runCatching { localizationBundle(it) }.isSuccess
+        }.sorted()
+    }
+
+    fun readLocalization(path: String): LocalizationFile {
+        localizationBundle(path)
+        val contents = resources.loadAsString(path)
+        checkSize(contents)
+        return LocalizationFile(path, contents)
+    }
+
+    fun saveLocalization(path: String, contents: String, originalContents: String): LocalizationFile {
+        localizationBundle(path)
+        checkSize(contents)
+        java.util.Properties().load(contents.reader())
+        require(resources.loadAsString(path) == originalContents) {
+            "This messages file changed since it was opened. Reload it before saving."
+        }
+        resources.saveAsString(path, contents)
+        return LocalizationFile(path, contents)
+    }
+
     fun bundles(): List<String> = resources.listBundles()
 
     fun registries(bundle: String): List<Identifier> {
@@ -346,6 +378,15 @@ class EditorResources(
             return "$bundle.${registry.path}.$action"
         }
         return when (operation) {
+            "list-localization" -> {
+                val bundle = requireNotNull(request.string("bundle")) { "Missing bundle" }
+                requireEnabledBundle(bundle)
+                listOf("$bundle.localization.read")
+            }
+            "read-localization", "save-localization" -> {
+                val bundle = localizationBundle(requireNotNull(request.string("path")) { "Missing messages path" })
+                listOf("$bundle.localization.${if (operation == "read-localization") "read" else "persist"}")
+            }
             "request-project", "search-resource-metadata" -> listOf(selectionKey("read"))
             "create-file" -> listOf(selectionKey("edit"))
             "open-file", "save-file", "rename-file" -> listOf(resourceKey(
@@ -573,7 +614,7 @@ internal fun Route.registerEditorResourceRoutes(
             seleneJson.decodeFromString<ResourcePermissionChecks>(call.receiveText()).checks.also { requests ->
                 require(requests.size <= 32) { "Too many permission checks" }
                 require(requests.all { it.operation in setOf(
-                    "create-file", "save-file", "persist-changes", "discard-changes"
+                    "create-file", "save-file", "persist-changes", "discard-changes", "save-localization"
                 ) }) { "Unsupported permission operation" }
             }
         } catch (_: IllegalArgumentException) {
@@ -614,6 +655,24 @@ internal fun Route.registerEditorResourceRoutes(
         execute(call, "search-scripts", { call.resourceQuery() }) { payload ->
             val request = seleneJson.decodeFromJsonElement<ScriptSearchRequest>(payload)
             seleneJson.encodeToString(editorResources.searchScripts(request))
+        }
+    }
+    get("/localization/bundles/{bundle}") {
+        execute(call, "list-localization", { call.resourceQuery() }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<BundleSelection>(payload)
+            seleneJson.encodeToString(editorResources.localizationFiles(request.bundle))
+        }
+    }
+    get("/localization/files/{path...}") {
+        execute(call, "read-localization", { call.resourceQuery() }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<ResourcePathRequest>(payload)
+            seleneJson.encodeToString(editorResources.readLocalization(request.path))
+        }
+    }
+    put("/localization/files/{path...}") {
+        execute(call, "save-localization", { call.resourceBody() }) { payload ->
+            val request = seleneJson.decodeFromJsonElement<SaveLocalizationRequest>(payload)
+            seleneJson.encodeToString(editorResources.saveLocalization(request.path, request.contents, request.originalContents))
         }
     }
     get("/resources/bundles") {
@@ -825,3 +884,9 @@ internal data class ResourcePermissionChecks(val checks: List<ResourcePermission
 
 @Serializable
 data class RegistryFieldRequest(val registry: String, val value: String, val property: String)
+
+@Serializable
+data class LocalizationFile(val path: String, val contents: String)
+
+@Serializable
+data class SaveLocalizationRequest(val path: String, val contents: String, val originalContents: String)

@@ -51,6 +51,30 @@ class EditorResourcesTest {
         assertEquals(JsonPrimitive("integer"), condition["data"]!!.jsonObject["variants"]!!.jsonObject["level"])
     }
 
+    @Test
+    fun `localization edits preserve properties and reject stale or invalid writes`() = fixture { api, resources, _ ->
+        val path = "active/server/i18n/messages_de.properties"
+        val original = "# Greeting\nhello=Grüße {name}\n"
+        resources.createAsString(path, original, createDirectories = true)
+        resources.createAsString("active/server/i18n/other.properties", "hidden=value\n")
+        assertEquals(listOf(path), api.localizationFiles("active"))
+        assertEquals(original, api.readLocalization(path).contents)
+        val updated = original + "farewell=Auf Wiedersehen\n"
+        assertEquals(updated, api.saveLocalization(path, updated, original).contents)
+        assertEquals(updated, resources.loadAsString(path))
+        assertFailsWith<IllegalArgumentException> { api.saveLocalization(path, original, original) }
+        assertFailsWith<IllegalArgumentException> { api.saveLocalization(path, "bad=\\uXXXX", updated) }
+        assertEquals(updated, resources.loadAsString(path))
+        for (invalid in listOf("active/server/i18n/../messages_de.properties", "active/server/lua/messages_de.properties",
+            "disabled/server/i18n/messages_de.properties", "active/server/i18n/other.properties")) {
+            assertFailsWith<IllegalArgumentException> { api.readLocalization(invalid) }
+        }
+        val request = buildJsonObject { put("path", path) }
+        assertEquals(listOf("active.localization.read"), api.permissionKeys("read-localization", request))
+        assertEquals(listOf("active.localization.persist"), api.permissionKeys("save-localization", request))
+        assertFalse(api.isAllowed("save-localization", request) { it.endsWith(".read") })
+    }
+
     private val registryName = Identifier("test", "items")
     private val entry = Identifier("test", "example")
     private val path = "active/common/data/test/items/example.json"

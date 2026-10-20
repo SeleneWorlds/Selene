@@ -139,10 +139,12 @@ class CefUiBridge(
             "GET" -> listOf("/resources/bundles", "/resources/bundles/$segment/registries",
                 bundleRegistry, "/resources/files/$segment(?:/$segment)*",
                 "/registries/$segment/entries", "/registries/$segment/field-options",
-                "/scripts", "/resources/changes", "/worldmap/image")
+                "/scripts", "/resources/changes", "/worldmap/image",
+                "/localization/bundles/$segment", "/localization/files/$segment(?:/$segment)*")
             "POST" -> listOf("/resources/permissions", "$bundleRegistry/files", "/resources/changes/(?:persist|discard)(?:/$segment)*",
                 "/resources/rename/$segment(?:/$segment)*")
-            "PUT" -> listOf("/resources/files/$segment(?:/$segment)*")
+            "PUT" -> listOf("/resources/files/$segment(?:/$segment)*",
+                "/localization/files/$segment(?:/$segment)*")
             else -> emptyList()
         }
         require(allowed.any { Regex(it).matches(path) } && path.split('/').drop(1).none {
