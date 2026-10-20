@@ -14,6 +14,26 @@ import kotlin.test.*
 
 class EditorResourcesTest {
     @Test
+    fun `script schema query retains module and function name`() {
+        val module = "illarion-script-loader.server.lua.lib.behaviorDefaults"
+        for (functionName in listOf("schema", "actionSchema")) {
+            val payload = parseResourceQuery(Parameters.build {
+                append("module", module)
+                append("functionName", functionName)
+            }, buildJsonObject {})
+            assertEquals(buildJsonObject {
+                put("module", module)
+                put("functionName", functionName)
+            }, payload)
+        }
+        val payload = parseResourceQuery(Parameters.build {
+            append("module", module)
+        }, buildJsonObject {})
+        assertEquals(JsonPrimitive(module), payload["module"])
+        assertNull(payload["functionName"])
+    }
+
+    @Test
     fun `registry schemas resolve shared types recursively and preserve field options`() = fixture { api, resources, _ ->
         resources.createAsString("active/common/data/test/registries/items.json",
             """{"schema":{"drops":{"type":"moonlight:rolls","optional":true}}}""", createDirectories = true)
@@ -290,6 +310,7 @@ class EditorResourcesTest {
         assertEquals(listOf("test.items.read"), api.permissionKeys("search-registry",
             buildJsonObject { put("registry", "test:items") }))
         assertEquals(listOf("selene.scripts.read"), api.permissionKeys("search-scripts", buildJsonObject {}))
+        assertEquals(listOf("selene.scripts.read"), api.permissionKeys("script-schema", buildJsonObject {}))
     }
 
     @Test

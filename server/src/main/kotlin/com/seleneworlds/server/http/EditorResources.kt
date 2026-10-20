@@ -412,7 +412,7 @@ class EditorResources(
                 val registry = Identifier.parse(requireNotNull(request.string("registry")))
                 listOf("${registry.namespace}.${registry.path}.read")
             }
-            "search-scripts" -> listOf("selene.scripts.read")
+            "search-scripts", "script-schema" -> listOf("selene.scripts.read")
             else -> throw IllegalArgumentException("Unknown resource operation: $operation")
         }
     }
@@ -548,6 +548,7 @@ internal fun Route.registerEditorResourceRoutes(
     playerManager: PlayerManager,
     mainThreadDispatcher: MainThreadDispatcher,
     logger: Logger,
+    scriptSchemas: ScriptSchemas,
     authenticatedUser: (ApplicationCall) -> SeleneUser
 ) {
     suspend fun execute(
@@ -652,6 +653,14 @@ internal fun Route.registerEditorResourceRoutes(
         execute(call, "registry-field-options", { call.resourceQuery() }) { payload ->
             val request = seleneJson.decodeFromJsonElement<RegistryFieldRequest>(payload)
             editorResources.registryFieldOptions(request).toString()
+        }
+    }
+    get("/scripts/schema") {
+        execute(call, "script-schema", { call.resourceQuery() }) { payload ->
+            val module = requireNotNull((payload["module"] as? JsonPrimitive)?.contentOrNull) { "Missing module" }
+            val functionName = (payload["functionName"] as? JsonPrimitive)?.contentOrNull ?: "schema"
+            require(module.isNotBlank() && functionName.isNotBlank()) { "Missing schema provider" }
+            scriptSchemas.fetch(module, functionName)
         }
     }
     get("/scripts") {
@@ -780,7 +789,7 @@ private fun RoutingCall.resourceQuery(): JsonObject =
     parseResourceQuery(request.queryParameters, resourceParameters())
 
 internal fun parseResourceQuery(query: Parameters, path: JsonObject): JsonObject = buildJsonObject {
-    for (name in listOf("query", "lookup", "value", "property", "key", "fieldType")) {
+    for (name in listOf("query", "lookup", "value", "property", "key", "fieldType", "module", "functionName")) {
         val value = query[name] ?: continue
         if (name == "lookup") {
             put(name, JsonPrimitive(requireNotNull(value.toBooleanStrictOrNull()) { "Invalid lookup value" }))

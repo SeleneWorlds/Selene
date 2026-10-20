@@ -64,7 +64,8 @@ class HttpServer(
     private val permissions: PermissionsApi,
     private val editorResources: EditorResources,
     private val mainThreadDispatcher: MainThreadDispatcher,
-    registryProvider: RegistryProvider
+    registryProvider: RegistryProvider,
+    private val luaManager: com.seleneworlds.common.lua.LuaManager
 ) : Disposable {
     private var engine: EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration>? = null
     private val clientLuaModules = ClientLuaModules(bundleDatabase, clientBundleCache)
@@ -420,7 +421,8 @@ class HttpServer(
                         call.respond(HttpStatusCode.NotFound, "Asset not found")
                     }
                     registerEditorResourceRoutes(
-                        editorResources, permissions, playerManager, mainThreadDispatcher, logger
+                        editorResources, permissions, playerManager, mainThreadDispatcher, logger,
+                        ScriptSchemas(luaManager)
                     ) { it.authenticatedUser() }
                     get("/client/registries") {
                         call.respond(mainThreadDispatcher.callOnMainThread { clientRegistrySnapshots.getIndex() })

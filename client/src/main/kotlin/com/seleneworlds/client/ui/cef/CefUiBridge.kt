@@ -139,7 +139,7 @@ class CefUiBridge(
             "GET" -> listOf("/resources/bundles", "/resources/bundles/$segment/registries",
                 bundleRegistry, "/resources/files/$segment(?:/$segment)*",
                 "/registries/$segment/entries", "/registries/$segment/field-options",
-                "/scripts", "/resources/changes", "/worldmap/image",
+                "/scripts", "/scripts/schema", "/resources/changes", "/worldmap/image",
                 "/localization/bundles/$segment", "/localization/files/$segment(?:/$segment)*")
             "POST" -> listOf("/resources/permissions", "$bundleRegistry/files", "/resources/changes/(?:persist|discard)(?:/$segment)*",
                 "/resources/rename/$segment(?:/$segment)*")
