@@ -240,6 +240,17 @@ export const ClientGridDefinitionSchema = z.object({
 });
 export type ClientGridDefinition = z.infer<typeof ClientGridDefinitionSchema>;
 
+export const ClientRenderGridDefinitionSchema = z.object({
+  tileWidth: z.number().int().positive().default(76),
+  tileHeight: z.number().int().positive().default(37),
+  tileStepX: z.number().finite().positive().default(38),
+  tileStepY: z.number().finite().positive().default(19),
+  tileStepZ: z.number().finite().nonnegative().default(114),
+  zSortScale: z.number().int().positive().default(500),
+  rowSortScale: z.number().int().positive().default(50),
+});
+export type ClientRenderGridDefinition = z.infer<typeof ClientRenderGridDefinitionSchema>;
+
 export const clientRegistryEntrySchemas = {
   tiles: ClientTileDefinitionSchema,
   entities: ClientEntityDefinitionSchema,
@@ -248,6 +259,7 @@ export const clientRegistryEntrySchemas = {
   audio: ClientAudioDefinitionSchema,
   particles: ClientParticleSystemDefinitionSchema,
   grids: ClientGridDefinitionSchema,
+  render_grids: ClientRenderGridDefinitionSchema,
   timelines: ClientTimelineDefinitionSchema,
 } satisfies Record<string, z.ZodType>;
 

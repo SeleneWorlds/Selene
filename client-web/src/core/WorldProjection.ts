@@ -1,8 +1,7 @@
 import type { Coordinate } from '@/networking/GameProtocol';
 
-export const TILE_STEP_X = 38;
-export const TILE_STEP_Y = 19;
-export const TILE_STEP_Z = 114;
+import { TILE_STEP_X, TILE_STEP_Y, TILE_STEP_Z } from './RenderGrid';
+export { TILE_STEP_X, TILE_STEP_Y, TILE_STEP_Z };
 
 export function projectCoordinate(coordinate: Coordinate): { x: number; y: number } {
   return {

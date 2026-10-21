@@ -1,5 +1,6 @@
 import { TILE_STEP_X, TILE_STEP_Y, TILE_STEP_Z } from '@/core/WorldProjection';
 import { getRegistryEntry, type ClientRegistrySnapshots } from '@/data/ClientRegistryLoader';
+import { applyRenderGrid } from './RenderGrid';
 import type {
   ClientDirection,
   GridApi,
@@ -21,6 +22,11 @@ export class ClientGrid implements GridApi {
       throw new Error(`Grid ${identifier} does not define directions.`);
     }
 
+    const renderGrid = getRegistryEntry(this.registries, 'render_grids', identifier);
+    if (!renderGrid) {
+      throw new Error(`Missing render grid definition for active grid: ${identifier}`);
+    }
+
     const directions = definition.directions.map((direction) => {
       const directionName = requireDirectionName(direction, identifier);
 
@@ -33,6 +39,7 @@ export class ClientGrid implements GridApi {
       };
     });
 
+    applyRenderGrid(renderGrid);
     this.directions.clear();
     for (const direction of directions) {
       this.defineDirection(direction.name, direction.x, direction.y, direction.z, direction.angle);
