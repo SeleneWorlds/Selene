@@ -8,7 +8,7 @@ const META_STORE = 'metadata';
 const MOD_LIST_KEY = 'installed-mods';
 
 interface StoredAsset { modId: string; path: string; blob: Blob }
-export interface ModInfo { id: string; name: string; fileCount: number }
+export interface ModInfo { id: string; name: string; fileCount: number; enabled: boolean }
 export interface ModInstallProgress { label: string; progress: number }
 
 let database: IDBDatabase | null = null;
@@ -36,15 +36,16 @@ export async function initializeModAssets(): Promise<void> {
 export function getInstalledMods(): ModInfo[] { return installedMods.map((mod) => ({ ...mod })); }
 export function hasModAsset(path: string): boolean {
   const normalized = normalizeAssetPath(path);
-  return installedMods.some((mod) => pathsByMod.get(mod.id)?.has(normalized));
+  return installedMods.some((mod) => mod.enabled && pathsByMod.get(mod.id)?.has(normalized));
 }
 export function listModAssetPaths(): string[] {
-  return [...new Set(installedMods.flatMap((mod) => [...(pathsByMod.get(mod.id) ?? [])]))];
+  return [...new Set(installedMods.filter((mod) => mod.enabled).flatMap((mod) => [...(pathsByMod.get(mod.id) ?? [])]))];
 }
 
 export async function getModAsset(path: string): Promise<Blob | null> {
   const normalized = normalizeAssetPath(path);
   for (const mod of installedMods) {
+    if (!mod.enabled) continue;
     if (!pathsByMod.get(mod.id)?.has(normalized)) continue;
     const stored = await getStoredAsset(mod.id, normalized);
     if (stored) return stored.blob;
@@ -58,6 +59,7 @@ export async function applyModRegistryOverrides<T extends { registries: Record<s
   let applied = 0;
   // Lower-priority mods apply first, allowing the topmost mod to overwrite them.
   for (const mod of [...installedMods].reverse()) {
+    if (!mod.enabled) continue;
     const overrides = [...(pathsByMod.get(mod.id) ?? [])]
       .map((path) => ({ path, match: /^(?:common|client)\/data\/([^/]+)\/([^/]+)(?:\/(.+))?\.json$/.exec(path) }))
       .filter((entry): entry is { path: string; match: RegExpExecArray } => entry.match !== null)
@@ -87,7 +89,7 @@ export async function applyModRegistryOverrides<T extends { registries: Record<s
     }
   }
   for (const name of changed) registries[name].entries = validateRegistryEntries(name, registries[name].entries);
-  if (applied) console.info(`[Mods] Applied ${applied} local registry overrides from ${installedMods.length} mod(s).`);
+  if (applied) console.info(`[Mods] Applied ${applied} local registry overrides from ${installedMods.filter((mod) => mod.enabled).length} mod(s).`);
   return { ...snapshots, registries };
 }
 
@@ -111,7 +113,7 @@ export async function installMod(file: File, onProgress?: (progress: ModInstallP
   const root = findArchiveRoot(entries.map((entry) => entry.path), file.name);
   const id = crypto.randomUUID();
   const assets = entries.map(({ path, contents }) => ({ modId: id, path: root ? path.slice(root.length + 1) : path, blob: new Blob([new Uint8Array(contents).buffer]) })).filter(({ path }) => path);
-  const mod = { id, name: file.name, fileCount: assets.length };
+  const mod = { id, name: file.name, fileCount: assets.length, enabled: true };
   const nextMods = [mod, ...installedMods];
   const transaction = database.transaction([FILE_STORE, META_STORE], 'readwrite');
   let stored = 0; let lastPercent = -1;
@@ -141,6 +143,16 @@ export async function removeMod(id: string): Promise<void> {
   installedMods = next; pathsByMod.delete(id);
 }
 
+export async function setModEnabled(id: string, enabled: boolean): Promise<void> {
+  if (!database) throw new Error('Browser mod storage is not available.');
+  if (!installedMods.some((mod) => mod.id === id)) return;
+  const next = installedMods.map((mod) => mod.id === id ? { ...mod, enabled } : mod);
+  const transaction = database.transaction(META_STORE, 'readwrite');
+  transaction.objectStore(META_STORE).put(next, MOD_LIST_KEY);
+  await transactionDone(transaction);
+  installedMods = next;
+}
+
 export async function moveMod(id: string, direction: -1 | 1): Promise<ModInfo[]> {
   if (!database) return getInstalledMods();
   const index = installedMods.findIndex((mod) => mod.id === id);
@@ -166,7 +178,7 @@ async function getStoredAsset(modId: string, path: string): Promise<StoredAsset 
 }
 
 function sanitizeModList(value: unknown): ModInfo[] {
-  return Array.isArray(value) ? value.filter((mod): mod is ModInfo => isRecord(mod) && typeof mod.id === 'string' && typeof mod.name === 'string' && typeof mod.fileCount === 'number').map((mod) => ({ ...mod })) : [];
+  return Array.isArray(value) ? value.filter((mod): mod is ModInfo => isRecord(mod) && typeof mod.id === 'string' && typeof mod.name === 'string' && typeof mod.fileCount === 'number').map((mod) => ({ ...mod, enabled: mod.enabled !== false })) : [];
 }
 async function readFileWithProgress(file: File, report: (progress: number) => void): Promise<Uint8Array> {
   const reader = file.stream().getReader(); const result = new Uint8Array(file.size); let offset = 0;

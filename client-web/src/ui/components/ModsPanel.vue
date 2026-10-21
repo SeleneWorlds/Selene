@@ -5,6 +5,7 @@ import {
   installMod,
   moveMod,
   removeMod,
+  setModEnabled,
   type ModInfo,
   type ModInstallProgress,
 } from '@/core/services/ModAssetStore';
@@ -31,6 +32,10 @@ async function uploadMod(event: Event): Promise<void> {
     installProgress.value = null;
     isUpdating.value = false;
   }
+}
+
+async function toggleMod(mod: ModInfo): Promise<void> {
+  await updateMods(() => setModEnabled(mod.id, !mod.enabled));
 }
 
 async function uninstallMod(id: string): Promise<void> {
@@ -60,9 +65,10 @@ async function updateMods(operation: () => Promise<void>): Promise<void> {
       <div v-for="(mod, index) in installedMods" :key="mod.id" class="mods-panel__installed">
         <span>
           <strong>{{ mod.name }}</strong>
-          <small>{{ mod.fileCount }} file{{ mod.fileCount === 1 ? '' : 's' }} · {{ index === 0 ? 'Highest priority' : `Priority ${index + 1}` }}</small>
+          <small>{{ mod.enabled ? 'Enabled' : 'Disabled' }} · {{ mod.fileCount }} file{{ mod.fileCount === 1 ? '' : 's' }} · {{ index === 0 ? 'Highest priority' : `Priority ${index + 1}` }}</small>
         </span>
         <div class="mods-panel__actions">
+          <button type="button" :aria-label="`${mod.enabled ? 'Disable' : 'Enable'} ${mod.name}`" :disabled="isUpdating" @click="toggleMod(mod)">{{ mod.enabled ? 'Disable' : 'Enable' }}</button>
           <button type="button" aria-label="Move bundle up" :disabled="isUpdating || index === 0" @click="reorderMod(mod.id, -1)">↑</button>
           <button type="button" aria-label="Move bundle down" :disabled="isUpdating || index === installedMods.length - 1" @click="reorderMod(mod.id, 1)">↓</button>
           <button type="button" :disabled="isUpdating" @click="uninstallMod(mod.id)">Remove</button>
@@ -70,6 +76,8 @@ async function updateMods(operation: () => Promise<void>): Promise<void> {
       </div>
     </div>
     <p v-else class="mods-panel__empty">No mods are installed.</p>
+
+    <p class="mods-panel__description">Enabling or disabling a mod reloads the client. Disabled mods keep their files and priority.</p>
 
     <p v-if="errorMessage" class="mods-panel__error" role="alert">{{ errorMessage }}</p>
     <div v-if="installProgress" class="mods-panel__progress" role="status" aria-live="polite">
