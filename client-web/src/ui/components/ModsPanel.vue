@@ -77,8 +77,6 @@ async function updateMods(operation: () => Promise<void>): Promise<void> {
     </div>
     <p v-else class="mods-panel__empty">No mods are installed.</p>
 
-    <p class="mods-panel__description">Enabling or disabling a mod reloads the client. Disabled mods keep their files and priority.</p>
-
     <p v-if="errorMessage" class="mods-panel__error" role="alert">{{ errorMessage }}</p>
     <div v-if="installProgress" class="mods-panel__progress" role="status" aria-live="polite">
       <div class="mods-panel__progress-label">
