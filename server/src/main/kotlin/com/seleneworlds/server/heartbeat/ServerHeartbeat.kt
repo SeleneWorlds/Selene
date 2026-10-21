@@ -90,7 +90,7 @@ class ServerHeartbeat(
             address = config.announcedHost,
             port = config.port,
             apiUrl = publicApiUrl,
-            currentPlayers = playerManager.players.size,
+            currentPlayers = playerManager.visibleOnlinePlayerCount,
             maxPlayers = 100
         )
 

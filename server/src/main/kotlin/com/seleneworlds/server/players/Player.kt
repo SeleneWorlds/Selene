@@ -31,6 +31,8 @@ class Player(
     override val api = PlayerApi(this)
 
     var connectionState: ConnectionState = ConnectionState.PENDING_AUTHENTICATION
+    @Volatile
+    var isVisibleOnline: Boolean = false
     var userId: String? = null
     var locale: Locale = Locale.ENGLISH
     val localeString get() = locale.toString()

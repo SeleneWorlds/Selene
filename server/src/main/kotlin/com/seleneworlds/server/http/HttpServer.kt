@@ -263,7 +263,7 @@ class HttpServer(
                             ),
                             queueSize = queue.queueSize,
                             maxQueueSize = queue.maxQueueSize,
-                            currentPlayers = playerManager.players.size,
+                            currentPlayers = playerManager.visibleOnlinePlayerCount,
                             maxPlayers = 100
                         )
                     )

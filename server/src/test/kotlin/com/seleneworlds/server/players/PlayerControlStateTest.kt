@@ -21,6 +21,7 @@ import kotlinx.serialization.json.Json
 import party.iroiro.luajava.Lua
 import java.net.InetSocketAddress
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -42,6 +43,37 @@ class PlayerControlStateTest {
         Json, EntityManager(), MainThreadDispatcher()
     )
     private val player = players.createPlayer(client)
+
+    @Test
+    fun `Lua visibility controls public counts without removing hidden players`() {
+        val hiddenPlayer = players.createPlayer(object : NetworkClient by client {})
+        val manager = LuaManager(LuaPackageModule())
+        try {
+            manager.defineMetatable(PlayerApi::class, PlayerLuaApi.luaMeta)
+            manager.lua.push(player.api, Lua.Conversion.NONE)
+            manager.lua.setGlobal("player")
+            manager.lua.load(LuaManager.loadBuffer("""
+                assert(not player:isVisibleOnline())
+                player:setVisibleOnline(true)
+                assert(player:isVisibleOnline())
+            """.trimIndent()), "player_visibility_test")
+            manager.lua.pCall(0, 0)
+            assertTrue(player.api.isVisibleOnline())
+            assertFalse(hiddenPlayer.api.isVisibleOnline())
+            assertEquals(1, players.visibleOnlinePlayerCount)
+            assertEquals(2, players.players.size)
+
+            manager.lua.load(LuaManager.loadBuffer("""
+                player:setVisibleOnline(false)
+                assert(not player:isVisibleOnline())
+            """.trimIndent()), "player_visibility_reset_test")
+            manager.lua.pCall(0, 0)
+            assertFalse(player.api.isVisibleOnline())
+            assertEquals(0, players.visibleOnlinePlayerCount)
+        } finally {
+            manager.lua.close()
+        }
+    }
 
     @Test
     fun `Lua exposes independent persistent control states`() {

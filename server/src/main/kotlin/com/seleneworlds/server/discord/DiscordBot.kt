@@ -27,7 +27,7 @@ class DiscordBot(
             val bot = try {
                 JDABuilder.createLight(config.discordBotToken.trim(), emptyList<GatewayIntent>())
                     .setEnableShutdownHook(false)
-                    .setActivity(Activity.playing(DiscordPresence.text(playerManager.players.size)))
+                    .setActivity(Activity.playing(DiscordPresence.text(playerManager.visibleOnlinePlayerCount)))
                     .build()
             } catch (_: Exception) {
                 // Do not include exceptions here: authentication diagnostics may contain credentials.
@@ -38,7 +38,7 @@ class DiscordBot(
                 val presence = DiscordPresence { bot.presence.activity = Activity.playing(it) }
                 while (isActive) {
                     try {
-                        presence.update(playerManager.players.size)
+                        presence.update(playerManager.visibleOnlinePlayerCount)
                     } catch (e: CancellationException) {
                         throw e
                     } catch (_: Exception) {

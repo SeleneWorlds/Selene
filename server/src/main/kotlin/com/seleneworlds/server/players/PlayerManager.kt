@@ -20,6 +20,8 @@ class PlayerManager(
     private val _players = ConcurrentHashMap<NetworkClient, Player>()
     val players: Collection<Player> get() = _players.values
 
+    val visibleOnlinePlayerCount: Int get() = players.count { it.isVisibleOnline }
+
     fun createPlayer(client: NetworkClient): Player {
         val player = Player(dimensionManager, this, client)
         _players[client] = player

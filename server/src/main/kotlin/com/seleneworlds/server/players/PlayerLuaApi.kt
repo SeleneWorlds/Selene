@@ -317,7 +317,35 @@ object PlayerLuaApi {
         return 0
     }
 
+    /**
+     * Whether this player is included in public online player counts. Defaults to false.
+     *
+     * ```signatures
+     * isVisibleOnline() -> boolean
+     * ```
+     */
+    private fun isVisibleOnline(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        lua.push(player.isVisibleOnline())
+        return 1
+    }
+
+    /**
+     * Sets whether this player is included in public online player counts.
+     *
+     * ```signatures
+     * setVisibleOnline(visibleOnline: boolean)
+     * ```
+     */
+    private fun setVisibleOnline(lua: Lua): Int {
+        val player = lua.checkUserdata<PlayerApi>(1)
+        player.setVisibleOnline(lua.checkBoolean(2))
+        return 0
+    }
+
     val luaMeta = LuaMappedMetatable(PlayerApi::class) {
+        callable(::isVisibleOnline)
+        callable(::setVisibleOnline)
         callable(::setCanMove)
         callable(::canMove)
         callable(::setCanTurn)

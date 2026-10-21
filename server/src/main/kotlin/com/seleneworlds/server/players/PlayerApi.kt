@@ -9,6 +9,12 @@ import com.seleneworlds.server.entities.EntityApi
 
 class PlayerApi(val delegate: Player) : IdResolvable<String, Player> {
 
+    fun isVisibleOnline(): Boolean = delegate.isVisibleOnline
+
+    fun setVisibleOnline(visibleOnline: Boolean) {
+        delegate.isVisibleOnline = visibleOnline
+    }
+
     fun getIdleTime(): Int {
         return delegate.idleTime
     }
