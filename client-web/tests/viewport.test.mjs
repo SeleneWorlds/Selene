@@ -23,26 +23,45 @@ function setup(hostWidth, hostHeight, width, height, fit) {
   return { viewport, canvas: app.canvas.style, ui: ui.style };
 }
 
-test('large render surfaces always fit, with matching UI scale and pointer conversion', () => {
+test('large render surfaces fit while UI retains screen pixels and world pointers use logical pixels', () => {
   for (const fit of [false, true]) {
     const { viewport, canvas, ui } = setup(1200, 900, 2048, 1536, fit);
     assert.equal(canvas.width, '1200px');
     assert.equal(canvas.height, '900px');
-    assert.equal(ui.transform, `scale(${1200 / 2048})`);
+    assert.equal(ui.transform, 'none');
+    assert.equal(ui.width, '1200px');
+    assert.equal(ui.height, '900px');
     assert.deepEqual(viewport.screenToLogical(600, 450), { x: 1024, y: 768 });
   }
 });
 
 test('Fit on Screen controls enlargement of smaller render surfaces', () => {
-  const { viewport, canvas } = setup(1600, 1200, 1024, 768, false);
+  const { viewport, canvas, ui } = setup(1600, 1200, 1024, 768, false);
   assert.equal(canvas.width, '1024px');
   assert.equal(canvas.height, '768px');
   assert.equal(canvas.left, '288px');
   assert.equal(canvas.top, '216px');
+  assert.equal(ui.left, canvas.left);
+  assert.equal(ui.top, canvas.top);
+  assert.equal(ui.width, canvas.width);
+  assert.equal(ui.height, canvas.height);
   assert.deepEqual(viewport.screenToLogical(800, 600), { x: 512, y: 384 });
   viewport.setFitToScreen(true);
   assert.equal(canvas.width, '1600px');
   assert.equal(canvas.height, '1200px');
+  assert.equal(ui.width, canvas.width);
+  assert.equal(ui.height, canvas.height);
+  assert.equal(ui.transform, 'none');
+});
+
+test('changing world resolution leaves dialog pixels and UI dimensions unchanged', () => {
+  const { viewport, ui } = setup(1024, 768, 1024, 768, true);
+  const original = { ...ui };
+  viewport.setLogicalRenderSize(2048, 1536);
+  assert.deepEqual(ui, original);
+  assert.deepEqual(viewport.screenToLogical(350, 200), { x: 700, y: 400 });
+  viewport.clearLogicalRenderSize();
+  assert.deepEqual(ui, original);
 });
 
 test('shrinking preserves proportions in wide and tall windows', () => {

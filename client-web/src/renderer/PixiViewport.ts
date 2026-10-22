@@ -110,8 +110,9 @@ export class PixiViewport {
       width: `${screenWidth}px`, height: `${screenHeight}px`,
     });
     Object.assign(this.uiHost.style, {
-      left: `${this.renderOffsetX}px`, top: `${this.renderOffsetY}px`, width: `${width}px`, height: `${height}px`,
-      transform: `scale(${this.renderScale})`, transformOrigin: 'top left',
+      left: `${this.renderOffsetX}px`, top: `${this.renderOffsetY}px`,
+      width: `${screenWidth}px`, height: `${screenHeight}px`,
+      transform: 'none',
     });
     this.sceneChanged();
     this.debugState.update({ viewport: { width, height, resolution: RENDER_RESOLUTION } });

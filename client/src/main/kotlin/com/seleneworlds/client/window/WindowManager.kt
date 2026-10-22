@@ -118,7 +118,10 @@ class WindowManager {
                 screenHeight = screenHeight
             )
         }
-        uiViewport = viewport
+        uiViewport = viewport.copy(
+            logicalWidth = viewport.screenWidth,
+            logicalHeight = viewport.screenHeight
+        )
         layoutVersion++
     }
 
