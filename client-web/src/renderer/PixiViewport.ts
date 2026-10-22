@@ -93,8 +93,10 @@ export class PixiViewport {
     const fittedHeight = hostAspect > targetAspect ? hostHeight : hostWidth / targetAspect;
     const width = this.logicalRenderSize?.width ?? Math.max(1, Math.round(fittedWidth));
     const height = this.logicalRenderSize?.height ?? Math.max(1, Math.round(fittedHeight));
-    const screenWidth = this.fitToScreen ? fittedWidth : width;
-    const screenHeight = this.fitToScreen ? fittedHeight : height;
+    const fittedScale = Math.min(fittedWidth / width, fittedHeight / height);
+    const screenScale = this.fitToScreen ? fittedScale : Math.min(1, fittedScale);
+    const screenWidth = width * screenScale;
+    const screenHeight = height * screenScale;
 
     this.renderWidth = width;
     this.renderHeight = height;
