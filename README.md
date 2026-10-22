@@ -27,7 +27,7 @@ git clone https://github.com/SeleneWorlds/Moonlight-Inventory.git moonlight-inve
 git clone https://github.com/SeleneWorlds/Illarion-Gobaith-Scripts.git illarion-gobaith
 git clone https://github.com/SeleneWorlds/Illarion-Gobaith-Map.git illarion-gobaith-map
 git clone https://github.com/SeleneWorlds/Illarion-Gobaith-Data.git illarion-gobaith-data
-git clone https://github.com/SeleneWorlds/Illarion-Gobaith-UI.git illarion-gobaith-ui
+git clone https://github.com/SeleneWorlds/Gobaith-Reborn-Client.git gobaith-reborn-client
 git clone https://github.com/SeleneWorlds/Illarion-Gobaith-Assets.git illarion-gobaith-assets
 # or
 git clone https://github.com/SeleneWorlds/Moonlight-Inventory.git moonlight-inventory
@@ -36,7 +36,7 @@ git clone https://github.com/SeleneWorlds/Illarion-API.git illarion-api
 git clone https://github.com/SeleneWorlds/Illarion-VBU-Scripts.git illarion-vbu
 git clone https://github.com/SeleneWorlds/Illarion-VBU-Map.git illarion-vbu-map
 git clone https://github.com/SeleneWorlds/Illarion-VBU-Data.git illarion-vbu-data
-git clone https://github.com/SeleneWorlds/Illarion-Gobaith-UI.git illarion-gobaith-ui
+git clone https://github.com/SeleneWorlds/Gobaith-Reborn-Client.git gobaith-reborn-client
 ```
 
 Note: For VBU, you would also need an `illarion-vbu-assets` bundle, which cannot be redistributed 
