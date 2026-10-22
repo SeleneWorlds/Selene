@@ -179,6 +179,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       input: gameClient.getBundleUiInputClaims(),
       camera: gameClient.getCameraApi(),
       grid: gameClient.getGridApi(),
+      setOffscreenRendering: (width, height) => gameClient.getGameApi().setOffscreenRendering(width, height),
       entities: gameClient.getEntitiesApi(),
       registries,
       i18n: i18nService,

@@ -14,6 +14,7 @@ import {
   type ClientRegistrySnapshots,
 } from '@/data/ClientRegistryLoader';
 import type { BundleUiInputClaims } from './BundleUiInputClaims';
+import { onRenderGridChanged, TILE_WIDTH, TILE_HEIGHT, TILE_STEP_X, TILE_STEP_Y, TILE_STEP_Z } from '@/core/RenderGrid';
 import type { CameraApi } from '@/api/CameraApi';
 import type { GridApi } from '@/api/GridApi';
 import type { EntitiesApi } from '@/api/EntitiesApi';
@@ -43,6 +44,7 @@ interface BundleUiManagerOptions {
   input: BundleUiInputClaims;
   camera: CameraApi;
   grid: GridApi;
+  setOffscreenRendering: (width: number, height: number) => void;
   entities: EntitiesApi;
   getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) => ClientMapTile[];
   hasTileAt: (coordinate: Coordinate) => boolean;
@@ -269,6 +271,20 @@ export class BundleUiManager {
         },
       }),
       world: Object.freeze({
+        onRenderGridChanged: (listener: () => void) => {
+          if (typeof listener !== 'function') throw new Error('Render grid callback must be a function.');
+          return onRenderGridChanged(listener);
+        },
+        getRenderGrid: () => ({
+          tileWidth: TILE_WIDTH, tileHeight: TILE_HEIGHT,
+          tileStepX: TILE_STEP_X, tileStepY: TILE_STEP_Y, tileStepZ: TILE_STEP_Z,
+        }),
+        setOffscreenRendering: (width: number, height: number) => {
+          if (![width, height].every(Number.isSafeInteger) || width <= 0 || height <= 0) {
+            throw new Error('Render surface dimensions must be positive integers.');
+          }
+          this.options.setOffscreenRendering(width, height);
+        },
         setTileOcclusionEnabled: (enabled: boolean) => {
           if (typeof enabled !== 'boolean') throw new Error('Tile occlusion enabled must be a boolean.');
           this.options.setTileOcclusionEnabled(enabled);

@@ -73,3 +73,16 @@ test('missing render definitions fail without changing the active projection', (
   assert.throws(() => grid.applyGrid('test:large'), /Missing render grid definition/);
   assert.equal(iso.TILE_WIDTH, defaults.tileWidth);
 });
+
+
+test('render grid changes notify layout consumers and can be unsubscribed', async () => {
+  const { onRenderGridChanged } = await import(renderGridUrl);
+  const grid = createGrid({ 'test:default': defaults, 'test:large': large });
+  let calls = 0;
+  const release = onRenderGridChanged(() => { calls++; });
+  grid.applyGrid('test:large');
+  assert.equal(calls, 1);
+  release();
+  grid.applyGrid('test:default');
+  assert.equal(calls, 1);
+});

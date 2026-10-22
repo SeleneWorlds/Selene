@@ -1,4 +1,4 @@
-export const SELENE_UI_API_VERSION = 20;
+export const SELENE_UI_API_VERSION = 21;
 
 export type ClientNetworkPayload = Record<string, unknown>;
 export interface Coordinate {
@@ -107,6 +107,15 @@ export interface SeleneUiApi {
     onConnected(callback: () => void): () => void;
   };
   readonly world: {
+    onRenderGridChanged(listener: () => void): () => void;
+    getRenderGrid(): {
+      tileWidth: number;
+      tileHeight: number;
+      tileStepX: number;
+      tileStepY: number;
+      tileStepZ: number;
+    };
+    setOffscreenRendering(width: number, height: number): void;
     setTileOcclusionEnabled(enabled: boolean): void;
     hasTileAt(coordinate: Coordinate): Promise<boolean>;
     setLightingEnabled(enabled: boolean): Promise<void>;

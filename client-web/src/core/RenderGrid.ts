@@ -9,6 +9,15 @@ export let TILE_STEP_Z = defaults.tileStepZ;
 export let Z_SORT_SCALE = defaults.zSortScale;
 export let ROW_SORT_SCALE = defaults.rowSortScale;
 
+const listeners = new Set<() => void>();
+
+export function onRenderGridChanged(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
 export function applyRenderGrid(definition: ClientRenderGridDefinition): void {
   TILE_WIDTH = definition.tileWidth;
   TILE_HEIGHT = definition.tileHeight;
@@ -17,4 +26,5 @@ export function applyRenderGrid(definition: ClientRenderGridDefinition): void {
   TILE_STEP_Z = definition.tileStepZ;
   Z_SORT_SCALE = definition.zSortScale;
   ROW_SORT_SCALE = definition.rowSortScale;
+  for (const listener of listeners) listener();
 }

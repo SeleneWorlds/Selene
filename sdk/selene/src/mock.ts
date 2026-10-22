@@ -197,6 +197,15 @@ export const createMockSeleneUiApi = (): SeleneUiApi => {
       onPayload: () => () => undefined,
     },
     world: {
+      onRenderGridChanged: () => () => undefined,
+      getRenderGrid: () => ({
+        tileWidth: 76,
+        tileHeight: 37,
+        tileStepX: 38,
+        tileStepY: 19,
+        tileStepZ: 114,
+      }),
+      setOffscreenRendering: () => undefined,
       setTileOcclusionEnabled: () => undefined,
       hasTileAt: async () => false,
       setLightingEnabled: async () => undefined,
