@@ -1,5 +1,6 @@
 package com.seleneworlds.server.maps.tree
 
+import com.seleneworlds.server.maps.layers.MapLayerApi
 import party.iroiro.luajava.Lua
 import com.seleneworlds.common.lua.LuaMappedMetatable
 import com.seleneworlds.common.lua.util.checkBoolean
@@ -10,6 +11,27 @@ import com.seleneworlds.common.lua.util.checkString
 import com.seleneworlds.common.lua.util.checkUserdata
 
 object MapTreeLuaApi {
+
+    private fun hasLayer(lua: Lua): Int {
+        val mapTree = lua.checkUserdata<MapTreeApi>(1)
+        lua.push(mapTree.hasLayer(lua.checkString(2)))
+        return 1
+    }
+
+    /** Returns the named layer. It can be passed directly to Saves.save. */
+    private fun getLayer(lua: Lua): Int {
+        val mapTree = lua.checkUserdata<MapTreeApi>(1)
+        lua.push(mapTree.getLayer(lua.checkString(2)), Lua.Conversion.NONE)
+        return 1
+    }
+
+    /** Attaches a loaded layer above the map's existing layers. */
+    private fun addLayer(lua: Lua): Int {
+        val mapTree = lua.checkUserdata<MapTreeApi>(1)
+        val layer = lua.checkUserdata<MapLayerApi>(2)
+        mapTree.addLayer(layer)
+        return 0
+    }
 
     /**
      * Merges another MapTree into this one, copying all tiles and annotations.
@@ -275,6 +297,9 @@ object MapTreeLuaApi {
     }
 
     val luaMeta = LuaMappedMetatable(MapTreeApi::class) {
+        callable(::hasLayer)
+        callable(::getLayer)
+        callable(::addLayer)
         callable(::merge)
         callable(::placeTile)
         callable(::replaceTiles)

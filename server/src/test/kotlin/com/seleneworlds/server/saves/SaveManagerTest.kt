@@ -26,7 +26,7 @@ class SaveManagerTest {
 
         assertTrue(saveFile.isFile)
 
-        val loaded = saveManager.load(saveFile)
+        val loaded = saveManager.loadKeyValueMap(saveFile)
         val loadedMap = assertIs<Map<*, *>>(loaded)
         assertEquals(5, loadedMap["counter"])
         assertEquals(listOf("a", 1, false), loadedMap["list"])
@@ -34,7 +34,9 @@ class SaveManagerTest {
     }
 
     private object NoopMapTreeFormat : MapTreeFormat {
-        override fun load(file: File): MapTree {
+        override fun loadMapLayer(file: java.io.File): com.seleneworlds.server.maps.layers.MapLayerApi = error("unused")
+        override fun saveLayer(file: java.io.File, layer: com.seleneworlds.server.maps.layers.MapLayerApi) = error("unused")
+        override fun loadMapTree(file: File): MapTree {
             error("Not used in this test")
         }
 

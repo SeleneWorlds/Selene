@@ -3,8 +3,26 @@ package com.seleneworlds.server.maps.tree
 import com.seleneworlds.common.grid.Coordinate
 import com.seleneworlds.common.serialization.SerializedMap
 import com.seleneworlds.common.tiles.TileDefinition
+import com.seleneworlds.server.maps.layers.MapLayerApi
 
 class MapTreeApi(val mapTree: MapTree) {
+
+    /** Checks for a named layer without creating it. */
+    fun hasLayer(layerName: String): Boolean = mapTree.layers.any { it.name == layerName }
+
+    /** Returns the named layer, creating it if needed. Layers can be saved directly. */
+    fun getLayer(layerName: String): MapLayerApi {
+        require(layerName != "default") { "Select an explicit named layer" }
+        return MapLayerApi(mapTree.getLayer(layerName), mapTree.registries)
+    }
+
+    /** Attaches a layer above the existing layers. */
+    fun addLayer(layer: MapLayerApi) {
+        require(layer.registries === mapTree.registries) { "Layer belongs to different registries" }
+        require(layer.getName() != "default") { "Select an explicit named layer" }
+        require(mapTree.layers.none { it.name == layer.getName() }) { "Layer already exists: ${layer.getName()}" }
+        mapTree.addLayer(layer.layer)
+    }
 
     fun merge(other: MapTreeApi) {
         mapTree.merge(other.mapTree)

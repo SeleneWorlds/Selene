@@ -4,6 +4,7 @@ import kotlinx.serialization.json.Json
 import com.seleneworlds.common.serialization.SerializedMapSerializer
 import com.seleneworlds.common.serialization.decodeFromFile
 import com.seleneworlds.server.maps.tree.MapTree
+import com.seleneworlds.server.maps.layers.MapLayerApi
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
@@ -20,11 +21,14 @@ class SaveManager(
     fun save(file: File, savable: Any?) {
         file.parentFile.mkdirs()
         when (savable) {
-            is MapTree -> {
+            is MapTree, is MapLayerApi -> {
                 // Never truncate the last good map save if serialization fails.
                 val temporary = Files.createTempFile(file.absoluteFile.parentFile.toPath(), ".map-", ".tmp")
                 try {
-                    mapTreeFormat.saveFullyInline(temporary.toFile(), savable)
+                    when (savable) {
+                        is MapTree -> mapTreeFormat.saveFullyInline(temporary.toFile(), savable)
+                        is MapLayerApi -> mapTreeFormat.saveLayer(temporary.toFile(), savable)
+                    }
                     try {
                         Files.move(temporary, file.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
                     } catch (_: AtomicMoveNotSupportedException) {
@@ -41,13 +45,9 @@ class SaveManager(
         }
     }
 
-    fun load(file: File): Any? {
-        return when (file.extension) {
-            "selenemap" -> mapTreeFormat.load(file)
-            "json" -> json.decodeFromFile(SerializedMapSerializer, file).toMutableMap()
-            else -> null
-        }
-    }
+    fun loadMapTree(file: File): MapTree = mapTreeFormat.loadMapTree(file)
+
+    fun loadMapLayer(file: File): MapLayerApi = mapTreeFormat.loadMapLayer(file)
 
     fun loadKeyValueMap(file: File): Map<String, Any?> {
         return json.decodeFromFile(SerializedMapSerializer, file)

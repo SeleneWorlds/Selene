@@ -15,7 +15,8 @@ class SavesLuaApi(private val api: SavesApi) : LuaModule {
     override fun register(table: LuaValue) {
         table.register("has", this::has)
         table.register("save", this::save)
-        table.register("load", this::load)
+        table.register("loadMapTree", this::loadMapTree)
+        table.register("loadMapLayer", this::loadMapLayer)
         table.register("loadTable", this::loadKeyValueMap)
         table.register("loadKeyValueMap", this::loadKeyValueMap)
     }
@@ -34,8 +35,13 @@ class SavesLuaApi(private val api: SavesApi) : LuaModule {
         return 0
     }
 
-    private fun load(lua: Lua): Int {
-        lua.push(api.load(lua.checkString(1)), Lua.Conversion.FULL)
+    private fun loadMapTree(lua: Lua): Int {
+        lua.push(api.loadMapTree(lua.checkString(1)), Lua.Conversion.NONE)
+        return 1
+    }
+
+    private fun loadMapLayer(lua: Lua): Int {
+        lua.push(api.loadMapLayer(lua.checkString(1)), Lua.Conversion.NONE)
         return 1
     }
 

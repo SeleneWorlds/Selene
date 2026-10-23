@@ -5,6 +5,8 @@ import party.iroiro.luajava.value.LuaValue
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.register
+import com.seleneworlds.server.maps.layers.MapLayerApi
+import com.seleneworlds.server.maps.layers.MapLayerLuaApi
 import com.seleneworlds.server.maps.tree.MapTreeApi
 import com.seleneworlds.server.maps.tree.MapTreeLuaApi
 import com.seleneworlds.server.sync.ScopedChunkViewApi
@@ -20,6 +22,7 @@ class ServerMapLuaApi(private val api: ServerMapApi) : LuaModule {
 
     override fun initialize(luaManager: LuaManager) {
         luaManager.defineMetatable(MapTreeApi::class, MapTreeLuaApi.luaMeta)
+        luaManager.defineMetatable(MapLayerApi::class, MapLayerLuaApi.luaMeta)
         luaManager.defineMetatable(ScopedChunkViewApi::class, ScopedChunkViewLuaApi.luaMeta)
         luaManager.defineMetatable(TransientTileApi::class, TransientTileLuaApi.luaMeta)
     }
