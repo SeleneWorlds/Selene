@@ -8,6 +8,9 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.JsonElement
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.nio.file.AtomicMoveNotSupportedException
 
 class SaveManager(
     private val mapTreeFormat: MapTreeFormat,
@@ -17,7 +20,20 @@ class SaveManager(
     fun save(file: File, savable: Any?) {
         file.parentFile.mkdirs()
         when (savable) {
-            is MapTree -> mapTreeFormat.saveFullyInline(file, savable)
+            is MapTree -> {
+                // Never truncate the last good map save if serialization fails.
+                val temporary = Files.createTempFile(file.absoluteFile.parentFile.toPath(), ".map-", ".tmp")
+                try {
+                    mapTreeFormat.saveFullyInline(temporary.toFile(), savable)
+                    try {
+                        Files.move(temporary, file.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+                    } catch (_: AtomicMoveNotSupportedException) {
+                        Files.move(temporary, file.toPath(), StandardCopyOption.REPLACE_EXISTING)
+                    }
+                } finally {
+                    Files.deleteIfExists(temporary)
+                }
+            }
             is Map<*, *> -> {
                 @Suppress("UNCHECKED_CAST")
                 file.writeText(json.encodeToString(SerializedMapSerializer, savable as Map<String, Any?>))
