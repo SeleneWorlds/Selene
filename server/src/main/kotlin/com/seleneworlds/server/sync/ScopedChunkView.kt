@@ -92,8 +92,10 @@ class ScopedChunkView(val window: ChunkWindow) : ExposedApi<ScopedChunkViewApi> 
                                 }
                             } else if (operation is SparseTileRemoval) {
                                 if (baseTiles[index] == operation.tileDef.id) {
-                                    baseTiles[index] = if (additionalTiles.size() > 0) additionalTiles.get(coordinate)
-                                        .removeAt(0) else 0
+                                    val additionalTilesInCell = additionalTiles.get(coordinate)
+                                    baseTiles[index] = if (additionalTilesInCell.isNotEmpty()) {
+                                        additionalTilesInCell.removeAt(0)
+                                    } else 0
                                 } else {
                                     val additionalTilesInCell = additionalTiles.get(coordinate)
                                     val index = additionalTilesInCell.indexOfFirst { it == operation.tileDef.id }
