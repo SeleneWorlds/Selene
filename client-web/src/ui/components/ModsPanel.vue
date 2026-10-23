@@ -71,7 +71,7 @@ async function updateMods(operation: () => Promise<void>): Promise<void> {
           <button type="button" :aria-label="`${mod.enabled ? 'Disable' : 'Enable'} ${mod.name}`" :disabled="isUpdating" @click="toggleMod(mod)">{{ mod.enabled ? 'Disable' : 'Enable' }}</button>
           <button type="button" aria-label="Move bundle up" :disabled="isUpdating || index === 0" @click="reorderMod(mod.id, -1)">↑</button>
           <button type="button" aria-label="Move bundle down" :disabled="isUpdating || index === installedMods.length - 1" @click="reorderMod(mod.id, 1)">↓</button>
-          <button type="button" :disabled="isUpdating" @click="uninstallMod(mod.id)">Remove</button>
+          <button type="button" :disabled="isUpdating" @click="uninstallMod(mod.id)">Uninstall</button>
         </div>
       </div>
     </div>
