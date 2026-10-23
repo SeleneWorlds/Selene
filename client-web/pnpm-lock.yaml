@@ -15,8 +15,8 @@ importers:
         specifier: ^8.9.2
         version: 8.20.1
       selene:
-        specifier: github:SeleneWorlds/Selene#11e318c90a397d0d0191bf9567e0dce97efceed4&path:/sdk/selene
-        version: https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4#path:/sdk/selene
+        specifier: github:SeleneWorlds/Selene#787aec7d963f5c1fc0adb82ce606a01c6e44cd69&path:/sdk/selene
+        version: https://codeload.github.com/SeleneWorlds/Selene/tar.gz/787aec7d963f5c1fc0adb82ce606a01c6e44cd69#path:/sdk/selene
       vue:
         specifier: ^3.5.13
         version: 3.5.42(typescript@5.9.3)
@@ -559,8 +559,8 @@ packages:
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
     hasBin: true
 
-  selene@https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4#path:/sdk/selene:
-    resolution: {gitHosted: true, path: /sdk/selene, tarball: https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4}
+  selene@https://codeload.github.com/SeleneWorlds/Selene/tar.gz/787aec7d963f5c1fc0adb82ce606a01c6e44cd69#path:/sdk/selene:
+    resolution: {gitHosted: true, integrity: sha512-EednA/ZBUg62I2LkdlNFe54bYbGO6UxnTNGdtqdCNa0hP4xMyuISM6QB7jIZyii6a2L23hVQQojYRdrQuiLawQ==, tarball: https://codeload.github.com/SeleneWorlds/Selene/tar.gz/787aec7d963f5c1fc0adb82ce606a01c6e44cd69}
     version: 0.1.0
 
   source-map-js@1.2.1:
@@ -1069,7 +1069,7 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.63.1
       fsevents: 2.3.3
 
-  selene@https://codeload.github.com/SeleneWorlds/Selene/tar.gz/11e318c90a397d0d0191bf9567e0dce97efceed4#path:/sdk/selene: {}
+  selene@https://codeload.github.com/SeleneWorlds/Selene/tar.gz/787aec7d963f5c1fc0adb82ce606a01c6e44cd69#path:/sdk/selene: {}
 
   source-map-js@1.2.1: {}
 

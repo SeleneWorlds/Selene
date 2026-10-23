@@ -16,7 +16,7 @@
     "vue": "^3.5.13",
     "wasmoon": "^1.16.0",
     "zod": "^4.6.5",
-    "selene": "github:SeleneWorlds/Selene#11e318c90a397d0d0191bf9567e0dce97efceed4&path:/sdk/selene"
+    "selene": "github:SeleneWorlds/Selene#787aec7d963f5c1fc0adb82ce606a01c6e44cd69&path:/sdk/selene"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",
