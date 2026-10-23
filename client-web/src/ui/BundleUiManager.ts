@@ -52,6 +52,7 @@ interface BundleUiManagerOptions {
   setLightingEnabled: (enabled: boolean) => void;
   isLightingEnabled: () => boolean;
   setTileGridVisible: (visible: boolean) => void;
+  logicalToScreen: (point: { x: number; y: number }) => { x: number; y: number };
   projectCoordinate: (coordinate: Coordinate) => { x: number; y: number };
   projectEntity: (networkId: number) => { x: number; y: number } | null;
   getControlledEntity: () => ReturnType<EntitiesApi['getEntityByNetworkId']>;
@@ -320,6 +321,12 @@ export class BundleUiManager {
         },
         getMapTiles: (coordinate?: Coordinate, width?: number, height?: number) =>
           this.options.getMapTiles(coordinate, width, height),
+        logicalToScreen: (point: { x: number; y: number }) => {
+          if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+            throw new Error('Logical point must contain finite x and y values.');
+          }
+          return this.options.logicalToScreen(point);
+        },
         projectCoordinate: (coordinate: Coordinate) => this.options.projectCoordinate(requireCoordinate(coordinate)),
         getEntitiesAt: async (coordinate: Coordinate) =>
           this.options.entities.getEntitiesAt(coordinate).map((entity) => this.toWorldEntity(entity)),

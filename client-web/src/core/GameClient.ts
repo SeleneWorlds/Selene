@@ -184,6 +184,10 @@ export class GameClient {
     this.renderer.setTileGridVisible(visible);
   }
 
+  logicalToScreen(point: { x: number; y: number }): { x: number; y: number } {
+    return this.renderer.logicalToScreen(point);
+  }
+
   projectCoordinate(coordinate: Coordinate): { x: number; y: number } {
     return this.renderer.projectCoordinate(coordinate);
   }

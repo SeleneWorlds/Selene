@@ -61,9 +61,18 @@ export class PixiViewport {
   }
 
   screenToLogical(screenX: number, screenY: number): { x: number; y: number } {
+    const bounds = this.host.getBoundingClientRect();
     return {
-      x: (screenX - this.renderOffsetX) / this.renderScale,
-      y: (screenY - this.renderOffsetY) / this.renderScale,
+      x: (screenX - bounds.left - this.renderOffsetX) / this.renderScale,
+      y: (screenY - bounds.top - this.renderOffsetY) / this.renderScale,
+    };
+  }
+
+  logicalToScreen(point: { x: number; y: number }): { x: number; y: number } {
+    const bounds = this.host.getBoundingClientRect();
+    return {
+      x: bounds.left + this.renderOffsetX + point.x * this.renderScale,
+      y: bounds.top + this.renderOffsetY + point.y * this.renderScale,
     };
   }
 

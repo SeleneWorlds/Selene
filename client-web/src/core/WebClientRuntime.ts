@@ -191,6 +191,7 @@ class DefaultWebClientRuntime implements WebClientRuntime {
       setLightingEnabled: (enabled) => gameClient.getEnvironmentApi().setLightingEnabled(enabled),
       isLightingEnabled: () => gameClient.getEnvironmentApi().isLightingEnabled(),
       setTileGridVisible: (visible) => gameClient.setTileGridVisible(visible),
+      logicalToScreen: (point) => gameClient.logicalToScreen(point),
       projectCoordinate: (coordinate) => gameClient.projectCoordinate(coordinate),
       projectEntity: (networkId) => gameClient.projectEntity(networkId),
       getControlledEntity: () => gameClient.getControlledEntity(),

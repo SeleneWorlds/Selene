@@ -284,6 +284,10 @@ export class PixiGameRenderer implements GameRenderer {
     this.viewport.setFitToScreen(enabled);
   }
 
+  logicalToScreen(point: { x: number; y: number }): { x: number; y: number } {
+    return this.viewport.logicalToScreen(point);
+  }
+
   screenToLogical(screenX: number, screenY: number): { x: number; y: number } {
     return this.viewport.screenToLogical(screenX, screenY);
   }

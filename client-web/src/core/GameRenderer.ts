@@ -33,6 +33,7 @@ export interface GameRenderer {
   setNativeRendering(): void;
   setFitToScreen(enabled: boolean): void;
   setDebugOption(option: keyof RendererDebugOptions, enabled: boolean): void;
+  logicalToScreen(point: { x: number; y: number }): { x: number; y: number };
   screenToLogical(screenX: number, screenY: number): { x: number; y: number };
   hasTileAt(coordinate: Coordinate): boolean;
   setTileGridVisible(visible: boolean): void;

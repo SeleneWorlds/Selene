@@ -1,4 +1,4 @@
-export const SELENE_UI_API_VERSION = 21;
+export const SELENE_UI_API_VERSION = 22;
 
 export type ClientNetworkPayload = Record<string, unknown>;
 export interface Coordinate {
@@ -132,6 +132,9 @@ export interface SeleneUiApi {
       width?: number,
       height?: number,
     ): MapTile[];
+    /** Convert offscreen render pixels to browser client pixels, including display scale and letterboxing. */
+    logicalToScreen(point: { x: number; y: number }): { x: number; y: number };
+    /** Project a world coordinate into offscreen render pixels. */
     projectCoordinate(coordinate: Coordinate): { x: number; y: number };
     getEntitiesAt(coordinate: Coordinate): Promise<WorldEntity[]>;
     projectEntity(networkId: number): { x: number; y: number } | null;

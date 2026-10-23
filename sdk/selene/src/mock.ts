@@ -218,6 +218,7 @@ export const createMockSeleneUiApi = (): SeleneUiApi => {
       setViewport: () => undefined,
       getControlledEntity: () => null,
       getMapTiles: () => [],
+      logicalToScreen: (point) => ({ ...point }),
       projectCoordinate: () => ({ x: 0, y: 0 }),
       getEntitiesAt: async () => [],
       projectEntity: () => null,

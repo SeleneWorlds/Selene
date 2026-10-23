@@ -12,7 +12,8 @@ const { PixiViewport } = await import(`data:text/javascript;base64,${Buffer.from
 globalThis.ResizeObserver = class { observe() {} };
 
 function setup(hostWidth, hostHeight, width, height, fit) {
-  const host = { clientWidth: hostWidth, clientHeight: hostHeight };
+  const host = { clientWidth: hostWidth, clientHeight: hostHeight,
+    getBoundingClientRect: () => ({ left: 0, top: 0 }) };
   const app = { canvas: { style: {} }, renderer: { resize() {} } };
   const ui = { style: {} };
   const viewport = new PixiViewport(app, host, ui, { setViewport() {} }, { update() {} }, () => {});
@@ -20,7 +21,7 @@ function setup(hostWidth, hostHeight, width, height, fit) {
   viewport.setLogicalRenderSize(width, height);
   viewport.setFitToScreen(fit);
   viewport.initialize();
-  return { viewport, canvas: app.canvas.style, ui: ui.style };
+  return { viewport, host, canvas: app.canvas.style, ui: ui.style };
 }
 
 test('large render surfaces fit while UI retains screen pixels and world pointers use logical pixels', () => {
@@ -71,4 +72,25 @@ test('shrinking preserves proportions in wide and tall windows', () => {
     assert.ok(parseFloat(canvas.height) <= height);
     assert.ok(Math.abs(parseFloat(canvas.width) / parseFloat(canvas.height) - 1771 / 1328) < 1e-9);
   }
+});
+
+test('world overlay projection converts render pixels to fixed CSS pixels', () => {
+  // 2048x1536 render surface displayed at 1024x768: using render pixels directly
+  // positions a gizmo at twice the distance of its matching rendered tile.
+  const { viewport, host } = setup(1200, 768, 2048, 1536, false);
+  host.getBoundingClientRect = () => ({ left: 20, top: 40 });
+  const coordinate = { x: 1180, y: 670 };
+  const screen = viewport.logicalToScreen(coordinate);
+  assert.deepEqual(screen, { x: 20 + 88 + 590, y: 40 + 335 });
+  assert.deepEqual(viewport.screenToLogical(screen.x, screen.y), coordinate);
+  const neighbor = viewport.logicalToScreen({ x: coordinate.x + 128, y: coordinate.y + 64 });
+  assert.equal(neighbor.x - screen.x, 64);
+  assert.equal(neighbor.y - screen.y, 32);
+  viewport.setFitToScreen(true);
+  assert.deepEqual(viewport.logicalToScreen(coordinate), screen);
+});
+
+test('render-to-screen conversion also handles enlarged viewports', () => {
+  const { viewport } = setup(1600, 1200, 1024, 768, true);
+  assert.deepEqual(viewport.logicalToScreen({ x: 512, y: 384 }), { x: 800, y: 600 });
 });
