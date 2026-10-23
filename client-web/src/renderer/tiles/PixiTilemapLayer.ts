@@ -1,6 +1,7 @@
 import { chunkTiming, chunkTimingEnabled, reportChunkWork } from '@/core/ChunkTiming';
 import type { Container } from 'pixi.js';
-import { getRenderOrder } from '../IsoProjection';
+import { TILE_STEP_X, TILE_STEP_Y } from '@/core/RenderGrid';
+import { getRenderOrder, projectCoordinate } from '../IsoProjection';
 import type { ClientMapTile } from '@/core/ClientMap';
 import type { Coordinate, MapChunkPacket, RemoveMapChunkPacket, UpdateMapTilesPacket } from '@/networking/GameProtocol';
 import type { WorldBounds } from '../entities/PixiEntityLayer';
@@ -13,6 +14,7 @@ import { TileOcclusionFader } from './TileOcclusionFader';
 import { TileSpatialIndex } from './TileSpatialIndex';
 import type { LightingEnvironment } from '../LightingEnvironment';
 import { FrameWorkQueue, frameWorkBudget } from './FrameWorkQueue';
+import { LitTileSprite } from './LitTileSprite';
 import type { TileLight } from '@/api/EnvironmentApi';
 
 /** Coordinates map state and delegates tile rendering and visibility policy. */
@@ -204,6 +206,14 @@ export class PixiTilemapLayer {
   }
 
   private lightingEnabled = true;
+  private smoothLighting = false;
+  private minLightSurfaceOffset = 0;
+  private maxLightSurfaceOffset = 0;
+  setSmoothLighting(enabled: boolean): void {
+    if (this.smoothLighting === enabled) return;
+    this.smoothLighting = enabled;
+    this.updateLighting();
+  }
 
   setLightingEnabled(enabled: boolean): void {
     if (this.lightingEnabled === enabled) return;
@@ -217,9 +227,27 @@ export class PixiTilemapLayer {
       for (const stack of this.renderedStacks.values()) this.tintStack(stack);
       return;
     }
+    if (this.smoothLighting) {
+      // Query artwork intersecting the changed light field, including overhanging sprites.
+      // Surface offsets move artwork above the plane used for its lighting samples.
+      const affected = new Set<RenderedTileStack>();
+      for (const region of regions) {
+        const center = projectCoordinate({ x: region.x + 8, y: region.y + 8, z: region.z });
+        for (const stack of this.spatialIndex.query({
+          x: center.x - 18 * TILE_STEP_X,
+          y: center.y - 19 * TILE_STEP_Y - this.maxLightSurfaceOffset,
+          width: 36 * TILE_STEP_X,
+          height: 36 * TILE_STEP_Y + this.maxLightSurfaceOffset - this.minLightSurfaceOffset,
+        })) {
+          if (stack.coordinate.z === region.z) affected.add(stack);
+        }
+      }
+      for (const stack of affected) this.tintStack(stack);
+      return;
+    }
     for (const region of regions) {
-      for (let y = region.y; y < region.y + 16; y += 1) {
-        for (let x = region.x; x < region.x + 16; x += 1) {
+      for (let y = region.y - 1; y < region.y + 17; y += 1) {
+        for (let x = region.x - 1; x < region.x + 17; x += 1) {
           const stack = this.renderedStacks.get(coordinateKey({ x, y, z: region.z }));
           if (stack) this.tintStack(stack);
         }
@@ -233,7 +261,16 @@ export class PixiTilemapLayer {
       ? this.lighting.getColor(stack.coordinate)
       : { red: 1, green: 1, blue: 1 };
     const tint = toTint(color.red, color.green, color.blue);
-    for (const container of stack.containers) container.tint = tint;
+    for (let index = 0; index < stack.containers.length; index += 1) {
+      const container = stack.containers[index];
+      this.minLightSurfaceOffset = Math.min(this.minLightSurfaceOffset, stack.surfaceOffsets[index]);
+      this.maxLightSurfaceOffset = Math.max(this.maxLightSurfaceOffset, stack.surfaceOffsets[index]);
+      const smooth = this.smoothLighting && this.lightingEnabled && container instanceof LitTileSprite;
+      if (container instanceof LitTileSprite) {
+        container.setSmoothLighting(smooth ? this.lighting : null, stack.coordinate, stack.surfaceOffsets[index]);
+      }
+      container.tint = smooth ? 0xffffff : tint;
+    }
   }
 
   setOcclusionEnabled(enabled: boolean): void {

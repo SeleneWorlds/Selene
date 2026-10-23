@@ -35,6 +35,7 @@ export class RenderPipeline {
     this.recordFrame(elapsedMs);
     const interiorChecks = this.scene.getCameraZoom() > 0.5;
     const lightingEnabled = options.lighting;
+    this.tilemapLayer.setSmoothLighting(options.smoothLighting);
     this.tilemapLayer.setLightingEnabled(lightingEnabled);
     this.entityLayer.setLightingEnabled(lightingEnabled);
     this.tilemapLayer.processPendingWork(elapsedMs);

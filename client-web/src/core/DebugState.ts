@@ -22,6 +22,7 @@ export interface RendererDebugOptions {
   lighting: boolean;
   particles: boolean;
   tileAnimations: boolean;
+  smoothLighting: boolean;
   tileOcclusion: boolean;
   interiorFade: boolean;
   pixiRender: boolean;
@@ -56,6 +57,7 @@ const initialSnapshot: DebugSnapshot = {
     lighting: true,
     particles: true,
     tileAnimations: true,
+    smoothLighting: false,
     tileOcclusion: true,
     interiorFade: true,
     pixiRender: true,

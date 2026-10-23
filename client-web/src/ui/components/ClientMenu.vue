@@ -9,6 +9,7 @@ defineProps<{
   debugOverlayVisible: boolean;
   fitToScreen: boolean;
   tileAnimations: boolean;
+  smoothLighting: boolean;
 }>();
 
 const page = ref<'menu' | 'settings' | 'mods' | 'controls'>('menu');
@@ -19,6 +20,7 @@ const emit = defineEmits<{
   debugOverlayVisibleChanged: [visible: boolean];
   fitToScreenChanged: [enabled: boolean];
   tileAnimationsChanged: [enabled: boolean];
+  smoothLightingChanged: [enabled: boolean];
 }>();
 </script>
 
@@ -28,10 +30,12 @@ const emit = defineEmits<{
     :debug-overlay-visible="debugOverlayVisible"
     :fit-to-screen="fitToScreen"
     :tile-animations="tileAnimations"
+    :smooth-lighting="smoothLighting"
     @back="page = 'menu'"
     @close="emit('close')"
     @debug-overlay-visible-changed="emit('debugOverlayVisibleChanged', $event)"
     @fit-to-screen-changed="emit('fitToScreenChanged', $event)"
+    @smooth-lighting-changed="emit('smoothLightingChanged', $event)"
     @tile-animations-changed="emit('tileAnimationsChanged', $event)"
   />
   <BaseModal

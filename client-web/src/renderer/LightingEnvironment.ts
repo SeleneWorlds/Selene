@@ -144,7 +144,10 @@ export class LightingEnvironment {
     for (const source of sources) {
       const distance = Math.hypot(coordinate.x - source.coordinate.x, coordinate.y - source.coordinate.y);
       if (distance > source.radius) continue;
-      const falloff = Math.max(0, 1 - distance / (source.radius + 0.5));
+      // Smoothstep reaches zero with zero slope at the radius, so moving sources
+      // do not pop as lighting samples cross the edge of their influence.
+      const remaining = Math.max(0, 1 - distance / source.radius);
+      const falloff = remaining * remaining * (3 - 2 * remaining);
       const amount = falloff * source.intensity * localScale;
       red += source.red * amount;
       green += source.green * amount;

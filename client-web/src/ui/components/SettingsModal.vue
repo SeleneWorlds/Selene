@@ -5,6 +5,7 @@ defineProps<{
   debugOverlayVisible: boolean;
   fitToScreen: boolean;
   tileAnimations: boolean;
+  smoothLighting: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -13,12 +14,22 @@ const emit = defineEmits<{
   debugOverlayVisibleChanged: [visible: boolean];
   fitToScreenChanged: [enabled: boolean];
   tileAnimationsChanged: [enabled: boolean];
+  smoothLightingChanged: [enabled: boolean];
 }>();
 </script>
 
 <template>
   <BaseModal title="Settings" show-back @back="emit('back')" @close="emit('close')">
     <div class="settings-modal__body">
+      <label class="settings-toggle">
+        <span>
+          <strong>Smooth Lighting</strong>
+          <small>Blend light across tile surfaces. May reduce performance.</small>
+        </span>
+        <input type="checkbox" :checked="smoothLighting"
+          @change="emit('smoothLightingChanged', ($event.target as HTMLInputElement).checked)">
+      </label>
+
       <label class="settings-toggle">
         <span>
           <strong>Fit to Screen</strong>

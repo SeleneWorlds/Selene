@@ -2,6 +2,7 @@ export interface ClientSettings {
   debugOverlayVisible: boolean;
   fitToScreen: boolean;
   tileAnimations: boolean;
+  smoothLighting: boolean;
   locale: string;
 }
 
@@ -10,6 +11,7 @@ const defaultSettings: ClientSettings = {
   debugOverlayVisible: false,
   fitToScreen: true,
   tileAnimations: true,
+  smoothLighting: false,
   locale: navigator.language.replace(/-/g, '_'),
 };
 
@@ -73,6 +75,10 @@ function sanitizeSettings(value: unknown): ClientSettings {
       isRecord(value) && typeof value.debugOverlayVisible === 'boolean'
         ? value.debugOverlayVisible
         : defaultSettings.debugOverlayVisible,
+    smoothLighting:
+      isRecord(value) && typeof value.smoothLighting === 'boolean'
+        ? value.smoothLighting
+        : defaultSettings.smoothLighting,
     tileAnimations:
       isRecord(value) && typeof value.tileAnimations === 'boolean'
         ? value.tileAnimations

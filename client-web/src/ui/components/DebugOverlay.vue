@@ -11,7 +11,7 @@ const emit = defineEmits<{
   rendererOptionChanged: [option: keyof RendererDebugOptions, enabled: boolean];
 }>();
 
-const rendererOptionLabels: Record<Exclude<keyof RendererDebugOptions, 'cameraEvents' | 'entityUpdates' | 'pixiRender' | 'tileAnimations'>, string> = {
+const rendererOptionLabels: Record<Exclude<keyof RendererDebugOptions, 'cameraEvents' | 'entityUpdates' | 'pixiRender' | 'tileAnimations' | 'smoothLighting'>, string> = {
   culling: 'Tile Culling',
   lighting: 'Lighting',
   particles: 'Particles',

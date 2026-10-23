@@ -21,6 +21,7 @@ const settings = loadSettings();
 const isDebugOverlayVisible = ref(settings.debugOverlayVisible);
 const fitToScreen = ref(settings.fitToScreen);
 const tileAnimations = ref(settings.tileAnimations);
+const smoothLighting = ref(settings.smoothLighting);
 const isMenuOpen = ref(false);
 const clientMenu = ref<InstanceType<typeof ClientMenu> | null>(null);
 const releases: Array<() => void> = [];
@@ -48,12 +49,19 @@ function setTileAnimations(enabled: boolean): void {
   persistSettings();
 }
 
+function setSmoothLighting(enabled: boolean): void {
+  smoothLighting.value = enabled;
+  clientRuntime?.setRendererDebugOption('smoothLighting', enabled);
+  persistSettings();
+}
+
 function persistSettings(): void {
   saveSettings({
     ...loadSettings(),
     debugOverlayVisible: isDebugOverlayVisible.value,
     fitToScreen: fitToScreen.value,
     tileAnimations: tileAnimations.value,
+    smoothLighting: smoothLighting.value,
   });
 }
 
@@ -144,6 +152,7 @@ async function startClient(): Promise<void> {
       },
     });
     clientRuntime.setRendererDebugOption('tileAnimations', tileAnimations.value);
+    clientRuntime.setRendererDebugOption('smoothLighting', smoothLighting.value);
     if (status.value === 'booting') {
       status.value = 'running';
     }
@@ -189,10 +198,12 @@ onMounted(() => {
       :debug-overlay-visible="isDebugOverlayVisible"
       :fit-to-screen="fitToScreen"
       :tile-animations="tileAnimations"
+      :smooth-lighting="smoothLighting"
       @close="isMenuOpen = false"
       @debug-overlay-visible-changed="setDebugOverlayVisible"
       @fit-to-screen-changed="setFitToScreen"
       @tile-animations-changed="setTileAnimations"
+      @smooth-lighting-changed="setSmoothLighting"
     />
 
     <ModDropInstaller />

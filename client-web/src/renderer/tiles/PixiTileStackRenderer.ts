@@ -1,3 +1,4 @@
+import { LitTileSprite } from './LitTileSprite';
 import { chunkTimingEnabled } from '@/core/ChunkTiming';
 import { Container, Graphics, Sprite, type Texture } from 'pixi.js';
 import { getRenderOrder, projectCoordinate, TILE_HEIGHT, TILE_WIDTH } from '@/renderer/IsoProjection';
@@ -43,7 +44,7 @@ export class PixiTileStackRenderer {
       const visual = visuals[localSortLayer];
       // A Sprite is itself a Container in Pixi v8. Avoiding a wrapper around
       // every ordinary tile roughly halves scene-graph traversal for maps.
-      const container = visual ? new Sprite() : new Container();
+      const container = visual ? new LitTileSprite() : new Container();
       container.position.set(position.x, position.y - surfaceOffsets[localSortLayer]);
       container.zIndex = renderOrders[localSortLayer];
       return container;
