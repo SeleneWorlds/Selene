@@ -108,6 +108,7 @@ import com.seleneworlds.common.jobs.SchedulesApi
 import com.seleneworlds.common.jobs.SchedulesLuaApi
 import com.seleneworlds.common.lua.EventsLuaApi
 import com.seleneworlds.common.lua.LuaManager
+import com.seleneworlds.common.lua.ScriptLifecycleLuaApi
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.libraries.*
 import com.seleneworlds.common.network.*
@@ -174,6 +175,7 @@ class SeleneApplication(
             singleOf(::SoundsLuaApi) { bind<LuaModule>() }
             singleOf(::TexturesLuaApi) { bind<LuaModule>() }
             singleOf(::ResourcesLuaApi) { bind<LuaModule>() }
+            singleOf(::ScriptLifecycleLuaApi) { bind<LuaModule>() }
             singleOf(::InputLuaApi) { bind<LuaModule>() }
             singleOf(::ClientGridLuaApi) { bind<LuaModule>() }
             singleOf(::MovementGridLuaApi) { bind<LuaModule>() }

@@ -5,6 +5,7 @@ import party.iroiro.luajava.value.LuaValue
 import com.seleneworlds.common.lua.LuaManager
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.util.checkString
+import org.slf4j.LoggerFactory
 import com.seleneworlds.common.lua.util.pushError
 import com.seleneworlds.common.lua.util.register
 
@@ -14,6 +15,40 @@ import com.seleneworlds.common.lua.util.register
  */
 class LuaPackageModule : LuaModule {
     override val name: String = "package"
+
+    private var executingScript: String? = null
+    private val unloadCallbacks = mutableMapOf<String, MutableList<() -> Unit>>()
+
+    /** Register cleanup against the script currently being loaded, including nested requires. */
+    fun onScriptUnload(callback: () -> Unit) {
+        val script = checkNotNull(executingScript) { "Unload callbacks must be registered while loading a script" }
+        unloadCallbacks.getOrPut(script) { mutableListOf() }.add(callback)
+    }
+
+    private fun unloadScript(script: String) {
+        val callbacks = unloadCallbacks.remove(script) ?: return
+        callbacks.asReversed().forEach { callback ->
+            try {
+                callback()
+            } catch (exception: Exception) {
+                LoggerFactory.getLogger(LuaPackageModule::class.java).error("Error cleaning up script {}", script, exception)
+            }
+        }
+    }
+
+    fun <T> withScript(script: String, block: () -> T): T {
+        unloadScript(script)
+        val previous = executingScript
+        executingScript = script
+        try {
+            return block()
+        } catch (exception: Exception) {
+            unloadScript(script)
+            throw exception
+        } finally {
+            executingScript = previous
+        }
+    }
 
     private val packageResolvers = mutableListOf<(String) -> Pair<String, String>?>()
 
@@ -45,6 +80,7 @@ class LuaPackageModule : LuaModule {
     }
 
     fun clearLoadedModule(lua: Lua, moduleName: String) {
+        unloadScript(moduleName)
         lua.push(packageLoaded)
         lua.pushNil()
         lua.setField(-2, moduleName)
@@ -86,7 +122,7 @@ class LuaPackageModule : LuaModule {
         lua.getField(-1, moduleName)
         if (!lua.isNil(-1)) {
             lua.remove(-2)
-            lua.pCall(0, 1)
+            withScript(moduleName) { lua.pCall(0, 1) }
             lua.push(packageLoaded)
             lua.pushValue(-2)
             lua.setField(-2, moduleName)
@@ -99,7 +135,7 @@ class LuaPackageModule : LuaModule {
         if (found != null) {
             val preTop = lua.top
             lua.load(LuaManager.Companion.loadBuffer(found.second), found.first)
-            lua.pCall(0, 1)
+            withScript(moduleName) { lua.pCall(0, 1) }
             if (lua.top > preTop) {
                 lua.push(packageLoaded)
                 lua.pushValue(-2)

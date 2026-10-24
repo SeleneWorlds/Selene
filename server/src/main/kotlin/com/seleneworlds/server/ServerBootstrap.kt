@@ -40,6 +40,7 @@ import com.seleneworlds.server.profiling.ServerProfiler
 import com.seleneworlds.server.profiling.ProfilerLuaApi
 import com.seleneworlds.common.lua.EventsLuaApi
 import com.seleneworlds.common.lua.LuaManager
+import com.seleneworlds.common.lua.ScriptLifecycleLuaApi
 import com.seleneworlds.common.lua.LuaModule
 import com.seleneworlds.common.lua.LoggingLuaApi
 import com.seleneworlds.common.lua.libraries.*
@@ -170,6 +171,7 @@ fun main(args: Array<String>) {
         singleOf(::EnvironmentLuaApi) { bind<LuaModule>() }
         singleOf(::GridLuaApi) { bind<LuaModule>() }
         singleOf(::ResourcesLuaApi) { bind<LuaModule>() }
+        singleOf(::ScriptLifecycleLuaApi) { bind<LuaModule>() }
         singleOf(::SavesLuaApi) { bind<LuaModule>() }
         singleOf(::ServerMapLuaApi) { bind<LuaModule>() }
         singleOf(::EntitiesLuaApi) { bind<LuaModule>(); bind<Disposable>() }
