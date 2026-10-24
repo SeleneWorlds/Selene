@@ -10,7 +10,7 @@ class DiscordPresenceTest {
         val updates = mutableListOf<String>()
         val presence = DiscordPresence { updates.add(it) }
         listOf(0, 0, 1, 1, 2, 0).forEach(presence::update)
-        assertEquals(listOf("0 players online", "1 player online", "2 players online", "0 players online"), updates)
+        assertEquals(listOf("Server online", "1 player online", "2 players online", "Server online"), updates)
     }
 
     @Test

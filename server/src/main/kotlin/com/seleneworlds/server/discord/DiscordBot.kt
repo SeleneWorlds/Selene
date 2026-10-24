@@ -69,6 +69,7 @@ internal class DiscordPresence(private val publish: (String) -> Unit) {
     }
 
     companion object {
-        fun text(count: Int) = "$count ${if (count == 1) "player" else "players"} online"
+        fun text(count: Int) = if (count == 0) "Server online"
+            else "$count ${if (count == 1) "player" else "players"} online"
     }
 }
